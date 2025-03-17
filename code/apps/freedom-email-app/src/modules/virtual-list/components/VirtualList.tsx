@@ -342,6 +342,9 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         }
       }
 
+      // Keeping the items sorted consistently
+      out.sort((a, b) => a[0].localeCompare(b[0]));
+
       if (hadAnyPendingChanges) {
         setTimeout(() => forceRenderCount.set(forceRenderCount.get() + 1), ANIMATION_DURATION_MSEC);
       }
@@ -674,7 +677,11 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         ))}
         {delegate.renderLoadingIndicator !== undefined
           ? BC(showLoadingIndicator, (showLoadingIndicator) => (
-              <Collapse in={showLoadingIndicator[0] && showLoadingIndicator[1] === 'start'} unmountOnExit={true}>
+              <Collapse
+                key="top-loading-indicator"
+                in={showLoadingIndicator[0] && showLoadingIndicator[1] === 'start'}
+                unmountOnExit={true}
+              >
                 {delegate.renderLoadingIndicator?.() ?? null}
               </Collapse>
             ))
@@ -685,14 +692,18 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         </div>
         {delegate.renderEmptyIndicator !== undefined
           ? BC({ isEmpty, showLoadingIndicator }, ({ isEmpty, showLoadingIndicator }) => (
-              <Collapse in={!showLoadingIndicator[0] && isEmpty} timeout={0} unmountOnExit={true}>
+              <Collapse key="empty-indicator" in={!showLoadingIndicator[0] && isEmpty} timeout={0} unmountOnExit={true}>
                 {delegate.renderEmptyIndicator?.() ?? null}
               </Collapse>
             ))
           : null}
         {delegate.renderLoadingIndicator !== undefined
           ? BC(showLoadingIndicator, (showLoadingIndicator) => (
-              <Collapse in={showLoadingIndicator[0] && showLoadingIndicator[1] === 'end'} unmountOnExit={true}>
+              <Collapse
+                key="bottom-loading-indicator"
+                in={showLoadingIndicator[0] && showLoadingIndicator[1] === 'end'}
+                unmountOnExit={true}
+              >
                 {delegate.renderLoadingIndicator?.() ?? null}
               </Collapse>
             ))
