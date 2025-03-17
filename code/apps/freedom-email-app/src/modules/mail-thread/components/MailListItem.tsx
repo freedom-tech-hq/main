@@ -39,7 +39,9 @@ export const MailListItem = <TagT,>({ mail }: MailItemProps<TagT>) => {
 
         <Divider sx={{ mx: -2, my: 1 }} />
 
-        <ListItemText secondary={mail.body} />
+        {mail.body.split(/\n+/).map((paragraph, index) => (
+          <ListItemText key={index} secondary={paragraph} />
+        ))}
       </ListItem>
     </Paper>
   );
