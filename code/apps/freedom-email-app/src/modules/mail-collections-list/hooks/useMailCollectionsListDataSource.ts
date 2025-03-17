@@ -1,0 +1,145 @@
+import { proxy } from 'comlink';
+import type { Result } from 'freedom-async';
+import { inline } from 'freedom-async';
+import { objectEntries } from 'freedom-cast';
+import type { Uuid } from 'freedom-contexts';
+import { makeTrace, makeUuid } from 'freedom-contexts';
+import { useEffect, useMemo, useRef } from 'react';
+
+import { useTasks } from '../../../contexts/tasks.tsx';
+import type { GetMailCollectionPacket } from '../../../tasks/mail/getMailCollectionsTask.ts';
+import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
+import type { DataSource } from '../../../types/DataSource.ts';
+import type { MailCollectionGroup } from '../../mail-types/MailCollectionGroup.ts';
+import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
+import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
+
+export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsListDataSourceItem, MailCollectionsListDataSourceKey> => {
+  const tasks = useTasks();
+
+  const groups = useRef<MailCollectionGroup[]>([]);
+  const items = useRef<MailCollectionsListDataSourceItem[]>([]);
+
+  const dataSource = useMemo(() => {
+    const out = new ArrayDataSource(items.current, {
+      getKeyForItemAtIndex: (index) => items.current[index].id
+    });
+    out.setIsLoading('end');
+    return out;
+  }, []);
+
+  const mountId = useRef<Uuid | undefined>(undefined);
+  useEffect(() => {
+    mountId.current = makeUuid();
+    return () => {
+      mountId.current = undefined;
+    };
+  }, [tasks]);
+
+  useEffect(() => {
+    if (!tasks) {
+      return;
+    }
+
+    const myMountId = mountId.current;
+    const isConnected = proxy(() => mountId.current === myMountId);
+    const onData = proxy((packet: Result<GetMailCollectionPacket>) => {
+      if (!isConnected()) {
+        return;
+      }
+
+      if (!packet.ok) {
+        console.error('Something went wrong', packet.value);
+        return;
+      }
+
+      switch (packet.value.type) {
+        case 'groups-added': {
+          groups.current.push(...packet.value.groups);
+
+          const addedIndices: number[] = [];
+          for (const newGroup of packet.value.groups) {
+            if (groups.current.indexOf(newGroup) !== 0) {
+              addedIndices.push(items.current.length);
+              items.current.push({ type: 'separator', id: `${newGroup.id}-separator` });
+            }
+
+            if (newGroup.title !== undefined) {
+              addedIndices.push(items.current.length);
+              items.current.push({ type: 'group-title', id: newGroup.id, title: newGroup.title });
+            }
+
+            for (const newCollection of newGroup.collections) {
+              addedIndices.push(items.current.length);
+              items.current.push({ type: 'collection', id: newCollection.id, collection: newCollection });
+            }
+          }
+
+          dataSource.itemsAdded({ indices: addedIndices });
+
+          break;
+        }
+        case 'groups-removed':
+          break; // TODO: handle
+        case 'collections-added': {
+          for (const [groupId, collections] of objectEntries(packet.value.byGroupId)) {
+            const groupIndex = groups.current.findIndex((group) => group.id === groupId);
+            if (groupIndex === -1) {
+              console.error('Group not found', groupId);
+              continue;
+            }
+
+            const group = groups.current[groupIndex];
+            const groupEndItemIndex = groups.current.slice(0, groupIndex + 1).reduce((out, group, index) => {
+              if (index > 0) {
+                out += 1; // Separator
+              }
+
+              if (group.title !== undefined) {
+                out += 1;
+              }
+
+              out += group.collections.length;
+
+              return out;
+            }, 0);
+
+            const addedIndices: number[] = [];
+            let newCollectionIndex = 0;
+            for (const newCollection of collections) {
+              group.collections.push(newCollection);
+
+              addedIndices.push(groupEndItemIndex + newCollectionIndex);
+              items.current.splice(groupEndItemIndex + newCollectionIndex, 0, {
+                type: 'collection',
+                id: newCollection.id,
+                collection: newCollection
+              });
+              newCollectionIndex += 1;
+            }
+
+            dataSource.itemsAdded({ indices: addedIndices });
+          }
+          break;
+        }
+        case 'collections-removed':
+          break; // TODO: handle
+      }
+    });
+    inline(async () => {
+      groups.current.length = 0;
+      items.current.length = 0;
+      dataSource.itemsCleared();
+      dataSource.setIsLoading('end');
+      try {
+        onData(await tasks.getMailCollectionsTask(makeTrace(import.meta.filename), isConnected, onData));
+      } finally {
+        if (isConnected()) {
+          dataSource.setIsLoading(false);
+        }
+      }
+    });
+  }, [dataSource, tasks]);
+
+  return dataSource;
+};

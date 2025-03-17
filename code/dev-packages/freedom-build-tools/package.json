@@ -1,0 +1,43 @@
+{
+  "description": "Shared build tools for packages in The Freedom Network monorepo",
+  "dependencies": {
+    "esbuild": "0.24.2",
+    "esbuild-plugin-inline-image": "0.0.9",
+    "esbuild-plugin-tsc": "0.5.0",
+    "fs-extra": "11.3.0",
+    "glob": "11.0.1",
+    "lodash-es": "4.17.21",
+    "yargs": "17.7.2",
+    "yaschema": "4.4.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "11.0.4",
+    "@types/lodash-es": "4.17.12",
+    "@types/yargs": "17.0.33",
+    "typescript": "5.8.2"
+  },
+  "type": "module",
+  "name": "freedom-build-tools",
+  "nx": {
+    "tags": [
+      "type:lib",
+      "type:dev"
+    ]
+  },
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.mjs.json && yarn finish-bin-files",
+    "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
+    "build:tests": "tsc",
+    "clean": "rimraf ./coverage ./lib",
+    "finish-bin-files": "yarn make-bin-files-executable",
+    "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
+    "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
+    "make-bin-files-executable": "chmod 755 ./lib/mjs/*.js",
+    "test": "yarn test:unit-tests",
+    "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_ALLOW_BLOCKING=${FREEDOM_LOG_ALLOW_BLOCKING:-false} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
+    "test:perf": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
+    "test:unit-tests": "echo tests-disabled # NODE_OPTIONS='--experimental-transform-types --disable-warning=ExperimentalWarning' node --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=90000 --test"
+  },
+  "version": "0.0.0"
+}

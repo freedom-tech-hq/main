@@ -1,0 +1,64 @@
+{
+  "author": "Line Feedr Inc.",
+  "devDependencies": {
+    "@eslint/compat": "1.2.7",
+    "@eslint/eslintrc": "3.3.0",
+    "@eslint/js": "9.22.0",
+    "@typescript-eslint/eslint-plugin": "^8.26.0",
+    "@typescript-eslint/parser": "^8.26.0",
+    "check-dependency-version-consistency": "5.0.0",
+    "depcheck": "1.4.7",
+    "eslint": "9.22.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-import-resolver-typescript": "^3.8.3",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
+    "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-require-extensions": "0.1.3",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-tsdoc": "^0.4.0",
+    "nx": "20.5.0",
+    "prettier": "3.5.3",
+    "rimraf": "6.0.1"
+  },
+  "engines": {
+    "node": ">=22.14"
+  },
+  "license": "none",
+  "name": "the-freedom-network",
+  "private": true,
+  "repository": "git@github.com:Line-Feedr/the-freedom-network.git",
+  "scripts": {
+    "build": "nx run-many --parallel=10 -t build",
+    "build-libs": "nx run-many --parallel=10 -t build --projects=tag:type:lib",
+    "build:tests": "nx run-many --parallel=10 -t build:tests",
+    "clean": "if [ $LF_SKIP_CLEAN ]; then exit 0; fi; rimraf ./**/deployable-lib && nx run-many --parallel=10 -t clean && nx reset",
+    "depcheck": "yarn check-dependency-version-consistency . && nx run-many --parallel=10 -t depcheck",
+    "lint": "yarn check-dependency-version-consistency . && yarn build-libs && nx run-many --parallel=10 -t lint",
+    "nx-reset": "nx reset",
+    "pre-commit": "yarn prep && yarn build:tests && yarn depcheck && yarn lint && yarn test",
+    "prep": "yarn install --check-files --ignore-engines && yarn build-libs",
+    "prep:dev": "FREEDOM_BUILD_MODE=DEV yarn prep",
+    "test": "nx run-many --parallel=10 -t test",
+    "test:debug": "nx run-many --parallel=10 -t test:debug",
+    "test-libs": "nx run-many --parallel=10 -t test --projects=tag:type:lib",
+    "upgrade-latest": "yarn upgrade-interactive --latest --check-files --ignore-engines && yarn build-libs"
+  },
+  "version": "0.0.0",
+  "workspaces": {
+    "nohoist": [
+      "**/@types/react",
+      "**/@types/react-dom"
+    ],
+    "packages": [
+      "apps/*",
+      "dev-packages/*",
+      "integration-testing-packages/*",
+      "cross-platform-packages/*",
+      "server-packages/*",
+      "appliance-plugin-packages/*"
+    ]
+  }
+}
