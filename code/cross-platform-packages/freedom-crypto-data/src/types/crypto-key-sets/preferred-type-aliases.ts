@@ -1,0 +1,14 @@
+import { CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm } from './specific/CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm.ts';
+import { CryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256 } from './specific/CryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256.ts';
+import { PrivateCryptoKeySet_RsaOaep4096Sha256_Aes256Gcm } from './specific/PrivateCryptoKeySet_RsaOaep4096Sha256_Aes256Gcm.ts';
+import { PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256 } from './specific/PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256.ts';
+
+export const PreferredEncryptionModeKeySet = CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm;
+export const PreferredPrivateEncryptionModeKeySet = PrivateCryptoKeySet_RsaOaep4096Sha256_Aes256Gcm;
+export const PreferredPrivateSigningModeKeySet = PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256;
+export const PreferredSigningModeKeySet = CryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256;
+
+export type PreferredEncryptionModeKeySet = CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm;
+export type PreferredPrivateEncryptionModeKeySet = PrivateCryptoKeySet_RsaOaep4096Sha256_Aes256Gcm;
+export type PreferredPrivateSigningModeKeySet = PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256;
+export type PreferredSigningModeKeySet = CryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256;

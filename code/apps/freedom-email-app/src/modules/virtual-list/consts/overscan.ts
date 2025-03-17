@@ -1,0 +1,1 @@
+export const DEFAULT_OVERSCAN_AMOUNT_PX = 160;

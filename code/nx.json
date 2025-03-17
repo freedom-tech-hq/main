@@ -1,0 +1,84 @@
+{
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/bin",
+        "{projectRoot}/build",
+        "{projectRoot}/deployable-bin",
+        "{projectRoot}/deployable-lib",
+        "{projectRoot}/firebase.json",
+        "{projectRoot}/functions",
+        "{projectRoot}/lib"
+      ],
+      "cache": true
+    },
+    "build:deploy": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/bin",
+        "{projectRoot}/build",
+        "{projectRoot}/deployable-bin",
+        "{projectRoot}/deployable-lib",
+        "{projectRoot}/firebase.json",
+        "{projectRoot}/functions",
+        "{projectRoot}/lib"
+      ]
+    },
+    "build:tests": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/bin",
+        "{projectRoot}/build",
+        "{projectRoot}/deployable-bin",
+        "{projectRoot}/deployable-lib",
+        "{projectRoot}/firebase.json",
+        "{projectRoot}/functions",
+        "{projectRoot}/lib"
+      ]
+    },
+    "clean": {
+      "dependsOn": [
+        "^clean"
+      ],
+      "outputs": [
+        "{projectRoot}/deployable-bin",
+        "{projectRoot}/deployable-lib",
+        "{projectRoot}/lib"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/coverage"
+      ],
+      "cache": true
+    },
+    "test:debug": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/coverage"
+      ],
+      "cache": true
+    },
+    "depcheck": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    }
+  },
+  "useDaemonProcess": false,
+  "useInferencePlugins": false,
+  "defaultBase": "main"
+}

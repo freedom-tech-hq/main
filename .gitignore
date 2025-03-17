@@ -1,0 +1,28 @@
+# Custom
+deployable-*
+bin
+lib
+build
+dist
+coverage
+.*.json
+*.rhl
+*.tsbuildinfo
+.ssl
+
+# Account key
+*serviceAccountKey*
+
+# OSX
+.DS_Store
+
+# IDEs
+.idea
+
+# dotenv environment variables file
+*.env*
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
