@@ -296,7 +296,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         const isMovingItem = !isInitializing && timeMSecByKeyByItemState.move[key] !== undefined;
 
         const hasMeasuredSize = currentItemSizes[itemIndex][0];
-        const shouldBeVisible = hasMeasuredSize || !delegate.itemPrototypes[templateId].isSizeDynamic;
+        const shouldBeVisible = itemIndex === 0 || hasMeasuredSize || !delegate.itemPrototypes[templateId].isSizeDynamic;
         const renderedItem = delegate.renderItem(key, item, itemIndex);
         const wrappedRenderedItem = (
           <ResizingObservingDiv
@@ -656,9 +656,22 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     controls.scrollToItemWithKey = scrollToItemWithKey;
   }
 
+  const lastContainerSize = useRef<number | undefined>(undefined);
+  const onContainerResize = useCallbackRef((_tag: undefined, width: number, _height: number) => {
+    if (lastContainerSize.current === width) {
+      return;
+    }
+
+    if (lastContainerSize.current !== undefined) {
+      makeOnVisibleRangeChange()?.();
+      forceRenderCount.set(forceRenderCount.get() + 1);
+    }
+    lastContainerSize.current = width;
+  });
+
   return (
     <ListHasFocusProvider listHasFocus={hasFocus}>
-      <div
+      <ResizingObservingDiv
         id={uuid}
         className="VirtualList"
         tabIndex={isFocusable ? 0 : undefined}
@@ -666,6 +679,8 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         onBlur={isFocusable ? hasFocus.reset : undefined}
         onClick={isFocusable ? focus : undefined}
         onKeyDown={isFocusable ? delegate.onKeyDown : undefined}
+        tag={undefined}
+        onResize={onContainerResize}
       >
         {/* Rendering Prototypes to Observe Size Changes */}
         {objectEntries(delegate.itemPrototypes).map(([templateId, { Component }]) => (
@@ -708,7 +723,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
               </Collapse>
             ))
           : null}
-      </div>
+      </ResizingObservingDiv>
     </ListHasFocusProvider>
   );
 };

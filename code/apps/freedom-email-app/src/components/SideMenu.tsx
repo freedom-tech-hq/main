@@ -10,8 +10,8 @@ import type { FocusControls } from '../types/FocusControls.ts';
 import { MailMenuContent } from './MailMenuContent.tsx';
 import { MainMenuContent } from './MainMenuContent.tsx';
 
-const MAIN_MENU_WIDTH_PX = 240;
-const MAIL_MENU_WIDTH_PX = 320;
+export const MAIN_MENU_WIDTH_PX = 240;
+export const MAIL_MENU_WIDTH_PX = 320;
 
 export const SideMenu = () => {
   const uuid = useMemo(() => makeUuid(), []);
