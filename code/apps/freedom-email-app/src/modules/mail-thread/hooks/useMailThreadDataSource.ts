@@ -12,6 +12,7 @@ import type { GetMailForThreadPacket } from '../../../tasks/mail/getMailForThrea
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailId } from '../../mail-types/MailId.ts';
+import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 
 export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, MailId> => {
@@ -72,21 +73,37 @@ export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, 
         }
       });
       inline(async () => {
-        items.current.length = 0;
-        dataSource.itemsCleared();
+        if (!isConnected()) {
+          return;
+        }
+
         if (selectedThreadId !== undefined) {
           dataSource.setIsLoading('end');
-          if (!isConnected()) {
-            return;
-          }
 
+          let didClearOldData = false;
+          const clearOldData = () => {
+            if (didClearOldData || !isConnected()) {
+              return;
+            }
+            didClearOldData = true;
+
+            items.current.length = 0;
+            dataSource.itemsCleared();
+          };
+
+          setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
-            onData(await tasks.getMailForThreadTask(makeTrace(import.meta.filename), selectedThreadId, isConnected, onData));
+            const data = await tasks.getMailForThreadTask(makeTrace(import.meta.filename), selectedThreadId, isConnected, onData);
+            clearOldData();
+            onData(data);
           } finally {
             if (isConnected()) {
               dataSource.setIsLoading(false);
             }
           }
+        } else {
+          items.current.length = 0;
+          dataSource.itemsCleared();
         }
       });
     },

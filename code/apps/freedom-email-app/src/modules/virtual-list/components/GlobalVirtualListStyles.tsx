@@ -19,6 +19,8 @@ export const GlobalVirtualListStyles = () => {
             outline: 'none',
 
             '& .MuiListItemButton-root': {
+              transition: 'none',
+
               '&.Mui-selected': {
                 backgroundColor: theme.palette.primary.main,
 

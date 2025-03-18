@@ -11,6 +11,7 @@ import type { GetMailCollectionPacket } from '../../../tasks/mail/getMailCollect
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailCollectionGroup } from '../../mail-types/MailCollectionGroup.ts';
+import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
 
@@ -127,12 +128,29 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
       }
     });
     inline(async () => {
-      groups.current.length = 0;
-      items.current.length = 0;
-      dataSource.itemsCleared();
+      if (!isConnected()) {
+        return;
+      }
+
       dataSource.setIsLoading('end');
+
+      let didClearOldData = false;
+      const clearOldData = () => {
+        if (didClearOldData || !isConnected()) {
+          return;
+        }
+        didClearOldData = true;
+
+        groups.current.length = 0;
+        items.current.length = 0;
+        dataSource.itemsCleared();
+      };
+
+      setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
       try {
-        onData(await tasks.getMailCollectionsTask(makeTrace(import.meta.filename), isConnected, onData));
+        const data = await tasks.getMailCollectionsTask(makeTrace(import.meta.filename), isConnected, onData);
+        clearOldData();
+        onData(data);
       } finally {
         if (isConnected()) {
           dataSource.setIsLoading(false);

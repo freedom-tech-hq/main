@@ -1,9 +1,11 @@
 import type { ListItemTextSlotsAndSlotProps, SxProps, Theme } from '@mui/material';
 import { Avatar, Divider, ListItem, ListItemAvatar, ListItemText, Paper, Stack, Typography } from '@mui/material';
 
-import { formatDateTime } from '../../../utils/formatDateTime.ts';
+import { formatDate } from '../../../utils/formatDate.ts';
+import { formatTime } from '../../../utils/formatTime.ts';
 import { makeStringAvatarProps } from '../../../utils/makeStringAvatarProps.ts';
 import type { MailDataSourceItem } from '../types/MailDataSourceItem.ts';
+import { MailActionsMenu } from './MailActionsMenu.tsx';
 
 export interface MailItemProps<TagT> extends Omit<MailDataSourceItem, 'type'> {
   tag: TagT;
@@ -11,7 +13,8 @@ export interface MailItemProps<TagT> extends Omit<MailDataSourceItem, 'type'> {
 
 export const MailListItem = <TagT,>({ mail }: MailItemProps<TagT>) => {
   return (
-    <Paper elevation={4} sx={{ mx: 3, my: 1 }}>
+    <Paper elevation={4} sx={{ position: 'relative', m: 3 }}>
+      <MailActionsMenu />
       <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch', py: 1.5 }}>
         <Stack direction="row">
           <ListItemAvatar sx={avatarStyle}>
@@ -21,14 +24,21 @@ export const MailListItem = <TagT,>({ mail }: MailItemProps<TagT>) => {
           </ListItemAvatar>
           <Stack alignItems="stretch" sx={headerContentStyle}>
             <Stack direction="row" justifyContent="space-between" gap={1}>
-              <Typography fontWeight="bold">{mail.from}</Typography>
-              <Typography variant="body2" color="textSecondary">
-                {formatDateTime(mail.timeMSec)}
+              <Typography fontWeight="bold" sx={ellipsizeStyle}>
+                {mail.from}
               </Typography>
+              <Stack direction="row" gap={1}>
+                <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
+                  {formatDate(mail.timeMSec)}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
+                  {formatTime(mail.timeMSec)}
+                </Typography>
+              </Stack>
             </Stack>
             <Stack direction="row" gap={1}>
               <Typography variant="body2">To:</Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" color="textSecondary" sx={ellipsizeStyle}>
                 {mail.to}
               </Typography>
             </Stack>
@@ -50,5 +60,7 @@ export const MailListItem = <TagT,>({ mail }: MailItemProps<TagT>) => {
 // Helpers
 
 const avatarStyle: SxProps<Theme> = { minWidth: '48px' };
-const headerContentStyle: SxProps<Theme> = { flexGrow: 1 };
+const ellipsizeStyle: SxProps<Theme> = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
+const headerContentStyle: SxProps<Theme> = { flexGrow: 1, overflow: 'hidden' };
+const noWrapStyle: SxProps<Theme> = { whiteSpace: 'nowrap' };
 const subjectSlotProps: ListItemTextSlotsAndSlotProps['slotProps'] = { primary: { fontWeight: 'bold' } };

@@ -11,11 +11,16 @@ export const AppTheme = ({ children }: { children: React.ReactNode }) => {
         },
         background: {
           default: '#eee'
+        },
+        secondary: {
+          main: '#A7F7FF'
         }
       },
       components: {
         MuiListItemButton: {
           defaultProps: {
+            disableRipple: true,
+            disableTouchRipple: true,
             tabIndex: -1
           }
         },
