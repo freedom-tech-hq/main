@@ -1,10 +1,11 @@
 import { keyframes } from '@emotion/react';
 import { GlobalStyles, useTheme } from '@mui/material';
 
+import type { AppTheme } from '../../../components/AppTheme.tsx';
 import { ANIMATION_DURATION_MSEC } from '../consts/animation.ts';
 
 export const GlobalVirtualListStyles = () => {
-  const theme = useTheme();
+  const theme = useTheme<AppTheme>();
 
   return (
     <GlobalStyles
@@ -15,20 +16,51 @@ export const GlobalVirtualListStyles = () => {
           justifyContent: 'flex-start',
           alignItems: 'stretch',
 
+          '& .MuiListItemButton-root': {
+            backgroundColor: theme.palette.list.unfocused.listItem.unselected.backgroundColor,
+
+            '& .MuiTypography-root': {
+              color: theme.palette.list.unfocused.listItem.unselected.color
+            },
+            '& .MuiChip-label': {
+              color: theme.palette.list.unfocused.listItem.unselected.color
+            },
+
+            '&.Mui-selected': {
+              backgroundColor: theme.palette.list.unfocused.listItem.selected.backgroundColor,
+
+              '& .MuiTypography-root': {
+                color: theme.palette.list.unfocused.listItem.selected.color
+              },
+              '& .MuiChip-label': {
+                color: theme.palette.list.unfocused.listItem.selected.color
+              }
+            }
+          },
+
           '&:focus': {
             outline: 'none',
 
             '& .MuiListItemButton-root': {
               transition: 'none',
 
+              backgroundColor: theme.palette.list.focused.listItem.unselected.backgroundColor,
+
+              '& .MuiTypography-root': {
+                color: theme.palette.list.focused.listItem.unselected.color
+              },
+              '& .MuiChip-label': {
+                color: theme.palette.list.focused.listItem.unselected.color
+              },
+
               '&.Mui-selected': {
-                backgroundColor: theme.palette.primary.main,
+                backgroundColor: theme.palette.list.focused.listItem.selected.backgroundColor,
 
                 '& .MuiTypography-root': {
-                  color: theme.palette.getContrastText(theme.palette.primary.main)
+                  color: theme.palette.list.focused.listItem.selected.color
                 },
                 '& .MuiChip-label': {
-                  color: theme.palette.getContrastText(theme.palette.primary.main)
+                  color: theme.palette.list.focused.listItem.selected.color
                 }
               }
             }
