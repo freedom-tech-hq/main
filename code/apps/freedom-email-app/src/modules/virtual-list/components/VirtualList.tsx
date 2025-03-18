@@ -12,7 +12,7 @@ import { ListHasFocusProvider } from '../../../contexts/list-has-focus.tsx';
 import type { DataSource, IsDataSourceLoading } from '../../../types/DataSource.ts';
 import { doRangesIntersect } from '../../../utils/doRangesIntersect.ts';
 import { ANIMATION_DURATION_MSEC } from '../consts/animation.ts';
-import { DEFAULT_OVERSCAN_AMOUNT_PX } from '../consts/overscan.ts';
+import { DEFAULT_MIN_OVERSCAN_AMOUNT_PX, DEFAULT_OVERSCAN_NUM_ITEMS } from '../consts/overscan.ts';
 import type { VirtualListControls } from '../types/VirtualListControls.ts';
 import type { VirtualListDelegate } from '../types/VirtualListDelegate.ts';
 
@@ -32,7 +32,7 @@ export interface VirtualListProps<T, KeyT extends string, TemplateIdT extends st
   /**
    * The number of px above or below the visible area to render content for
    *
-   * @defaultValue `160`
+   * @defaultValue `max(DEFAULT_MIN_OVERSCAN_AMOUNT_PX, max of all item prototype defaultEstimatedSizePx * DEFAULT_OVERSCAN_NUM_ITEMS)`
    */
   overscanAmountPx?: number;
 
@@ -46,7 +46,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   dataSource,
   delegate,
   scrollParent,
-  overscanAmountPx = DEFAULT_OVERSCAN_AMOUNT_PX,
+  overscanAmountPx,
   controls,
   isFocusable = true
 }: VirtualListProps<T, KeyT, TemplateIdT>) => {
@@ -70,6 +70,19 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       return out as Record<TemplateIdT, number>;
     },
     { id: 'prototypeSizes' }
+  );
+
+  const computedOverscanAmountPx = useDerivedBinding(
+    overscanAmountPx === undefined ? prototypeSizes : undefined,
+    () => {
+      if (overscanAmountPx !== undefined) {
+        return overscanAmountPx;
+      }
+
+      const maxPrototypeSize = Math.max(...(Object.values(prototypeSizes.get()) as number[]));
+      return Math.max(DEFAULT_MIN_OVERSCAN_AMOUNT_PX, maxPrototypeSize * DEFAULT_OVERSCAN_NUM_ITEMS);
+    },
+    { id: 'computedOverscanAmountPx' }
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -404,6 +417,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       const currentTotalSize = totalSize.get();
       const bottom = Math.min(elemRect.top + currentTotalSize, scrollParentRect.bottom);
 
+      const overscanAmountPx = computedOverscanAmountPx.get();
       visibleRangePx.set([
         Math.max(0, top - elemRect.top - overscanAmountPx),
         Math.min(currentTotalSize, bottom - elemRect.top + 1 + overscanAmountPx)
