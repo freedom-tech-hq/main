@@ -70,17 +70,17 @@ const prototypeCollection: MailCollection = {
 };
 const itemPrototypes = {
   collection: {
-    defaultEstimatedSizePx: 36,
+    defaultEstimatedSizePx: 48,
     isSizeDynamic: false,
     Component: () => <MailCollectionListItem id={prototypeCollection.id} collection={prototypeCollection} tag={undefined} onClick={noop} />
   },
   separator: {
-    defaultEstimatedSizePx: 1,
+    defaultEstimatedSizePx: 16,
     isSizeDynamic: false,
     Component: () => <MailCollectionSeparatorListItem />
   },
   'group-title': {
-    defaultEstimatedSizePx: 36,
+    defaultEstimatedSizePx: 20,
     isSizeDynamic: false,
     Component: () => <MailCollectionGroupTitleListItem id={mailCollectionGroupIdInfo.make('prototype')} title="Prototype" />
   }

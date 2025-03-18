@@ -48,7 +48,7 @@ const prototypeMail: Mail = {
 };
 const itemPrototypes = {
   mail: {
-    defaultEstimatedSizePx: 101,
+    defaultEstimatedSizePx: 320,
     isSizeDynamic: true,
     Component: () => <MailListItem id={prototypeMail.id} mail={prototypeMail} tag={undefined} />
   }

@@ -62,7 +62,7 @@ const prototypeMail: MailThread = {
 };
 const itemPrototypes = {
   'mail-thread': {
-    defaultEstimatedSizePx: 97,
+    defaultEstimatedSizePx: 113,
     isSizeDynamic: false,
     Component: () => <MailThreadListItem id={prototypeMail.id} thread={prototypeMail} tag={undefined} onClick={noop} />
   }
