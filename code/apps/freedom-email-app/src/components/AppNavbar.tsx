@@ -9,7 +9,7 @@ export const AppNavbar = () => {
   const theme = useTheme();
 
   return (
-    <AppBar position="sticky" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
+    <AppBar color="secondary" position="sticky" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
       <Toolbar variant="dense">
         <Stack direction="row" gap={2} alignItems="center" flexGrow={1}>
           <Typography variant="h6" component="h6" sx={{ width: `calc(${MAIN_MENU_WIDTH_PX}px - ${theme.spacing(4)})` }}>
@@ -17,7 +17,7 @@ export const AppNavbar = () => {
           </Typography>
           <NavBarSearchField />
           <Box sx={{ flexGrow: 1 }} />
-          <Button variant="text" color="secondary" startIcon={<ComposeIcon />}>
+          <Button variant="text" startIcon={<ComposeIcon />}>
             New Message
           </Button>
         </Stack>

@@ -17,7 +17,7 @@ export const NavBarSearchField = () => {
       sx={{
         ...searchFieldStyle,
         width: `calc(${MAIL_MENU_WIDTH_PX}px - ${theme.spacing(2)})`,
-        backgroundColor: theme.palette.getContrastText(theme.palette.primary.main)
+        backgroundColor: theme.palette.common.white
       }}
     />
   );

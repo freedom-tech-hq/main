@@ -13,6 +13,7 @@ import { Chip, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui
 import type { ComponentType } from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
+import type { AppTheme } from '../../../components/AppTheme.tsx';
 import { useListHasFocus } from '../../../contexts/list-has-focus.tsx';
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import type { MailCollectionType } from '../../mail-types/MailCollectionType.ts';
@@ -26,7 +27,7 @@ export interface MailCollectionListItemProps<TagT> extends Omit<MailCollectionsL
 export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: MailCollectionListItemProps<TagT>) => {
   const listHasFocus = useListHasFocus();
   const selectedCollectionId = useSelectedMailCollectionId();
-  const theme = useTheme();
+  const theme = useTheme<AppTheme>();
 
   const taggedOnClick = useCallbackRef(() => onClick(tag));
 
@@ -45,7 +46,8 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
             {BC(listHasFocus, (listHasFocus) => (
               <IconComponent
                 sx={{
-                  color: isSelected && listHasFocus ? theme.palette.getContrastText(theme.palette.primary.main) : theme.palette.primary.main
+                  color:
+                    theme.palette.list[listHasFocus ? 'focused' : 'unfocused'].listItem[isSelected ? 'selected' : 'unselected'].iconColor
                 }}
               />
             ))}
