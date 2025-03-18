@@ -8,12 +8,13 @@ import type { MailDataSourceItem } from '../types/MailDataSourceItem.ts';
 import { MailActionsMenu } from './MailActionsMenu.tsx';
 
 export interface MailItemProps<TagT> extends Omit<MailDataSourceItem, 'type'> {
+  isFirst: boolean;
   tag: TagT;
 }
 
-export const MailListItem = <TagT,>({ mail }: MailItemProps<TagT>) => {
+export const MailListItem = <TagT,>({ isFirst, mail }: MailItemProps<TagT>) => {
   return (
-    <Paper elevation={4} sx={{ position: 'relative', m: 3 }}>
+    <Paper elevation={4} sx={{ position: 'relative', mx: 3, mt: isFirst ? 0 : 3, mb: 3 }}>
       <MailActionsMenu />
       <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch', py: 1.5 }}>
         <Stack direction="row">

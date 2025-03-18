@@ -16,10 +16,10 @@ export const useMailThreadDelegate = (
     (): VirtualListDelegate<MailThreadDataSourceItem, MailId, 'mail'> => ({
       itemPrototypes,
       getTemplateIdForItemAtIndex: (index) => dataSource.getItemAtIndex(index).type,
-      renderItem: (_key, item, _index) => {
+      renderItem: (_key, item, index) => {
         switch (item.type) {
           case 'mail':
-            return <MailListItem {...item} tag={item.id} />;
+            return <MailListItem {...item} isFirst={index === 0} tag={item.id} />;
         }
       },
       renderEmptyIndicator: () => (
@@ -50,6 +50,6 @@ const itemPrototypes = {
   mail: {
     defaultEstimatedSizePx: 320,
     isSizeDynamic: true,
-    Component: () => <MailListItem id={prototypeMail.id} mail={prototypeMail} tag={undefined} />
+    Component: () => <MailListItem id={prototypeMail.id} isFirst={true} mail={prototypeMail} tag={undefined} />
   }
 };
