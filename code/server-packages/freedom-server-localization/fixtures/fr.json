@@ -1,0 +1,6 @@
+{
+    "test": {
+        "mymessage": "Mon Message",
+        "hello:_name_": "Bonjour: {{name}}"
+    }
+}

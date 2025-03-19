@@ -1,17 +1,26 @@
 import { SearchOutlined as SearchIcon } from '@mui/icons-material';
 import type { SxProps, Theme } from '@mui/material';
 import { Input } from '@mui/material';
+import { LOCALIZE } from 'freedom-localization';
+import { useT } from 'freedom-react-localization';
 
-export const AuxSearchField = () => (
-  <Input
-    size="small"
-    placeholder="Search"
-    type="search"
-    startAdornment={<SearchIcon sx={searchIconStyle} />}
-    disableUnderline={true}
-    sx={searchFieldStyle}
-  />
-);
+const ns = 'ui';
+const $searchFieldPlaceholder = LOCALIZE('Search')({ ns });
+
+export const AuxSearchField = () => {
+  const t = useT();
+
+  return (
+    <Input
+      size="small"
+      placeholder={$searchFieldPlaceholder(t)}
+      type="search"
+      startAdornment={<SearchIcon sx={searchIconStyle} />}
+      disableUnderline={true}
+      sx={searchFieldStyle}
+    />
+  );
+};
 
 // Helpers
 

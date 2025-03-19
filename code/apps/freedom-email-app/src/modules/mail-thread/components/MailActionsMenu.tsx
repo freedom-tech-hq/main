@@ -1,8 +1,15 @@
 import { ReplyAllOutlined as ReplyAllIcon, ReplyOutlined as ReplyIcon, ShortcutOutlined as ForwardIcon } from '@mui/icons-material';
 import type { SxProps, Theme } from '@mui/material';
 import { Button, Stack, useTheme } from '@mui/material';
+import { LOCALIZE } from 'freedom-localization';
+import { useT } from 'freedom-react-localization';
 
 import { ActionMenuDivider } from './ActionMenuDivider.tsx';
+
+const ns = 'ui';
+const $replyButtonTitle = LOCALIZE('Reply')({ ns });
+const $replyAllButtonTitle = LOCALIZE('Reply All')({ ns });
+const $forwardButtonTitle = LOCALIZE('Forward')({ ns });
 
 export const MailActionsMenu = () => (
   <>
@@ -16,6 +23,7 @@ export const MailActionsMenu = () => (
 const buttonStyle: SxProps<Theme> = { borderRadius: 0 };
 
 const InternalMailActionsMenu = ({ isShadowVersion }: { isShadowVersion: boolean }) => {
+  const t = useT();
   const theme = useTheme();
 
   return (
@@ -40,15 +48,15 @@ const InternalMailActionsMenu = ({ isShadowVersion }: { isShadowVersion: boolean
           overflow: 'hidden'
         }}
       >
-        <Button variant="text" size="small" sx={buttonStyle}>
+        <Button variant="text" size="small" sx={buttonStyle} title={$replyButtonTitle(t)}>
           <ReplyIcon />
         </Button>
         <ActionMenuDivider />
-        <Button variant="text" size="small" sx={buttonStyle}>
+        <Button variant="text" size="small" sx={buttonStyle} title={$replyAllButtonTitle(t)}>
           <ReplyAllIcon />
         </Button>
         <ActionMenuDivider />
-        <Button variant="text" size="small" sx={buttonStyle}>
+        <Button variant="text" size="small" sx={buttonStyle} title={$forwardButtonTitle(t)}>
           <ForwardIcon />
         </Button>
       </Stack>

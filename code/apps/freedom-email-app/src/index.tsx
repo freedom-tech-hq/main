@@ -1,8 +1,11 @@
+import { init } from 'freedom-react-localization';
 import ReactDOM from 'react-dom/client';
 
 import { WebApp } from './components/WebApp.tsx';
 
-const startWebApp = (rootElem: HTMLElement | null) => {
+const startWebApp = async (rootElem: HTMLElement | null) => {
+  await init({ defaultLanguage: 'en', supportedLanguages: ['en'] });
+
   if (rootElem === null) {
     throw new Error('Root element not found');
   }
