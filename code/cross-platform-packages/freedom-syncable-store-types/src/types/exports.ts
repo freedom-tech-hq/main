@@ -21,6 +21,7 @@ export * from './MutableSyncableItemAccessor.ts';
 export * from './MutableSyncableStore.ts';
 export * from './MutableTrustMarkStore.ts';
 export * from './SaveableDocument.ts';
+export * from './StoreAdapter.ts';
 export * from './StoreBase.ts';
 export * from './SyncableItemAccessor.ts';
 export * from './SyncableStore.ts';

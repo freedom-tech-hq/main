@@ -10,8 +10,10 @@ import { InMemoryAccessControlledFolderBase } from '../internal/types/InMemoryAc
 import { InMemoryEncryptedBundle } from '../internal/types/InMemoryEncryptedBundle.ts';
 import { InMemoryFolder } from '../internal/types/InMemoryFolder.ts';
 import { InMemoryPlainBundle } from '../internal/types/InMemoryPlainBundle.ts';
+import { InMemoryStoreAdapter } from '../internal/types/InMemoryStoreAdapter.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
+import type { StoreAdapterFactory } from './StoreAdapter.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
 export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase implements MutableSyncableStore {
@@ -19,6 +21,8 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
   public readonly cryptoService: CryptoService;
 
   public readonly localTrustMarks = new InMemoryTrustMarkStore();
+
+  public readonly createStoreAdapterPerPath: StoreAdapterFactory = (_path) => new InMemoryStoreAdapter();
 
   constructor({
     storageRootId,
@@ -44,6 +48,7 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
 
     const weakStore = new WeakRef(this);
     const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore);
+
     this.deferredInit_({
       store: weakStore,
       folderOperationsHandler,
