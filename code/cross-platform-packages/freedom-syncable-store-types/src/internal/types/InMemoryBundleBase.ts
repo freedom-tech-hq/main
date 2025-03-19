@@ -38,18 +38,7 @@ import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNe
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 import { InMemoryMutableBundleFileAccessor } from './InMemoryMutableBundleFileAccessor.ts';
 import { InMemoryMutableFlatFileAccessor } from './InMemoryMutableFlatFileAccessor.ts';
-
-interface InternalFlatFile {
-  type: 'flatFile';
-  accessor: InMemoryMutableFlatFileAccessor;
-}
-
-interface InternalBundleFile {
-  type: 'bundleFile';
-  accessor: InMemoryMutableBundleFileAccessor;
-}
-
-type AnyFile = InternalFlatFile | InternalBundleFile;
+import type { InternalBundleFile, InternalFlatFile, StoreAdapter } from '../../types/StoreAdapter.ts';
 
 export interface InMemoryBundleBaseConstructorArgs {
   store: WeakRef<MutableSyncableStore>;
@@ -68,7 +57,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   protected readonly syncTracker_: SyncTracker;
   protected readonly folderOperationsHandler_: FolderOperationsHandler;
 
-  private readonly files_ = new Map<SyncableId, StorableObject<AnyFile>>();
+  protected readonly storeAdapter_: StoreAdapter;
 
   private hash_: Sha256Hash | undefined;
   private readonly provenance_: SyncableProvenance;
@@ -81,6 +70,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     this.folderOperationsHandler_ = folderOperationsHandler;
     this.path = path;
     this.provenance_ = provenance;
+    this.storeAdapter_ = store.deref()!.createStoreAdapterPerPath(path);
   }
 
   // Abstract Methods
@@ -191,7 +181,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
 
       const removePath = this.path.append(id);
 
-      const file = this.files_.get(id);
+      const file = await this.storeAdapter_.getFileMetadata(id);
       /* node:coverage disable */
       if (file === undefined) {
         return makeFailure(
@@ -242,7 +232,8 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       id = staticId.value;
     }
 
-    if (!this.files_.has(id)) {
+    const fileExists = await this.storeAdapter_.isFileExists(id);
+    if (!fileExists) {
       return makeSuccess(false);
     }
 
@@ -273,7 +264,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         id = staticId.value;
       }
 
-      const file = this.files_.get(id);
+      const file = await this.storeAdapter_.getFileMetadata(id);
       if (file === undefined) {
         return makeFailure(
           new NotFoundError(trace, {
@@ -351,7 +342,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         ids.value,
         {},
         async (trace, fileId): PR<Sha256Hash | undefined> => {
-          const file = this.files_.get(fileId);
+          const file = await this.storeAdapter_.getFileMetadata(fileId);
           if (file === undefined) {
             return makeSuccess(undefined);
           }
@@ -436,8 +427,11 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
 
   public readonly getIds = makeAsyncResultFunc(
     [import.meta.filename, 'getIds'],
-    async (trace: Trace, options?: { type?: SingleOrArray<SyncableItemType> }): PR<SyncableId[]> =>
-      this.filterOutDeletedIds_(trace, this.filterIdsByType_(Array.from(this.files_.keys()), options?.type))
+    async (trace: Trace, options?: { type?: SingleOrArray<SyncableItemType> }): PR<SyncableId[]> => {
+      const fileIds = await this.storeAdapter_.getAllFileIds();
+      const filteredIds = await this.filterIdsByType_(fileIds, options?.type);
+      return this.filterOutDeletedIds_(trace, filteredIds);
+    }
   );
 
   public readonly get = makeAsyncResultFunc(
@@ -486,7 +480,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       objectEntries(hashesByFileId.value).sort((a, b) => a[0].localeCompare(b[0])),
       {},
       async (trace, [fileId, hash]): PR<string[]> => {
-        const file = this.files_.get(fileId);
+        const file = await this.storeAdapter_.getFileMetadata(fileId);
         if (file === undefined) {
           return makeSuccess([]);
         }
@@ -524,7 +518,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       return makeSuccess(undefined);
     }
 
-    const allFileIds = Array.from(this.files_.keys());
+    const allFileIds = await this.storeAdapter_.getAllFileIds();
     if (allFileIds.length === 0) {
       return makeSuccess(undefined);
     }
@@ -541,10 +535,11 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     }
 
     for (const id of deleteIds) {
-      this.files_.delete(id);
+      await this.storeAdapter_.deleteFileMetadata(id);
     }
 
-    const recursivelySwept = await allResultsMapped(trace, Array.from(this.files_.values()), {}, async (trace, file) => {
+    const allFiles = await this.storeAdapter_.getAllFiles();
+    const recursivelySwept = await allResultsMapped(trace, allFiles, {}, async (trace, file) => {
       switch (file.storedValue.type) {
         case 'bundleFile':
           return file.storedValue.accessor.sweep(trace);
@@ -573,7 +568,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
-      if (this.files_.has(id)) {
+      if (await this.storeAdapter_.isFileExists(id)) {
         return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
       }
 
@@ -604,7 +599,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         updateCount: 0
       };
 
-      this.files_.set(id, storable);
+      await this.storeAdapter_.saveFileMetadata(id, storable);
 
       const marked = await storable.storedValue.accessor.markNeedsRecomputeHash(trace);
       /* node:coverage disable */
@@ -629,7 +624,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace, id: SyncableId, provenance: SyncableProvenance): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
-      if (this.files_.has(id)) {
+      if (await this.storeAdapter_.isFileExists(id)) {
         return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
       }
 
@@ -667,7 +662,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         updateCount: 0
       };
 
-      this.files_.set(id, storable);
+     await this.storeAdapter_.saveFileMetadata(id, storable);
 
       const marked = await storable.storedValue.accessor.markNeedsRecomputeHash(trace);
       /* node:coverage disable */
@@ -687,17 +682,26 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     }
   );
 
-  private readonly filterIdsByType_ = (encodedIds: SyncableId[], type?: SingleOrArray<SyncableItemType>): SyncableId[] =>
-    type === undefined
-      ? encodedIds
-      : encodedIds.filter((id) => {
-          const found = this.files_.get(id);
-          if (found === undefined) {
-            return false;
-          }
+  private readonly filterIdsByType_ = async (encodedIds: SyncableId[], type?: SingleOrArray<SyncableItemType>): Promise<SyncableId[]> => {
+    if (type === undefined) {
+      return encodedIds;
+    }
 
-          return Array.isArray(type) ? type.includes(found.storedValue.type) : type === found.storedValue.type;
-        });
+    const ids = await Promise.all(
+      encodedIds.map(async (id) => {
+        const found = await this.storeAdapter_.getFileMetadata(id);
+        if (
+          found !== undefined
+          && (Array.isArray(type) ? type.includes(found.storedValue.type) : type === found.storedValue.type)
+        ) {
+          return id;
+          }
+        return undefined;
+      })
+    )
+
+    return ids.filter((id): id is SyncableId => id !== undefined);
+  };
 
   private readonly filterOutDeletedIds_ = makeAsyncResultFunc(
     [import.meta.filename, 'filterOutDeletedIds_'],

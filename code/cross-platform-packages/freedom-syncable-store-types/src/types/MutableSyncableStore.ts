@@ -6,6 +6,7 @@ import type { FolderManagement } from './FolderManagement.ts';
 import type { MutableAccessControlledFolderAccessor } from './MutableAccessControlledFolderAccessor.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
+import type { StoreAdapterFactory } from './StoreAdapter.ts';
 
 export interface MutableSyncableStore
   extends SyncableStore,
@@ -15,4 +16,6 @@ export interface MutableSyncableStore
     Notifiable<SyncTrackerNotifications> {
   /** Initializes the folder for use and sets initial access settings.  This must be done exactly once for locally-created folders. */
   readonly initialize: PRFunc<undefined, 'conflict'>;
+
+  readonly createStoreAdapterPerPath: StoreAdapterFactory;
 }

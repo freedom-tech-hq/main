@@ -1,6 +1,7 @@
 export * from './getBinaryFromFileAtPath.ts';
 export * from './getBundleFileAtPath.ts';
 export * from './getConflictFreeDocumentFromBundleAtPath.ts';
+export * from './getDynamicIds.ts';
 export * from './getFolderAtPath.ts';
 export * from './getFolderPath.ts';
 export * from './getJsonFromFileAtPath.ts';
