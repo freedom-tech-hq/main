@@ -1,6 +1,7 @@
 import type { CssThemeVariables, CssVarsPalette, Palette, Theme } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import React from 'react';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 
 type ThemePalette = Palette & (CssThemeVariables extends { enabled: true } ? CssVarsPalette : object);
 
@@ -24,8 +25,8 @@ export interface AppTheme extends Theme {
   palette: AppPalette;
 }
 
-export const AppTheme = ({ children }: { children: React.ReactNode }) => {
-  const theme = React.useMemo(() => {
+export const AppTheme = ({ children }: { children: ReactNode }) => {
+  const theme = useMemo(() => {
     const theme = createTheme({
       palette: {
         action: {

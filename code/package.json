@@ -58,6 +58,7 @@
       "integration-testing-packages/*",
       "cross-platform-packages/*",
       "server-packages/*",
+      "web-packages/*",
       "appliance-plugin-packages/*"
     ]
   }
