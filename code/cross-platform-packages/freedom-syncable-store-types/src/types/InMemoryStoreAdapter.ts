@@ -1,6 +1,6 @@
 import type { SyncableId } from 'freedom-sync-types';
 import type { StorableObject } from 'freedom-object-store-types';
-import type { StoreAdapter, AnyFile } from '../../types/StoreAdapter.ts';
+import type { StoreAdapter, AnyFile } from './StoreAdapter.ts';
 
 /**
  * In-memory implementation of the StoreAdapter interface.
@@ -8,13 +8,6 @@ import type { StoreAdapter, AnyFile } from '../../types/StoreAdapter.ts';
  */
 export class InMemoryStoreAdapter implements StoreAdapter {
   private readonly files_ = new Map<SyncableId, StorableObject<AnyFile>>();
-
-  /**
-   * Gets the file path for a given ID.
-   */
-  getFilePath(id: SyncableId): string {
-    return id;
-  }
 
   /**
    * Checks if a file exists for a given ID.
@@ -27,6 +20,7 @@ export class InMemoryStoreAdapter implements StoreAdapter {
    * Retrieves file metadata for a given ID.
    */
   async getFileMetadata<T extends AnyFile = AnyFile>(id: SyncableId): Promise<StorableObject<T> | undefined> {
+    console.log(`Retrieving file metadata for ${id}`);
     return this.files_.get(id) as StorableObject<T> | undefined;
   }
 
@@ -34,6 +28,7 @@ export class InMemoryStoreAdapter implements StoreAdapter {
    * Saves file metadata for a given ID.
    */
   async saveFileMetadata(id: SyncableId, metadata: StorableObject<AnyFile>): Promise<void> {
+    console.log(`Saving file metadata for ${id}`);
     this.files_.set(id, metadata);
   }
 

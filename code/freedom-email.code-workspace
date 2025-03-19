@@ -39,6 +39,7 @@
         { "path": "dev-packages/freedom-sync-service-testing-tools"  },
         { "path": "dev-packages/freedom-testing-tools"  },
         { "path": "server-packages/freedom-appliance-plugin-types"  },
+        { "path": "server-packages/freedom-fs-store"  },
         { "path": "server-packages/freedom-server-api-handling"  },
         { "path": "server-packages/freedom-server-auth"  },
         { "path": "server-packages/freedom-server-localization" },

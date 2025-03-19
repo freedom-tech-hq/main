@@ -8,6 +8,7 @@ export * from './FlatFileAccessor.ts';
 export * from './FolderManagement.ts';
 export * from './FolderStore.ts';
 export * from './GenerateNewSyncableItemIdFunc.ts';
+export * from './InMemoryStoreAdapter.ts';
 export * from './InMemorySyncableStore.ts';
 export * from './MutableAccessControlledFolderAccessor.ts';
 export * from './MutableBundleFileAccessor.ts';

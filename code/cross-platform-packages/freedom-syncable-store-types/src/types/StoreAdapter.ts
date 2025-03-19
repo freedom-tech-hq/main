@@ -21,11 +21,6 @@ export type AnyFile = InternalFlatFile | InternalBundleFile;
  */
 export interface StoreAdapter {
   /**
-   * Gets the file path for a given ID.
-   */
-  getFilePath(id: SyncableId): string;
-
-  /**
    * Checks if a file exists for a given ID.
    */
   isFileExists(id: SyncableId): Promise<boolean>;
