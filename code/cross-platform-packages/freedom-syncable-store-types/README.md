@@ -55,6 +55,8 @@ Syncable stores support 5 roles:
   - can read and and write most bundles and flat files
 - viewer
   - can read folders, bundles, and flat files
+- appender
+  - can create bundles and flat files, but not read
 
 App-specific semantics may also be enforced for these roles.  If different roles are desired for an app's purposes, those can be modeled and managed in parallel to these rules and enforced in software, using similar techniques.  However, all Cloud-based enforcement, which grants basic read/write access, will be managed with the above roles.
 
