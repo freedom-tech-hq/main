@@ -16,6 +16,7 @@ yarn test
 | Name | Description |
 | --- | --- |
 | FREEDOM_BUILD_MODE | Set to `DEV` to enable compile-time development features, guarded with DEV labels.  `yarn prep:dev` implies this.  Use `yarn clean` when switching build modes |
+| FREEDOM_BUILD_UUID | A string value that will be replaced at build time. |
 | FREEDOM_LOG_FUNCS | (DEV build mode only) Default = `all`.  See Log Rules below. |
 | FREEDOM_LOG_ARGS | For any functions logged due to `FREEDOM_LOG_FUNCS`, determines if argument values should be logged as well. See Log Rules below. |
 | FREEDOM_LOG_RESULTS | For any functions logged due to `FREEDOM_LOG_FUNCS`, determines if results should be logged as well. See Log Rules below. |

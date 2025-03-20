@@ -33,6 +33,7 @@ export const build = async (args: BuildArgs) => {
       loader: {
         '.js': 'jsx'
       },
+      entryNames: (process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `[name]-${process.env.FREEDOM_BUILD_UUID}` : undefined,
       plugins: [
         esbuildPluginTsc({ force: true, tsconfigPath: args.tsconfig }),
         makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin({ packageName, bundle: args.bundle ?? false })

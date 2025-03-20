@@ -16,6 +16,16 @@ import type { ShouldSyncWithAllRemotesFunc } from '../types/ShouldSyncWithAllRem
 import type { SyncService } from '../types/SyncService.ts';
 import type { SyncServiceLogEntry } from '../types/SyncServiceLogEntry.ts';
 
+export interface MakeSyncServiceArgs {
+  store: MutableSyncableStore;
+  puller: SyncPuller;
+  pusher: SyncPusher;
+  deviceNotificationClients: () => DeviceNotificationClient[];
+  getRemotes: () => RemoteInfo[];
+  shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
+  shouldRecordLogs?: boolean;
+}
+
 export const makeSyncService = makeAsyncResultFunc(
   [import.meta.filename],
   async (
@@ -28,15 +38,7 @@ export const makeSyncService = makeAsyncResultFunc(
       getRemotes,
       shouldSyncWithAllRemotes,
       shouldRecordLogs = false
-    }: {
-      store: MutableSyncableStore;
-      puller: SyncPuller;
-      pusher: SyncPusher;
-      deviceNotificationClients: () => DeviceNotificationClient[];
-      getRemotes: () => RemoteInfo[];
-      shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
-      shouldRecordLogs?: boolean;
-    }
+    }: MakeSyncServiceArgs
   ): PR<SyncService> => {
     const pullQueue = new TaskQueue(trace);
     const pushQueue = new TaskQueue(trace);
