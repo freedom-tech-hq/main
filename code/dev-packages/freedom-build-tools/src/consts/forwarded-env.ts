@@ -3,6 +3,7 @@ import { once } from 'lodash-es';
 export const FORWARDED_ENV = once(
   () =>
     ({
+      'process.env.FREEDOM_BUILD_UUID': JSON.stringify(process.env.FREEDOM_BUILD_UUID ?? ''),
       'process.env.FREEDOM_DEBUG_TOPICS': JSON.stringify(process.env.FREEDOM_DEBUG_TOPICS ?? ''),
       'process.env.FREEDOM_FAILURE_LOGGING': JSON.stringify(process.env.FREEDOM_FAILURE_LOGGING ?? 'false'),
       'process.env.FREEDOM_LOG_ALLOW_BLOCKING': JSON.stringify(process.env.FREEDOM_LOG_ALLOW_BLOCKING ?? 'true'),
