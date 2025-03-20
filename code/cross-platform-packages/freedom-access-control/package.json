@@ -2,6 +2,7 @@
   "dependencies": {
     "freedom-access-control-types": "0.0.0",
     "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",

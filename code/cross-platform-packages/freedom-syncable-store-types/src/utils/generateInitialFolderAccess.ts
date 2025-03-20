@@ -17,7 +17,7 @@ export const generateInitialFolderAccess = makeAsyncResultFunc(
     }
 
     // If this folder is being created by a non-root-creator user, then we need to ensure that the creator's encrypting key is added to the
-    // shared secret.  Otherwise, this folder will be rejected
+    // shared  keys.  Otherwise, this folder will be rejected
     const isRootCreator = cryptoKeySetIds.value.includes(store.creatorCryptoKeySetId);
 
     // Only root creators can have the creator role.  Other folder creators are initialized with an owner role

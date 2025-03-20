@@ -16,17 +16,17 @@ export const generateCryptoCombinationKeySet = makeAsyncResultFunc(
       signingMode = preferredSigningMode
     }: { encryptionMode?: EncryptionMode; signingMode?: SigningMode } = {}
   ): PR<PrivateCombinationCryptoKeySet> => {
-    const signVerifyKeySet = await generateCryptoSignVerifyKeySet(trace, signingMode);
+    const id = cryptoKeySetIdInfo.make(`combo-${makeUuid()}`);
+
+    const signVerifyKeySet = await generateCryptoSignVerifyKeySet(trace, id, signingMode);
     if (!signVerifyKeySet.ok) {
       return signVerifyKeySet;
     }
 
-    const encDecKeySet = await generateCryptoEncryptDecryptKeySet(trace, encryptionMode);
+    const encDecKeySet = await generateCryptoEncryptDecryptKeySet(trace, id, encryptionMode);
     if (!encDecKeySet.ok) {
       return encDecKeySet;
     }
-
-    const id = cryptoKeySetIdInfo.make(`combo-${makeUuid()}`);
 
     return makeSuccess(
       new PrivateCombinationCryptoKeySet(id, { signVerifyKeySet: signVerifyKeySet.value, encDecKeySet: encDecKeySet.value })

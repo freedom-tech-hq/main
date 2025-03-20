@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
-import type { PureSigningKeySet, PureVerifyingKeySet, SigningMode } from 'freedom-crypto-data';
+import type { CryptoKeySetId, PureSigningKeySet, PureVerifyingKeySet, SigningMode } from 'freedom-crypto-data';
 import {
   algorithmBySigningMode,
   cryptoKeySetIdInfo,
@@ -11,8 +11,8 @@ import {
 
 export const generateCryptoSignVerifyKeySet = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, mode: SigningMode = preferredSigningMode): PR<PureSigningKeySet & PureVerifyingKeySet> => {
-    const id = cryptoKeySetIdInfo.make(`sv-${makeUuid()}`);
+  async (trace, id?: CryptoKeySetId, mode: SigningMode = preferredSigningMode): PR<PureSigningKeySet & PureVerifyingKeySet> => {
+    id = id ?? cryptoKeySetIdInfo.make(`sv-${makeUuid()}`);
 
     try {
       switch (mode) {

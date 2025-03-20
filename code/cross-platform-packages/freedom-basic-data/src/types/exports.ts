@@ -10,6 +10,7 @@ export * from './IsoDateTime.ts';
 export * from './NonNegativeInteger.ts';
 export * from './PrefixedString.ts';
 export * from './PrefixedStringInfo.ts';
+export * from './SerializedValue.ts';
 export * from './SessionTokenDetails.ts';
 export * from './Sha256Hash.ts';
 export * from './Uint8Array.ts';

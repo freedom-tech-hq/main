@@ -87,7 +87,8 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
           return makeSuccess(true);
         case 'editor':
         case 'viewer':
-          // Editors and viewers are never allowed to make store changes
+        case 'appender':
+          // Editors, viewers, and appenders are never allowed to make store changes
           return makeSuccess(false);
         case 'owner':
         case 'admin':

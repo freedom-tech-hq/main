@@ -1,5 +1,5 @@
 import { Collapse } from '@mui/material';
-import { objectEntries, objectKeys } from 'freedom-cast';
+import { objectEntries, objectKeys, objectValues } from 'freedom-cast';
 import { makeUuid } from 'freedom-contexts';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
@@ -79,7 +79,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         return overscanAmountPx;
       }
 
-      const maxPrototypeSize = Math.max(...(Object.values(prototypeSizes.get()) as number[]));
+      const maxPrototypeSize = Math.max(...objectValues(prototypeSizes.get()));
       return Math.max(DEFAULT_MIN_OVERSCAN_AMOUNT_PX, maxPrototypeSize * DEFAULT_OVERSCAN_NUM_ITEMS);
     },
     { id: 'computedOverscanAmountPx' }

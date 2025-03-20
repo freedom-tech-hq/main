@@ -1,6 +1,7 @@
 import type { PR } from 'freedom-async';
 import { allResultsMapped, debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
+import { objectValues } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { addCoordinatedHashSaltChangeListener } from 'freedom-crypto';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
@@ -26,7 +27,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     let removeListenersByFolderPath: Partial<Record<string, (() => void)[]>> = {};
 
     const removeListeners = (removeListenersByFolderPath: Partial<Record<string, (() => void)[]>>) => {
-      for (const removeListeners of Object.values(removeListenersByFolderPath)) {
+      for (const removeListeners of objectValues(removeListenersByFolderPath)) {
         for (const removeListener of removeListeners ?? []) {
           removeListener();
         }

@@ -7,7 +7,7 @@ import type { Trace } from 'freedom-contexts';
 import type { CryptoService } from 'freedom-crypto-service';
 import type { Schema } from 'yaschema';
 
-import { generateSharedSecret } from './generateSharedSecret.ts';
+import { generateSharedKeys } from './generateSharedKeys.ts';
 
 export const generateInitialAccess = makeAsyncResultFunc(
   [import.meta.filename],
@@ -35,13 +35,13 @@ export const generateInitialAccess = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const initialSharedSecret = await generateSharedSecret(trace, { cryptoService, cryptoKeySetIds: objectKeys(initialState) });
+    const initialSharedKeys = await generateSharedKeys(trace, { cryptoService, cryptoKeySetIds: objectKeys(initialState) });
     /* node:coverage disable */
-    if (!initialSharedSecret.ok) {
-      return initialSharedSecret;
+    if (!initialSharedKeys.ok) {
+      return initialSharedKeys;
     }
     /* node:coverage enable */
 
-    return makeSuccess({ state: signedState.value, sharedSecrets: [initialSharedSecret.value] });
+    return makeSuccess({ state: signedState.value, sharedKeys: [initialSharedKeys.value] });
   }
 );

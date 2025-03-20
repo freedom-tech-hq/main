@@ -1,12 +1,16 @@
+import assert from 'node:assert';
 import type { TestContext } from 'node:test';
-import { describe, it } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
+import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
+import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { trustedTimeIdInfo } from 'freedom-crypto-data';
 import { expectOk } from 'freedom-testing-tools';
 
+import type { TestingCryptoService } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
@@ -14,30 +18,40 @@ import { generateSignedAddAccessChange } from '../generateSignedAddAccessChange.
 import { generateSignedModifyAccessChange } from '../generateSignedModifyAccessChange.ts';
 
 describe('generateSignedModifyAccessChange', () => {
-  it('should work', async (t: TestContext) => {
-    const trace = makeTrace('test');
+  let trace!: Trace;
+  let cryptoKeys1!: PrivateCombinationCryptoKeySet;
+  let cryptoKeys2!: PrivateCombinationCryptoKeySet;
+  let cryptoService!: TestingCryptoService;
+  let accessControlDoc!: TestAccessControlDocument;
 
-    const cryptoKeys1 = await generateCryptoCombinationKeySet(trace);
-    expectOk(cryptoKeys1);
+  beforeEach(async () => {
+    trace = makeTrace('test');
 
-    const cryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys1.value });
+    const internalCryptoKeys1 = await generateCryptoCombinationKeySet(trace);
+    expectOk(internalCryptoKeys1);
+    cryptoKeys1 = internalCryptoKeys1.value;
+
+    cryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys1 });
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
-      initialState: { [cryptoKeys1.value.id]: 'creator' },
+      initialState: { [cryptoKeys1.id]: 'creator' },
       roleSchema: testStoreRoleSchema
     });
     expectOk(initialAccess);
 
-    t.assert.deepStrictEqual(initialAccess.value.state.value, { [cryptoKeys1.value.id]: 'creator' });
+    assert.deepStrictEqual(initialAccess.value.state.value, { [cryptoKeys1.id]: 'creator' });
 
-    const accessControlDoc = new TestAccessControlDocument({ initialAccess: initialAccess.value });
+    accessControlDoc = new TestAccessControlDocument({ initialAccess: initialAccess.value });
 
-    const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
-    expectOk(cryptoKeys2);
+    const internalCryptoKeys2 = await generateCryptoCombinationKeySet(trace);
+    expectOk(internalCryptoKeys2);
+    cryptoKeys2 = internalCryptoKeys2.value;
 
-    cryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value });
+    cryptoService.addPublicKeys({ publicKeys: cryptoKeys2 });
+  });
 
+  it('should work maintaining read access', async (t: TestContext) => {
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
       cryptoService,
       accessControlDoc,
@@ -45,9 +59,10 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted time IDs here
       generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
       params: {
-        publicKeyId: cryptoKeys2.value.id,
+        publicKeyId: cryptoKeys2.id,
         role: 'editor'
-      }
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedAddAccessChange);
 
@@ -56,14 +71,16 @@ describe('generateSignedModifyAccessChange', () => {
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
       cryptoService,
+      accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted time IDs here
       generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
       params: {
-        publicKeyId: cryptoKeys2.value.id,
+        publicKeyId: cryptoKeys2.id,
         oldRole: 'editor',
         newRole: 'viewer'
-      }
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedModifyAccessChange);
 
@@ -71,8 +88,100 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(accessModified);
 
     t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
-      [cryptoKeys1.value.id]: 'creator',
-      [cryptoKeys2.value.id]: 'viewer'
+      [cryptoKeys1.id]: 'creator',
+      [cryptoKeys2.id]: 'viewer'
+    });
+  });
+
+  it('should work dropping read access', async (t: TestContext) => {
+    const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
+      cryptoService,
+      accessControlDoc,
+      roleSchema: testStoreRoleSchema,
+      // Not validating trusted time IDs here
+      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      params: {
+        publicKeyId: cryptoKeys2.id,
+        role: 'editor'
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
+    });
+    expectOk(signedAddAccessChange);
+
+    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value);
+    expectOk(accessAdded);
+
+    const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
+      cryptoService,
+      accessControlDoc,
+      roleSchema: testStoreRoleSchema,
+      // Not validating trusted time IDs here
+      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      params: {
+        publicKeyId: cryptoKeys2.id,
+        oldRole: 'editor',
+        newRole: 'appender'
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
+    });
+    expectOk(signedModifyAccessChange);
+    t.assert.strictEqual(signedModifyAccessChange.value.value.type, 'modify-access');
+    if (signedModifyAccessChange.value.value.type === 'modify-access') {
+      t.assert.notStrictEqual(signedModifyAccessChange.value.value.newSharedKeys, undefined);
+    }
+
+    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value);
+    expectOk(accessModified);
+
+    t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
+      [cryptoKeys1.id]: 'creator',
+      [cryptoKeys2.id]: 'appender'
+    });
+  });
+
+  it('should work adding read access', async (t: TestContext) => {
+    const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
+      cryptoService,
+      accessControlDoc,
+      roleSchema: testStoreRoleSchema,
+      // Not validating trusted time IDs here
+      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      params: {
+        publicKeyId: cryptoKeys2.id,
+        role: 'appender'
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
+    });
+    expectOk(signedAddAccessChange);
+
+    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value);
+    expectOk(accessAdded);
+
+    const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
+      cryptoService,
+      accessControlDoc,
+      roleSchema: testStoreRoleSchema,
+      // Not validating trusted time IDs here
+      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      params: {
+        publicKeyId: cryptoKeys2.id,
+        oldRole: 'appender',
+        newRole: 'viewer'
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
+    });
+    expectOk(signedModifyAccessChange);
+    t.assert.strictEqual(signedModifyAccessChange.value.value.type, 'modify-access');
+    if (signedModifyAccessChange.value.value.type === 'modify-access') {
+      t.assert.notStrictEqual(signedModifyAccessChange.value.value.encryptedSecretKeysForModifiedUserBySharedKeysId, undefined);
+    }
+
+    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value);
+    expectOk(accessModified);
+
+    t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
+      [cryptoKeys1.id]: 'creator',
+      [cryptoKeys2.id]: 'viewer'
     });
   });
 });

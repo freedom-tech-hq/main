@@ -4,15 +4,16 @@ import { ConflictError } from 'freedom-common-errors';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
-import type { CryptoKeySetId, SignedValue } from 'freedom-crypto-data';
+import type { CryptoKeySetId, EncryptedValue, SignedValue } from 'freedom-crypto-data';
 import { extractPartsFromTrustedTimeId, makeSignedValueSchema } from 'freedom-crypto-data';
 import type { Schema } from 'yaschema';
 
 import type { AccessControlState } from './AccessControlState.ts';
 import { makeAccessControlStateSchema } from './AccessControlState.ts';
 import type { InitialAccess } from './InitialAccess.ts';
-import type { SharedSecret } from './SharedSecret.ts';
-import { sharedSecretSchema } from './SharedSecret.ts';
+import type { SharedKeys } from './SharedKeys.ts';
+import { sharedKeysSchema } from './SharedKeys.ts';
+import type { SharedSecretKeys } from './SharedSecretKeys.ts';
 import type { TimedAccessChange } from './TimedAccessChange.ts';
 import { makeTimedAccessChangeSchema } from './TimedAccessChange.ts';
 
@@ -40,14 +41,14 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
 
     if (snapshot === undefined) {
       this.initialState_.set(initialAccess.state);
-      this.sharedSecrets_.append(initialAccess.sharedSecrets);
+      this.sharedKeys_.append(initialAccess.sharedKeys);
     }
 
     this.state_ = this.rebuildState_();
   }
 
   protected get initialAccess_(): InitialAccess<RoleT> {
-    return { state: this.initialState_.get()!, sharedSecrets: Array.from(this.sharedSecrets_.values()) };
+    return { state: this.initialState_.get()!, sharedKeys: Array.from(this.sharedKeys_.values()) };
   }
 
   // Overridden Public Methods
@@ -113,20 +114,20 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
       // TODO: if an add and remove happen at about the same time, its likely that the new user might not get access to the new secret.  this should be mitigated during the merge of the remove, to make sure that it really includes all users and access control changes should be done synchronously
       switch (change.value.type) {
         case 'add-access':
-          for (const [index, sharedSecret] of this.sharedSecrets_.entries()) {
-            const encryptedSecretKeysForNewUser = change.value.encryptedSecretKeysForNewUserBySharedSecretId[sharedSecret.id];
-            if (encryptedSecretKeysForNewUser !== undefined) {
-              sharedSecret.secretKeysEncryptedPerMember[change.value.publicKeyId] = encryptedSecretKeysForNewUser;
-              this.sharedSecrets_.splice(index, 1, [sharedSecret]);
-            }
-          }
+          this.insertEncryptedSecretKeysForUser_(change.value.publicKeyId, change.value.encryptedSecretKeysForNewUserBySharedKeysId);
           break;
 
         case 'modify-access':
+          if (change.value.encryptedSecretKeysForModifiedUserBySharedKeysId !== undefined) {
+            this.insertEncryptedSecretKeysForUser_(change.value.publicKeyId, change.value.encryptedSecretKeysForModifiedUserBySharedKeysId);
+          }
+          if (change.value.newSharedKeys !== undefined) {
+            this.sharedKeys_.append([change.value.newSharedKeys]);
+          }
           break;
 
         case 'remove-access':
-          this.sharedSecrets_.append([change.value.newSharedSecret]);
+          this.sharedKeys_.append([change.value.newSharedKeys]);
           break;
       }
 
@@ -136,9 +137,9 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
     }
   );
 
-  public readonly getSharedSecrets = makeAsyncResultFunc(
-    [import.meta.filename, 'getSharedSecrets'],
-    async (_trace: Trace): PR<SharedSecret[]> => makeSuccess(Array.from(this.sharedSecrets_.values()))
+  public readonly getSharedKeys = makeAsyncResultFunc(
+    [import.meta.filename, 'getSharedKeys'],
+    async (_trace: Trace): PR<SharedKeys[]> => makeSuccess(Array.from(this.sharedKeys_.values()))
   );
 
   // Protected Field Access Methods
@@ -151,13 +152,27 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
     return this.generic.getArrayField<SignedValue<TimedAccessChange<RoleT>>>('changes', this.changeSchema_);
   }
 
-  protected get sharedSecrets_() {
-    return this.generic.getArrayField<SharedSecret>('sharedSecrets', sharedSecretSchema);
+  protected get sharedKeys_() {
+    return this.generic.getArrayField<SharedKeys>('sharedKeys', sharedKeysSchema);
   }
 
   // Private Methods
 
-  private readonly rebuildState_ = () => {
+  private insertEncryptedSecretKeysForUser_(
+    userPublicKeyId: CryptoKeySetId,
+    encryptedSecretKeysForUserBySharedKeysId: Partial<Record<CryptoKeySetId, EncryptedValue<SharedSecretKeys>>>
+  ) {
+    for (const [index, sharedKeys] of this.sharedKeys_.entries()) {
+      const encryptedSecretKeysForNewUser = encryptedSecretKeysForUserBySharedKeysId[sharedKeys.id];
+      if (encryptedSecretKeysForNewUser !== undefined) {
+        sharedKeys.secretKeysEncryptedPerMember[userPublicKeyId] = encryptedSecretKeysForNewUser;
+        // Since this is part of the CRDT document, we need to actually update the data structure so it gets tracked
+        this.sharedKeys_.splice(index, 1, [sharedKeys]);
+      }
+    }
+  }
+
+  private rebuildState_() {
     const newState = this.initialState_.get()!.value;
 
     for (const change of this.changes_.values()) {
@@ -165,7 +180,7 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
     }
 
     return newState;
-  };
+  }
 }
 
 // Helpers

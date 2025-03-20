@@ -27,8 +27,8 @@ export const makeEncryptedValue = <T>({
 
 export const makeEncryptedValueSchema = <T>(
   decryptedValueSchema: Schema<T>
-): schema.CustomSchema<EncryptedValue<T>, string> & { decryptedValueSchema: Schema<T> } => {
-  const modifiedCustomSchema = schema.custom<EncryptedValue<T>, string>({
+): schema.CustomSchema<EncryptedValue<T>, `ENC_${string}`> & { decryptedValueSchema: Schema<T> } => {
+  const modifiedCustomSchema = schema.custom<EncryptedValue<T>, `ENC_${string}`>({
     typeName: 'EncryptedValue',
     isContainerType: true,
     customValidation: (value) => base64String.schema.validateAsync(value.encryptedValue),
@@ -97,7 +97,7 @@ export const makeEncryptedValueSchema = <T>(
         }
       }
     }
-  }) as schema.CustomSchema<EncryptedValue<T>, string> & { decryptedValueSchema: Schema<T> };
+  }) as schema.CustomSchema<EncryptedValue<T>, `ENC_${string}`> & { decryptedValueSchema: Schema<T> };
 
   modifiedCustomSchema.decryptedValueSchema = decryptedValueSchema;
 

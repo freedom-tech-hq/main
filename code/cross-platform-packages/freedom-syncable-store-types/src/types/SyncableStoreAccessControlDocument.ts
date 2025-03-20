@@ -61,7 +61,8 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
           return makeSuccess(true);
         case 'editor':
         case 'viewer':
-          // Editors and viewers are never allowed to make access control changes
+        case 'appender':
+          // Editors, viewers, and appenders are never allowed to make access control changes
           return makeSuccess(false);
         case 'owner':
         case 'admin':
@@ -70,13 +71,13 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
 
       const beforeInitialState = this.initialState_;
       const beforeChanges = Array.from(this.changes_.values());
-      const beforeSharedSecrets = Array.from(this.sharedSecrets_.values());
+      const beforeSharedKeys = Array.from(this.sharedKeys_.values());
 
       this.applyDeltas([encodedDelta]);
 
       const afterInitialState = this.initialState_;
       const afterChanges = Array.from(this.changes_.values());
-      const afterSharedSecrets = Array.from(this.sharedSecrets_.values());
+      const afterSharedKeys = Array.from(this.sharedKeys_.values());
 
       // Initial state should be immutable
       if (!isEqual(beforeInitialState, afterInitialState)) {
@@ -100,16 +101,16 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         return makeSuccess(false);
       }
 
-      // All shared secrets from "before" should still be present in "after" and in the same relative order
-      const addedSharedSecrets = checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder({
-        before: beforeSharedSecrets,
-        after: afterSharedSecrets
+      // All shared keys from "before" should still be present in "after" and in the same relative order
+      const addedSharedKeys = checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder({
+        before: beforeSharedKeys,
+        after: afterSharedKeys
       });
-      if (addedSharedSecrets === undefined) {
+      if (addedSharedKeys === undefined) {
         return makeSuccess(false);
       }
 
-      // TODO: could probably check for corruption of shared secrets in a more meaningful way
+      // TODO: could probably check for corruption of shared keys in a more meaningful way
 
       const allowedTargetRoles: Set<SyncableStoreRole> = inline(() => {
         switch (role) {

@@ -6,10 +6,12 @@ import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { encId, storageRootIdInfo } from 'freedom-sync-types';
-import { expectOk } from 'freedom-testing-tools';
+import { expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
+import type { HotSwappableCryptoService } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
+import { makeHotSwappableCryptoServiceForTesting } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../../consts/special-file-ids.ts';
 import { InMemorySyncableStore } from '../../../types/InMemorySyncableStore.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
@@ -25,7 +27,8 @@ import { initializeRoot } from '../../../utils/initializeRoot.ts';
 describe('InMemoryAccessControlledFolder', () => {
   let trace!: Trace;
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: TestingCryptoService;
+  let cryptoService!: HotSwappableCryptoService;
+  let primaryUserCryptoService!: TestingCryptoService;
   let store!: InMemorySyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
@@ -37,7 +40,8 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(internalCryptoKeys);
     cryptoKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ cryptoKeys });
+    primaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys });
+    cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, { storageRootId, cryptoService });
     expectOk(provenance);
@@ -47,16 +51,53 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(await initializeRoot(trace, store));
   });
 
-  it('giving access to a second user should work', async (_t: TestContext) => {
+  it('giving access to a second user should work', async (t: TestContext) => {
     const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
     expectOk(testingFolder);
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-
-    cryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
+    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
+
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys2.value });
+    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
+
+    cryptoService.hotSwap(secondaryUserCryptoService);
+
+    // Should be able to write new file
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path, encId('test.txt'), 'hello world');
+    expectOk(createdTestTxtFile);
+
+    // Should be able to read back that file
+    const textContent = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
+    expectOk(textContent);
+    t.assert.strictEqual(textContent.value, 'hello world');
+  });
+
+  it('giving appender (write-only) access to a second user should work', async (_t: TestContext) => {
+    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    expectOk(testingFolder);
+
+    const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
+    expectOk(cryptoKeys2);
+    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
+
+    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'appender' }));
+
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys2.value });
+    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
+
+    cryptoService.hotSwap(secondaryUserCryptoService);
+
+    // Should be able to write new file
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path, encId('test.txt'), 'hello world');
+    expectOk(createdTestTxtFile);
+
+    // Should NOT be able to read back that file
+    const textContent = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
+    expectNotOk(textContent);
   });
 
   it('modifying user access should work', async (t: TestContext) => {
@@ -66,7 +107,7 @@ describe('InMemoryAccessControlledFolder', () => {
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
 
-    cryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
+    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
 
