@@ -15,3 +15,5 @@ const startWebApp = async (rootElem: HTMLElement | null) => {
 };
 
 startWebApp(document.getElementById('root'));
+
+console.log('Loaded index', process.env.FREEDOM_BUILD_UUID);

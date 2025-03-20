@@ -2,13 +2,13 @@ import { proxy } from 'comlink';
 import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
-import { makeTrace, makeUuid } from 'freedom-contexts';
+import { makeUuid } from 'freedom-contexts';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailThreadsForCollectionPacket } from '../../../tasks/mail/getMailThreadsForCollectionTask.ts';
+import type { GetMailThreadsForCollectionPacket } from '../../../tasks/modules/mail/getMailThreadsForCollection.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailThreadId } from '../../mail-types/MailThreadId.ts';
@@ -93,12 +93,7 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
 
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
-            const data = await tasks.getMailThreadsForCollectionTask(
-              makeTrace(import.meta.filename),
-              selectedCollectionId,
-              isConnected,
-              onData
-            );
+            const data = await tasks.getMailThreadsForCollection(selectedCollectionId, isConnected, onData);
             clearOldData();
             onData(data);
           } finally {

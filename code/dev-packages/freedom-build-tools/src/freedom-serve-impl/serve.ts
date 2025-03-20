@@ -29,6 +29,7 @@ export const serve = async (args: ServeArgs) => {
       loader: {
         '.js': 'jsx'
       },
+      entryNames: (process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `[name]-${process.env.FREEDOM_BUILD_UUID}` : undefined,
       assetNames: '/static/[ext]/[name]-[hash]',
       plugins: [
         inlineImage({ limit: 0 }),

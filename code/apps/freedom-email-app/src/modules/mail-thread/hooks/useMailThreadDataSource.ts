@@ -2,13 +2,13 @@ import { proxy } from 'comlink';
 import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
-import { makeTrace, makeUuid } from 'freedom-contexts';
+import { makeUuid } from 'freedom-contexts';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailForThreadPacket } from '../../../tasks/mail/getMailForThreadTask.ts';
+import type { GetMailForThreadPacket } from '../../../tasks/modules/mail/getMailForThread.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailId } from '../../mail-types/MailId.ts';
@@ -93,7 +93,7 @@ export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, 
 
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
-            const data = await tasks.getMailForThreadTask(makeTrace(import.meta.filename), selectedThreadId, isConnected, onData);
+            const data = await tasks.getMailForThread(selectedThreadId, isConnected, onData);
             clearOldData();
             onData(data);
           } finally {
