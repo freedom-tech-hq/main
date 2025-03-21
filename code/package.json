@@ -36,6 +36,7 @@
     "build:tests": "nx run-many --parallel=10 -t build:tests",
     "clean": "if [ $LF_SKIP_CLEAN ]; then exit 0; fi; rimraf ./**/deployable-lib && nx run-many --parallel=10 -t clean && nx reset",
     "depcheck": "yarn check-dependency-version-consistency . && nx run-many --parallel=10 -t depcheck",
+    "deploy:extract": "nx run-many --parallel=10 -t deploy:extract",
     "lint": "yarn check-dependency-version-consistency . && yarn build-libs && nx run-many --parallel=10 -t lint",
     "nx-reset": "nx reset",
     "pre-commit": "yarn prep && yarn build:tests && yarn depcheck && yarn lint && yarn test",
@@ -58,6 +59,7 @@
       "integration-testing-packages/*",
       "cross-platform-packages/*",
       "server-packages/*",
+      "backends/*",
       "web-packages/*",
       "appliance-plugin-packages/*"
     ]
