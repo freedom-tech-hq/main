@@ -15,16 +15,14 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
     signedEncryptedValue: Uint8Array,
     { accessControlDoc, cryptoService }: { accessControlDoc: SyncableStoreAccessControlDocument; cryptoService: CryptoService }
   ): PR<Uint8Array> => {
-    const sharedSecrets = await accessControlDoc.getSharedSecrets(trace);
+    const sharedKeys = await accessControlDoc.getSharedKeys(trace);
     /* node:coverage disable */
-    if (!sharedSecrets.ok) {
-      return sharedSecrets;
+    if (!sharedKeys.ok) {
+      return sharedKeys;
     }
     /* node:coverage enable */
 
-    const isSignatureValid = await cryptoService.isSignatureValidForSignedBuffer(trace, {
-      signedBuffer: signedEncryptedValue
-    });
+    const isSignatureValid = await cryptoService.isSignatureValidForSignedBuffer(trace, { signedBuffer: signedEncryptedValue });
     /* node:coverage disable */
     if (!isSignatureValid.ok) {
       return isSignatureValid;
@@ -40,32 +38,35 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const selectedSharedSecretId = await extractKeyIdFromEncryptedBuffer(trace, { encryptedValue: encryptedValue.value });
+    const selectedSharedKeysId = await extractKeyIdFromEncryptedBuffer(trace, { encryptedValue: encryptedValue.value });
     /* node:coverage disable */
-    if (!selectedSharedSecretId.ok) {
-      if (selectedSharedSecretId.value.errorCode === 'not-found') {
+    if (!selectedSharedKeysId.ok) {
+      if (selectedSharedKeysId.value.errorCode === 'not-found') {
         return makeFailure(
           new InternalStateError(trace, {
-            message: 'Failed to extract shared secret ID from encrypted value',
-            cause: selectedSharedSecretId.value
+            message: 'Failed to extract shared key set ID from encrypted value',
+            cause: selectedSharedKeysId.value
           })
         );
       }
-      return excludeFailureResult(selectedSharedSecretId, 'not-found');
+      return excludeFailureResult(selectedSharedKeysId, 'not-found');
     }
     /* node:coverage enable */
 
-    const selectedSharedSecret = sharedSecrets.value.find((sharedSecret) => sharedSecret.id === selectedSharedSecretId.value)!;
+    const selectedSharedKeys = sharedKeys.value.find((sharedSecret) => sharedSecret.id === selectedSharedKeysId.value)!;
 
     // TODO: could be cached probably
-    const sharedSecretKeys = await decryptOneEncryptedValue(trace, cryptoService, selectedSharedSecret.secretKeysEncryptedPerMember);
+    const decryptedSharedSecretKeys = await decryptOneEncryptedValue(trace, cryptoService, selectedSharedKeys.secretKeysEncryptedPerMember);
     /* node:coverage disable */
-    if (!sharedSecretKeys.ok) {
-      return sharedSecretKeys;
+    if (!decryptedSharedSecretKeys.ok) {
+      return decryptedSharedSecretKeys;
     }
     /* node:coverage enable */
 
-    const decryptedValue = await decryptBuffer(trace, { encryptedValue: encryptedValue.value, decryptingKeys: sharedSecretKeys.value });
+    const decryptedValue = await decryptBuffer(trace, {
+      encryptedValue: encryptedValue.value,
+      decryptingKeys: decryptedSharedSecretKeys.value
+    });
     /* node:coverage disable */
     if (!decryptedValue.ok) {
       return decryptedValue;

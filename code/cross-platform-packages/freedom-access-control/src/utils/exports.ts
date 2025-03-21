@@ -1,5 +1,5 @@
 export * from './generateInitialAccess.ts';
-export * from './generateSharedSecret.ts';
+export * from './generateSharedKeys.ts';
 export * from './generateSignedAddAccessChange.ts';
 export * from './generateSignedModifyAccessChange.ts';
-export * from './getDecryptedSharedSecretsFromAccessControlDocument.ts';
+export * from './getDecryptedSharedSecretKeysFromAccessControlDocument.ts';

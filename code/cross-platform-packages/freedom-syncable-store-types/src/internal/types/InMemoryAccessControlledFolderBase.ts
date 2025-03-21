@@ -54,6 +54,7 @@ import type { SyncableStoreRole } from '../../types/SyncableStoreRole.ts';
 import { adminAndAboveRoles, syncableStoreRoleSchema } from '../../types/SyncableStoreRole.ts';
 import type { SyncTracker, SyncTrackerNotifications } from '../../types/SyncTracker.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../../utils/create/createConflictFreeDocumentBundleAtPath.ts';
+import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableStoreRoleHaveReadAccess.ts';
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
 import { generateTrustedTimeIdForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeIdForSyncableStoreAccessChange.ts';
 import type {
@@ -133,22 +134,25 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       switch (change.type) {
         case 'add-access':
           signedTimedChange = await generateSignedAddAccessChange(trace, {
-            accessControlDoc: accessControlDoc.value.document,
             cryptoService: store.cryptoService,
+            accessControlDoc: accessControlDoc.value.document,
             generateTrustedTimeIdForAccessChange: async (trace: Trace, accessChange: AccessChange<SyncableStoreRole>): PR<TrustedTimeId> =>
               generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
-            params: change
+            params: change,
+            doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
           });
           break;
 
         case 'modify-access':
           signedTimedChange = await generateSignedModifyAccessChange(trace, {
             cryptoService: store.cryptoService,
+            accessControlDoc: accessControlDoc.value.document,
             generateTrustedTimeIdForAccessChange: async (trace: Trace, accessChange: AccessChange<SyncableStoreRole>): PR<TrustedTimeId> =>
               generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
-            params: change
+            params: change,
+            doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
           });
           break;
 

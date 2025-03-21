@@ -20,7 +20,7 @@ Most folder, bundle, and file names are also encrypted.
 
 There are two special bundles, per root / folder, whose contents aren't encrypted at the top level, which are used to help with data access and data management.  These aren't encrypted at the top level, but changes to these documents must be signed and they're append-only.
 
-- `.access-control` - role / access information and encrypted shared secrets
+- `.access-control` - role / access information and shared keys (secret keys are encrypted per user with read access)
 - `.changes` - information about deletions
 
 ## Access Control
@@ -55,6 +55,8 @@ Syncable stores support 5 roles:
   - can read and and write most bundles and flat files
 - viewer
   - can read folders, bundles, and flat files
+- appender
+  - can create bundles and flat files, but not read
 
 App-specific semantics may also be enforced for these roles.  If different roles are desired for an app's purposes, those can be modeled and managed in parallel to these rules and enforced in software, using similar techniques.  However, all Cloud-based enforcement, which grants basic read/write access, will be managed with the above roles.
 
@@ -68,7 +70,7 @@ _Note: in the future, especially to support app-specific permissions modeling, c
 
 ## Sharing
 
-Access control documents contain a set of shared secrets, encrypted for each member with access.  The most recent shared secret should typically be used, so that users who have been removed, won't be able to read new data.
+Access control documents contain a set of shared keys, where the private keys are encrypted for each member with read access.  The most recent shared keys should typically be used, so that users who have been removed, won't be able to read new data.
 
 When new users are added, all of the previous secrets are encrypted for the new user and added to the document.
 
@@ -91,9 +93,9 @@ Data read protection is managed in two ways:
 
 When accessing remotes (e.g. Freedom cloud services or Freedom Nodes) to read or write data in a shared folder, one sends a signed token with each request.  These tokens are checked against the current state of the access control document, and the remote then grants or rejects access to read (or write) bits.
 
-For the portions of data a user wants to read, the user's device must also have the keys to decrypt.  The keys are the shared secrets that have been encrypted for each member.
+For the portions of data a user wants to read, the user's device must also have the keys to decrypt.  The keys are the shared secret keys that have been encrypted for each member with read access.
 
-Each encrypted piece of data is signed by its author and includes information about how it was encrypted, including a shared secret ID.  Each shared secret has an ID and a map of public key IDs to encrypted keys.  The user decrypts the secret key using their main private key.  Then, they decrypt the data using the secret key.  _We don't directly encrypt the data for each user because that would lead to as many copies of the data as their are members, which would be both space and computationally inefficient, especially for larger data chunks._
+Each encrypted piece of data is signed by its author and includes information about how it was encrypted, including a shared key set ID.  Each shared key set has an ID and a map of user public key IDs to encrypted secret keys.  The user decrypts the secret key using their main private key.  Then, they decrypt the data using the secret key.  _We don't directly encrypt the data for each user because that would lead to as many copies of the data as their are members, which would be both space and computationally inefficient, especially for larger data chunks._
 
 _// TODO: add support for optionally downloading metadata only / lazily downloading folders / files / optimizing local file storage_
 
@@ -101,7 +103,7 @@ _// TODO: add support for optionally downloading metadata only / lazily download
 
 Write protection is managed by remotes in the same way as read protection.  Users send a signed token, which is checked against the access control document.  Where there is no access control document, only root creators will have sufficient privileges to write.
 
-To write data, one decrypts the most recent shared secret and then encrypts their new data using that.  There are cases where two or more writers may have out-of-sync ideas about what the most recent share secret is.  These data will be allowed.  However, previously removed users may be able to decrypt these new messages (though they won't be able to obtain their encrypted bits) if they're not reencrypted with later keys.  It is up to apps to manage reencryption.
+To write data, one uses the most recent shared keys and then encrypts their new data using that.  There are cases where two or more writers may have out-of-sync ideas about what the most recent share keys are.  These data will be allowed.  However, previously removed users may be able to decrypt these new messages (though they won't be able to obtain their encrypted bits) if they're not reencrypted with later keys.  Additionally, member who have lost read access but have otherwise retained their membership, may be able to read data encrypted using keys they obtained prior to losing their read access.  It is up to apps to manage reencryption.
 
 Apps may provide their own additional semantics with respect to writing, but in general those with write access should be somewhat trusted because a malicious user with write access could cause large amounts of data to be transferred and large amounts of compute to be used up evaluating their content.
 
@@ -271,7 +273,7 @@ Once the `.access-control` bundle is loadable, the remote can use it to determin
 
 #### Creating Content Locally
 
-Creating sub-folders, bundles, and files locally, is very similar to working with any other file system.  With Freedom however, all API-created content is automatically encrypted on write and decrypted on read, using the shared secrets in the access control document, which is available with each folder.
+Creating sub-folders, bundles, and files locally, is very similar to working with any other file system.  With Freedom however, all API-created content is automatically encrypted on write and decrypted on read, using the shared secret keys in the access control document, which is available with each folder.
 
 Once configurations are setup with Cloud and/or Nodes, synchronization happens automatically.  We use push and pull operations, hierarchically comparing hashes, to determine what is out of sync.
 
@@ -286,7 +288,8 @@ To do that, one must get the public verifying and encryption keys for the new us
 When adding another user, one:
 
 - appends an add-access change to the access control document
-- encrypts all of the shared secrets from the access control document for the new user, using their public encryption key
+- if the new user has read access:
+  - encrypts all of the shared secret keys from the access control document for the new user, using their public encryption key
 
 Once these changes are synced with the relevant remotes, the remotes will be able to grant access to the new user, who will generate access tokens signed with their public signing key, and which will be checked against the access control document.
 

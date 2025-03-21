@@ -28,6 +28,14 @@ export const withResolved = <T, ReturnT>(
       }
     });
   } else {
-    return callback(value);
+    try {
+      return callback(value);
+    } catch (e) {
+      if (onError !== undefined) {
+        return onError(e);
+      }
+
+      throw e;
+    }
   }
 };

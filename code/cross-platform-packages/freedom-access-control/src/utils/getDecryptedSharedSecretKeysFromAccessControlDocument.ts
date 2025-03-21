@@ -6,26 +6,26 @@ import type { CryptoKeySetId } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { decryptOneEncryptedValue } from 'freedom-crypto-service';
 
-export const getDecryptedSharedSecretsFromAccessControlDocument = makeAsyncResultFunc(
+export const getDecryptedSharedSecretKeysFromAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename],
   async <RoleT extends string>(
     trace: Trace,
     { cryptoService, accessControl }: { cryptoService: CryptoService; accessControl: AccessControlDocument<RoleT> }
   ): PR<Partial<Record<CryptoKeySetId, SharedSecretKeys>>> => {
-    const sharedSecrets = await accessControl.getSharedSecrets(trace);
+    const sharedKeys = await accessControl.getSharedKeys(trace);
     /* node:coverage disable */
-    if (!sharedSecrets.ok) {
-      return sharedSecrets;
+    if (!sharedKeys.ok) {
+      return sharedKeys;
     }
     /* node:coverage enable */
 
     return allResultsReduced(
       trace,
-      sharedSecrets.value,
+      sharedKeys.value,
       {},
-      async (trace, sharedSecret) => decryptOneEncryptedValue(trace, cryptoService, sharedSecret.secretKeysEncryptedPerMember),
-      async (_trace, out, decrypted, sharedSecret) => {
-        out[sharedSecret.id] = decrypted;
+      async (trace, sharedKeys) => decryptOneEncryptedValue(trace, cryptoService, sharedKeys.secretKeysEncryptedPerMember),
+      async (_trace, out, decryptedSharedSecretKeys, sharedKeys) => {
+        out[sharedKeys.id] = decryptedSharedSecretKeys;
         return makeSuccess(out);
       },
       {} as Partial<Record<CryptoKeySetId, SharedSecretKeys>>

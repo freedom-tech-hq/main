@@ -1,18 +1,18 @@
-import type { SharedSecret, SharedSecretKeys } from 'freedom-access-control-types';
+import { type SharedKeys, sharedPublicKeysSchema, type SharedSecretKeys, sharedSecretKeysSchema } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
-import { allResultsReduced, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { allResultsReduced, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeSerializedValue } from 'freedom-basic-data';
+import { InternalSchemaValidationError } from 'freedom-common-errors';
 import { generateCryptoEncryptDecryptKeySet } from 'freedom-crypto';
 import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
-import { decryptingKeySetSchema, encryptingKeySetSchema, privateKeySetSchema } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
-import { schema } from 'yaschema';
 
-export const generateSharedSecret = makeAsyncResultFunc(
+export const generateSharedKeys = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     { cryptoService, cryptoKeySetIds }: { cryptoService: CryptoService; cryptoKeySetIds: CryptoKeySetId[] }
-  ): PR<SharedSecret> => {
+  ): PR<SharedKeys> => {
     // TODO: this is a pretty large piece of data and we need to share – so there's probably a much better way to do this
     const sharedEncryptDecryptKeys = await generateCryptoEncryptDecryptKeySet(trace);
     /* node:coverage disable */
@@ -28,7 +28,7 @@ export const generateSharedSecret = makeAsyncResultFunc(
       async (trace, cryptoKeySetId) =>
         cryptoService.generateEncryptedValue(trace, {
           value: sharedEncryptDecryptKeys.value,
-          valueSchema: schema.allOf3(privateKeySetSchema, encryptingKeySetSchema, decryptingKeySetSchema),
+          valueSchema: sharedSecretKeysSchema,
           cryptoKeySetId: cryptoKeySetId
         }),
       async (_trace, out, encryptedSharedSecretKeys, cryptoKeySetId) => {
@@ -43,8 +43,17 @@ export const generateSharedSecret = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
+    const publicKeysSerialization = await sharedPublicKeysSchema.serializeAsync(sharedEncryptDecryptKeys.value.publicOnly());
+    if (publicKeysSerialization.error !== undefined) {
+      return makeFailure(new InternalSchemaValidationError(trace, { message: publicKeysSerialization.error }));
+    }
+
     return makeSuccess({
       id: sharedEncryptDecryptKeys.value.id,
+      publicKeys: makeSerializedValue({
+        deserializedValueSchema: sharedPublicKeysSchema,
+        serializedValue: publicKeysSerialization.serialized
+      }),
       secretKeysEncryptedPerMember: secretKeysEncryptedPerMember.value
     });
   }

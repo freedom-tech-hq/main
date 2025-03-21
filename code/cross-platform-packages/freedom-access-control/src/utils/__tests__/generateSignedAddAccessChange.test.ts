@@ -46,7 +46,8 @@ describe('generateSignedAddAccessChange', () => {
       params: {
         publicKeyId: cryptoKeys2.value.id,
         role: 'editor'
-      }
+      },
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedAddAccessChange);
 

@@ -22,7 +22,7 @@ export const privateCombinationCryptoKeySetSchema = schema.custom<PrivateCombina
   serDes: {
     isValueType: (value): value is PrivateCombinationCryptoKeySet => value instanceof PrivateCombinationCryptoKeySet,
     serializedSchema: () => serializedSchema,
-    serialize: async (value) =>
+    serialize: (value) =>
       serializedSchema.serializeAsync({
         type: 'private:combination-crypto-key-set',
         id: value.id,

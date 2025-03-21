@@ -1,9 +1,8 @@
-import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
+import type { CryptoKeySetId } from 'freedom-crypto-data';
 import { cryptoKeySetIdInfo, makeEncryptedValueSchema } from 'freedom-crypto-data';
 import type { Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
-import type { SharedSecretKeys } from './SharedSecretKeys.ts';
 import { sharedSecretKeysSchema } from './SharedSecretKeys.ts';
 
 export const makeAddAccessChangeParamsSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
@@ -19,7 +18,8 @@ export interface AddAccessChangeParams<RoleT extends string> {
 }
 
 const computedFieldsSchema = schema.object({
-  encryptedSecretKeysForNewUserBySharedSecretId: schema.record(cryptoKeySetIdInfo.schema, makeEncryptedValueSchema(sharedSecretKeysSchema))
+  /** All of the current secrets, encrypted for the new user */
+  encryptedSecretKeysForNewUserBySharedKeysId: schema.record(cryptoKeySetIdInfo.schema, makeEncryptedValueSchema(sharedSecretKeysSchema))
 });
 type ComputedFields = typeof computedFieldsSchema.valueType;
 
@@ -28,7 +28,4 @@ export const makeAddAccessChangeSchema = <RoleT extends string>({ roleSchema }: 
     makeAddAccessChangeParamsSchema({ roleSchema }),
     computedFieldsSchema
   );
-export interface AddAccessChange<RoleT extends string> extends AddAccessChangeParams<RoleT> {
-  /** All of the current secrets, encrypted for the new user */
-  encryptedSecretKeysForNewUserBySharedSecretId: Partial<Record<CryptoKeySetId, EncryptedValue<SharedSecretKeys>>>;
-}
+export type AddAccessChange<RoleT extends string> = AddAccessChangeParams<RoleT> & ComputedFields;

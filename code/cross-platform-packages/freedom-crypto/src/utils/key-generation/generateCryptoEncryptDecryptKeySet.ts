@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
-import type { EncryptionMode, PureDecryptingKeySet, PureEncryptingKeySet } from 'freedom-crypto-data';
+import type { CryptoKeySetId, EncryptionMode, PureDecryptingKeySet, PureEncryptingKeySet } from 'freedom-crypto-data';
 import {
   asymmetricalAlgorithmByEncryptionMode,
   cryptoKeySetIdInfo,
@@ -11,8 +11,8 @@ import {
 
 export const generateCryptoEncryptDecryptKeySet = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, mode: EncryptionMode = preferredEncryptionMode): PR<PureEncryptingKeySet & PureDecryptingKeySet> => {
-    const id = cryptoKeySetIdInfo.make(`ed-${makeUuid()}`);
+  async (trace, id?: CryptoKeySetId, mode: EncryptionMode = preferredEncryptionMode): PR<PureEncryptingKeySet & PureDecryptingKeySet> => {
+    id = id ?? cryptoKeySetIdInfo.make(`ed-${makeUuid()}`);
 
     try {
       switch (mode) {
