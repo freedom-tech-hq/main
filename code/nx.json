@@ -76,6 +76,12 @@
     },
     "lint": {
       "cache": true
+    },
+    "deploy:extract": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false
     }
   },
   "useDaemonProcess": false,
