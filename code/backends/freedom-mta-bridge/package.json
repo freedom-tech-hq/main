@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "main": "bridge_incoming.js",
+  "name": "freedom-mta-bridge",
+  "description": "Pass incoming emails from MTA to freedom-mail-host",
+  "nx": {
+    "tags": [
+      "type:app",
+      "platform:server"
+    ]
+  },
+  "private": true,
+  "scripts": {
+    "deploy:extract": "./deploy.extract.sh"
+  },
+  "version": "0.0.0"
+}

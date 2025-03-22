@@ -1,0 +1,6 @@
+catch_all_router:
+  driver = redirect
+  domains = mail-domain.placeholder
+  data = |/app/bridge_incoming.js
+  pipe_transport = address_pipe
+  no_more

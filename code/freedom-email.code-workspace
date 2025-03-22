@@ -131,7 +131,9 @@
         },
         {
             "path": "web-packages/freedom-react-localization"
-        }
+        },
+        { "path": "backends/freedom-mail-host"  },
+        { "path": "backends/freedom-mta-bridge"  }
     ],
     "settings": {}
 }
