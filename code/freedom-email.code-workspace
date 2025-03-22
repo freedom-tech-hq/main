@@ -44,6 +44,8 @@
         { "path": "server-packages/freedom-server-localization" },
         { "path": "server-packages/freedom-server-trace-auth-token"  },
         { "path": "web-packages/freedom-react-localization"  },
+        { "path": "backends/freedom-mail-host"  },
+        { "path": "backends/freedom-mta-bridge"  },
     ],
     "settings": {}
 }
