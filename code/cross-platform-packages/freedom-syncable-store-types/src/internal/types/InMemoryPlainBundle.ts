@@ -3,13 +3,14 @@ import { makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { StaticSyncablePath } from 'freedom-sync-types';
 
 import type { InMemoryBundleBaseConstructorArgs } from './InMemoryBundleBase.ts';
 import { InMemoryBundleBase } from './InMemoryBundleBase.ts';
 
 export type InMemoryPlainBundleConstructorArgs = InMemoryBundleBaseConstructorArgs;
 
+// TODO: rename to DefaultPlainBundle in separate PR
 export class InMemoryPlainBundle extends InMemoryBundleBase {
   // InMemoryBundleBase Abstract Method Implementations
 
@@ -27,16 +28,13 @@ export class InMemoryPlainBundle extends InMemoryBundleBase {
     return makeSuccess(rawData);
   }
 
-  protected override async newBundle_(
-    _trace: Trace,
-    { path, provenance }: { path: StaticSyncablePath; provenance: SyncableProvenance }
-  ): PR<InMemoryPlainBundle> {
+  protected override async newBundle_(_trace: Trace, { path }: { path: StaticSyncablePath }): PR<InMemoryPlainBundle> {
     return makeSuccess(
       new InMemoryPlainBundle({
         store: this.weakStore_,
+        backing: this.backing_,
         syncTracker: this.syncTracker_,
         path,
-        provenance,
         folderOperationsHandler: this.folderOperationsHandler_,
         supportsDeletion: this.supportsDeletion
       })

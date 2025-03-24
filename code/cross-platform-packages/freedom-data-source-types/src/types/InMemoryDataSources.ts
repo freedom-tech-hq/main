@@ -9,7 +9,7 @@ import { InMemoryLockStore } from 'freedom-locking-types';
 import type { InMemoryObjectStoreConstructorArgs, MutableObjectStore } from 'freedom-object-store-types';
 import { InMemoryObjectStore } from 'freedom-object-store-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
-import { generateProvenanceForNewSyncableStore, InMemorySyncableStore } from 'freedom-syncable-store-types';
+import { generateProvenanceForNewSyncableStore, InMemorySyncableStore, InMemorySyncableStoreBacking } from 'freedom-syncable-store-types';
 
 import type { DataSources } from './DataSources.ts';
 import type { GetOrCreateIndexStoreArgs } from './GetOrCreateIndexStoreArgs.ts';
@@ -71,7 +71,10 @@ export class InMemoryDataSources implements DataSources {
       return provenance;
     }
 
-    const newStore = new InMemorySyncableStore({ storageRootId, cryptoService, provenance: provenance.value });
+    // TODO: TEMP
+    const storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
+
+    const newStore = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
 
     this.syncableStores_[cacheKey] = newStore;
     return makeSuccess(newStore);

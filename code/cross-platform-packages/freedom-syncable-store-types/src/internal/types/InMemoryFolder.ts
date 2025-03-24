@@ -21,6 +21,7 @@ import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { FolderManagement } from '../../types/FolderManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
 import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
@@ -37,31 +38,35 @@ import { InMemoryAccessControlledFolder } from './InMemoryAccessControlledFolder
 
 type InternalFolder = InMemoryAccessControlledFolder;
 
+// TODO: rename to DefaultFolder in separate PR
 export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   public readonly path: StaticSyncablePath;
 
   private readonly syncTracker_: SyncTracker;
 
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
-
-  private readonly folders_ = new Map<SyncableId, InternalFolder>();
   private readonly folderOperationsHandler_: FolderOperationsHandler;
 
-  private hash_: Sha256Hash | undefined;
+  private readonly backing_: SyncableStoreBacking;
+  private readonly folders_ = new Map<SyncableId, InternalFolder>();
+
   private needsRecomputeHashCount_ = 0;
 
   constructor({
     store,
+    backing,
     syncTracker,
     folderOperationsHandler,
     path
   }: {
     store: WeakRef<MutableSyncableStore>;
+    backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
     folderOperationsHandler: FolderOperationsHandler;
     path: StaticSyncablePath;
   }) {
     this.weakStore_ = store;
+    this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.folderOperationsHandler_ = folderOperationsHandler;
     this.path = path;
@@ -250,8 +255,14 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   public readonly getHash = makeAsyncResultFunc(
     [import.meta.filename, 'getHash'],
     async (trace, { recompute = false }: { recompute?: boolean } = {}): PR<Sha256Hash> => {
-      if (this.hash_ !== undefined && !recompute) {
-        return makeSuccess(this.hash_);
+      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+      if (!metadata.ok) {
+        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+      }
+
+      const hash = metadata.value.hash;
+      if (hash !== undefined && !recompute) {
+        return makeSuccess(hash);
       }
 
       do {
@@ -272,7 +283,11 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
         /* node:coverage enable */
 
         if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          this.hash_ = hash.value;
+          const updatedMetadata = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+          if (!updatedMetadata.ok) {
+            return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
+          }
+
           return makeSuccess(hash.value);
         }
       } while (true);
@@ -397,7 +412,11 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
     async (trace): PR<undefined> => {
-      this.hash_ = undefined;
+      const updatedMetadata = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: undefined });
+      if (!updatedMetadata.ok) {
+        return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
+      }
+
       this.needsRecomputeHashCount_ += 1;
 
       const store = this.weakStore_.deref();
@@ -507,11 +526,16 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
         return guards;
       }
 
+      const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata: { type: 'folder', provenance } });
+      if (!createdFolder.ok) {
+        return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
+      }
+
       const folder = new InMemoryAccessControlledFolder({
         store: this.weakStore_,
+        backing: this.backing_,
         syncTracker: this.syncTracker_,
-        path: newPath,
-        provenance
+        path: newPath
       });
 
       this.folders_.set(id, folder);

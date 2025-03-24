@@ -1,6 +1,6 @@
-import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
-import { invalidProvenance } from 'freedom-sync-types';
+import type { StaticSyncablePath } from 'freedom-sync-types';
 
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { InMemoryAccessControlledFolderBase } from './InMemoryAccessControlledFolderBase.ts';
@@ -12,16 +12,16 @@ import { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
 export class InMemoryAccessControlledFolder extends InMemoryAccessControlledFolderBase {
   constructor({
     store,
+    backing,
     syncTracker,
-    path,
-    provenance
+    path
   }: {
     store: WeakRef<MutableSyncableStore>;
+    backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
     path: StaticSyncablePath;
-    provenance: SyncableProvenance;
   }) {
-    super({ syncTracker, path, provenance });
+    super({ backing, syncTracker, path });
 
     const folderOperationsHandler = this.makeFolderOperationsHandler_(store);
     this.deferredInit_({
@@ -29,23 +29,24 @@ export class InMemoryAccessControlledFolder extends InMemoryAccessControlledFold
       folderOperationsHandler,
       plainBundle: new InMemoryPlainBundle({
         store,
+        backing,
         syncTracker,
         folderOperationsHandler,
         path,
-        provenance: invalidProvenance,
         supportsDeletion: false
       }),
       folder: new InMemoryFolder({
         store,
+        backing,
         syncTracker,
         folderOperationsHandler,
         path
       }),
       encryptedBundle: new InMemoryEncryptedBundle({
         store,
+        backing,
         syncTracker,
         folderOperationsHandler,
-        provenance: invalidProvenance,
         path
       })
     });

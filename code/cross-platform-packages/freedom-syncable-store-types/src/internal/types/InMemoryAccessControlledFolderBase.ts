@@ -37,6 +37,7 @@ import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../consts/special-file-ids.ts';
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
@@ -71,26 +72,28 @@ import type { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
 import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
+// TODO: rename to DefaultAccessControlledFolderBase in a separate PR
 export abstract class InMemoryAccessControlledFolderBase implements MutableAccessControlledFolder {
   public readonly type = 'folder';
   public readonly path: StaticSyncablePath;
-  public readonly provenance: SyncableProvenance;
-
-  private readonly syncTracker_: SyncTracker;
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
+  private folderOperationsHandler_!: FolderOperationsHandler;
+  private readonly syncTracker_: SyncTracker;
+
+  private readonly backing_: SyncableStoreBacking;
+
   private folder_!: InMemoryFolder;
   private plainBundle_!: InMemoryPlainBundle;
   private encryptedBundle_!: InMemoryEncryptedBundle;
-  private folderOperationsHandler_!: FolderOperationsHandler;
 
-  private hash_: Sha256Hash | undefined = undefined;
+  // private hash_: Sha256Hash | undefined = undefined;
   private needsRecomputeHashCount_ = 0;
 
-  constructor({ syncTracker, path, provenance }: { syncTracker: SyncTracker; path: StaticSyncablePath; provenance: SyncableProvenance }) {
+  constructor({ backing, syncTracker, path }: { backing: SyncableStoreBacking; syncTracker: SyncTracker; path: StaticSyncablePath }) {
+    this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.path = path;
-    this.provenance = provenance;
   }
 
   protected deferredInit_({
@@ -372,8 +375,14 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly getHash = makeAsyncResultFunc(
     [import.meta.filename, 'getHash'],
     async (trace, { recompute = false }: { recompute?: boolean } = {}): PR<Sha256Hash> => {
-      if (this.hash_ !== undefined && !recompute) {
-        return makeSuccess(this.hash_);
+      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+      if (!metadata.ok) {
+        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+      }
+
+      const hash = metadata.value.hash;
+      if (hash !== undefined && !recompute) {
+        return makeSuccess(hash);
       }
 
       do {
@@ -394,7 +403,11 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         /* node:coverage enable */
 
         if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          this.hash_ = hash.value;
+          const updatedHash = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+          if (!updatedHash.ok) {
+            return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+          }
+
           return makeSuccess(hash.value);
         }
       } while (true);
@@ -423,15 +436,23 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     }
   );
 
-  public readonly getProvenance = makeAsyncResultFunc(
-    [import.meta.filename, 'getProvenance'],
-    async (_trace): PR<SyncableProvenance> => makeSuccess(this.provenance)
-  );
+  public readonly getProvenance = makeAsyncResultFunc([import.meta.filename, 'getProvenance'], async (trace): PR<SyncableProvenance> => {
+    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+    if (!metadata.ok) {
+      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    }
+
+    return makeSuccess(metadata.value.provenance);
+  });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
     async (trace): PR<undefined> => {
-      this.hash_ = undefined;
+      const updatedHash = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: undefined });
+      if (!updatedHash.ok) {
+        return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+      }
+
       this.needsRecomputeHashCount_ += 1;
 
       const store = this.weakStore_.deref();

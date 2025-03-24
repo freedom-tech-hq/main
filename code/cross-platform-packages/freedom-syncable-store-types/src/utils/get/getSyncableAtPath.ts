@@ -31,7 +31,7 @@ export const getSyncableAtPath = makeAsyncResultFunc(
     }
 
     if (path.ids.length === 0) {
-      const guards = await guardIsExpectedType(trace, new StaticSyncablePath(path.storageRootId), store, expectedType, 'wrong-type');
+      const guards = guardIsExpectedType(trace, new StaticSyncablePath(path.storageRootId), store, expectedType, 'wrong-type');
       if (!guards.ok) {
         return generalizeFailureResult(trace, guards, 'wrong-type');
       }

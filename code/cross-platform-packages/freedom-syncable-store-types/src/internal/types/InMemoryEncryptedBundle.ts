@@ -3,8 +3,9 @@ import { makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { StaticSyncablePath } from 'freedom-sync-types';
 
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
@@ -12,20 +13,21 @@ import { InMemoryBundleBase } from './InMemoryBundleBase.ts';
 
 export interface InMemoryEncryptedBundleConstructorArgs {
   store: WeakRef<MutableSyncableStore>;
+  backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
   path: StaticSyncablePath;
-  provenance: SyncableProvenance;
 }
 
+// TODO: rename to DefaultEncryptedBundle in separate PR
 export class InMemoryEncryptedBundle extends InMemoryBundleBase {
-  constructor({ store, syncTracker, folderOperationsHandler, path, provenance }: InMemoryEncryptedBundleConstructorArgs) {
+  constructor({ store, backing, syncTracker, folderOperationsHandler, path }: InMemoryEncryptedBundleConstructorArgs) {
     super({
       store,
+      backing,
       syncTracker,
       folderOperationsHandler,
       path,
-      provenance,
       supportsDeletion: true
     });
   }
@@ -44,17 +46,14 @@ export class InMemoryEncryptedBundle extends InMemoryBundleBase {
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 
-  protected override async newBundle_(
-    _trace: Trace,
-    { path, provenance }: { path: StaticSyncablePath; provenance: SyncableProvenance }
-  ): PR<InMemoryEncryptedBundle> {
+  protected override async newBundle_(_trace: Trace, { path }: { path: StaticSyncablePath }): PR<InMemoryEncryptedBundle> {
     return makeSuccess(
       new InMemoryEncryptedBundle({
         store: this.weakStore_,
+        backing: this.backing_,
         syncTracker: this.syncTracker_,
         folderOperationsHandler: this.folderOperationsHandler_,
-        path,
-        provenance
+        path
       })
     );
   }

@@ -2,41 +2,34 @@ import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { FlatFileAccessor } from '../../types/FlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { InMemoryMutableFileAccessorBase } from './InMemoryMutableFileAccessorBase.ts';
 
+// TODO: rename to DefaultMutableFlatFileAccessor in separate PR
 export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessorBase implements FlatFileAccessor {
   public readonly type = 'flatFile';
 
-  private readonly data_: Uint8Array;
-  private readonly hash_: Sha256Hash;
-  private readonly provenance_: SyncableProvenance;
   private readonly decode_: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
 
   constructor({
     store,
+    backing,
     path,
-    data,
-    hash,
-    provenance,
     decode
   }: {
     store: WeakRef<MutableSyncableStore>;
+    backing: SyncableStoreBacking;
     path: StaticSyncablePath;
-    data: Uint8Array;
-    hash: Sha256Hash;
-    provenance: SyncableProvenance;
     decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
   }) {
-    super({ store, path });
+    super({ store, backing, path });
 
-    this.data_ = data;
-    this.hash_ = hash;
-    this.provenance_ = provenance;
     this.decode_ = decode;
   }
 
@@ -44,8 +37,32 @@ export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessor
 
   public readonly getHash = makeAsyncResultFunc(
     [import.meta.filename, 'getHash'],
-    async (_trace, _options?: { recompute?: boolean }): PR<Sha256Hash> => {
-      return makeSuccess(this.hash_);
+    async (trace, _options?: { recompute?: boolean }): PR<Sha256Hash> => {
+      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+      if (!metadata.ok) {
+        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+      }
+
+      if (metadata.value.hash !== undefined) {
+        return makeSuccess(metadata.value.hash);
+      }
+
+      const encodedBinary = await this.getEncodedBinary(trace);
+      if (!encodedBinary.ok) {
+        return encodedBinary;
+      }
+
+      const hash = await generateSha256HashFromBuffer(trace, encodedBinary.value);
+      if (!hash.ok) {
+        return hash;
+      }
+
+      const updatedMetadata = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+      if (!updatedMetadata.ok) {
+        return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
+      }
+
+      return makeSuccess(hash.value);
     }
   );
 
@@ -67,13 +84,22 @@ export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessor
     }
   );
 
-  public readonly getEncodedBinary = makeAsyncResultFunc(
-    [import.meta.filename, 'getEncodedBinary'],
-    async (_trace): PR<Uint8Array> => makeSuccess(this.data_)
-  );
+  public readonly getEncodedBinary = makeAsyncResultFunc([import.meta.filename, 'getEncodedBinary'], async (trace): PR<Uint8Array> => {
+    const found = await this.backing_.getAtPath(trace, this.path, ['flatFile']);
+    if (!found.ok) {
+      return generalizeFailureResult(trace, found, ['not-found', 'wrong-type']);
+    }
+
+    return found.value.getBinary(trace);
+  });
 
   public readonly getBinary = makeAsyncResultFunc([import.meta.filename, 'getBinary'], async (trace): PR<Uint8Array> => {
-    const decoded = await this.decode_(trace, this.data_);
+    const encodedBinary = await this.getEncodedBinary(trace);
+    if (!encodedBinary.ok) {
+      return encodedBinary;
+    }
+
+    const decoded = await this.decode_(trace, encodedBinary.value);
     /* node:coverage disable */
     if (!decoded.ok) {
       return decoded;
@@ -83,8 +109,12 @@ export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessor
     return makeSuccess(decoded.value);
   });
 
-  public readonly getProvenance = makeAsyncResultFunc(
-    [import.meta.filename, 'getProvenance'],
-    async (_trace): PR<SyncableProvenance> => makeSuccess(this.provenance_)
-  );
+  public readonly getProvenance = makeAsyncResultFunc([import.meta.filename, 'getProvenance'], async (trace): PR<SyncableProvenance> => {
+    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+    if (!metadata.ok) {
+      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    }
+
+    return makeSuccess(metadata.value.provenance);
+  });
 }
