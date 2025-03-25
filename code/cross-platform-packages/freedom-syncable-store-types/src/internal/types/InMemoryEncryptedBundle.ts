@@ -1,5 +1,4 @@
 import type { PR } from 'freedom-async';
-import { makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
@@ -46,15 +45,13 @@ export class InMemoryEncryptedBundle extends InMemoryBundleBase {
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 
-  protected override async newBundle_(_trace: Trace, { path }: { path: StaticSyncablePath }): PR<InMemoryEncryptedBundle> {
-    return makeSuccess(
-      new InMemoryEncryptedBundle({
-        store: this.weakStore_,
-        backing: this.backing_,
-        syncTracker: this.syncTracker_,
-        folderOperationsHandler: this.folderOperationsHandler_,
-        path
-      })
-    );
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): InMemoryEncryptedBundle {
+    return new InMemoryEncryptedBundle({
+      store: this.weakStore_,
+      backing: this.backing_,
+      syncTracker: this.syncTracker_,
+      folderOperationsHandler: this.folderOperationsHandler_,
+      path
+    });
   }
 }

@@ -66,10 +66,11 @@ import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/
 import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-import type { InMemoryEncryptedBundle } from './InMemoryEncryptedBundle.ts';
-import type { InMemoryFolder } from './InMemoryFolder.ts';
-import type { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
+import { InMemoryEncryptedBundle } from './InMemoryEncryptedBundle.ts';
+import { InMemoryFolder } from './InMemoryFolder.ts';
+import { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
 import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
+import { StoreOperationsHandler } from './StoreOperationsHandler.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
 // TODO: rename to DefaultAccessControlledFolderBase in a separate PR
@@ -78,14 +79,58 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly path: StaticSyncablePath;
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
+  private storeOperationsHandler_!: StoreOperationsHandler;
   private folderOperationsHandler_!: FolderOperationsHandler;
   private readonly syncTracker_: SyncTracker;
 
   private readonly backing_: SyncableStoreBacking;
 
-  private folder_!: InMemoryFolder;
-  private plainBundle_!: InMemoryPlainBundle;
-  private encryptedBundle_!: InMemoryEncryptedBundle;
+  private folder__: InMemoryFolder | undefined;
+  private get folder_(): InMemoryFolder {
+    if (this.folder__ === undefined) {
+      this.folder__ = new InMemoryFolder({
+        store: this.weakStore_,
+        backing: this.backing_,
+        syncTracker: this.syncTracker_,
+        storeOperationsHandler: this.storeOperationsHandler_,
+        folderOperationsHandler: this.folderOperationsHandler_,
+        path: this.path
+      });
+    }
+
+    return this.folder__;
+  }
+
+  private plainBundle__: InMemoryPlainBundle | undefined;
+  private get plainBundle_(): InMemoryPlainBundle {
+    if (this.plainBundle__ === undefined) {
+      this.plainBundle__ = new InMemoryPlainBundle({
+        store: this.weakStore_,
+        backing: this.backing_,
+        syncTracker: this.syncTracker_,
+        folderOperationsHandler: this.folderOperationsHandler_,
+        path: this.path,
+        supportsDeletion: false
+      });
+    }
+
+    return this.plainBundle__;
+  }
+
+  private encryptedBundle__: InMemoryEncryptedBundle | undefined;
+  private get encryptedBundle_(): InMemoryEncryptedBundle {
+    if (this.encryptedBundle__ === undefined) {
+      this.encryptedBundle__ = new InMemoryEncryptedBundle({
+        store: this.weakStore_,
+        backing: this.backing_,
+        syncTracker: this.syncTracker_,
+        folderOperationsHandler: this.folderOperationsHandler_,
+        path: this.path
+      });
+    }
+
+    return this.encryptedBundle__;
+  }
 
   // private hash_: Sha256Hash | undefined = undefined;
   private needsRecomputeHashCount_ = 0;
@@ -98,22 +143,16 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   protected deferredInit_({
     store,
-    folderOperationsHandler,
-    plainBundle,
-    folder,
-    encryptedBundle
+    storeOperationsHandler,
+    folderOperationsHandler
   }: {
     store: WeakRef<MutableSyncableStore>;
+    storeOperationsHandler: StoreOperationsHandler;
     folderOperationsHandler: FolderOperationsHandler;
-    plainBundle: InMemoryPlainBundle;
-    folder: InMemoryFolder;
-    encryptedBundle: InMemoryEncryptedBundle;
   }) {
     this.weakStore_ = store;
+    this.storeOperationsHandler_ = storeOperationsHandler;
     this.folderOperationsHandler_ = folderOperationsHandler;
-    this.plainBundle_ = plainBundle;
-    this.folder_ = folder;
-    this.encryptedBundle_ = encryptedBundle;
   }
 
   // MutableAccessControlledFolderAccessor Methods
@@ -604,11 +643,16 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     }
   );
 
-  protected makeFolderOperationsHandler_(store: WeakRef<MutableSyncableStore>) {
+  protected makeStoreOperationsHandler_(): StoreOperationsHandler {
+    return new StoreOperationsHandler();
+  }
+
+  protected makeFolderOperationsHandler_(store: WeakRef<MutableSyncableStore>, storeOperationsHandler: StoreOperationsHandler) {
     const weakThis = new WeakRef(this);
 
     return new FolderOperationsHandler({
       store,
+      storeOperationsHandler,
       getAccessControlDocument: async (trace: Trace): PR<SyncableStoreAccessControlDocument> => {
         const self = weakThis.deref();
         if (self === undefined) {

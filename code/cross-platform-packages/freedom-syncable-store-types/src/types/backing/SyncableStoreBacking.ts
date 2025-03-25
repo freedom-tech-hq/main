@@ -11,6 +11,7 @@ import type {
 } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
+import type { SyncableStoreBackingBundleFileAccessor } from './accessors/SyncableStoreBackingBundleFileAccessor.ts';
 import type { SyncableStoreBackingFlatFileAccessor } from './accessors/SyncableStoreBackingFlatFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from './accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { SyncableStoreBackingItemAccessor } from './accessors/SyncableStoreBackingItemAccessor.ts';
@@ -48,8 +49,18 @@ export interface SyncableStoreBacking {
   readonly createFolderWithPath: PRFunc<
     SyncableStoreBackingFolderAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata }]
-  >;
+    [path: StaticSyncablePath, { metadata: SyncableFolderMetadata & LocalItemMetadata }]
+  > &
+    PRFunc<
+      SyncableStoreBackingBundleFileAccessor,
+      'not-found' | 'wrong-type' | 'conflict',
+      [path: StaticSyncablePath, { metadata: SyncableBundleFileMetadata & LocalItemMetadata }]
+    > &
+    PRFunc<
+      SyncableStoreBackingFolderAccessor | SyncableStoreBackingBundleFileAccessor,
+      'not-found' | 'wrong-type' | 'conflict',
+      [path: StaticSyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleFileMetadata) & LocalItemMetadata }]
+    >;
 
   readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: StaticSyncablePath]>;
 

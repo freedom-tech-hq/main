@@ -28,16 +28,14 @@ export class InMemoryPlainBundle extends InMemoryBundleBase {
     return makeSuccess(rawData);
   }
 
-  protected override async newBundle_(_trace: Trace, { path }: { path: StaticSyncablePath }): PR<InMemoryPlainBundle> {
-    return makeSuccess(
-      new InMemoryPlainBundle({
-        store: this.weakStore_,
-        backing: this.backing_,
-        syncTracker: this.syncTracker_,
-        path,
-        folderOperationsHandler: this.folderOperationsHandler_,
-        supportsDeletion: this.supportsDeletion
-      })
-    );
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): InMemoryPlainBundle {
+    return new InMemoryPlainBundle({
+      store: this.weakStore_,
+      backing: this.backing_,
+      syncTracker: this.syncTracker_,
+      path,
+      folderOperationsHandler: this.folderOperationsHandler_,
+      supportsDeletion: this.supportsDeletion
+    });
   }
 }

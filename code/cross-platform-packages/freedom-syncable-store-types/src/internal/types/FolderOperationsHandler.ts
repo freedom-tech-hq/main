@@ -16,27 +16,31 @@ import { syncableStoreChangeSchema } from '../../types/SyncableStoreChange.ts';
 import type { SyncableStoreChangesDocument } from '../../types/SyncableStoreChangesDocument.ts';
 import { encryptAndSignBinary } from '../../utils/encryptAndSignBinary.ts';
 import { generateTrustedTimeIdForSyncable } from '../../utils/generateTrustedTimeIdForSyncable.ts';
-import { shouldUseTrustedTimeIdsInPath } from '../../utils/shouldUseTrustedTimeIdsInPath.ts';
 import { verifyAndDecryptBinary } from '../../utils/verifyAndDecryptBinary.ts';
+import type { StoreOperationsHandler } from './StoreOperationsHandler.ts';
 
 export class FolderOperationsHandler {
   private getAccessControlDocument_: PRFunc<SyncableStoreAccessControlDocument>;
   private getMutableSyncableStoreChangesDocument_: PRFunc<SaveableDocument<SyncableStoreChangesDocument>>;
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
+  private readonly storeOperationsHandler_: StoreOperationsHandler;
 
   // TODO: TEMP - this should work as a live document
   // private storeChangesDoc_: SaveableDocument<SyncableStoreChangesDocument> | undefined;
 
   constructor({
     store,
+    storeOperationsHandler,
     getAccessControlDocument,
     getMutableSyncableStoreChangesDocument
   }: {
     store: WeakRef<MutableSyncableStore>;
+    storeOperationsHandler: StoreOperationsHandler;
     getAccessControlDocument: PRFunc<SyncableStoreAccessControlDocument>;
     getMutableSyncableStoreChangesDocument: PRFunc<SaveableDocument<SyncableStoreChangesDocument>>;
   }) {
     this.weakStore_ = store;
+    this.storeOperationsHandler_ = storeOperationsHandler;
     this.getAccessControlDocument_ = getAccessControlDocument;
     this.getMutableSyncableStoreChangesDocument_ = getMutableSyncableStoreChangesDocument;
   }
@@ -99,7 +103,7 @@ export class FolderOperationsHandler {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const shouldUseTrustedTime = await shouldUseTrustedTimeIdsInPath(trace, store, parentPath);
+          const shouldUseTrustedTime = await this.storeOperationsHandler_.shouldUseTrustedTimeIdsInPath(trace, parentPath);
           if (!shouldUseTrustedTime.ok) {
             return shouldUseTrustedTime;
           }
@@ -117,11 +121,6 @@ export class FolderOperationsHandler {
   public readonly isPathMarkedAsDeleted = makeAsyncResultFunc(
     [import.meta.filename, 'isPathMarkedAsDeleted'],
     async (trace, path: StaticSyncablePath): PR<boolean> => {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
-
       // TODO: TEMP - this should work as a live document
       // if (this.storeChangesDoc_ === undefined) {
       const storeChangesDoc = await this.getMutableSyncableStoreChangesDocument_(trace);

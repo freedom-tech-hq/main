@@ -9,11 +9,15 @@ import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBack
 import type { FlatFileAccessor } from '../../types/FlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
-import { InMemoryMutableFileAccessorBase } from './InMemoryMutableFileAccessorBase.ts';
 
 // TODO: rename to DefaultMutableFlatFileAccessor in separate PR
-export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessorBase implements FlatFileAccessor {
+export class InMemoryMutableFlatFileAccessor implements FlatFileAccessor {
   public readonly type = 'flatFile';
+
+  public readonly path: StaticSyncablePath;
+
+  protected readonly weakStore_: WeakRef<MutableSyncableStore>;
+  protected readonly backing_: SyncableStoreBacking;
 
   private readonly decode_: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
 
@@ -28,7 +32,9 @@ export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessor
     path: StaticSyncablePath;
     decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
   }) {
-    super({ store, backing, path });
+    this.weakStore_ = store;
+    this.backing_ = backing;
+    this.path = path;
 
     this.decode_ = decode;
   }

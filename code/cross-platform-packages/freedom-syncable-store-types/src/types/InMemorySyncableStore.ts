@@ -7,9 +7,6 @@ import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
 import { StaticSyncablePath } from 'freedom-sync-types';
 
 import { InMemoryAccessControlledFolderBase } from '../internal/types/InMemoryAccessControlledFolderBase.ts';
-import { InMemoryEncryptedBundle } from '../internal/types/InMemoryEncryptedBundle.ts';
-import { InMemoryFolder } from '../internal/types/InMemoryFolder.ts';
-import { InMemoryPlainBundle } from '../internal/types/InMemoryPlainBundle.ts';
 import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
@@ -47,32 +44,8 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
     this.creatorCryptoKeySetId = creatorCryptoKeySetId.value;
 
     const weakStore = new WeakRef(this);
-    const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore);
-    this.deferredInit_({
-      store: weakStore,
-      folderOperationsHandler,
-      plainBundle: new InMemoryPlainBundle({
-        store: weakStore,
-        backing,
-        syncTracker,
-        folderOperationsHandler,
-        path,
-        supportsDeletion: false
-      }),
-      folder: new InMemoryFolder({
-        store: weakStore,
-        backing,
-        syncTracker,
-        folderOperationsHandler,
-        path
-      }),
-      encryptedBundle: new InMemoryEncryptedBundle({
-        store: weakStore,
-        backing,
-        syncTracker,
-        folderOperationsHandler,
-        path
-      })
-    });
+    const storeOperationsHandler = this.makeStoreOperationsHandler_();
+    const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore, storeOperationsHandler);
+    this.deferredInit_({ store: weakStore, storeOperationsHandler, folderOperationsHandler });
   }
 }
