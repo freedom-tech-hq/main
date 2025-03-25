@@ -1,2 +1,2 @@
-export * from './useP.js';
-export * from './useT.js';
+export * from './useP.tsx';
+export * from './useT.ts';

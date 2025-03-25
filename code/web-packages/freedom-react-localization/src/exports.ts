@@ -1,2 +1,2 @@
-export * from './config/exports.js';
-export * from './hooks/exports.js';
+export * from './config/exports.ts';
+export * from './hooks/exports.ts';

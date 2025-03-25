@@ -1,3 +1,4 @@
+import 'eslint-plugin-import-extensions';
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import tsdoc from 'eslint-plugin-tsdoc';
@@ -6,7 +7,6 @@ import preferArrow from 'eslint-plugin-prefer-arrow';
 import prettier from 'eslint-plugin-prettier';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import requireExtensions from 'eslint-plugin-require-extensions';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tsParser from '@typescript-eslint/parser';
 import path from 'node:path';
@@ -45,7 +45,7 @@ const baseConfig = [
       'plugin:import/warnings',
       'plugin:import/typescript',
       'plugin:prettier/recommended',
-      'plugin:require-extensions/recommended',
+      'plugin:import-extensions/recommended',
       'prettier'
     )
   ),
@@ -125,8 +125,8 @@ const baseConfig = [
       'import/newline-after-import': 'error',
       'import/no-duplicates': 'error',
       'import/no-unresolved': ['error', { ignore: ['\\.js$'] }],
-      // 'require-extensions/require-extensions': ['error', { expectedExtensions: ['ts'] }],
-      // 'require-extensions/require-index': ['error', { expectedExtensions: ['ts'] }],
+      'import-extensions/require-extensions': ['error', { expectedExtensions: ['ts', 'tsx', 'mjs', 'cjs', 'js'] }],
+      'import-extensions/require-index': ['error', { expectedExtensions: ['ts', 'tsx', 'mjs', 'cjs', 'js'] }],
 
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
