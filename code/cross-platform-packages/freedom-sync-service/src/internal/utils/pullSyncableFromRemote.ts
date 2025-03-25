@@ -85,7 +85,7 @@ const onBundleFilePulled = makeAsyncResultFunc(
   ): PR<undefined> => {
     const path = fwd.path;
 
-    const localBundle = await getOrCreateViaSyncBundleFileAtPath(trace, store, path, file.provenance);
+    const localBundle = await getOrCreateViaSyncBundleFileAtPath(trace, store, path, file.metadata);
     if (!localBundle.ok) {
       if (localBundle.value.errorCode === 'deleted') {
         // Was locally deleted, so not interested in this content
@@ -128,7 +128,7 @@ const onFolderPulled = makeAsyncResultFunc(
   ): PR<undefined> => {
     const path = fwd.path;
 
-    const localFolder = await getOrCreateViaSyncFolderAtPath(trace, store, path, folder.provenance);
+    const localFolder = await getOrCreateViaSyncFolderAtPath(trace, store, path, folder.metadata);
     if (!localFolder.ok) {
       if (localFolder.value.errorCode === 'deleted') {
         // Was locally deleted, so not interested in this content
@@ -165,7 +165,7 @@ const onFlatFilePulled = makeAsyncResultFunc(
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));
     }
 
-    const localFile = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, file.data, file.provenance);
+    const localFile = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, file.data, file.metadata);
     if (!localFile.ok) {
       if (localFile.value.errorCode === 'deleted') {
         // Was locally deleted, so not interested in this content

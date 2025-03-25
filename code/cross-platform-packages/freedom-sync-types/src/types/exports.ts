@@ -1,5 +1,6 @@
 export * from './DynamicSyncableId.ts';
 export * from './DynamicSyncablePath.ts';
+export * from './metadata/exports.ts';
 export * from './pull-responses/exports.ts';
 export * from './RemoteId.ts';
 export * from './RemoteInfo.ts';

@@ -1,6 +1,6 @@
 import { makeSyncFunc } from 'freedom-async';
 
-import type { SyncableStoreBackingFolderAccessor } from '../../../backing/SyncableStoreBackingFolderAccessor.ts';
+import type { SyncableStoreBackingFolderAccessor } from '../../../backing/accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { InMemorySyncableStoreBackingFolderItem } from '../types/InMemorySyncableStoreBackingFolderItem.ts';
 
 export const makeFolderAccessor = makeSyncFunc(

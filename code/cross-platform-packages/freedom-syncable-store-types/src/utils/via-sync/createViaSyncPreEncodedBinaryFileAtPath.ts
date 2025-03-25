@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableProvenance } from 'freedom-sync-types';
+import type { SyncableFlatFileMetadata } from 'freedom-sync-types';
 import { StaticSyncablePath, syncableItemTypes } from 'freedom-sync-types';
 import { lastIndexOf } from 'lodash-es';
 
@@ -17,7 +17,7 @@ export const createViaSyncPreEncodedBinaryFileAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: StaticSyncablePath,
     encodedValue: Uint8Array,
-    provenance: SyncableProvenance
+    metadata: SyncableFlatFileMetadata
   ): PR<MutableFlatFileAccessor, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     // Any time any part of an access control bundle is changed, clear trust for the associated folder
     const accessControlBundleFileIdIndex = lastIndexOf(path.ids, ACCESS_CONTROL_BUNDLE_FILE_ID);
@@ -31,6 +31,6 @@ export const createViaSyncPreEncodedBinaryFileAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return await parent.value.createBinaryFile(trace, { mode: 'via-sync', id: path.lastId!, encodedValue, provenance });
+    return await parent.value.createBinaryFile(trace, { mode: 'via-sync', id: path.lastId!, encodedValue, metadata });
   }
 );

@@ -1,10 +1,10 @@
-import type { SyncableId } from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
 
-import type { SyncableStoreBackingMetadata } from '../../../backing/SyncableStoreBackingMetadata.ts';
+import type { LocalItemMetadata } from '../../../backing/LocalItemMetadata.ts';
 
 export type InMemorySyncableStoreBackingFlatFileItem = {
   type: 'flatFile';
   id: SyncableId;
-  metadata: SyncableStoreBackingMetadata & { type: 'flatFile' };
+  metadata: SyncableItemMetadata & { type: 'flatFile' } & LocalItemMetadata;
   data: Uint8Array;
 };

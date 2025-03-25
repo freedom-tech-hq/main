@@ -1,6 +1,6 @@
 import { makeSuccess, makeSyncFunc } from 'freedom-async';
 
-import type { SyncableStoreBackingFlatFileAccessor } from '../../../backing/SyncableStoreBackingFlatFileAccessor.ts';
+import type { SyncableStoreBackingFlatFileAccessor } from '../../../backing/accessors/SyncableStoreBackingFlatFileAccessor.ts';
 import type { InMemorySyncableStoreBackingFlatFileItem } from '../types/InMemorySyncableStoreBackingFlatFileItem.ts';
 
 export const makeFlatFileAccessor = makeSyncFunc(

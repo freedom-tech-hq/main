@@ -15,12 +15,20 @@ import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundErr
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
 import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
-import type { DynamicSyncableId, StaticSyncablePath, SyncableId, SyncableItemType, SyncableProvenance } from 'freedom-sync-types';
+import type {
+  DynamicSyncableId,
+  StaticSyncablePath,
+  SyncableFolderMetadata,
+  SyncableId,
+  SyncableItemType,
+  SyncableProvenance
+} from 'freedom-sync-types';
 import { areDynamicSyncableIdsEqual, invalidProvenance, syncableEncryptedIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
+import type { LocalItemMetadata } from '../../types/backing/LocalItemMetadata.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { FolderManagement } from '../../types/FolderManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
@@ -79,7 +87,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
     async (trace, args): PR<MutableAccessControlledFolderAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedFolder_(trace, args.id, args.provenance);
+          return await this.createPreEncodedFolder_(trace, args.id, args.metadata);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -103,7 +111,11 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
             return provenance;
           }
 
-          const folder = await this.createPreEncodedFolder_(trace, id.value, provenance.value);
+          const folder = await this.createPreEncodedFolder_(trace, id.value, {
+            type: 'folder',
+            provenance: provenance.value,
+            encrypted: true
+          });
           if (!folder.ok) {
             return folder;
           }
@@ -283,7 +295,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
         /* node:coverage enable */
 
         if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          const updatedMetadata = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+          const updatedMetadata = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
           if (!updatedMetadata.ok) {
             return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
           }
@@ -412,7 +424,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
     async (trace): PR<undefined> => {
-      const updatedMetadata = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: undefined });
+      const updatedMetadata = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
       if (!updatedMetadata.ok) {
         return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
       }
@@ -513,7 +525,11 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
 
   private readonly createPreEncodedFolder_ = makeAsyncResultFunc(
     [import.meta.filename, 'createPreEncodedFolder_'],
-    async (trace, id: SyncableId, provenance: SyncableProvenance): PR<InMemoryAccessControlledFolder, 'conflict' | 'deleted'> => {
+    async (
+      trace,
+      id: SyncableId,
+      metadata: SyncableFolderMetadata & LocalItemMetadata
+    ): PR<InMemoryAccessControlledFolder, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       const existingFolder = this.folders_.get(id);
@@ -526,7 +542,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
         return guards;
       }
 
-      const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata: { type: 'folder', provenance } });
+      const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata });
       if (!createdFolder.ok) {
         return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
       }

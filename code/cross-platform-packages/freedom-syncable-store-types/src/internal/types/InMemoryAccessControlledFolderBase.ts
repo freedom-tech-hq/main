@@ -403,7 +403,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         /* node:coverage enable */
 
         if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          const updatedHash = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+          const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
           if (!updatedHash.ok) {
             return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
           }
@@ -448,7 +448,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
     async (trace): PR<undefined> => {
-      const updatedHash = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: undefined });
+      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
       if (!updatedHash.ok) {
         return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
       }

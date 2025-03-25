@@ -31,8 +31,7 @@ export const traversePath = makeSyncResultFunc(
             })
           );
 
-        case 'folder':
-        case 'bundleFile': {
+        case 'folder': {
           const nextCursor = cursor.contents[pathId];
 
           if (nextCursor === undefined) {

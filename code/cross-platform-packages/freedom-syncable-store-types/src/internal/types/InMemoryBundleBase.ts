@@ -16,12 +16,21 @@ import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
 import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
 import type { StorableObject } from 'freedom-object-store-types';
-import type { DynamicSyncableId, StaticSyncablePath, SyncableId, SyncableItemType, SyncableProvenance } from 'freedom-sync-types';
+import type {
+  DynamicSyncableId,
+  StaticSyncablePath,
+  SyncableBundleFileMetadata,
+  SyncableFlatFileMetadata,
+  SyncableId,
+  SyncableItemType,
+  SyncableProvenance
+} from 'freedom-sync-types';
 import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
+import type { LocalItemMetadata } from '../../types/backing/LocalItemMetadata.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { BundleManagement } from '../../types/BundleManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
@@ -100,9 +109,14 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace: Trace, args): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.provenance);
+          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
         case undefined:
         case 'local': {
+          const parentMetadata = await this.backing_.getMetadataAtPath(trace, this.path);
+          if (!parentMetadata.ok) {
+            return generalizeFailureResult(trace, parentMetadata, ['not-found', 'wrong-type']);
+          }
+
           const store = this.weakStore_.deref();
           if (store === undefined) {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -135,7 +149,12 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
             return provenance;
           }
 
-          return await this.createPreEncodedBinaryFile_(trace, id.value, encodedData.value, provenance.value);
+          return await this.createPreEncodedBinaryFile_(trace, id.value, encodedData.value, {
+            type: 'flatFile',
+            provenance: provenance.value,
+            // Flat file encryption always matches the parent bundle or folder
+            encrypted: parentMetadata.value.encrypted
+          });
         }
       }
     }
@@ -146,7 +165,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace, args): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBundleFile_(trace, args.id, args.provenance);
+          return await this.createPreEncodedBundleFile_(trace, args.id, args.metadata);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -170,7 +189,11 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
             return provenance;
           }
 
-          return await this.createPreEncodedBundleFile_(trace, id.value, provenance.value);
+          return await this.createPreEncodedBundleFile_(trace, id.value, {
+            type: 'bundleFile',
+            provenance: provenance.value,
+            encrypted: true
+          });
         }
       }
     }
@@ -337,7 +360,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         /* node:coverage enable */
 
         if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          const updatedHash = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+          const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
           if (!updatedHash.ok) {
             return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
           }
@@ -476,7 +499,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
     async (trace): PR<undefined> => {
-      const updatedHash = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: undefined });
+      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
       if (!updatedHash.ok) {
         return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
       }
@@ -594,7 +617,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       trace: Trace,
       id: SyncableId,
       encodedData: Uint8Array,
-      provenance: SyncableProvenance
+      metadata: SyncableFlatFileMetadata & LocalItemMetadata
     ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
@@ -614,9 +637,12 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       }
       /* node:coverage enable */
 
+      // Never using a hash from metadata
+      metadata.hash = hash.value;
+
       const createdFlatFile = await this.backing_.createBinaryFileWithPath(trace, newPath, {
         data: encodedData,
-        metadata: { type: 'flatFile', provenance, hash: hash.value }
+        metadata
       });
       if (!createdFlatFile.ok) {
         return generalizeFailureResult(trace, createdFlatFile, ['not-found', 'wrong-type']);
@@ -657,7 +683,11 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
 
   public readonly createPreEncodedBundleFile_ = makeAsyncResultFunc(
     [import.meta.filename, 'createPreEncodedBundleFile_'],
-    async (trace, id: SyncableId, provenance: SyncableProvenance): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
+    async (
+      trace,
+      id: SyncableId,
+      metadata: SyncableBundleFileMetadata & LocalItemMetadata
+    ): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       if (this.files_.has(id)) {
@@ -686,7 +716,10 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       }
       /* node:coverage enable */
 
-      const createdBundleFile = await this.backing_.createFolderWithPath(trace, newPath, { metadata: { type: 'bundleFile', provenance } });
+      // Never using a hash from metadata
+      metadata.hash = hash.value;
+
+      const createdBundleFile = await this.backing_.createFolderWithPath(trace, newPath, { metadata });
       if (!createdBundleFile.ok) {
         return generalizeFailureResult(trace, createdBundleFile, ['not-found', 'wrong-type']);
       }

@@ -57,7 +57,7 @@ export class InMemoryMutableFlatFileAccessor extends InMemoryMutableFileAccessor
         return hash;
       }
 
-      const updatedMetadata = await this.backing_.updateMetadataAtPath(trace, this.path, { hash: hash.value });
+      const updatedMetadata = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
       if (!updatedMetadata.ok) {
         return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
       }
