@@ -91,7 +91,7 @@ export class InMemoryMutableFlatFileAccessor implements FlatFileAccessor {
   );
 
   public readonly getEncodedBinary = makeAsyncResultFunc([import.meta.filename, 'getEncodedBinary'], async (trace): PR<Uint8Array> => {
-    const found = await this.backing_.getAtPath(trace, this.path, ['flatFile']);
+    const found = await this.backing_.getAtPath(trace, this.path, 'flatFile');
     if (!found.ok) {
       return generalizeFailureResult(trace, found, ['not-found', 'wrong-type']);
     }

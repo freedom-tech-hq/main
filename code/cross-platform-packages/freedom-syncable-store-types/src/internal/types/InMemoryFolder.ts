@@ -53,6 +53,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
 
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
   private readonly folderOperationsHandler_: FolderOperationsHandler;
+  private readonly makeFolderAccessor_: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
 
   private readonly backing_: SyncableStoreBacking;
   // private readonly folders_ = new Map<SyncableId, InternalFolder>();
@@ -64,19 +65,22 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
     backing,
     syncTracker,
     folderOperationsHandler,
-    path
+    path,
+    makeFolderAccessor
   }: {
     store: WeakRef<MutableSyncableStore>;
     backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
     folderOperationsHandler: FolderOperationsHandler;
     path: StaticSyncablePath;
+    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
   }) {
     this.weakStore_ = store;
     this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.folderOperationsHandler_ = folderOperationsHandler;
     this.path = path;
+    this.makeFolderAccessor_ = makeFolderAccessor;
   }
 
   // MutableFolderStore Methods
@@ -244,7 +248,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
 
       const getPath = this.path.append(id);
 
-      const backingItem = await this.backing_.getAtPath(trace, getPath, expectedType);
+      const backingItem = await this.backing_.getAtPath(trace, getPath, intersectSyncableItemTypes(expectedType, 'folder'));
       if (!backingItem.ok) {
         return backingItem;
       }
@@ -672,12 +676,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   ): MutableSyncableItemAccessor & { type: T } {
     switch (itemType) {
       case 'folder':
-        return new InMemoryAccessControlledFolder({
-          store: this.weakStore_,
-          backing: this.backing_,
-          path,
-          syncTracker: this.syncTracker_
-        }) as any as MutableSyncableItemAccessor & { type: T };
+        return this.makeFolderAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
 
       case 'bundleFile':
         throw new Error("Bundles can't be managed by InMemoryFolder");

@@ -5,7 +5,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { encId, storageRootIdInfo } from 'freedom-sync-types';
+import { encId, storageRootIdInfo, syncableItemTypes } from 'freedom-sync-types';
 import { expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -168,7 +168,7 @@ describe('InMemoryAccessControlledFolder', () => {
     const innerFolder2 = await getFolderAtPath(trace, store, innerPath);
     expectOk(innerFolder2);
 
-    const fileIds = await getDynamicIds(trace, innerFolder2.value, { type: ['flatFile', 'bundleFile'] });
+    const fileIds = await getDynamicIds(trace, innerFolder2.value, { type: syncableItemTypes.exclude('folder') });
     expectOk(fileIds);
 
     t.assert.deepEqual(
@@ -194,7 +194,7 @@ describe('InMemoryAccessControlledFolder', () => {
 
     expectOk(await createBundleFileAtPath(trace, store, myBundlePath, encId('nested-bundle')));
 
-    const fileIds = await getDynamicIds(trace, bundle.value, { type: ['flatFile', 'bundleFile'] });
+    const fileIds = await getDynamicIds(trace, bundle.value, { type: syncableItemTypes.exclude('folder') });
     expectOk(fileIds);
     t.assert.deepStrictEqual(fileIds.value, [encId('hello-world.txt'), encId('nested-bundle')]);
 

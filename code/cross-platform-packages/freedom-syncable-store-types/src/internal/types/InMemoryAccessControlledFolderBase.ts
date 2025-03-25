@@ -39,6 +39,7 @@ import type { SingleOrArray } from 'yaschema';
 import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../consts/special-file-ids.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
+import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
@@ -79,6 +80,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
   private folderOperationsHandler_!: FolderOperationsHandler;
+  private makeFolderAccessor_!: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
   private readonly syncTracker_: SyncTracker;
 
   private readonly backing_: SyncableStoreBacking;
@@ -91,7 +93,8 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         backing: this.backing_,
         syncTracker: this.syncTracker_,
         folderOperationsHandler: this.folderOperationsHandler_,
-        path: this.path
+        path: this.path,
+        makeFolderAccessor: this.makeFolderAccessor_
       });
     }
 
@@ -140,13 +143,16 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   protected deferredInit_({
     store,
-    folderOperationsHandler
+    folderOperationsHandler,
+    makeFolderAccessor
   }: {
     store: WeakRef<MutableSyncableStore>;
     folderOperationsHandler: FolderOperationsHandler;
+    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
   }) {
     this.weakStore_ = store;
     this.folderOperationsHandler_ = folderOperationsHandler;
+    this.makeFolderAccessor_ = makeFolderAccessor;
   }
 
   // MutableAccessControlledFolderAccessor Methods

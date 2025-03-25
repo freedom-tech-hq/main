@@ -15,15 +15,21 @@ export const traversePath = makeSyncResultFunc(
     item: InMemorySyncableStoreBackingItem,
     path: StaticSyncablePath,
     expectedType?: SingleOrArray<T>
-  ): Result<InMemorySyncableStoreBackingItem & { type: T }, 'not-found' | 'wrong-type'> => {
+  ): Result<
+    InMemorySyncableStoreBackingItem & { metadata: InMemorySyncableStoreBackingItem['metadata'] & { type: T } },
+    'not-found' | 'wrong-type'
+  > => {
+    console.log('FOOBARBLA lookin for', path.toString());
     const idsSoFar: SyncableId[] = [];
 
     let cursor: InMemorySyncableStoreBackingItem = item;
     for (const pathId of path.ids) {
       idsSoFar.push(pathId);
+      console.log('FOOBARBLA so far', idsSoFar.join('/'));
 
       switch (cursor.type) {
         case 'flatFile':
+          console.log('FOOBARBLA stopping flat file', pathId);
           return makeFailure(
             new NotFoundError(trace, {
               message: `Expected folder or bundleFile, found: ${cursor.type}`,
@@ -35,6 +41,7 @@ export const traversePath = makeSyncResultFunc(
           const nextCursor = cursor.contents[pathId];
 
           if (nextCursor === undefined) {
+            console.log('FOOBARBLA stopping folder not found', pathId);
             return makeFailure(
               new NotFoundError(trace, {
                 message: `No item found at ${new StaticSyncablePath(path.storageRootId, ...idsSoFar).toString()}`,
@@ -46,13 +53,19 @@ export const traversePath = makeSyncResultFunc(
           cursor = nextCursor;
         }
       }
+
+      console.log('FOOBARBLA continuing after', pathId);
     }
 
-    const guards = guardIsExpectedType(trace, path, cursor, expectedType, 'wrong-type');
+    console.log('FOOBARBLA got to end', path.toString(), cursor.metadata);
+
+    const guards = guardIsExpectedType(trace, path, cursor.metadata, expectedType, 'wrong-type');
     if (!guards.ok) {
       return guards;
     }
 
-    return makeSuccess(cursor as InMemorySyncableStoreBackingItem & { type: T });
+    return makeSuccess(
+      cursor as InMemorySyncableStoreBackingItem & { metadata: InMemorySyncableStoreBackingItem['metadata'] & { type: T } }
+    );
   }
 );

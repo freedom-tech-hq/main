@@ -21,6 +21,10 @@ export class InMemoryAccessControlledFolder extends InMemoryAccessControlledFold
     super({ backing, syncTracker, path });
 
     const folderOperationsHandler = this.makeFolderOperationsHandler_(store);
-    this.deferredInit_({ store, folderOperationsHandler });
+    this.deferredInit_({
+      store,
+      folderOperationsHandler,
+      makeFolderAccessor: () => new InMemoryAccessControlledFolder({ store, backing, path, syncTracker })
+    });
   }
 }

@@ -23,7 +23,7 @@ import type {
   SyncableItemType,
   SyncableProvenance
 } from 'freedom-sync-types';
-import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo } from 'freedom-sync-types';
+import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo, syncableItemTypes } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -44,7 +44,6 @@ import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateP
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-import { InMemoryMutableFlatFileAccessor } from './InMemoryMutableFlatFileAccessor.ts';
 
 // interface InternalFlatFile {
 //   type: 'flatFile';
@@ -98,7 +97,8 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   protected abstract computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash>;
   protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
-  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): InMemoryBundleBase;
+  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableBundleFileAccessor;
+  protected abstract makeFlatFileAccessor_(args: { path: StaticSyncablePath }): MutableFlatFileAccessor;
 
   // MutableFileStore Methods
 
@@ -310,7 +310,11 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
 
       const getPath = this.path.append(id);
 
-      const backingItem = await this.backing_.getAtPath(trace, getPath, expectedType);
+      const backingItem = await this.backing_.getAtPath(
+        trace,
+        getPath,
+        intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder'))
+      );
       if (!backingItem.ok) {
         return backingItem;
       }
@@ -485,7 +489,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     [import.meta.filename, 'getIds'],
     async (trace: Trace, options?: { type?: SingleOrArray<SyncableItemType> }): PR<SyncableId[]> => {
       const ids = await this.backing_.getIdsInPath(trace, this.path, {
-        type: intersectSyncableItemTypes(options?.type, ['bundleFile', 'flatFile'])
+        type: intersectSyncableItemTypes(options?.type, syncableItemTypes.exclude('folder'))
       });
       if (!ids.ok) {
         return generalizeFailureResult(trace, ids, ['not-found', 'wrong-type']);
@@ -595,7 +599,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       return makeSuccess(undefined);
     }
 
-    const allItemIds = await this.backing_.getIdsInPath(trace, this.path, { type: ['bundleFile', 'flatFile'] });
+    const allItemIds = await this.backing_.getIdsInPath(trace, this.path, { type: syncableItemTypes.exclude('folder') });
     if (!allItemIds.ok) {
       return generalizeFailureResult(trace, allItemIds, ['not-found', 'wrong-type']);
     } else if (allItemIds.value.length === 0) {
@@ -817,18 +821,13 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   ): MutableSyncableItemAccessor & { type: T } {
     switch (itemType) {
       case 'folder':
-        throw new Error("Folders can't be managed by InMemoryFolder");
+        throw new Error("Folders can't be managed by InMemoryBundleBase");
 
       case 'bundleFile':
         return this.makeBundleAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
 
       case 'flatFile':
-        return new InMemoryMutableFlatFileAccessor({
-          store: this.weakStore_,
-          backing: this.backing_,
-          path,
-          decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
-        }) as any as MutableSyncableItemAccessor & { type: T };
+        return this.makeFlatFileAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
     }
   }
 }

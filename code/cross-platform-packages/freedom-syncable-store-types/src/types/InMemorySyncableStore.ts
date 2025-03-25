@@ -6,9 +6,11 @@ import { NotificationManager } from 'freedom-notification-types';
 import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
 import { StaticSyncablePath } from 'freedom-sync-types';
 
+import { InMemoryAccessControlledFolder } from '../internal/types/InMemoryAccessControlledFolder.ts';
 import { InMemoryAccessControlledFolderBase } from '../internal/types/InMemoryAccessControlledFolderBase.ts';
 import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
+import type { MutableAccessControlledFolderAccessor } from './MutableAccessControlledFolderAccessor.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
@@ -45,6 +47,11 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
 
     const weakStore = new WeakRef(this);
     const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore);
-    this.deferredInit_({ store: weakStore, folderOperationsHandler });
+    this.deferredInit_({
+      store: weakStore,
+      folderOperationsHandler,
+      makeFolderAccessor: ({ path }: { path: StaticSyncablePath }): MutableAccessControlledFolderAccessor =>
+        new InMemoryAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
+    });
   }
 }

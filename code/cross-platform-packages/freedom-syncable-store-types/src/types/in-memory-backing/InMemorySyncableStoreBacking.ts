@@ -1,15 +1,16 @@
-import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
-import { ConflictError, NotFoundError } from 'freedom-common-errors';
+import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type {
-  StaticSyncablePath,
-  SyncableBundleFileMetadata,
-  SyncableFlatFileMetadata,
-  SyncableFolderMetadata,
-  SyncableId,
-  SyncableItemMetadata,
-  SyncableItemType
+import {
+  type StaticSyncablePath,
+  type SyncableBundleFileMetadata,
+  type SyncableFlatFileMetadata,
+  type SyncableFolderMetadata,
+  type SyncableId,
+  type SyncableItemMetadata,
+  type SyncableItemType,
+  syncableItemTypes
 } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
@@ -43,7 +44,15 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     [import.meta.filename, 'existsAtPath'],
     async (trace, path: StaticSyncablePath): PR<boolean> => {
       const found = traversePath(trace, this.root_, path);
-      return makeSuccess(found !== undefined);
+      if (!found.ok) {
+        if (found.value.errorCode === 'not-found') {
+          return makeSuccess(false);
+        }
+
+        return generalizeFailureResult(trace, excludeFailureResult(found, 'not-found'), 'wrong-type');
+      }
+
+      return makeSuccess(found.value !== undefined);
     }
   );
 
@@ -71,7 +80,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       options?: { type?: SingleOrArray<SyncableItemType> }
     ): PR<SyncableId[], 'not-found' | 'wrong-type'> => {
-      const found = traversePath(trace, this.root_, path, ['bundleFile', 'folder']);
+      const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('flatFile'));
       if (!found.ok) {
         return found;
       }
@@ -122,7 +131,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       ids?: Set<SyncableId>
     ): PR<Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>, 'not-found' | 'wrong-type'> => {
-      const found = traversePath(trace, this.root_, path, ['bundleFile', 'folder']);
+      const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('flatFile'));
       if (!found.ok) {
         return found;
       }
@@ -153,12 +162,13 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       { data, metadata }: { data: Uint8Array; metadata: SyncableFlatFileMetadata & LocalItemMetadata }
     ): PR<SyncableStoreBackingFlatFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
+      console.trace('FOOBARBLA', path.toString());
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = traversePath(trace, this.root_, parentPath, ['bundleFile', 'folder']);
+      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('flatFile'));
       if (!foundParent.ok) {
         return foundParent;
       }
@@ -186,12 +196,13 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       { metadata }: { metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata }
     ): PR<SyncableStoreBackingFolderAccessor | SyncableStoreBackingBundleFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
+      console.trace('FOOBARBLA', path.toString());
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = traversePath(trace, this.root_, parentPath, ['bundleFile', 'folder']);
+      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('flatFile'));
       if (!foundParent.ok) {
         return foundParent;
       }
@@ -220,7 +231,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = traversePath(trace, this.root_, parentPath, ['bundleFile', 'folder']);
+      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('flatFile'));
       if (!foundParent.ok) {
         return foundParent;
       }
