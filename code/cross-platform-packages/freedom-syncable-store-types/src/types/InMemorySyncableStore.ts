@@ -44,8 +44,7 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
     this.creatorCryptoKeySetId = creatorCryptoKeySetId.value;
 
     const weakStore = new WeakRef(this);
-    const storeOperationsHandler = this.makeStoreOperationsHandler_();
-    const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore, storeOperationsHandler);
-    this.deferredInit_({ store: weakStore, storeOperationsHandler, folderOperationsHandler });
+    const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore);
+    this.deferredInit_({ store: weakStore, folderOperationsHandler });
   }
 }

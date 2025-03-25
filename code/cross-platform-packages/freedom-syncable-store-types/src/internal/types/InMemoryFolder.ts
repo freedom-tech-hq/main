@@ -42,7 +42,6 @@ import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNe
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 import { InMemoryAccessControlledFolder } from './InMemoryAccessControlledFolder.ts';
-import type { StoreOperationsHandler } from './StoreOperationsHandler.ts';
 
 // type InternalFolder = InMemoryAccessControlledFolder;
 
@@ -53,7 +52,6 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   private readonly syncTracker_: SyncTracker;
 
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
-  private readonly storeOperationsHandler_: StoreOperationsHandler;
   private readonly folderOperationsHandler_: FolderOperationsHandler;
 
   private readonly backing_: SyncableStoreBacking;
@@ -65,19 +63,16 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
     store,
     backing,
     syncTracker,
-    storeOperationsHandler,
     folderOperationsHandler,
     path
   }: {
     store: WeakRef<MutableSyncableStore>;
     backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
-    storeOperationsHandler: StoreOperationsHandler;
     folderOperationsHandler: FolderOperationsHandler;
     path: StaticSyncablePath;
   }) {
     this.weakStore_ = store;
-    this.storeOperationsHandler_ = storeOperationsHandler;
     this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.folderOperationsHandler_ = folderOperationsHandler;
@@ -595,7 +590,6 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
 
       const folder = new InMemoryAccessControlledFolder({
         store: this.weakStore_,
-        storeOperationsHandler: this.storeOperationsHandler_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
         path: newPath
@@ -680,7 +674,6 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
       case 'folder':
         return new InMemoryAccessControlledFolder({
           store: this.weakStore_,
-          storeOperationsHandler: this.storeOperationsHandler_,
           backing: this.backing_,
           path,
           syncTracker: this.syncTracker_

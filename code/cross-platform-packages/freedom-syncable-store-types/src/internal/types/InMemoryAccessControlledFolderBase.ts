@@ -70,7 +70,6 @@ import { InMemoryEncryptedBundle } from './InMemoryEncryptedBundle.ts';
 import { InMemoryFolder } from './InMemoryFolder.ts';
 import { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
 import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
-import { StoreOperationsHandler } from './StoreOperationsHandler.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
 // TODO: rename to DefaultAccessControlledFolderBase in a separate PR
@@ -79,7 +78,6 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly path: StaticSyncablePath;
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
-  private storeOperationsHandler_!: StoreOperationsHandler;
   private folderOperationsHandler_!: FolderOperationsHandler;
   private readonly syncTracker_: SyncTracker;
 
@@ -92,7 +90,6 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
-        storeOperationsHandler: this.storeOperationsHandler_,
         folderOperationsHandler: this.folderOperationsHandler_,
         path: this.path
       });
@@ -143,15 +140,12 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   protected deferredInit_({
     store,
-    storeOperationsHandler,
     folderOperationsHandler
   }: {
     store: WeakRef<MutableSyncableStore>;
-    storeOperationsHandler: StoreOperationsHandler;
     folderOperationsHandler: FolderOperationsHandler;
   }) {
     this.weakStore_ = store;
-    this.storeOperationsHandler_ = storeOperationsHandler;
     this.folderOperationsHandler_ = folderOperationsHandler;
   }
 
@@ -643,16 +637,11 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     }
   );
 
-  protected makeStoreOperationsHandler_(): StoreOperationsHandler {
-    return new StoreOperationsHandler();
-  }
-
-  protected makeFolderOperationsHandler_(store: WeakRef<MutableSyncableStore>, storeOperationsHandler: StoreOperationsHandler) {
+  protected makeFolderOperationsHandler_(store: WeakRef<MutableSyncableStore>) {
     const weakThis = new WeakRef(this);
 
     return new FolderOperationsHandler({
       store,
-      storeOperationsHandler,
       getAccessControlDocument: async (trace: Trace): PR<SyncableStoreAccessControlDocument> => {
         const self = weakThis.deref();
         if (self === undefined) {

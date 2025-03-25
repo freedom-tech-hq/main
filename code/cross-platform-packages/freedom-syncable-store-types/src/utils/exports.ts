@@ -26,6 +26,7 @@ export * from './guards/exports.ts';
 export * from './initializeRoot.ts';
 export * from './logLs.ts';
 export * from './markSyncableNeedsRecomputeHashAtPath.ts';
+export * from './shouldUseTrustedTimeIdsInPath.ts';
 export * from './validation/exports.ts';
 export * from './verifyAndDecryptBinary.ts';
 export * from './via-sync/exports.ts';
