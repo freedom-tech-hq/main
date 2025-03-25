@@ -1,9 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import * as openpgp from 'openpgp';
 import { encryptEmail } from '../encryptEmail.ts';
+import { decryptFile } from '../decryptFile.ts';
 import { getJsFixture, getStringFixture } from 'freedom-testing-tools';
 import type { User } from '../../../../types/User.ts';
+import * as openpgp from 'openpgp';
 
 const publicKey = getStringFixture(
   import.meta.dirname,
@@ -17,6 +18,7 @@ const user: User = {
   email: 'user1@my-test.com',
   publicKey
 };
+const receivedAt = '2023-01-01T00:00:00Z';
 
 describe('encryptEmail', () => {
   it('handles a typical case', async () => {
@@ -27,40 +29,51 @@ describe('encryptEmail', () => {
     );
 
     // Act
-    const encryptedEmail = await encryptEmail(user, parsedEmail);
+    const encryptedEmail = await encryptEmail({ user, parsedEmail, receivedAt });
 
-    // Assert
-    const { body, metadata } = encryptedEmail;
+    // Assert structure
+    assert.ok(encryptedEmail.render.filename.endsWith('.email'), 'Render filename should end with .email');
+    assert.ok(encryptedEmail.body.filename, 'Body should have a filename');
+    assert.ok(encryptedEmail.archive.filename, 'Archive should have a filename');
+    assert.strictEqual(encryptedEmail.attachments.length, parsedEmail.attachments.length, 'Should have same number of attachments');
 
-    assert.deepStrictEqual(metadata, {
-      contentType: 'application/pgp-encrypted',
-      date: '2025-03-20T19:28:34.000Z',
-      from: 'sender@my-test.com',
-      headers: '{}',
-      messageId: '20250320202834.004250@pavel-mac2.local',
-      subject: 'test Thu, 20 Mar 2025 20:28:34 +0100',
-      timestamp: metadata.timestamp, // Use dynamic timestamp instead of hardcoded value
-      to: 'user1@my-test.com'
-    });
-
-    // Decrypt and verify the message
-    // Load private key
+    // Prepare private key
     const privateKey = await openpgp.readPrivateKey({ armoredKey: privateKeyArmored });
     const decryptedPrivateKey = await openpgp.decryptKey({
       privateKey,
       passphrase: 'testpassword'
     });
 
-    // Decrypt the message
-    const encryptedBody = await openpgp.readMessage({
-      armoredMessage: body
-    });
-    const { data: decrypted } = await openpgp.decrypt({
-      message: encryptedBody,
-      decryptionKeys: decryptedPrivateKey
+    // Decrypt and verify render section
+    const decryptedRender = JSON.parse(await decryptFile(encryptedEmail.render.payload, decryptedPrivateKey));
+    assert.deepStrictEqual(decryptedRender, {
+      ...parsedEmail.render,
+      receivedAt,
+      bodyId: encryptedEmail.body.filename
     });
 
-    // Verify
-    assert.strictEqual(decrypted, parsedEmail.text);
+    // Decrypt and verify body section
+    const decryptedBody = JSON.parse(await decryptFile(encryptedEmail.body.payload, decryptedPrivateKey));
+    assert.deepStrictEqual(decryptedBody, {
+      body: parsedEmail.body,
+      htmlBody: parsedEmail.htmlBody,
+      attachments: encryptedEmail.attachments.map(a => ({
+        ...parsedEmail.attachments[0].render,
+        contentId: a.filename
+      })),
+      archiveId: encryptedEmail.archive.filename
+    });
+
+    // Decrypt and verify attachments
+    for (let i = 0; i < encryptedEmail.attachments.length; i++) {
+      const decryptedAttachment = Buffer.from(
+        await decryptFile(encryptedEmail.attachments[i].payload, decryptedPrivateKey)
+      );
+      assert.deepStrictEqual(
+        decryptedAttachment,
+        parsedEmail.attachments[i].content,
+        `Attachment ${i} content should match`
+      );
+    }
   });
 });

@@ -1,86 +1,88 @@
-import * as openpgp from 'openpgp';
 import type { ParsedEmail } from '../../../types/ParsedEmail.ts';
 import type { User } from '../../../types/User.ts';
-import type { EncryptedEmail, EmailMetadata } from '../../../types/EncryptedEmail.ts';
-
-// TODO: Replace with a real implementation when the EncryptedEmail format will be frozen
+import type { EncryptedEmail, EncryptedPart } from '../../../types/EncryptedEmail.ts';
+import { encryptFile } from './encryptFile.ts';
+import { generateFileId } from './generateFileId.ts';
+import { getUserPublicKey } from './getUserPublicKey.ts';
+import type { PublicKey } from '../../../types/PublicKey.ts';
 
 /**
  * Encrypt an email for a specific user using their public key
  *
- * @param user User with email and public key
- * @param parsedEmail Parsed email data
+ * @param params Parameters for email encryption
+ * @param params.user User with email and public key
+ * @param params.parsedEmail Parsed email data
+ * @param params.receivedAt Date and time when the email was received, ISO seconds
  * @returns Promise resolving to encrypted email data
  */
-export async function encryptEmail(
-  user: User,
-  parsedEmail: ParsedEmail,
-): Promise<EncryptedEmail> {
-  // Extract email data
-  let toAddress = '';
-  let fromAddress = '';
+export async function encryptEmail({
+  user,
+  parsedEmail,
+  receivedAt,
+}: {
+  user: User;
+  parsedEmail: ParsedEmail;
+  receivedAt: string;
+}): Promise<EncryptedEmail> {
+  const publicKey = await getUserPublicKey(user);
 
-  // Extract 'to' address from parsed email
-  if (parsedEmail.to) {
-    // Handle different formats that mailparser might return
-    const toText = typeof parsedEmail.to === 'string' ?
-      parsedEmail.to :
-      (parsedEmail.to as any).text || '';
-    toAddress = extractEmailAddress(toText);
+  // Encrypt all sections TODO: Consider Promise.all()
+  // Attachments
+  const attachments: EncryptedEmail['attachments'] = [];
+  const metaAttachments: EncryptedEmail['body']['source']['attachments'] = [];
+  for (const attachment of parsedEmail.attachments) {
+    const { content, ...metaAttachment } = attachment;
+
+    const part = await encryptPart(content, publicKey);
+
+    metaAttachments.push({
+      ...metaAttachment.render,
+      contentId: part.filename,
+    });
+
+    attachments.push(part);
   }
 
-  // Extract 'from' address from parsed email
-  if (parsedEmail.from) {
-    // Handle different formats that mailparser might return
-    const fromText = typeof parsedEmail.from === 'string' ?
-      parsedEmail.from :
-      (parsedEmail.from as any).text || '';
-    fromAddress = extractEmailAddress(fromText);
-  }
-  const subject = parsedEmail.subject || '(No Subject)';
-  const messageId = parsedEmail.messageId ?
-    parsedEmail.messageId.replace(/[<>]/g, '') : 'unknown';
+  // Archive
+  const archive: EncryptedEmail['archive'] = await encryptPart(parsedEmail.archive, publicKey);
 
-  // Import recipient's public key
-  const publicKey = await openpgp.readKey({ armoredKey: user.publicKey });
+  // Body
+  const body = await encryptPart<EncryptedEmail['body']['source']>(
+    {
+      body: parsedEmail.body,
+      htmlBody: parsedEmail.htmlBody,
+      attachments: metaAttachments,
+      archiveId: archive.filename,
+    },
+    publicKey
+  );
 
-  // Encrypt the email
-  const encrypted = await openpgp.encrypt({
-    message: await openpgp.createMessage({ text: parsedEmail.text ?? '' }),
-    encryptionKeys: publicKey
-  });
+  // Render
+  const render = await encryptPart<EncryptedEmail['render']['source']>(
+    {
+      ...parsedEmail.render,
+      receivedAt,
+      bodyId: body.filename,
+    },
+    publicKey
+  );
+  render.filename += '.email'; // Adjust with a marker
 
-  // Create metadata
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const metadata: EmailMetadata = {
-    messageId,
-    from: fromAddress,
-    to: toAddress,
-    subject,
-    date: parsedEmail.date?.toISOString() || new Date().toISOString(),
-    contentType: 'application/pgp-encrypted',
-    timestamp,
-    headers: JSON.stringify(parsedEmail.headers)
-  };
-
-  // Return encrypted email with metadata
+  // Pack
   return {
-    metadata,
-    body: String(encrypted)
+    render,
+    archive,
+    body,
+    attachments,
   };
 }
 
-function extractEmailAddress(addressString: string | undefined): string {
-  if (!addressString) {
-    return '';
-  }
-
-  // Check if the address is in the format "Name <email@example.com>"
-  const match = addressString.match(/<([^>]+)>/);
-  if (match && match[1]) {
-    return match[1].toLowerCase();
-  }
-
-  // Otherwise, return the original string
-  return addressString.toLowerCase();
+async function encryptPart<Source>(
+  source: Source,
+  publicKey: PublicKey,
+): Promise<EncryptedPart<Source>> {
+  const serialized = JSON.stringify(source);
+  const filename = generateFileId(serialized);
+  const payload = await encryptFile(serialized, publicKey);
+  return { source, filename, payload };
 }
