@@ -42,22 +42,22 @@ describe('processEmail', async () => {
     await processEmail(inEmail);
 
     // Assert
-    // Check saveToStorageInbox was called with correct parameters
-    assert.strictEqual(saveToStorageInboxMock.mock.calls.length, 1, 'saveToStorageInbox should be called once');
+    // Check saveToStorageInbox was called for each part
+    const calls = saveToStorageInboxMock.mock.calls;
+    assert.strictEqual(calls.length, 3, 'saveToStorageInbox should be called 3 times (render, archive, body)');
 
-    const [calledUser, calledEmail] = saveToStorageInboxMock.mock.calls[0].arguments;
-    assert.strictEqual(calledUser, user, 'saveToStorageInbox should be called with the correct user');
-    assert.deepStrictEqual(calledEmail.metadata, {
-      contentType: 'application/pgp-encrypted',
-      date: '2025-03-20T19:28:34.000Z',
-      from: 'sender@my-test.com',
-      headers: '{}',
-      messageId: '20250320202834.004250@pavel-mac2.local',
-      subject: 'test Thu, 20 Mar 2025 20:28:34 +0100',
-      timestamp: calledEmail.metadata.timestamp, // Use dynamic timestamp instead of hardcoded value
-      to: 'user1@my-test.com'
-    });
-    assert.ok(calledEmail.body, 'Encrypted email should have a body');
+    // Check that each call has the correct user
+    for (const call of calls) {
+      const [calledUser, part] = call.arguments;
+      assert.strictEqual(calledUser, user, 'saveToStorageInbox should be called with the correct user');
+      assert.ok(part.filename, 'Each part should have a filename');
+      assert.ok(part.payload, 'Each part should have a payload');
+    }
+
+    // Verify we have all required parts
+    const filenames = calls.map(call => call.arguments[1].filename);
+    assert.ok(filenames.some(f => f.endsWith('.email')), 'Should have a render part with .email extension');
+    assert.ok(filenames.length === new Set(filenames).size, 'All filenames should be unique');
   });
 
   it('processes email with multiple recipients', async () => {
@@ -89,13 +89,23 @@ This is a test email with multiple recipients`;
 
     // Assert
     assert.strictEqual(findUsersMock.mock.calls.length, 1, 'findUsers should be called once');
-    assert.strictEqual(saveToStorageInboxMock.mock.calls.length, 3, 'saveToStorageInbox should be called for each user');
 
-    // Check that saveToStorageInbox was called with each user
-    const recipientEmails = saveToStorageInboxMock.mock.calls.map(call => call.arguments[0].email);
-    assert.ok(recipientEmails.includes('user1@my-test.com'), 'user1 should receive email');
-    assert.ok(recipientEmails.includes('user2@my-test.com'), 'user2 should receive email');
-    assert.ok(recipientEmails.includes('user3@my-test.com'), 'user3 should receive email');
+    // Each user should have 3 parts saved (render, archive, body)
+    const minExpectedCalls = testUsers.length * 3;
+    assert.strictEqual(
+      saveToStorageInboxMock.mock.calls.length,
+      testUsers.length * 3,
+      `saveToStorageInbox should be called at least ${minExpectedCalls} times (3 parts per user)`
+    );
+
+    // Check that each user got their parts
+    const userEmailsWithParts = new Set(
+      saveToStorageInboxMock.mock.calls.map(call => call.arguments[0].email)
+    );
+    assert.strictEqual(userEmailsWithParts.size, testUsers.length, 'Each user should receive parts');
+    for (const user of testUsers) {
+      assert.ok(userEmailsWithParts.has(user.email), `${user.email} should receive parts`);
+    }
   });
 
   it('handles empty recipients gracefully', async () => {
