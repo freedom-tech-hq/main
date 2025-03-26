@@ -96,7 +96,7 @@ export class InMemoryMutableFlatFileAccessor implements FlatFileAccessor {
       return generalizeFailureResult(trace, found, ['not-found', 'wrong-type']);
     }
 
-    return found.value.getBinary(trace);
+    return await found.value.getBinary(trace);
   });
 
   public readonly getBinary = makeAsyncResultFunc([import.meta.filename, 'getBinary'], async (trace): PR<Uint8Array> => {

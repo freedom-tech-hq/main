@@ -24,7 +24,6 @@ import { getDynamicIds } from '../../../utils/get/getDynamicIds.ts';
 import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
 import { getStringFromFileAtPath } from '../../../utils/get/getStringFromFileAtPath.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
-import { logLs } from '../../../utils/logLs.ts';
 
 describe('InMemoryAccessControlledFolder', () => {
   let trace!: Trace;
@@ -176,9 +175,6 @@ describe('InMemoryAccessControlledFolder', () => {
     expectIncludes(innerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_FILE_ID);
     expectIncludes(innerFolderItemIds.value, STORE_CHANGES_BUNDLE_FILE_ID);
     expectIncludes(innerFolderItemIds.value, encId('hello-world.txt'));
-
-    // TODO: TEMP
-    await logLs(trace, store, console.log, { prefix: 'LS: ' });
   });
 
   it('creating nested folders and bundles should work', async (t: TestContext) => {
