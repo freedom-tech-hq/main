@@ -45,8 +45,6 @@ import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 import { InMemoryAccessControlledFolder } from './InMemoryAccessControlledFolder.ts';
 
-// type InternalFolder = InMemoryAccessControlledFolder;
-
 // TODO: rename to DefaultFolder in separate PR
 export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   public readonly path: StaticSyncablePath;
@@ -58,7 +56,6 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   private readonly makeFolderAccessor_: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
 
   private readonly backing_: SyncableStoreBacking;
-  // private readonly folders_ = new Map<SyncableId, InternalFolder>();
 
   private needsRecomputeHashCount_ = 0;
 

@@ -50,4 +50,8 @@ export class InMemoryPlainBundle extends InMemoryBundleBase {
       decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
     });
   }
+
+  protected override isEncrypted_(): boolean {
+    return false;
+  }
 }

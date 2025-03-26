@@ -10,7 +10,6 @@ import { InMemoryAccessControlledFolder } from '../internal/types/InMemoryAccess
 import { InMemoryAccessControlledFolderBase } from '../internal/types/InMemoryAccessControlledFolderBase.ts';
 import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
-import type { MutableAccessControlledFolderAccessor } from './MutableAccessControlledFolderAccessor.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 

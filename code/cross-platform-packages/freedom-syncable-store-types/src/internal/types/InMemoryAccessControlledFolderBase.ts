@@ -643,11 +643,11 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     }
   );
 
-  protected makeFolderOperationsHandler_(store: WeakRef<MutableSyncableStore>) {
+  protected makeFolderOperationsHandler_(weakStore: WeakRef<MutableSyncableStore>) {
     const weakThis = new WeakRef(this);
 
     return new FolderOperationsHandler({
-      store,
+      store: weakStore,
       getAccessControlDocument: async (trace: Trace): PR<SyncableStoreAccessControlDocument> => {
         const self = weakThis.deref();
         if (self === undefined) {

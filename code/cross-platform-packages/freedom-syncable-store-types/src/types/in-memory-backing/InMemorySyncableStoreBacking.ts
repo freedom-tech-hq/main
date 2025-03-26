@@ -15,7 +15,6 @@ import {
 import type { SingleOrArray } from 'yaschema';
 
 import { isExpectedType } from '../../utils/validation/isExpectedType.ts';
-import type { SyncableStoreBackingBundleFileAccessor } from '../backing/accessors/SyncableStoreBackingBundleFileAccessor.ts';
 import type { SyncableStoreBackingFlatFileAccessor } from '../backing/accessors/SyncableStoreBackingFlatFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from '../backing/accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { SyncableStoreBackingItemAccessor } from '../backing/accessors/SyncableStoreBackingItemAccessor.ts';
@@ -36,7 +35,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
-      metadata: { ...metadata, type: 'bundleFile', encrypted: true },
+      metadata: { ...metadata, type: 'folder', encrypted: true },
       contents: {}
     };
   }
@@ -191,7 +190,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       trace,
       path: StaticSyncablePath,
       { metadata }: { metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata }
-    ): PR<SyncableStoreBackingFolderAccessor | SyncableStoreBackingBundleFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
+    ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
@@ -216,7 +215,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
 
       return makeSuccess(makeFolderAccessor(trace, newItem));
     }
-  ) as SyncableStoreBacking['createFolderWithPath'];
+  );
 
   public readonly deleteAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'deleteAtPath'],

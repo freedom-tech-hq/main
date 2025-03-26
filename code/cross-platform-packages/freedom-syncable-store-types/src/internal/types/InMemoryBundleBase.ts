@@ -47,18 +47,6 @@ import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNe
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
-// interface InternalFlatFile {
-//   type: 'flatFile';
-//   accessor: InMemoryMutableFlatFileAccessor;
-// }
-
-// interface InternalBundleFile {
-//   type: 'bundleFile';
-//   accessor: InMemoryMutableBundleFileAccessor;
-// }
-
-// type AnyFile = InternalFlatFile | InternalBundleFile;
-
 export interface InMemoryBundleBaseConstructorArgs {
   store: WeakRef<MutableSyncableStore>;
   backing: SyncableStoreBacking;
@@ -79,10 +67,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   protected readonly folderOperationsHandler_: FolderOperationsHandler;
 
   protected readonly backing_: SyncableStoreBacking;
-  // private readonly files_ = new Map<SyncableId, StorableObject<AnyFile>>();
 
-  // private hash_: Sha256Hash | undefined;
-  // private readonly provenance_: SyncableProvenance;
   private needsRecomputeHashCount_ = 0;
 
   constructor({ store, backing, syncTracker, folderOperationsHandler, path, supportsDeletion }: InMemoryBundleBaseConstructorArgs) {
@@ -101,6 +86,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
   protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableBundleFileAccessor;
   protected abstract makeFlatFileAccessor_(args: { path: StaticSyncablePath }): MutableFlatFileAccessor;
+  protected abstract isEncrypted_(): boolean;
 
   // MutableFileStore Methods
 
@@ -112,11 +98,6 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
           return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
         case undefined:
         case 'local': {
-          const parentMetadata = await this.backing_.getMetadataAtPath(trace, this.path);
-          if (!parentMetadata.ok) {
-            return generalizeFailureResult(trace, parentMetadata, ['not-found', 'wrong-type']);
-          }
-
           const store = this.weakStore_.deref();
           if (store === undefined) {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -153,7 +134,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
             type: 'flatFile',
             provenance: provenance.value,
             // Flat file encryption always matches the parent bundle or folder
-            encrypted: parentMetadata.value.encrypted
+            encrypted: this.isEncrypted_()
           });
         }
       }
@@ -192,7 +173,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
           return await this.createPreEncodedBundleFile_(trace, id.value, {
             type: 'bundleFile',
             provenance: provenance.value,
-            encrypted: true
+            encrypted: this.isEncrypted_()
           });
         }
       }
@@ -502,7 +483,22 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         return generalizeFailureResult(trace, ids, ['not-found', 'wrong-type']);
       }
 
-      return await this.filterOutDeletedIds_(trace, ids.value);
+      const nonDeletedIds = await this.filterOutDeletedIds_(trace, ids.value);
+      if (!nonDeletedIds.ok) {
+        return nonDeletedIds;
+      }
+
+      const metadataById = await this.backing_.getMetadataByIdInPath(trace, this.path, new Set(nonDeletedIds.value));
+      if (!metadataById.ok) {
+        return generalizeFailureResult(trace, metadataById, ['not-found', 'wrong-type']);
+      }
+
+      const isEncrypted = this.isEncrypted_();
+      const idsWithMatchingEncryptionMode = objectEntries(metadataById.value)
+        .filter(([_id, metadata]) => metadata?.encrypted === isEncrypted)
+        .map(([id, _metadata]) => id);
+
+      return makeSuccess(idsWithMatchingEncryptionMode);
     }
   );
 
