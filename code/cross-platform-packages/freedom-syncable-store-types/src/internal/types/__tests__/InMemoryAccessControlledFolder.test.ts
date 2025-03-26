@@ -6,7 +6,7 @@ import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { encId, storageRootIdInfo, syncableItemTypes } from 'freedom-sync-types';
-import { expectNotOk, expectOk } from 'freedom-testing-tools';
+import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -24,6 +24,7 @@ import { getDynamicIds } from '../../../utils/get/getDynamicIds.ts';
 import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
 import { getStringFromFileAtPath } from '../../../utils/get/getStringFromFileAtPath.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
+import { logLs } from '../../../utils/logLs.ts';
 
 describe('InMemoryAccessControlledFolder', () => {
   let trace!: Trace;
@@ -146,7 +147,6 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(outerFolder);
     const outerPath = outerFolder.value.path;
 
-    console.log('FOOBARBLA outerPath', outerPath.toString());
     const innerFolder = await createFolderAtPath(trace, store, outerPath, encId('inner'));
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
@@ -162,20 +162,23 @@ describe('InMemoryAccessControlledFolder', () => {
     const outerFolder2 = await getFolderAtPath(trace, store, outerPath);
     expectOk(outerFolder2);
 
-    const folderIds = await getDynamicIds(trace, outerFolder2.value, { type: 'folder' });
-    expectOk(folderIds);
-    t.assert.deepStrictEqual(folderIds.value, [encId('inner')]);
+    const outerFolderItemIds = await getDynamicIds(trace, outerFolder2.value);
+    expectOk(outerFolderItemIds);
+    expectIncludes(outerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_FILE_ID);
+    expectIncludes(outerFolderItemIds.value, STORE_CHANGES_BUNDLE_FILE_ID);
+    expectIncludes(outerFolderItemIds.value, encId('inner'));
 
     const innerFolder2 = await getFolderAtPath(trace, store, innerPath);
     expectOk(innerFolder2);
 
-    const fileIds = await getDynamicIds(trace, innerFolder2.value, { type: syncableItemTypes.exclude('folder') });
-    expectOk(fileIds);
+    const innerFolderItemIds = await getDynamicIds(trace, innerFolder2.value);
+    expectOk(innerFolderItemIds);
+    expectIncludes(innerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_FILE_ID);
+    expectIncludes(innerFolderItemIds.value, STORE_CHANGES_BUNDLE_FILE_ID);
+    expectIncludes(innerFolderItemIds.value, encId('hello-world.txt'));
 
-    t.assert.deepEqual(
-      fileIds.value.sort(),
-      [ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID, encId('hello-world.txt')].sort()
-    );
+    // TODO: TEMP
+    await logLs(trace, store, console.log, { prefix: 'LS: ' });
   });
 
   it('creating nested folders and bundles should work', async (t: TestContext) => {

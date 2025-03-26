@@ -50,8 +50,7 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
     this.deferredInit_({
       store: weakStore,
       folderOperationsHandler,
-      makeFolderAccessor: ({ path }: { path: StaticSyncablePath }): MutableAccessControlledFolderAccessor =>
-        new InMemoryAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
+      makeFolderAccessor: ({ path }) => new InMemoryAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
     });
   }
 }

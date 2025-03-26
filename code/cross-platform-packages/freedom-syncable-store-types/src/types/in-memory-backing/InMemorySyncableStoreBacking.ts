@@ -14,6 +14,7 @@ import {
 } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
+import { isExpectedType } from '../../utils/validation/isExpectedType.ts';
 import type { SyncableStoreBackingBundleFileAccessor } from '../backing/accessors/SyncableStoreBackingBundleFileAccessor.ts';
 import type { SyncableStoreBackingFlatFileAccessor } from '../backing/accessors/SyncableStoreBackingFlatFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from '../backing/accessors/SyncableStoreBackingFolderAccessor.ts';
@@ -91,12 +92,8 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
             return false;
           }
 
-          const expectedType = options?.type;
-          if (expectedType !== undefined) {
-            return Array.isArray(expectedType) ? expectedType.includes(item.type) : expectedType === item.type;
-          }
-
-          return true;
+          const isExpected = isExpectedType(trace, item.metadata, options?.type);
+          return isExpected.ok && isExpected.value;
         })
         .map(([id, _item]) => id);
       return makeSuccess(ids);

@@ -24,7 +24,7 @@ export class InMemoryAccessControlledFolder extends InMemoryAccessControlledFold
     this.deferredInit_({
       store,
       folderOperationsHandler,
-      makeFolderAccessor: () => new InMemoryAccessControlledFolder({ store, backing, path, syncTracker })
+      makeFolderAccessor: ({ path }) => new InMemoryAccessControlledFolder({ store, backing, path, syncTracker })
     });
   }
 }

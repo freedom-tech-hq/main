@@ -3,7 +3,6 @@ import {
   allResults,
   allResultsMapped,
   allResultsReduced,
-  consoleLog,
   debugTopic,
   excludeFailureResult,
   makeAsyncResultFunc,
@@ -720,9 +719,6 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     ): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
-      if (id === '._changes') {
-        consoleLog().debug?.(trace, 'FOOBARBLA creating', newPath.toString());
-      }
       const exists = await this.backing_.existsAtPath(trace, newPath);
       if (!exists.ok) {
         return exists;
