@@ -162,7 +162,6 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       { data, metadata }: { data: Uint8Array; metadata: SyncableFlatFileMetadata & LocalItemMetadata }
     ): PR<SyncableStoreBackingFlatFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
-      console.trace('FOOBARBLA', path.toString());
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
@@ -196,7 +195,6 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       { metadata }: { metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata }
     ): PR<SyncableStoreBackingFolderAccessor | SyncableStoreBackingBundleFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
-      console.trace('FOOBARBLA', path.toString());
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));

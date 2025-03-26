@@ -8,6 +8,11 @@ import type { SingleOrArray } from 'yaschema';
 import { guardIsExpectedType } from '../../../../utils/guards/guardIsExpectedType.ts';
 import type { InMemorySyncableStoreBackingItem } from '../types/InMemorySyncableStoreBackingItem.ts';
 
+type BackingTypeBySyncableItemType<T extends SyncableItemType> =
+  | (T extends 'flatFile' ? 'flatFile' : never)
+  | (T extends 'bundleFile' ? 'folder' : never)
+  | (T extends 'folder' ? 'folder' : never);
+
 export const traversePath = makeSyncResultFunc(
   [import.meta.filename],
   <T extends SyncableItemType = SyncableItemType>(
@@ -16,20 +21,20 @@ export const traversePath = makeSyncResultFunc(
     path: StaticSyncablePath,
     expectedType?: SingleOrArray<T>
   ): Result<
-    InMemorySyncableStoreBackingItem & { metadata: InMemorySyncableStoreBackingItem['metadata'] & { type: T } },
+    InMemorySyncableStoreBackingItem & {
+      type: BackingTypeBySyncableItemType<T>;
+      metadata: InMemorySyncableStoreBackingItem['metadata'] & { type: T };
+    },
     'not-found' | 'wrong-type'
   > => {
-    console.log('FOOBARBLA lookin for', path.toString());
     const idsSoFar: SyncableId[] = [];
 
     let cursor: InMemorySyncableStoreBackingItem = item;
     for (const pathId of path.ids) {
       idsSoFar.push(pathId);
-      console.log('FOOBARBLA so far', idsSoFar.join('/'));
 
       switch (cursor.type) {
         case 'flatFile':
-          console.log('FOOBARBLA stopping flat file', pathId);
           return makeFailure(
             new NotFoundError(trace, {
               message: `Expected folder or bundleFile, found: ${cursor.type}`,
@@ -41,7 +46,6 @@ export const traversePath = makeSyncResultFunc(
           const nextCursor = cursor.contents[pathId];
 
           if (nextCursor === undefined) {
-            console.log('FOOBARBLA stopping folder not found', pathId);
             return makeFailure(
               new NotFoundError(trace, {
                 message: `No item found at ${new StaticSyncablePath(path.storageRootId, ...idsSoFar).toString()}`,
@@ -53,11 +57,7 @@ export const traversePath = makeSyncResultFunc(
           cursor = nextCursor;
         }
       }
-
-      console.log('FOOBARBLA continuing after', pathId);
     }
-
-    console.log('FOOBARBLA got to end', path.toString(), cursor.metadata);
 
     const guards = guardIsExpectedType(trace, path, cursor.metadata, expectedType, 'wrong-type');
     if (!guards.ok) {
@@ -65,7 +65,10 @@ export const traversePath = makeSyncResultFunc(
     }
 
     return makeSuccess(
-      cursor as InMemorySyncableStoreBackingItem & { metadata: InMemorySyncableStoreBackingItem['metadata'] & { type: T } }
+      cursor as InMemorySyncableStoreBackingItem & {
+        type: BackingTypeBySyncableItemType<T>;
+        metadata: InMemorySyncableStoreBackingItem['metadata'] & { type: T };
+      }
     );
   }
 );

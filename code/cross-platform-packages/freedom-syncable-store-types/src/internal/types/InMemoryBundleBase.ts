@@ -1,7 +1,9 @@
 import type { PR } from 'freedom-async';
 import {
+  allResults,
   allResultsMapped,
   allResultsReduced,
+  consoleLog,
   debugTopic,
   excludeFailureResult,
   makeAsyncResultFunc,
@@ -41,6 +43,7 @@ import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
+import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
@@ -310,21 +313,26 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
 
       const getPath = this.path.append(id);
 
-      const backingItem = await this.backing_.getAtPath(
-        trace,
-        getPath,
-        intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder'))
-      );
-      if (!backingItem.ok) {
-        return backingItem;
+      const metadata = await this.backing_.getMetadataAtPath(trace, getPath);
+      if (!metadata.ok) {
+        return metadata;
       }
 
-      const guards = await this.guardNotDeleted_(trace, this.path.append(id), 'deleted');
+      const guards = await allResults(trace, [
+        this.guardNotDeleted_(trace, getPath, 'deleted'),
+        guardIsExpectedType(
+          trace,
+          getPath,
+          metadata.value,
+          intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
+          'wrong-type'
+        )
+      ]);
       if (!guards.ok) {
         return guards;
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, backingItem.value.type));
+      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, metadata.value.type as T));
     }
   );
 
@@ -712,6 +720,9 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     ): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
+      if (id === '._changes') {
+        consoleLog().debug?.(trace, 'FOOBARBLA creating', newPath.toString());
+      }
       const exists = await this.backing_.existsAtPath(trace, newPath);
       if (!exists.ok) {
         return exists;

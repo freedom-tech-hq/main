@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import {
+  allResults,
   allResultsMapped,
   allResultsReduced,
   debugTopic,
@@ -38,6 +39,7 @@ import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
+import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
@@ -248,17 +250,20 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
 
       const getPath = this.path.append(id);
 
-      const backingItem = await this.backing_.getAtPath(trace, getPath, intersectSyncableItemTypes(expectedType, 'folder'));
-      if (!backingItem.ok) {
-        return backingItem;
+      const metadata = await this.backing_.getMetadataAtPath(trace, getPath);
+      if (!metadata.ok) {
+        return metadata;
       }
 
-      const guards = await this.guardNotDeleted_(trace, this.path.append(id), 'deleted');
+      const guards = await allResults(trace, [
+        this.guardNotDeleted_(trace, getPath, 'deleted'),
+        guardIsExpectedType(trace, getPath, metadata.value, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type')
+      ]);
       if (!guards.ok) {
         return guards;
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, backingItem.value.type));
+      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, metadata.value.type as T));
     }
   );
 

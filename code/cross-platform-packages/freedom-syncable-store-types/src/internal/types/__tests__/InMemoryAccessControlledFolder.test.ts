@@ -146,6 +146,7 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(outerFolder);
     const outerPath = outerFolder.value.path;
 
+    console.log('FOOBARBLA outerPath', outerPath.toString());
     const innerFolder = await createFolderAtPath(trace, store, outerPath, encId('inner'));
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
