@@ -4,7 +4,7 @@ import { ForbiddenError, generalizeFailureResult } from 'freedom-common-errors';
 
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
-import { editorAndAboveRoles } from '../../types/SyncableStoreRole.ts';
+import { editorAndAboveRoles, rolesWithWriteAccess } from '../../types/SyncableStoreRole.ts';
 import { getRoleForOriginWithPath } from './getRoleForOriginWithPath.ts';
 
 export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
@@ -35,7 +35,7 @@ export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
     }
 
     // Checking that the user has at least general write access
-    if (!editorAndAboveRoles.has(originRole.value)) {
+    if (!rolesWithWriteAccess.has(originRole.value)) {
       // It's also possible that permissions are just temporarily out of sync
       return makeSuccess(false);
     }

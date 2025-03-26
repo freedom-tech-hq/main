@@ -76,7 +76,7 @@ describe('InMemoryAccessControlledFolder', () => {
     t.assert.strictEqual(textContent.value, 'hello world');
   });
 
-  it('giving appender (write-only) access to a second user should work', async (_t: TestContext) => {
+  it('giving appender (write-only) access to a second user should work', async (t: TestContext) => {
     const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
     expectOk(testingFolder);
 
@@ -96,8 +96,15 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(createdTestTxtFile);
 
     // Should NOT be able to read back that file
+    const textContent2 = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
+    expectNotOk(textContent2);
+
+    cryptoService.hotSwap(primaryUserCryptoService);
+
+    // Primary user should be able to read back that file
     const textContent = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
-    expectNotOk(textContent);
+    expectOk(textContent);
+    t.assert.strictEqual(textContent.value, 'hello world');
   });
 
   it('modifying user access should work', async (t: TestContext) => {

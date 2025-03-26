@@ -11,6 +11,9 @@ export const editorAndAboveRoles = new Set<SyncableStoreRole>(['creator', 'owner
 export const viewerAndAboveRoles = new Set<SyncableStoreRole>(['creator', 'owner', 'admin', 'editor', 'viewer']);
 export const appenderAndAboveRoles = new Set<SyncableStoreRole>(['creator', 'owner', 'admin', 'editor', 'viewer', 'appender']);
 
+export const rolesWithReadAccess = viewerAndAboveRoles;
+export const rolesWithWriteAccess = new Set<SyncableStoreRole>([...editorAndAboveRoles, 'appender']);
+
 export const creatorAndBelowRoles = new Set<SyncableStoreRole>(['creator', 'owner', 'admin', 'editor', 'viewer', 'appender']);
 export const ownerAndBelowRoles = new Set<SyncableStoreRole>(['owner', 'admin', 'editor', 'viewer', 'appender']);
 export const adminAndBelowRoles = new Set<SyncableStoreRole>(['admin', 'editor', 'viewer', 'appender']);
