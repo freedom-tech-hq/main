@@ -71,7 +71,6 @@ export class InMemoryDataSources implements DataSources {
       return provenance;
     }
 
-    // TODO: TEMP
     const storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
 
     const newStore = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
