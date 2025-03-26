@@ -4,17 +4,17 @@ import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { SyncableBundleFileMetadata, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-types';
 import type { JsonValue } from 'yaschema';
 
+import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { folderMetadataSchema } from '../types/FolderMetadata.ts';
-import { getFsPath } from './getFsPath.ts';
+import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 
 export const makeFolderMetaFuncForPath = (rootPath: string, ids: readonly SyncableId[]) =>
   makeAsyncResultFunc(
     [import.meta.filename],
-    async (trace): PR<(SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata, 'not-found' | 'wrong-type'> => {
-      const filePath = await getFsPath(trace, rootPath, ids, ['metadata.json']);
+    async (trace): PR<(SyncableBundleFileMetadata | SyncableFolderMetadata) & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
+      const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
       if (!filePath.ok) {
         return filePath;
       }

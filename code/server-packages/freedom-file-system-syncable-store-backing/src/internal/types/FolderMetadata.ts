@@ -1,11 +1,11 @@
 import { schema } from 'yaschema';
 
-import { localMetadataSchema } from './LocalMetadata.ts';
+import { fileSystemLocalItemMetadataSchema } from './FileSystemLocalItemMetadata.ts';
 import { syncableMetadataBaseSchema } from './SyncableMetadataBase.ts';
 
 export const folderMetadataSchema = schema.allOf3(
   syncableMetadataBaseSchema,
-  localMetadataSchema,
+  fileSystemLocalItemMetadataSchema,
   schema.oneOf(
     schema.object({
       type: schema.string('folder'),

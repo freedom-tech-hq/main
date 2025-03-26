@@ -11,10 +11,10 @@ import type {
 } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
+import type { InMemoryLocalItemMetadata } from '../in-memory-backing/internal/types/InMemoryLocalItemMetadata.ts';
 import type { SyncableStoreBackingFlatFileAccessor } from './accessors/SyncableStoreBackingFlatFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from './accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { SyncableStoreBackingItemAccessor } from './accessors/SyncableStoreBackingItemAccessor.ts';
-import type { LocalItemMetadata } from './LocalItemMetadata.ts';
 
 export interface SyncableStoreBacking {
   readonly existsAtPath: PRFunc<boolean, never, [path: StaticSyncablePath]>;
@@ -31,10 +31,14 @@ export interface SyncableStoreBacking {
     [path: StaticSyncablePath, options?: { type?: SingleOrArray<SyncableItemType> }]
   >;
 
-  readonly getMetadataAtPath: PRFunc<SyncableItemMetadata & LocalItemMetadata, 'not-found' | 'wrong-type', [path: StaticSyncablePath]>;
+  readonly getMetadataAtPath: PRFunc<
+    SyncableItemMetadata & InMemoryLocalItemMetadata,
+    'not-found' | 'wrong-type',
+    [path: StaticSyncablePath]
+  >;
 
   readonly getMetadataByIdInPath: PRFunc<
-    Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>,
+    Partial<Record<SyncableId, SyncableItemMetadata & InMemoryLocalItemMetadata>>,
     'not-found' | 'wrong-type',
     [path: StaticSyncablePath, ids?: Set<SyncableId>]
   >;
@@ -42,13 +46,13 @@ export interface SyncableStoreBacking {
   readonly createBinaryFileWithPath: PRFunc<
     SyncableStoreBackingFlatFileAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { data: Uint8Array; metadata: SyncableFlatFileMetadata & LocalItemMetadata }]
+    [path: StaticSyncablePath, { data: Uint8Array; metadata: SyncableFlatFileMetadata & InMemoryLocalItemMetadata }]
   >;
 
   readonly createFolderWithPath: PRFunc<
     SyncableStoreBackingFolderAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleFileMetadata) & LocalItemMetadata }]
+    [path: StaticSyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleFileMetadata) & InMemoryLocalItemMetadata }]
   >;
 
   readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: StaticSyncablePath]>;
@@ -56,6 +60,6 @@ export interface SyncableStoreBacking {
   readonly updateLocalMetadataAtPath: PRFunc<
     undefined,
     'not-found' | 'wrong-type',
-    [path: StaticSyncablePath, metadata: Partial<LocalItemMetadata>]
+    [path: StaticSyncablePath, metadata: Partial<InMemoryLocalItemMetadata>]
   >;
 }

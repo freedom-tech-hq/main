@@ -4,17 +4,17 @@ import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalSchemaValidationError } from 'freedom-common-errors';
 import { type SyncableId, type SyncableItemMetadata } from 'freedom-sync-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-types';
 import type { JsonValue } from 'yaschema';
 
+import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { flatFileMetadataSchema } from '../types/FlatFileMetadata.ts';
-import { getFsPath } from './getFsPath.ts';
+import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 
 export const makeFlatFileMetaFuncForPath = (rootPath: string, ids: readonly SyncableId[]) =>
   makeAsyncResultFunc(
     [import.meta.filename],
-    async (trace): PR<SyncableItemMetadata & { type: 'flatFile' } & LocalItemMetadata, 'not-found' | 'wrong-type'> => {
-      const filePath = await getFsPath(trace, rootPath, ids, ['metadata.json']);
+    async (trace): PR<SyncableItemMetadata & { type: 'flatFile' } & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
+      const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
       if (!filePath.ok) {
         return filePath;
       }

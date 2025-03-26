@@ -4,16 +4,21 @@ import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { SyncableId } from 'freedom-sync-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-types';
 import type { JsonValue } from 'yaschema';
 
 import { anyMetadataSchema } from '../types/AnyMetadata.ts';
-import { getFsPath } from './getFsPath.ts';
+import type { FileSystemChangeableLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
+import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 
 export const updateLocalMetadata = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, rootPath: string, ids: readonly SyncableId[], metadataChanges: Partial<LocalItemMetadata>): PR<undefined> => {
-    const filePath = await getFsPath(trace, rootPath, ids, ['metadata.json']);
+  async (
+    trace,
+    rootPath: string,
+    ids: readonly SyncableId[],
+    metadataChanges: Partial<FileSystemChangeableLocalItemMetadata>
+  ): PR<undefined> => {
+    const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
     if (!filePath.ok) {
       return filePath;
     }

@@ -10,7 +10,7 @@ export const allResultsReduced = makeAsyncResultFunc(
   [import.meta.filename],
   async <V, T, ReducedT, ErrorCodeT extends string = never>(
     trace: Trace,
-    values: V[],
+    values: readonly V[],
     options: {
       maxConcurrency?: number;
       /** @defaultValue `'continue'` */

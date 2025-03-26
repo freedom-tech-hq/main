@@ -1,5 +1,5 @@
 import type { Sha256Hash } from 'freedom-basic-data';
 
-export interface LocalItemMetadata {
+export interface InMemoryLocalItemMetadata {
   hash?: Sha256Hash;
 }

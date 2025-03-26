@@ -6,12 +6,13 @@ import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { SyncableId } from 'freedom-sync-types';
 
 import { type AnyMetadata, anyMetadataSchema } from '../types/AnyMetadata.ts';
-import { getFsPath } from './getFsPath.ts';
+import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
+import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 
 export const createMetadataFile = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, rootPath: string, ids: readonly SyncableId[], metadata: AnyMetadata): PR<undefined> => {
-    const filePath = await getFsPath(trace, rootPath, ids, ['metadata.json']);
+  async (trace, rootPath: string, ids: readonly SyncableId[], metadata: AnyMetadata & FileSystemLocalItemMetadata): PR<undefined> => {
+    const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
     if (!filePath.ok) {
       return filePath;
     }

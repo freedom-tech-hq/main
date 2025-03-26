@@ -28,10 +28,10 @@ import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
-import type { LocalItemMetadata } from '../../types/backing/LocalItemMetadata.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { FolderManagement } from '../../types/FolderManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
+import type { InMemoryLocalItemMetadata } from '../../types/in-memory-backing/internal/types/InMemoryLocalItemMetadata.ts';
 import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
@@ -573,7 +573,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
     async (
       trace,
       id: SyncableId,
-      metadata: SyncableFolderMetadata & LocalItemMetadata
+      metadata: SyncableFolderMetadata & InMemoryLocalItemMetadata
     ): PR<InMemoryAccessControlledFolder, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 

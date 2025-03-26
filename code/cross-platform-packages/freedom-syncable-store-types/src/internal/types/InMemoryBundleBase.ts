@@ -29,10 +29,10 @@ import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
-import type { LocalItemMetadata } from '../../types/backing/LocalItemMetadata.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { BundleManagement } from '../../types/BundleManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
+import type { InMemoryLocalItemMetadata } from '../../types/in-memory-backing/internal/types/InMemoryLocalItemMetadata.ts';
 import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
@@ -652,7 +652,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       trace: Trace,
       id: SyncableId,
       encodedData: Uint8Array,
-      metadata: SyncableFlatFileMetadata & LocalItemMetadata
+      metadata: SyncableFlatFileMetadata & InMemoryLocalItemMetadata
     ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
@@ -711,7 +711,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (
       trace,
       id: SyncableId,
-      metadata: SyncableBundleFileMetadata & LocalItemMetadata
+      metadata: SyncableBundleFileMetadata & InMemoryLocalItemMetadata
     ): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
