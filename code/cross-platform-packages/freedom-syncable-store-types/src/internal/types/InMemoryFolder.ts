@@ -431,7 +431,9 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
           return makeSuccess([]);
         }
 
-        const output: string[] = [`${folderId}: ${hash}`];
+        const dynamicId = await this.staticToDynamicId(trace, folderId);
+
+        const output: string[] = [`${dynamicId.ok ? JSON.stringify(dynamicId.value) : folderId}: ${hash}`];
         const folderLs = await folder.ls(trace);
         if (!folderLs.ok) {
           return folderLs;

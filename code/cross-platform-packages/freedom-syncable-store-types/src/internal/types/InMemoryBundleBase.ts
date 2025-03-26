@@ -491,7 +491,9 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
           return makeSuccess([]);
         }
 
-        const output: string[] = [`${fileId}: ${hash}`];
+        const dynamicId = await this.staticToDynamicId(trace, fileId);
+
+        const output: string[] = [`${dynamicId.ok ? JSON.stringify(dynamicId.value) : fileId}: ${hash}`];
         switch (file.storedValue.type) {
           case 'bundleFile': {
             const fileLs = await file.storedValue.accessor.ls(trace);

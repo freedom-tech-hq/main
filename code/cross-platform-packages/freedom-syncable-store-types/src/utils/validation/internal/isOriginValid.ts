@@ -6,7 +6,7 @@ import type { SignedSyncableOrigin } from 'freedom-sync-types';
 
 import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../../types/SyncableStore.ts';
-import { editorAndAboveRoles } from '../../../types/SyncableStoreRole.ts';
+import { rolesWithWriteAccess } from '../../../types/SyncableStoreRole.ts';
 import { getFolderPath } from '../../get/getFolderPath.ts';
 import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
@@ -72,7 +72,7 @@ export const isOriginValid = makeAsyncResultFunc(
 
     // Making sure the origin user had write access
     const role = rolesByCryptoKeySetId.value[signingCryptoKeySetId.value];
-    if (role === undefined || !editorAndAboveRoles.has(role)) {
+    if (role === undefined || !rolesWithWriteAccess.has(role)) {
       DEV: debugTopic('VALIDATION', (log) => log(`Origin signer doesn't have write access for ${item.path.toString()}:`, role));
       return makeSuccess(false);
     }
