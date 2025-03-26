@@ -46,7 +46,7 @@ export class InMemoryLockStore<KeyT extends string> implements LockStore<KeyT> {
           } else {
             // Otherwise, wait for the lock to be released
 
-            return new Promise<Result<LockToken, 'lock-timeout'>>((resolve) => {
+            return await new Promise<Result<LockToken, 'lock-timeout'>>((resolve) => {
               const newOnReleaseNode = found.onRelease.append(() => {
                 clearTimeout(timeout);
 

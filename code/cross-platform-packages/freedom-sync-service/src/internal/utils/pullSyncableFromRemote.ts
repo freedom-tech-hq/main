@@ -115,7 +115,7 @@ const onBundleFilePulled = makeAsyncResultFunc(
     }
 
     // Pushing any missing content to the remote
-    return pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, fwd);
+    return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, fwd);
   }
 );
 
@@ -151,7 +151,7 @@ const onFolderPulled = makeAsyncResultFunc(
     }
 
     // Pushing any missing content to the remote
-    return pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: folder }, fwd);
+    return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: folder }, fwd);
   }
 );
 

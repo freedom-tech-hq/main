@@ -19,7 +19,7 @@ describe('allResultsReduced', () => {
       trace,
       values,
       {},
-      async (trace, value) => makeDelayedSuccessResult(trace, value + 1),
+      (trace, value) => makeDelayedSuccessResult(trace, value + 1),
       async (_trace, out, value) => makeSuccess(out + value),
       0
     );
@@ -36,7 +36,7 @@ describe('allResultsReduced', () => {
       trace,
       values,
       {},
-      async (trace, value) => makeDelayedSuccessResult(trace, value + 1),
+      (trace, value) => makeDelayedSuccessResult(trace, value + 1),
       async (_trace, out, value) => makeSuccess(out + value),
       0
     );

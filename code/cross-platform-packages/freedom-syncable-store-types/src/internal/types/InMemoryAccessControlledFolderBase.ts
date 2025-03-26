@@ -137,7 +137,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
             cryptoService: store.cryptoService,
             accessControlDoc: accessControlDoc.value.document,
             generateTrustedTimeIdForAccessChange: async (trace: Trace, accessChange: AccessChange<SyncableStoreRole>): PR<TrustedTimeId> =>
-              generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
+              await generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
             params: change,
             doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
@@ -149,7 +149,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
             cryptoService: store.cryptoService,
             accessControlDoc: accessControlDoc.value.document,
             generateTrustedTimeIdForAccessChange: async (trace: Trace, accessChange: AccessChange<SyncableStoreRole>): PR<TrustedTimeId> =>
-              generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
+              await generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
             params: change,
             doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
@@ -201,7 +201,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         return accessControlDoc;
       }
 
-      return accessControlDoc.value.didHaveRoleAtTimeMSec(trace, { cryptoKeySetId, oneOfRoles, timeMSec });
+      return await accessControlDoc.value.didHaveRoleAtTimeMSec(trace, { cryptoKeySetId, oneOfRoles, timeMSec });
     }
   );
 
@@ -325,7 +325,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: DynamicSyncableId) => {
     if (id === ACCESS_CONTROL_BUNDLE_FILE_ID || id === STORE_CHANGES_BUNDLE_FILE_ID) {
-      return this.plainBundle_.exists(trace, id);
+      return await this.plainBundle_.exists(trace, id);
     }
 
     const results = await allResultsNamed(
@@ -346,7 +346,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   });
 
   public readonly generateNewSyncableItemId: GenerateNewSyncableItemIdFunc = async (trace: Trace, args) =>
-    this.folderOperationsHandler_.generateNewSyncableItemId(trace, args);
+    await this.folderOperationsHandler_.generateNewSyncableItemId(trace, args);
 
   public readonly staticToDynamicId = (trace: Trace, id: SyncableId): PR<DynamicSyncableId> =>
     this.folderOperationsHandler_.staticToDynamicId(trace, id);
@@ -476,7 +476,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       if (id === ACCESS_CONTROL_BUNDLE_FILE_ID || id === STORE_CHANGES_BUNDLE_FILE_ID) {
-        return this.plainBundle_.getMutable(trace, id, expectedType);
+        return await this.plainBundle_.getMutable(trace, id, expectedType);
       }
 
       const got = await disableLam(trace, 'not-found', (trace) =>
@@ -523,7 +523,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       trace: Trace,
       id: DynamicSyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
   // BundleManagement Methods
@@ -593,14 +593,14 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         if (self === undefined) {
           return makeFailure(new InternalStateError(trace, { message: 'folder was released' }));
         }
-        return self.getAccessControlDocument_(trace);
+        return await self.getAccessControlDocument_(trace);
       },
       getMutableSyncableStoreChangesDocument: async (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
         const self = weakThis.deref();
         if (self === undefined) {
           return makeFailure(new InternalStateError(trace, { message: 'folder was released' }));
         }
-        return self.getMutableSyncableStoreChangesDocument_(trace);
+        return await self.getMutableSyncableStoreChangesDocument_(trace);
       }
     });
   }
@@ -670,7 +670,7 @@ const isDeltaValidForAccessControlDocument = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    return document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
+    return await document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
   }
 );
 
@@ -705,6 +705,6 @@ const isDeltaValidForStoreChangesDocument = makeAsyncResultFunc(
       staticPath = path;
     }
 
-    return document.isDeltaValidForRole(trace, { store, path: staticPath, role: originRole, encodedDelta });
+    return await document.isDeltaValidForRole(trace, { store, path: staticPath, role: originRole, encodedDelta });
   }
 );

@@ -105,7 +105,7 @@ export class FolderOperationsHandler {
           }
 
           if (shouldUseTrustedTime.value) {
-            return generateTrustedTimeIdForSyncable(trace, store, { parentPath, uuid: id.uuid, getSha256ForItemProvenance });
+            return await generateTrustedTimeIdForSyncable(trace, store, { parentPath, uuid: id.uuid, getSha256ForItemProvenance });
           } else {
             return makeSuccess(timeIdInfo.make(`${makeIsoDateTime()}-${id.uuid}`));
           }
@@ -194,7 +194,7 @@ export class FolderOperationsHandler {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      return verifyAndDecryptBinary(trace, signedEncryptedValue, {
+      return await verifyAndDecryptBinary(trace, signedEncryptedValue, {
         accessControlDoc: accessControl.value,
         cryptoService: store.cryptoService
       });
@@ -232,7 +232,7 @@ export class FolderOperationsHandler {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      return encryptAndSignBinary(trace, value, { accessControlDoc: accessControlDoc.value, cryptoService: store.cryptoService });
+      return await encryptAndSignBinary(trace, value, { accessControlDoc: accessControlDoc.value, cryptoService: store.cryptoService });
     }
   );
 

@@ -16,5 +16,5 @@ export const createStringFileAtPath = makeAsyncResultFunc(
     id: DynamicSyncableId,
     value: string
   ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-    createBinaryFileAtPath(trace, store, parentPath, id, Buffer.from(value, 'utf-8'))
+    await createBinaryFileAtPath(trace, store, parentPath, id, Buffer.from(value, 'utf-8'))
 );

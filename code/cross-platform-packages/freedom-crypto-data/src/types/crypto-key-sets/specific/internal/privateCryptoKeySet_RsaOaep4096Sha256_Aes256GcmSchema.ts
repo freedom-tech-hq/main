@@ -51,7 +51,7 @@ export const privateCryptoKeySet_RsaOaep4096Sha256_Aes256GcmSchema = schema.cust
       }
       /* node:coverage enable */
 
-      return serializedSchema.serializeAsync({
+      return await serializedSchema.serializeAsync({
         type: 'private:RSA-OAEP/4096/SHA-256+AES/256/GCM',
         id: value.id,
         rsaPublicKey: rsaPublicKeyPem.value,

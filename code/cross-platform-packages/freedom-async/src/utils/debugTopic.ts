@@ -1,3 +1,4 @@
+import { getEnv } from 'freedom-contexts';
 import type { LoggingFunc } from 'freedom-logging-types';
 import isPromise from 'is-promise';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -14,7 +15,7 @@ export let debugTopic: <R extends TypeOrPromisedType<any>>(
 
 DEV: {
   shouldDebugTopic = inline(() => {
-    const topicsString = process.env.FREEDOM_DEBUG_TOPICS?.trim() ?? '';
+    const topicsString = getEnv('FREEDOM_DEBUG_TOPICS', process.env.FREEDOM_DEBUG_TOPICS)?.trim() ?? '';
 
     if (topicsString.length === 0) {
       return () => false;

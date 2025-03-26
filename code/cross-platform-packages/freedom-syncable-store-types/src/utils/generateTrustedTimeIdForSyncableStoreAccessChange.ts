@@ -25,6 +25,6 @@ export const generateTrustedTimeIdForSyncableStoreAccessChange = makeAsyncResult
 
     const parentPath = path.parentPath ?? new StaticSyncablePath(path.storageRootId);
 
-    return generateTrustedTimeId(trace, store, { parentPath, uuid: makeUuid(), contentHash: contentHash.value });
+    return await generateTrustedTimeId(trace, store, { parentPath, uuid: makeUuid(), contentHash: contentHash.value });
   }
 );

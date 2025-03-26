@@ -187,6 +187,6 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
   } else {
     // If retrying isn't supported
 
-    return attempt(0);
+    return await attempt(0);
   }
 };

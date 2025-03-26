@@ -27,6 +27,6 @@ export const createJsonFileAtPath = makeAsyncResultFunc(
     /* node:coverage enable */
 
     const jsonString = JSON.stringify(serialization.serialized);
-    return createStringFileAtPath(trace, store, parentPath, id, jsonString);
+    return await createStringFileAtPath(trace, store, parentPath, id, jsonString);
   }
 );

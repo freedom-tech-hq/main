@@ -13,14 +13,14 @@ import { callAsyncResultFunc } from '../callAsyncResultFunc.ts';
 describe('callAsyncResultFunc', () => {
   it('should work with success values', async (t: TestContext) => {
     const trace = makeTrace('test');
-    const result = await callAsyncResultFunc(trace, {}, async (trace) => makeDelayedSuccessResult(trace, 3.14));
+    const result = await callAsyncResultFunc(trace, {}, (trace) => makeDelayedSuccessResult(trace, 3.14));
     expectOk(result);
     t.assert.strictEqual(result.value, 3.14);
   });
 
   it('should work with failure values', async (_t: TestContext) => {
     const trace = makeTrace('test');
-    const result = await callAsyncResultFunc(trace, {}, async (trace) => makeDelayedFailureResult(trace, 'generic'));
+    const result = await callAsyncResultFunc(trace, {}, (trace) => makeDelayedFailureResult(trace, 'generic'));
     expectErrorCode(result, 'generic');
   });
 
@@ -44,7 +44,7 @@ describe('callAsyncResultFunc', () => {
       async (trace) => {
         count += 1;
         if (count < 3) {
-          return makeDelayedFailureResult(trace, 'generic');
+          return await makeDelayedFailureResult(trace, 'generic');
         } else {
           return makeSuccess(3.14);
         }
@@ -62,7 +62,7 @@ describe('callAsyncResultFunc', () => {
       { shouldRetry: (_failure, { attemptCount }) => ({ retry: attemptCount < 3, delayMSec: Math.random() * 100 }) },
       async (trace) => {
         count += 1;
-        return makeDelayedFailureResult(trace, 'generic');
+        return await makeDelayedFailureResult(trace, 'generic');
       }
     );
     expectErrorCode(result, 'generic');

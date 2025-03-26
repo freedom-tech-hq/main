@@ -74,7 +74,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
     async (trace, args): PR<MutableAccessControlledFolderAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return this.createPreEncodedFolder_(trace, args.id, args.provenance);
+          return await this.createPreEncodedFolder_(trace, args.id, args.provenance);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -290,7 +290,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
       }
       /* node:coverage enable */
 
-      return allResultsReduced(
+      return await allResultsReduced(
         trace,
         ids.value,
         {},
@@ -300,7 +300,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
             return makeSuccess(undefined);
           }
 
-          return folder.getHash(trace, { recompute });
+          return await folder.getHash(trace, { recompute });
         },
         async (_trace, out, hash, folderId) => {
           out[folderId] = hash;
@@ -377,7 +377,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   public readonly getIds = makeAsyncResultFunc(
     [import.meta.filename, 'getIds'],
     async (trace: Trace, options?: { type?: SingleOrArray<SyncableItemType> }): PR<SyncableId[]> =>
-      this.filterOutDeletedIds_(trace, this.filterIdsByType_(Array.from(this.folders_.keys()), options?.type))
+      await this.filterOutDeletedIds_(trace, this.filterIdsByType_(Array.from(this.folders_.keys()), options?.type))
   );
 
   public readonly get = makeAsyncResultFunc(
@@ -386,7 +386,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
       trace: Trace,
       id: DynamicSyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
   public readonly getProvenance = makeAsyncResultFunc(
@@ -475,8 +475,11 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
       this.folders_.delete(id);
     }
 
-    const recursivelySwept = await allResultsMapped(trace, Array.from(this.folders_.values()), {}, async (trace, folder) =>
-      folder.sweep(trace)
+    const recursivelySwept = await allResultsMapped(
+      trace,
+      Array.from(this.folders_.values()),
+      {},
+      async (trace, folder) => await folder.sweep(trace)
     );
     /* node:coverage disable */
     if (!recursivelySwept.ok) {
@@ -556,7 +559,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
   private readonly filterOutDeletedIds_ = makeAsyncResultFunc(
     [import.meta.filename, 'filterOutDeletedIds_'],
     async (trace, encodedIds: SyncableId[]) => {
-      return allResultsReduced(
+      return await allResultsReduced(
         trace,
         encodedIds,
         {},

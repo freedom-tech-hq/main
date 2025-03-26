@@ -24,6 +24,6 @@ export const getTrustedTimeSourcesForPath = makeAsyncResultFunc(
       return itemAccessor;
     }
 
-    return itemAccessor.value.getTrustedTimeSources(trace);
+    return await itemAccessor.value.getTrustedTimeSources(trace);
   }
 );

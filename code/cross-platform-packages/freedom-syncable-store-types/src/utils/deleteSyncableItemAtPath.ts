@@ -18,6 +18,6 @@ export const deleteSyncableItemAtPath = makeAsyncResultFunc(
       return excludeFailureResult(parentFileStore, 'deleted');
     }
 
-    return parentFileStore.value.delete(trace, path.lastId!);
+    return await parentFileStore.value.delete(trace, path.lastId!);
   }
 );

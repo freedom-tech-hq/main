@@ -13,7 +13,7 @@ export const isSignatureValidForString = makeAsyncResultFunc(
     trace: Trace,
     { signature, value, verifyingKeys }: { signature: Base64String; value: string; verifyingKeys: VerifyingKeySet }
   ): PR<boolean> =>
-    isSignatureValidForBuffer(trace, {
+    await isSignatureValidForBuffer(trace, {
       signature: base64String.toBuffer(signature),
       value: Buffer.from(value, 'utf-8'),
       verifyingKeys

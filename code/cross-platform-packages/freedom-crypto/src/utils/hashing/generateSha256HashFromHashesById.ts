@@ -12,9 +12,9 @@ export const generateSha256HashFromHashesById = makeAsyncResultFunc(
     const stringValue = JSON.stringify(objectWithSortedKeys(hashesById));
 
     if (stringValue === '{}') {
-      return generateSha256HashForEmptyString(trace);
+      return await generateSha256HashForEmptyString(trace);
     }
 
-    return generateSha256HashFromString(trace, stringValue);
+    return await generateSha256HashFromString(trace, stringValue);
   }
 );

@@ -25,6 +25,6 @@ export const createViaSyncFolderAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return parent.value.createFolder(trace, { mode: 'via-sync', id: path.lastId!, provenance });
+    return await parent.value.createFolder(trace, { mode: 'via-sync', id: path.lastId!, provenance });
   }
 );

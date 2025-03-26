@@ -40,7 +40,7 @@ export class CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm extends BaseCryptoKeySet i
       });
     }
 
-    return this.aesKeyPromise_;
+    return await this.aesKeyPromise_;
   }
 
   public async getRawAesKey(): Promise<{ raw: Uint8Array; native: CryptoKey }> {
@@ -48,7 +48,7 @@ export class CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm extends BaseCryptoKeySet i
     const aesKey = await this.getAesKey();
     if (this.aesKeyPromise_ !== lastAesKeyPromise) {
       // Trying again because the key was rotated in between
-      return this.getRawAesKey();
+      return await this.getRawAesKey();
     }
 
     if (this.rawAesKeyPromise_ === undefined) {
@@ -62,7 +62,7 @@ export class CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm extends BaseCryptoKeySet i
     const rawAesKey = await this.rawAesKeyPromise_;
     if (this.rawAesKeyPromise_ !== lastRawAesKeyPromise) {
       // Trying again because the key was rotated in between
-      return this.getRawAesKey();
+      return await this.getRawAesKey();
     }
 
     return { raw: rawAesKey, native: aesKey };

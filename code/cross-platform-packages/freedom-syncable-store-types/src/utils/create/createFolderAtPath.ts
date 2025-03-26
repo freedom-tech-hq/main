@@ -19,6 +19,6 @@ export const createFolderAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return parent.value.createFolder(trace, { id });
+    return await parent.value.createFolder(trace, { id });
   }
 );

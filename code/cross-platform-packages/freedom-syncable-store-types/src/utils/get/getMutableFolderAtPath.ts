@@ -13,5 +13,5 @@ export const getMutableFolderAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: SyncablePath
   ): PR<MutableAccessControlledFolderAccessor, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-    getMutableSyncableAtPath(trace, store, path, 'folder')
+    await getMutableSyncableAtPath(trace, store, path, 'folder')
 );

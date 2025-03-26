@@ -26,7 +26,7 @@ export const generateSharedKeys = makeAsyncResultFunc(
       cryptoKeySetIds,
       {},
       async (trace, cryptoKeySetId) =>
-        cryptoService.generateEncryptedValue(trace, {
+        await cryptoService.generateEncryptedValue(trace, {
           value: sharedEncryptDecryptKeys.value,
           valueSchema: sharedSecretKeysSchema,
           cryptoKeySetId: cryptoKeySetId

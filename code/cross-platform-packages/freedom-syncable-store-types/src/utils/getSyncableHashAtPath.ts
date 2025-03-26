@@ -14,6 +14,6 @@ export const getSyncableHashAtPath = makeAsyncResultFunc(
       return itemAccessor;
     }
 
-    return itemAccessor.value.getHash(trace);
+    return await itemAccessor.value.getHash(trace);
   }
 );

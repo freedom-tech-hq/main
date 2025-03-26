@@ -175,7 +175,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         > => {
           const deltaPath = deltasPath.append(deltaId);
 
-          return allResultsNamed(
+          return await allResultsNamed(
             trace,
             { _errorCodeType: Cast<'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>() },
             {

@@ -19,6 +19,6 @@ export const isSignatureValidForSignedBuffer = makeAsyncResultFunc(
 
     const unsignedValue = signedBuffer.slice(offset);
 
-    return isSignatureValidForBuffer(trace, { signature, value: unsignedValue, verifyingKeys });
+    return await isSignatureValidForBuffer(trace, { signature, value: unsignedValue, verifyingKeys });
   }
 );

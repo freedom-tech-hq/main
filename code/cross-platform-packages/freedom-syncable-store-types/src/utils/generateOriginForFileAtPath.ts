@@ -33,6 +33,6 @@ export const generateOriginForFileAtPath = makeAsyncResultFunc(
       staticPath = path;
     }
 
-    return generateOrigin(trace, { path: staticPath, contentHash: contentHash.value, cryptoService: store.cryptoService });
+    return await generateOrigin(trace, { path: staticPath, contentHash: contentHash.value, cryptoService: store.cryptoService });
   }
 );

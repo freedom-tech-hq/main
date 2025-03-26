@@ -13,6 +13,6 @@ export const markSyncableNeedsRecomputeHashAtPath = makeAsyncResultFunc(
       return itemAccessor;
     }
 
-    return itemAccessor.value.markNeedsRecomputeHash(trace);
+    return await itemAccessor.value.markNeedsRecomputeHash(trace);
   }
 );

@@ -1,10 +1,12 @@
 /* node:coverage disable */
 
-import { wrapLogger } from 'freedom-contexts';
+import { getEnv, wrapLogger } from 'freedom-contexts';
 import type { Logger } from 'yaschema';
 
 let globalLogger: Logger = {};
 let globalIsDefaultLogger = true;
+
+let globalConsoleLogger: Logger = {};
 
 export const log = () => globalLogger;
 export const setLogger = (logger: Logger) => {
@@ -13,10 +15,16 @@ export const setLogger = (logger: Logger) => {
 };
 export const isDefaultLogger = () => globalIsDefaultLogger;
 
-DEV: if (process.env.FREEDOM_VERBOSE_LOGGING === 'true') {
-  (async () => {
-    const console = await import('console');
-    const wrappedLogger = wrapLogger(console);
+/** Only for test debugging.  This can be used even when `FREEDOM_VERBOSE_LOGGING` isn't set. */
+export const consoleLog = () => globalConsoleLogger;
+
+DEV: (async () => {
+  const console = await import('console');
+  const wrappedLogger = wrapLogger(console);
+
+  globalConsoleLogger = wrappedLogger;
+
+  if (getEnv('FREEDOM_VERBOSE_LOGGING', process.env.FREEDOM_VERBOSE_LOGGING) === 'true') {
     if (isDefaultLogger()) {
       setLogger(wrappedLogger);
     }
@@ -25,5 +33,5 @@ DEV: if (process.env.FREEDOM_VERBOSE_LOGGING === 'true') {
     if (testingTools.isDefaultFailureResultLogger()) {
       testingTools.setFailureResultLogger(wrappedLogger);
     }
-  })();
-}
+  }
+})();

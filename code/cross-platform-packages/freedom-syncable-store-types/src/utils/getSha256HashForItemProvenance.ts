@@ -11,9 +11,9 @@ export const getSha256HashForItemProvenance = makeAsyncResultFunc(
     switch (item.type) {
       case 'folder':
       case 'bundleFile':
-        return generateSha256HashForEmptyString(trace);
+        return await generateSha256HashForEmptyString(trace);
       case 'flatFile':
-        return item.getHash(trace);
+        return await item.getHash(trace);
     }
   }
 );

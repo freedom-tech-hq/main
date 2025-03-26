@@ -30,7 +30,7 @@ export const generateOrigin = makeAsyncResultFunc(
       contentHash = folderContentHash.value;
     }
 
-    return cryptoService.generateSignedValue(trace, {
+    return await cryptoService.generateSignedValue(trace, {
       value: { contentHash },
       valueSchema: syncableOriginSchema,
       signatureExtras: { path },

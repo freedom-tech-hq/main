@@ -13,5 +13,5 @@ export const getMutableBundleFileAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: SyncablePath
   ): PR<MutableFileStore, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-    getMutableSyncableAtPath(trace, store, path, 'bundleFile')
+    await getMutableSyncableAtPath(trace, store, path, 'bundleFile')
 );

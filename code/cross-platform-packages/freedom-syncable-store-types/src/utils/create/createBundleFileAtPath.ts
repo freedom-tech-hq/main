@@ -20,6 +20,6 @@ export const createBundleFileAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return parent.value.createBundleFile(trace, { id });
+    return await parent.value.createBundleFile(trace, { id });
   }
 );

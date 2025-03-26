@@ -23,6 +23,6 @@ export const generateOriginForFolderLikeItemAtPath = makeAsyncResultFunc(
       staticPath = path;
     }
 
-    return generateOrigin(trace, { path: staticPath, contentHash: undefined, cryptoService: store.cryptoService });
+    return await generateOrigin(trace, { path: staticPath, contentHash: undefined, cryptoService: store.cryptoService });
   }
 );

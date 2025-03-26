@@ -15,7 +15,7 @@ export const findTsFiles = async ({ includes, excludes }: { includes: string[]; 
           return [path];
         }
 
-        return glob(`${path}/**/*.ts?(x)`);
+        return await glob(`${path}/**/*.ts?(x)`);
       })
     )
   );
@@ -28,7 +28,7 @@ export const findTsFiles = async ({ includes, excludes }: { includes: string[]; 
             return [path];
           }
 
-          return glob(`${path}/**/*.ts?(x)`);
+          return await glob(`${path}/**/*.ts?(x)`);
         })
       )
     )

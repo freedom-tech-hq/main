@@ -33,7 +33,7 @@ export const isTrustedTimeIdValidForPath = makeAsyncResultFunc(
       return excludeFailureResult(trustedTimeSources, 'untrusted');
     }
 
-    return isTrustedTimeIdValid(trace, store, {
+    return await isTrustedTimeIdValid(trace, store, {
       trustedTimeId,
       parentPathHash: parentPathHash.value,
       contentHash,

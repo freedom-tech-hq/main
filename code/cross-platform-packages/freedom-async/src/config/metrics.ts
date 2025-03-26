@@ -1,5 +1,7 @@
 /* node:coverage disable */
 
+import { getEnv } from 'freedom-contexts';
+
 import { makeShouldIncludeTraceForDebuggingFunc } from '../internal/debugging/makeShouldIncludeTraceForDebuggingFunc.ts';
 import type { MetricsTracker } from '../types/MetricsTracker.ts';
 import { log } from './logging.ts';
@@ -16,11 +18,11 @@ export const setMetricsTracker = (tracker: MetricsTracker) => {
 
 export const isDefaultMetricsTracker = () => globalIsDefaultMetricsTracker;
 
-DEV: if ((process.env.FREEDOM_PROFILE ?? '') !== '') {
+DEV: if ((getEnv('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE) ?? '') !== '') {
   (async () => {
     const freedomProfiler = await import('freedom-profiler');
     if (isDefaultMetricsTracker()) {
-      const shouldTrackFunc = makeShouldIncludeTraceForDebuggingFunc(process.env.FREEDOM_PROFILE);
+      const shouldTrackFunc = makeShouldIncludeTraceForDebuggingFunc(getEnv('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE));
       setMetricsTracker(freedomProfiler.makeDebugProfiler(log, shouldTrackFunc));
     }
   })();

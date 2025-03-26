@@ -29,7 +29,7 @@ export const encryptValue = makeAsyncResultFunc(
 
       const jsonString = JSON.stringify(serialization.serialized);
 
-      return encryptString(trace, { mode, value: jsonString, encryptingKeys, includeKeyId });
+      return await encryptString(trace, { mode, value: jsonString, encryptingKeys, includeKeyId });
     } catch (e) {
       /* node:coverage ignore next */
       return makeFailure(new GeneralError(trace, e));

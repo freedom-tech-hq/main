@@ -23,6 +23,6 @@ export const generateTrustedTimeIdForSyncable = makeAsyncResultFunc(
       return contentHash;
     }
 
-    return generateTrustedTimeId(trace, store, { parentPath, uuid, contentHash: contentHash.value });
+    return await generateTrustedTimeId(trace, store, { parentPath, uuid, contentHash: contentHash.value });
   }
 );

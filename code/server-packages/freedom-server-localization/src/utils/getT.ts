@@ -9,7 +9,7 @@ const globalCacheByLocaleCode: Partial<Record<string, Promise<TFunction>>> = {};
 export const getT = makeAsyncFunc([import.meta.filename], async (_trace, localeCode: string): Promise<TFunction> => {
   const cached = globalCacheByLocaleCode[localeCode];
   if (cached !== undefined) {
-    return cached;
+    return await cached;
   }
 
   const tPromise = inline(async () => {
@@ -23,5 +23,5 @@ export const getT = makeAsyncFunc([import.meta.filename], async (_trace, localeC
   });
   globalCacheByLocaleCode[localeCode] = tPromise;
 
-  return tPromise;
+  return await tPromise;
 });

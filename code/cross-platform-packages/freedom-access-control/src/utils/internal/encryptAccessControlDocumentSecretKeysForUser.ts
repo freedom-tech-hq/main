@@ -38,7 +38,7 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
     }
     /* node:coverage enable */
 
-    return allResultsReduced(
+    return await allResultsReduced(
       trace,
       objectEntries(decryptedSharedSecretKeys.value),
       {},
@@ -49,7 +49,7 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
         }
         /* node:coverage enable */
 
-        return generateEncryptedValue(trace, {
+        return await generateEncryptedValue(trace, {
           value: decryptedSharedSecretKeys,
           valueSchema: sharedSecretKeysSchema,
           encryptingKeys: userEncryptingKeys.value

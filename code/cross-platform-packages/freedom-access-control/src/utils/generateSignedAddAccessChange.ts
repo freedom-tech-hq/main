@@ -68,7 +68,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    return cryptoService.generateSignedValue<TimedAccessChange<RoleT>>(trace, {
+    return await cryptoService.generateSignedValue<TimedAccessChange<RoleT>>(trace, {
       value: { ...addAccessChange, trustedTimeId: trustedTimeId.value },
       valueSchema: makeTimedAccessChangeSchema({ roleSchema }),
       signatureExtras: undefined,

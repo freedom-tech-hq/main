@@ -243,7 +243,7 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
 
   private readonly addToIndices_ = makeAsyncResultFunc(
     [import.meta.filename, 'addToIndices_'],
-    async (trace, key: KeyT, stored: StoredType<T>) => this.keys_.addToIndex(trace, key, stored.insertionCount)
+    async (trace, key: KeyT, stored: StoredType<T>) => await this.keys_.addToIndex(trace, key, stored.insertionCount)
   );
 
   private readonly get_ = makeAsyncResultFunc([import.meta.filename, 'get_'], async (trace, key: KeyT): PR<StoredType<T>, 'not-found'> => {
@@ -268,8 +268,9 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
     return makeSuccess(cloned.value);
   });
 
-  private readonly removeFromIndices_ = makeAsyncResultFunc([import.meta.filename, 'removeFromIndices_'], async (trace, key: KeyT) =>
-    this.keys_.removeFromIndex(trace, key)
+  private readonly removeFromIndices_ = makeAsyncResultFunc(
+    [import.meta.filename, 'removeFromIndices_'],
+    async (trace, key: KeyT) => await this.keys_.removeFromIndex(trace, key)
   );
 
   private readonly cloneValue_ = makeAsyncResultFunc(

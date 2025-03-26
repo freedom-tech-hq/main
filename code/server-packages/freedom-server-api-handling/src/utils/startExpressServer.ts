@@ -15,9 +15,9 @@ export const startExpressServer = makeAsyncResultFunc(
     trace,
     server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
     { port, serviceContext, onShutdown }: { port: number; serviceContext: ServiceContext; onShutdown?: () => Promise<void> }
-  ): PR<{ shutDown: () => Promise<void> }> =>
+  ): PR<{ shutDown: () => Promise<void> }> => {
     // eslint-disable-next-line no-async-promise-executor
-    new Promise(async (resolveServerStartUp, rejectServerStartUp) => {
+    return await new Promise(async (resolveServerStartUp, rejectServerStartUp) => {
       try {
         const startedServer = server.listen(port, () => {
           log().info?.(trace, `Server now listening on port ${port}`);
@@ -27,7 +27,7 @@ export const startExpressServer = makeAsyncResultFunc(
 
             const onShutdownPromise = onShutdown?.();
 
-            return new Promise<void>((resolveServerShutDown) => {
+            return await new Promise<void>((resolveServerShutDown) => {
               startedServer.close(() =>
                 callAsyncFunc(makeSubTrace(trace, ['shutDown']), {}, async (trace) => {
                   log().info?.(trace, 'Incoming HTTP connections are no longer being accepted');
@@ -53,5 +53,6 @@ export const startExpressServer = makeAsyncResultFunc(
         // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         rejectServerStartUp(e);
       }
-    })
+    });
+  }
 );

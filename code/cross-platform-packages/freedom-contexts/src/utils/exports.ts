@@ -1,4 +1,5 @@
 export * from './attachToTrace.ts';
+export * from './getEnv.ts';
 export * from './getTraceStack.ts';
 export * from './getTraceStackTop.ts';
 export * from './getTraceStackWithAttachments.ts';

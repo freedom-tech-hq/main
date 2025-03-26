@@ -18,7 +18,7 @@ describe('allResultsReducedSkipFailures', () => {
       trace,
       values,
       { skipErrorCodes: ['generic'] },
-      async (trace, value) => makeDelayedSuccessResult(trace, value + 1),
+      (trace, value) => makeDelayedSuccessResult(trace, value + 1),
       async (_trace, out, value) => makeSuccess(out + value),
       0
     );
@@ -35,7 +35,7 @@ describe('allResultsReducedSkipFailures', () => {
       trace,
       values,
       { skipErrorCodes: ['generic'] },
-      async (trace, value) => makeDelayedSuccessResult(trace, value + 1),
+      (trace, value) => makeDelayedSuccessResult(trace, value + 1),
       async (_trace, out, value) => makeSuccess(out + value),
       0
     );

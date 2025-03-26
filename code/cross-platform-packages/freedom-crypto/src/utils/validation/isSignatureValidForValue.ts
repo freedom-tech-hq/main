@@ -54,7 +54,7 @@ export const isSignatureValidForValue = makeAsyncResultFunc(
 
       const jsonString = JSON.stringify(serialized);
 
-      return isSignatureValidForString(trace, { signature, value: jsonString, verifyingKeys });
+      return await isSignatureValidForString(trace, { signature, value: jsonString, verifyingKeys });
     } catch (e) {
       /* node:coverage ignore next */
       return makeFailure(new GeneralError(trace, e));

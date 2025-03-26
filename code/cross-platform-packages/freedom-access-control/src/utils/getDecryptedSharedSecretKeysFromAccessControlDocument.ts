@@ -19,11 +19,11 @@ export const getDecryptedSharedSecretKeysFromAccessControlDocument = makeAsyncRe
     }
     /* node:coverage enable */
 
-    return allResultsReduced(
+    return await allResultsReduced(
       trace,
       sharedKeys.value,
       {},
-      async (trace, sharedKeys) => decryptOneEncryptedValue(trace, cryptoService, sharedKeys.secretKeysEncryptedPerMember),
+      async (trace, sharedKeys) => await decryptOneEncryptedValue(trace, cryptoService, sharedKeys.secretKeysEncryptedPerMember),
       async (_trace, out, decryptedSharedSecretKeys, sharedKeys) => {
         out[sharedKeys.id] = decryptedSharedSecretKeys;
         return makeSuccess(out);

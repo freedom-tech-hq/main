@@ -17,13 +17,13 @@ export interface Tasks {
 
 class TasksImpl implements Tasks {
   public readonly getMailForThreadTask = async (...args: Parameters<GetMailForThreadTask>): ReturnType<GetMailForThreadTask> =>
-    (await import('./tasks/mail/getMailForThreadTask.ts')).getMailForThreadTask(...args);
+    await (await import('./tasks/mail/getMailForThreadTask.ts')).getMailForThreadTask(...args);
   public readonly getMailCollectionsTask = async (...args: Parameters<GetMailCollectionsTask>): ReturnType<GetMailCollectionsTask> =>
-    (await import('./tasks/mail/getMailCollectionsTask.ts')).getMailCollectionsTask(...args);
+    await (await import('./tasks/mail/getMailCollectionsTask.ts')).getMailCollectionsTask(...args);
   public readonly getMailThreadsForCollectionTask = async (
     ...args: Parameters<GetMailThreadsForCollectionTask>
   ): ReturnType<GetMailThreadsForCollectionTask> =>
-    (await import('./tasks/mail/getMailThreadsForCollectionTask.ts')).getMailThreadsForCollectionTask(...args);
+    await (await import('./tasks/mail/getMailThreadsForCollectionTask.ts')).getMailThreadsForCollectionTask(...args);
 }
 
 expose(TasksImpl);

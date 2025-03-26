@@ -51,7 +51,7 @@ export const privateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256Schema = schema.custo
       }
       /* node:coverage enable */
 
-      return serializedSchema.serializeAsync({
+      return await serializedSchema.serializeAsync({
         type: 'private:RSASSA-PKCS1-v1_5/4096/SHA-256',
         id: value.id,
         rsaPublicKey: rsaPublicKeyPem.value,

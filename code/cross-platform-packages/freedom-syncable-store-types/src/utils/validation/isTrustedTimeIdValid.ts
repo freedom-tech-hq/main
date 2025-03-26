@@ -37,11 +37,15 @@ export const isTrustedTimeIdValid = makeAsyncResultFunc(
     }
 
     if (signingCryptoKeySetId.value === store.creatorCryptoKeySetId) {
-      return store.cryptoService.isSignedValueValid(trace, signedTimeId.value, { parentPathHash, contentHash });
+      return await store.cryptoService.isSignedValueValid(trace, signedTimeId.value, { parentPathHash, contentHash });
     }
 
-    const trustedTimeValid = await allResultsMapped(trace, trustedTimeSources, {}, async (trace, trustedTimeSource) =>
-      trustedTimeSource.isTrustedTimeIdValid(trace, trustedTimeId, { parentPathHash, contentHash })
+    const trustedTimeValid = await allResultsMapped(
+      trace,
+      trustedTimeSources,
+      {},
+      async (trace, trustedTimeSource) =>
+        await trustedTimeSource.isTrustedTimeIdValid(trace, trustedTimeId, { parentPathHash, contentHash })
     );
     if (!trustedTimeValid.ok) {
       return trustedTimeValid;

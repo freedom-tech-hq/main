@@ -10,7 +10,7 @@ export const makeLoadNamespaceForLanguage = () => {
     const promisesKey = `${lng}::${ns}`;
     let promise = promises[promisesKey];
     if (promise !== undefined) {
-      return promise;
+      return await promise;
     }
 
     promise = inline(async (): Promise<ResourceKey> => {
@@ -19,6 +19,6 @@ export const makeLoadNamespaceForLanguage = () => {
       return loaded?.[ns] ?? {};
     });
     promises[promisesKey] = promise;
-    return promise;
+    return await promise;
   };
 };

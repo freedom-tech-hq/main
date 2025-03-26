@@ -4,7 +4,7 @@ import { ForbiddenError, generalizeFailureResult } from 'freedom-common-errors';
 
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
-import { editorAndAboveRoles, rolesWithWriteAccess } from '../../types/SyncableStoreRole.ts';
+import { rolesWithWriteAccess } from '../../types/SyncableStoreRole.ts';
 import { getRoleForOriginWithPath } from './getRoleForOriginWithPath.ts';
 
 export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(

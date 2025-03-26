@@ -19,7 +19,7 @@ export const firstSuccessResult = makeAsyncResultFunc(
       return makeFailure(new GeneralError(trace, undefined, 'empty-data-set'));
     }
 
-    return new Promise<Result<SuccessT, ErrorCodeT>>((resolve) => {
+    return await new Promise<Result<SuccessT, ErrorCodeT>>((resolve) => {
       let failureResult: FailureResult<ErrorCodeT> | undefined;
 
       let succeeded = false;

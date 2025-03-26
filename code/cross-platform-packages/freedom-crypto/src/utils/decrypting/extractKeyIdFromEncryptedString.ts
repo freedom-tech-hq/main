@@ -9,5 +9,5 @@ import { extractKeyIdFromEncryptedBuffer } from './extractKeyIdFromEncryptedBuff
 export const extractKeyIdFromEncryptedString = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { encryptedValue }: { encryptedValue: Base64String }): PR<CryptoKeySetId, 'not-found'> =>
-    extractKeyIdFromEncryptedBuffer(trace, { encryptedValue: base64String.toBuffer(encryptedValue) })
+    await extractKeyIdFromEncryptedBuffer(trace, { encryptedValue: base64String.toBuffer(encryptedValue) })
 );

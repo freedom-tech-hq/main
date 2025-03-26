@@ -28,6 +28,6 @@ export const decryptOneEncryptedValue = makeAsyncResultFunc(
     }
 
     const encryptedValue = encryptedValues[keyId]!;
-    return cryptoService.decryptEncryptedValue(trace, encryptedValue);
+    return await cryptoService.decryptEncryptedValue(trace, encryptedValue);
   }
 );

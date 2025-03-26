@@ -22,6 +22,6 @@ export const getMutableParentSyncable = makeAsyncResultFunc(
       return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
     }
 
-    return getMutableSyncableAtPath(trace, store, parentPath, expectedType);
+    return await getMutableSyncableAtPath(trace, store, parentPath, expectedType);
   }
 );

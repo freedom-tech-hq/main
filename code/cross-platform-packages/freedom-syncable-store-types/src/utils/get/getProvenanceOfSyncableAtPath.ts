@@ -18,6 +18,6 @@ export const getProvenanceOfSyncableAtPath = makeAsyncResultFunc(
       return item;
     }
 
-    return item.value.getProvenance(trace);
+    return await item.value.getProvenance(trace);
   }
 );

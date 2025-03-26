@@ -33,7 +33,7 @@ export const generateTrustedTimeId = makeAsyncResultFunc(
 
     // If the user is a creator, they can sign their own trusted time IDs
     if (roleAndCryptoKeySetId.value.role === 'creator') {
-      return generateSelfSignedTrustedTimeId(trace, store, {
+      return await generateSelfSignedTrustedTimeId(trace, store, {
         parentPathHash: parentPathHash.value,
         uuid,
         contentHash
@@ -50,7 +50,7 @@ export const generateTrustedTimeId = makeAsyncResultFunc(
       trustedTimeSources.value,
       { onSuccess: 'stop', skipErrorCodes: ['generic'] },
       async (trace, trustedTimeSource) =>
-        trustedTimeSource.generateTrustedTimeId(trace, { parentPathHash: parentPathHash.value, uuid, contentHash })
+        await trustedTimeSource.generateTrustedTimeId(trace, { parentPathHash: parentPathHash.value, uuid, contentHash })
     );
     if (!trustedTimeIds.ok) {
       return trustedTimeIds;

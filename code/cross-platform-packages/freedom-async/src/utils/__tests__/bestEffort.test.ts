@@ -34,7 +34,7 @@ describe('bestEffort', () => {
     };
 
     const trace = makeTrace('test');
-    await bestEffort(trace, async (trace) => trackResult(0, makeDelayedSuccessResult(trace, 3.14)));
+    await bestEffort(trace, (trace) => trackResult(0, makeDelayedSuccessResult(trace, 3.14)));
     t.assert.strictEqual(tracked.length, 1);
     expectOk(tracked[0]);
   });

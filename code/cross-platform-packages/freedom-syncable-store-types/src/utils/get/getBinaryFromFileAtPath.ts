@@ -18,6 +18,6 @@ export const getBinaryFromFileAtPath = makeAsyncResultFunc(
       return file;
     }
 
-    return file.value.getBinary(trace);
+    return await file.value.getBinary(trace);
   }
 );

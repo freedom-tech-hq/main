@@ -49,7 +49,7 @@ export const generateAcceptanceForPathIfPossible = makeAsyncResultFunc(
       staticPath = path;
     }
 
-    return internalGenerateAcceptanceForFileAtPathWithKeySet(trace, store, {
+    return await internalGenerateAcceptanceForFileAtPathWithKeySet(trace, store, {
       path: staticPath,
       getSha256ForItemProvenance,
       cryptoKeySetId: roleAndCryptoKeySetId.value.cryptoKeySetId
@@ -100,7 +100,7 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       staticPath = path;
     }
 
-    return store.cryptoService.generateSignedValue(trace, {
+    return await store.cryptoService.generateSignedValue(trace, {
       cryptoKeySetId,
       value: { trustedTimeId: trustedTimeId.value },
       valueSchema: syncableAcceptanceSchema,

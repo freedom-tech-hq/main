@@ -22,6 +22,6 @@ export const createBinaryFileAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return parent.value.createBinaryFile(trace, { id, value });
+    return await parent.value.createBinaryFile(trace, { id, value });
   }
 );

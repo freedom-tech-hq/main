@@ -93,7 +93,7 @@ export class TaskQueue {
       this.pendingWaiter_ = new Resolvable<void>();
     }
 
-    return this.pendingWaiter_.promise;
+    return await this.pendingWaiter_.promise;
   };
 
   // Private Methods

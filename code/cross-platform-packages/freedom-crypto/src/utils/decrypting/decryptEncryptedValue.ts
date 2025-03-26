@@ -8,7 +8,7 @@ import { decryptValue } from './decryptValue.ts';
 export const decryptEncryptedValue = makeAsyncResultFunc(
   [import.meta.filename],
   async <T>(trace: Trace, encryptedValue: EncryptedValue<T>, { decryptingKeys }: { decryptingKeys: DecryptingKeySet }): PR<T> =>
-    decryptValue(trace, {
+    await decryptValue(trace, {
       encryptedValue: encryptedValue.encryptedValue,
       valueSchema: encryptedValue.decryptedValueSchema,
       decryptingKeys

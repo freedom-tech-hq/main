@@ -12,6 +12,7 @@ import {
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { makeFailureWithCodeSchemas } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
+import { getEnv } from 'freedom-contexts';
 import { expectNotOk, expectOk, sleep } from 'freedom-testing-tools';
 import { StatusCodes } from 'http-status-codes';
 import { get } from 'lodash-es';
@@ -22,7 +23,7 @@ import { apiFetch } from 'yaschema-api-fetcher';
 import { makeHttpApiHandler } from '../utils/makeHttpApiHandler.ts';
 import { makeRegisterAllWithExpress } from '../utils/makeRegisterAllWithExpress.ts';
 
-const port = Number.parseInt(process.env.PORT ?? '18088');
+const port = Number.parseInt(getEnv('PORT', process.env.PORT) ?? '18088');
 
 const POST_WITH_CREDENTIALS = makeHttpApi({
   method: 'POST',
@@ -64,7 +65,7 @@ describe('makeRegisterAllWithExpress', () => {
   let server: http.Server | undefined;
 
   before(
-    async () =>
+    () =>
       new Promise<void>((resolve, reject) => {
         const app = addYaschemaApiExpressContextAccessorToExpress(express(), makeYaschemaApiExpressContext());
 
@@ -114,7 +115,7 @@ describe('makeRegisterAllWithExpress', () => {
   });
 
   after(
-    async () =>
+    () =>
       new Promise<void>((resolve, reject) => {
         if (server === undefined) {
           setTimeout(resolve, 0);

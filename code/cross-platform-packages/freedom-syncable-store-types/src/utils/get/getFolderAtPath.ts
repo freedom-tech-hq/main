@@ -13,5 +13,5 @@ export const getFolderAtPath = makeAsyncResultFunc(
     store: SyncableStore,
     path: SyncablePath
   ): PR<AccessControlledFolderAccessor, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-    getSyncableAtPath(trace, store, path, 'folder')
+    await getSyncableAtPath(trace, store, path, 'folder')
 );

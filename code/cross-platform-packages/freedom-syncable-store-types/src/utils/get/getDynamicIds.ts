@@ -22,7 +22,7 @@ export const getDynamicIds = makeAsyncResultFunc(
       trace,
       fileIds.value,
       {},
-      async (trace, id): PR<DynamicSyncableId> => inFolderLike.staticToDynamicId(trace, id)
+      async (trace, id): PR<DynamicSyncableId> => await inFolderLike.staticToDynamicId(trace, id)
     );
     if (!dynamicFileIds.ok) {
       return dynamicFileIds;

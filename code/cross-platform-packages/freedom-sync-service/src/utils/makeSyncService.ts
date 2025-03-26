@@ -88,7 +88,7 @@ export const makeSyncService = makeAsyncResultFunc(
         const version = hash;
 
         pushQueue.add({ key, version }, async (trace) => {
-          return pushSyncableToRemotes(trace, { store, syncService: service }, args);
+          return await pushSyncableToRemotes(trace, { store, syncService: service }, args);
         });
       },
 

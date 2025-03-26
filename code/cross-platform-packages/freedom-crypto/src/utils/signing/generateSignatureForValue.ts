@@ -56,7 +56,7 @@ export const generateSignatureForValue = makeAsyncResultFunc(
 
       const jsonString = JSON.stringify(serialized);
 
-      return generateSignatureForString(trace, { mode, value: jsonString, signingKeys, includeKeyId });
+      return await generateSignatureForString(trace, { mode, value: jsonString, signingKeys, includeKeyId });
     } catch (e) {
       /* node:coverage ignore next */
       return makeFailure(new GeneralError(trace, e));

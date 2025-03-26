@@ -97,7 +97,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace: Trace, args): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.provenance);
+          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.provenance);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -132,7 +132,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
             return provenance;
           }
 
-          return this.createPreEncodedBinaryFile_(trace, id.value, encodedData.value, provenance.value);
+          return await this.createPreEncodedBinaryFile_(trace, id.value, encodedData.value, provenance.value);
         }
       }
     }
@@ -143,7 +143,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace, args): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return this.createPreEncodedBundleFile_(trace, args.id, args.provenance);
+          return await this.createPreEncodedBundleFile_(trace, args.id, args.provenance);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -167,7 +167,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
             return provenance;
           }
 
-          return this.createPreEncodedBundleFile_(trace, id.value, provenance.value);
+          return await this.createPreEncodedBundleFile_(trace, id.value, provenance.value);
         }
       }
     }
@@ -346,7 +346,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       }
       /* node:coverage enable */
 
-      return allResultsReduced(
+      return await allResultsReduced(
         trace,
         ids.value,
         {},
@@ -356,7 +356,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
             return makeSuccess(undefined);
           }
 
-          return file.storedValue.accessor.getHash(trace, { recompute });
+          return await file.storedValue.accessor.getHash(trace, { recompute });
         },
         async (_trace, out, hash, fileId) => {
           if (hash === undefined) {
@@ -437,7 +437,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
   public readonly getIds = makeAsyncResultFunc(
     [import.meta.filename, 'getIds'],
     async (trace: Trace, options?: { type?: SingleOrArray<SyncableItemType> }): PR<SyncableId[]> =>
-      this.filterOutDeletedIds_(trace, this.filterIdsByType_(Array.from(this.files_.keys()), options?.type))
+      await this.filterOutDeletedIds_(trace, this.filterIdsByType_(Array.from(this.files_.keys()), options?.type))
   );
 
   public readonly get = makeAsyncResultFunc(
@@ -446,7 +446,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
       trace: Trace,
       id: DynamicSyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
   public readonly getProvenance = makeAsyncResultFunc(
@@ -549,7 +549,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     const recursivelySwept = await allResultsMapped(trace, Array.from(this.files_.values()), {}, async (trace, file) => {
       switch (file.storedValue.type) {
         case 'bundleFile':
-          return file.storedValue.accessor.sweep(trace);
+          return await file.storedValue.accessor.sweep(trace);
         case 'flatFile':
           return makeSuccess(undefined);
       }
@@ -708,7 +708,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
         return makeSuccess(encodedIds);
       }
 
-      return allResultsReduced(
+      return await allResultsReduced(
         trace,
         encodedIds,
         {},

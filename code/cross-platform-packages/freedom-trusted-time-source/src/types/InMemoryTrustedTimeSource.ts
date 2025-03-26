@@ -65,7 +65,7 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
         return makeSuccess(false);
       }
 
-      return isSignedValueValid(
+      return await isSignedValueValid(
         trace,
         deserialization.deserialized,
         { parentPathHash, contentHash },

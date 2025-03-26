@@ -13,7 +13,7 @@ export const isSignedValueValid = makeAsyncResultFunc(
     signatureExtras: [SignatureExtrasT] extends [never] ? undefined : NoInfer<SignatureExtrasT>,
     { verifyingKeys }: { verifyingKeys: VerifyingKeySet }
   ): PR<boolean> =>
-    isSignatureValidForValue<T, SignatureExtrasT>(trace, {
+    await isSignatureValidForValue<T, SignatureExtrasT>(trace, {
       signature: signedValue.signature,
       value: signedValue.value,
       valueSchema: signedValue.valueSchema,

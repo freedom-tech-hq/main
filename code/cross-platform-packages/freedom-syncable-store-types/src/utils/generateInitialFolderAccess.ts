@@ -34,6 +34,6 @@ export const generateInitialFolderAccess = makeAsyncResultFunc(
       initialState[creatorEncryptingKeySet.value.id] = 'creator';
     }
 
-    return generateInitialAccess(trace, { cryptoService: store.cryptoService, initialState, roleSchema: syncableStoreRoleSchema });
+    return await generateInitialAccess(trace, { cryptoService: store.cryptoService, initialState, roleSchema: syncableStoreRoleSchema });
   }
 );

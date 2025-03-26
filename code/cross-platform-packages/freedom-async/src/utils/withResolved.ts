@@ -18,10 +18,10 @@ export const withResolved = <T, ReturnT>(
     return inline(async () => {
       try {
         const resolved = await value;
-        return callback(resolved);
+        return await callback(resolved);
       } catch (e) {
         if (onError !== undefined) {
-          return onError(e);
+          return await onError(e);
         }
 
         throw e;

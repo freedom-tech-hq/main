@@ -2,6 +2,7 @@ import type { LoggingMode } from 'freedom-logging-types';
 import { LogJson } from 'freedom-logging-types';
 import type { Logger } from 'yaschema';
 
+import { getEnv } from './getEnv.ts';
 import { wrapLoggingFunc } from './wrapLoggingFunc.ts';
 
 const debugSeverity = new LogJson('severity', 'DEBUG');
@@ -9,7 +10,7 @@ const infoSeverity = new LogJson('severity', 'INFO');
 const warningSeverity = new LogJson('severity', 'WARNING');
 const errorSeverity = new LogJson('severity', 'ERROR');
 
-const shouldAllowLogBlocking = process.env.FREEDOM_LOG_ALLOW_BLOCKING !== 'false';
+const shouldAllowLogBlocking = getEnv('FREEDOM_LOG_ALLOW_BLOCKING', process.env.FREEDOM_LOG_ALLOW_BLOCKING) !== 'false';
 
 // If `shouldAllowLogBlocking` is `false`, uses logger.error for all logging, to avoid blocking, so that content is as aligned as possible
 export const wrapLogger = (logger: Logger, mode?: LoggingMode): Logger => ({

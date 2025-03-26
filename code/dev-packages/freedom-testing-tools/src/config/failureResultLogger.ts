@@ -1,5 +1,6 @@
 /* node:coverage disable */
 
+import { getEnv } from '../internal/utils/getEnv.ts';
 import { inline } from '../internal/utils/inline.ts';
 
 type LoggingFunc = (message?: any, ...optionalParams: any[]) => void;
@@ -26,7 +27,7 @@ export const setFailureResultLogger = (logger: FailureResultLogger) => {
 
 export const isDefaultFailureResultLogger = () => globalIsDefaultFailureResultLogger;
 
-DEV: if (process.env.FREEDOM_FAILURE_LOGGING === 'true') {
+DEV: if (getEnv('FREEDOM_FAILURE_LOGGING', process.env.FREEDOM_FAILURE_LOGGING) === 'true') {
   inline(async () => {
     const console = await import('console');
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

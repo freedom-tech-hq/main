@@ -10,12 +10,12 @@ export const computeAsyncOnce = async <T>(idStack: string[], key: string, produc
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const cached = globalCache[key];
   if (cached !== undefined) {
-    return cached as Promise<T>;
+    return await (cached as Promise<T>);
   }
 
   const trace = makeTrace(...idStack);
-  const promisedOutput = callAsyncFunc(trace, {}, async (trace) => producer(trace));
+  const promisedOutput = callAsyncFunc(trace, {}, (trace) => producer(trace));
   globalCache[key] = promisedOutput;
 
-  return promisedOutput;
+  return await promisedOutput;
 };

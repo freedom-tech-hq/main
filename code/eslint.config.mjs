@@ -101,6 +101,7 @@ const baseConfig = [
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      '@typescript-eslint/return-await': ['error', 'always'],
 
       '@typescript-eslint/no-unused-vars': [
         'warn',

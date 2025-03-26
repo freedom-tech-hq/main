@@ -24,7 +24,7 @@ export const makeRecencyCachingAsyncResultFunc = <SuccessT, ErrorCodeT extends s
         cleanupTimeout = setTimeout(cleanup, recencyThresholdMSec);
       }
 
-      return cached;
+      return await cached;
     }
 
     // eslint-disable-next-line no-async-promise-executor
@@ -52,6 +52,6 @@ export const makeRecencyCachingAsyncResultFunc = <SuccessT, ErrorCodeT extends s
         reject(e);
       }
     });
-    return cached;
+    return await cached;
   });
 };

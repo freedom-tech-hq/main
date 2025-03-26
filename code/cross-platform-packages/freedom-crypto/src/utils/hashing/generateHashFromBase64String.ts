@@ -9,4 +9,4 @@ import { generateHashFromBuffer } from './generateHashFromBuffer.ts';
 export const generateHashFromBase64String = async (
   trace: Trace,
   { mode, value }: { mode?: HashingMode; value: Base64String }
-): PR<Uint8Array> => generateHashFromBuffer(trace, { mode, value: base64String.toBuffer(value) });
+): PR<Uint8Array> => await generateHashFromBuffer(trace, { mode, value: base64String.toBuffer(value) });

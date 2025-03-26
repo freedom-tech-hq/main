@@ -37,7 +37,7 @@ export const cryptoKeySet_RsaOaep4096Sha256_Aes256GcmSchema = schema.custom<Cryp
       }
       /* node:coverage enable */
 
-      return serializedSchema.serializeAsync({
+      return await serializedSchema.serializeAsync({
         type: 'RSA-OAEP/4096/SHA-256+AES/256/GCM',
         id: value.id,
         rsaPublicKey: rsaPublicKeyPem.value

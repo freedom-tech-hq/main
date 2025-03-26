@@ -19,6 +19,6 @@ export const generateContentHashForSyncableStoreAccessChange = makeAsyncResultFu
       return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));
     }
 
-    return generateSha256HashFromString(trace, JSON.stringify(serialization.serialized));
+    return await generateSha256HashFromString(trace, JSON.stringify(serialization.serialized));
   }
 );

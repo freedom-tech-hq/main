@@ -31,6 +31,6 @@ export const createViaSyncPreEncodedBinaryFileAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return parent.value.createBinaryFile(trace, { mode: 'via-sync', id: path.lastId!, encodedValue, provenance });
+    return await parent.value.createBinaryFile(trace, { mode: 'via-sync', id: path.lastId!, encodedValue, provenance });
   }
 );

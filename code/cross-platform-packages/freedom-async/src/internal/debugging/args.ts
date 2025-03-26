@@ -1,6 +1,6 @@
 /* node:coverage disable */
 
-import type { Trace } from 'freedom-contexts';
+import { getEnv, type Trace } from 'freedom-contexts';
 
 import { genericValueToString } from '../utils/genericValueToString.ts';
 import { makeShouldIncludeTraceForDebuggingFunc } from './makeShouldIncludeTraceForDebuggingFunc.ts';
@@ -9,7 +9,7 @@ export let shouldLogFuncArgs: (trace: Trace) => boolean = () => false;
 export let argsToStrings: (args: any[]) => string[];
 
 DEV: {
-  shouldLogFuncArgs = makeShouldIncludeTraceForDebuggingFunc(process.env.FREEDOM_LOG_ARGS);
+  shouldLogFuncArgs = makeShouldIncludeTraceForDebuggingFunc(getEnv('FREEDOM_LOG_ARGS', process.env.FREEDOM_LOG_ARGS));
 
   argsToStrings = (args) => {
     const out: string[] = ['ARGS:'];

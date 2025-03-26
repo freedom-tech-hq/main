@@ -22,6 +22,6 @@ export const extractPartsFromTrustedTimeId = makeAsyncResultFunc(
       return makeFailure(new InternalSchemaValidationError(trace, { message: signedTimeIdDeserialization.error }));
     }
 
-    return extractPartsFromTimeId(trace, signedTimeIdDeserialization.deserialized.value);
+    return await extractPartsFromTimeId(trace, signedTimeIdDeserialization.deserialized.value);
   }
 );

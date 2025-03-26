@@ -20,6 +20,6 @@ export const createViaSyncBundleFileAtPath = makeAsyncResultFunc(
       return parent;
     }
 
-    return parent.value.createBundleFile(trace, { mode: 'via-sync', id: path.lastId!, provenance });
+    return await parent.value.createBundleFile(trace, { mode: 'via-sync', id: path.lastId!, provenance });
   }
 );

@@ -33,7 +33,7 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
     if (!pulled.ok) {
       if (pulled.value.errorCode === 'not-found') {
         DEV: debugTopic('SYNC', (log) => log(`Pulled ${args.path.toString()}: nothing found on remote.  Will try to push everything`));
-        return pushEverything(trace, { store, syncService }, args);
+        return await pushEverything(trace, { store, syncService }, args);
       }
 
       return excludeFailureResult(pulled, 'not-found');
@@ -45,7 +45,7 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
     DEV: debugTopic('SYNC', (log) =>
       log(`Pulled ${args.path.toString()}: local and remote are out of sync.  Will try to push missing content`)
     );
-    return pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: pulled.value }, args);
+    return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: pulled.value }, args);
   }
 );
 
@@ -66,7 +66,7 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
   ): PR<undefined> => {
     switch (pulled.type) {
       case 'folder':
-        return pushFolder(trace, {
+        return await pushFolder(trace, {
           store,
           syncService,
           path,
@@ -74,10 +74,10 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
         });
 
       case 'flatFile':
-        return pushFlatFile(trace, { remoteId, store, syncService, path });
+        return await pushFlatFile(trace, { remoteId, store, syncService, path });
 
       case 'bundleFile':
-        return pushBundleFile(trace, { store, syncService, path, pulledHashesById: pulled.hashesById });
+        return await pushBundleFile(trace, { store, syncService, path, pulledHashesById: pulled.hashesById });
     }
   }
 );
@@ -111,11 +111,11 @@ const pushEverything = makeAsyncResultFunc(
         }
         syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'folder', pathString: path.toString() });
 
-        return pushFolder(trace, { store, syncService, path });
+        return await pushFolder(trace, { store, syncService, path });
       }
 
       case 'flatFile':
-        return pushFlatFile(trace, { remoteId, store, syncService, path });
+        return await pushFlatFile(trace, { remoteId, store, syncService, path });
 
       case 'bundleFile': {
         const provenance = await localItemAccessor.value.getProvenance(trace);
@@ -129,7 +129,7 @@ const pushEverything = makeAsyncResultFunc(
         }
         syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'bundleFile', pathString: path.toString() });
 
-        return pushBundleFile(trace, { store, syncService, path });
+        return await pushBundleFile(trace, { store, syncService, path });
       }
     }
   }
