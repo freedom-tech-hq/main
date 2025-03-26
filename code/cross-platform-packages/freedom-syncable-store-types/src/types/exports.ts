@@ -1,4 +1,5 @@
 export * from './AccessControlledFolderAccessor.ts';
+export * from './backing/exports.ts';
 export * from './BundleFileAccessor.ts';
 export * from './BundleManagement.ts';
 export * from './FileAccessor.ts';

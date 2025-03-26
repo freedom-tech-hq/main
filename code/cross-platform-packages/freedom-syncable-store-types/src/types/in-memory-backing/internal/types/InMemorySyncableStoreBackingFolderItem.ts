@@ -3,9 +3,9 @@ import type { SyncableBundleFileMetadata, SyncableFolderMetadata, SyncableId } f
 import type { LocalItemMetadata } from '../../../backing/LocalItemMetadata.ts';
 import type { InMemorySyncableStoreBackingItem } from './InMemorySyncableStoreBackingItem.ts';
 
-export type InMemorySyncableStoreBackingFolderItem = {
-  type: 'folder';
-  id: SyncableId;
-  metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata;
-  contents: Partial<Record<SyncableId, InMemorySyncableStoreBackingItem>>;
-};
+export interface InMemorySyncableStoreBackingFolderItem {
+  readonly type: 'folder';
+  readonly id: SyncableId;
+  readonly contents: Partial<Record<SyncableId, InMemorySyncableStoreBackingItem>>;
+  readonly metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & LocalItemMetadata;
+}
