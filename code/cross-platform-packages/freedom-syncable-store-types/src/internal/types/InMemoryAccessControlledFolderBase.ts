@@ -22,14 +22,15 @@ import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId, SignedValue, TrustedTimeId } from 'freedom-crypto-data';
-import {
-  type DynamicSyncableId,
-  DynamicSyncablePath,
-  type StaticSyncablePath,
-  type SyncableId,
-  type SyncableItemType,
-  type SyncableProvenance
+import type {
+  DynamicSyncableId,
+  StaticSyncablePath,
+  SyncableId,
+  SyncableItemType,
+  SyncablePath,
+  SyncableProvenance
 } from 'freedom-sync-types';
+import { DynamicSyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
@@ -160,7 +161,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly updateAccess = makeAsyncResultFunc(
     [import.meta.filename, 'updateAccess'],
     async (trace: Trace, change: AccessChangeParams<SyncableStoreRole>): PR<undefined, 'conflict'> => {
-      const accessControlDoc = await this.getMutableAccessControlDocument_(trace);
+      const accessControlDoc = await getMutableAccessControlDocument(trace, this.weakStore_, this.path);
       /* node:coverage disable */
       if (!accessControlDoc.ok) {
         return accessControlDoc;
@@ -228,7 +229,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   // AccessControlledFolderAccessor Methods
 
   public readonly canPushToRemotes = makeAsyncResultFunc([import.meta.filename, 'canPushToRemotes'], async (trace): PR<boolean> => {
-    const accessControlDoc = await disableLam(trace, true, (trace) => this.getAccessControlDocument_(trace));
+    const accessControlDoc = await disableLam(trace, true, (trace) => getAccessControlDocument(trace, this.weakStore_, this.path));
     return makeSuccess(accessControlDoc.ok);
   });
 
@@ -238,7 +239,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       trace,
       { cryptoKeySetId, oneOfRoles, timeMSec }: { cryptoKeySetId: CryptoKeySetId; oneOfRoles: Set<SyncableStoreRole>; timeMSec: number }
     ): PR<boolean> => {
-      const accessControlDoc = await this.getAccessControlDocument_(trace);
+      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
       if (!accessControlDoc.ok) {
         return accessControlDoc;
       }
@@ -608,60 +609,14 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   // Protected Methods
 
-  protected readonly getAccessControlDocument_ = makeAsyncResultFunc([import.meta.filename, 'getAccessControlDocument'], async (trace) => {
-    const accessControlDoc = await this.getMutableAccessControlDocument_(trace);
-    /* node:coverage disable */
-    if (!accessControlDoc.ok) {
-      return accessControlDoc;
-    }
-    /* node:coverage enable */
-
-    return makeSuccess(accessControlDoc.value.document);
-  });
-
-  protected readonly getMutableSyncableStoreChangesDocument_ = makeAsyncResultFunc(
-    [import.meta.filename, 'getMutableSyncableStoreChangesDocument_'],
-    async (trace): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
-
-      // TODO: doc can be modified directly by changing bundle.  this should track that probably
-      const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, this.path.append(STORE_CHANGES_BUNDLE_FILE_ID), {
-        newDocument: makeSyncableStoreChangesDocumentFromSnapshot,
-        isSnapshotValid: isStoreChangesDocumentSnapshotValid,
-        isDeltaValidForDocument: isDeltaValidForStoreChangesDocument
-      });
-      /* node:coverage disable */
-      if (!doc.ok) {
-        return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-      }
-      /* node:coverage enable */
-
-      return makeSuccess(doc.value);
-    }
-  );
-
   protected makeFolderOperationsHandler_(weakStore: WeakRef<MutableSyncableStore>) {
-    const weakThis = new WeakRef(this);
+    const path = this.path;
 
     return new FolderOperationsHandler({
       store: weakStore,
-      getAccessControlDocument: async (trace: Trace): PR<SyncableStoreAccessControlDocument> => {
-        const self = weakThis.deref();
-        if (self === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'folder was released' }));
-        }
-        return await self.getAccessControlDocument_(trace);
-      },
-      getMutableSyncableStoreChangesDocument: async (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
-        const self = weakThis.deref();
-        if (self === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'folder was released' }));
-        }
-        return await self.getMutableSyncableStoreChangesDocument_(trace);
-      }
+      getAccessControlDocument: (trace: Trace): PR<SyncableStoreAccessControlDocument> => getAccessControlDocument(trace, weakStore, path),
+      getMutableSyncableStoreChangesDocument: (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> =>
+        getMutableSyncableStoreChangesDocument(trace, weakStore, path)
     });
   }
 
@@ -670,7 +625,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   private readonly getAccessControlState_ = makeAsyncResultFunc(
     [import.meta.filename, 'getAccessControlState'],
     async (trace: Trace): PR<AccessControlState<SyncableStoreRole>> => {
-      const accessControlDoc = await this.getAccessControlDocument_(trace);
+      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
       /* node:coverage disable */
       if (!accessControlDoc.ok) {
         return accessControlDoc;
@@ -680,36 +635,74 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       return makeSuccess(accessControlDoc.value.accessControlState);
     }
   );
-
-  private readonly getMutableAccessControlDocument_ = makeAsyncResultFunc(
-    [import.meta.filename, 'getMutableAccessControlDocument_'],
-    async (trace): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
-
-      const newDocument = (snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'ACCESS-CONTROL'> }) =>
-        new SyncableStoreAccessControlDocument({ snapshot });
-
-      // TODO: doc can be modified directly by changing bundle.  this should track that probably
-      const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, this.path.append(ACCESS_CONTROL_BUNDLE_FILE_ID), {
-        newDocument,
-        isSnapshotValid: isAccessControlDocumentSnapshotValid,
-        isDeltaValidForDocument: isDeltaValidForAccessControlDocument
-      });
-      /* node:coverage disable */
-      if (!doc.ok) {
-        return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-      }
-      /* node:coverage enable */
-
-      return makeSuccess(doc.value);
-    }
-  );
 }
 
 // Helpers
+
+const getAccessControlDocument = makeAsyncResultFunc(
+  [import.meta.filename, 'getAccessControlDocument'],
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath) => {
+    const accessControlDoc = await getMutableAccessControlDocument(trace, weakStore, path);
+    /* node:coverage disable */
+    if (!accessControlDoc.ok) {
+      return accessControlDoc;
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(accessControlDoc.value.document);
+  }
+);
+
+const getMutableAccessControlDocument = makeAsyncResultFunc(
+  [import.meta.filename, 'getMutableAccessControlDocument'],
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
+    const store = weakStore.deref();
+    if (store === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+    }
+
+    const newDocument = (snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'ACCESS-CONTROL'> }) =>
+      new SyncableStoreAccessControlDocument({ snapshot });
+
+    // TODO: doc can be modified directly by changing bundle.  this should track that probably
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(ACCESS_CONTROL_BUNDLE_FILE_ID), {
+      newDocument,
+      isSnapshotValid: isAccessControlDocumentSnapshotValid,
+      isDeltaValidForDocument: isDeltaValidForAccessControlDocument
+    });
+    /* node:coverage disable */
+    if (!doc.ok) {
+      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(doc.value);
+  }
+);
+
+const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
+  [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
+    const store = weakStore.deref();
+    if (store === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+    }
+
+    // TODO: doc can be modified directly by changing bundle.  this should track that probably
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(STORE_CHANGES_BUNDLE_FILE_ID), {
+      newDocument: makeSyncableStoreChangesDocumentFromSnapshot,
+      isSnapshotValid: isStoreChangesDocumentSnapshotValid,
+      isDeltaValidForDocument: isDeltaValidForStoreChangesDocument
+    });
+    /* node:coverage disable */
+    if (!doc.ok) {
+      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(doc.value);
+  }
+);
 
 const isAccessControlDocumentSnapshotValid = makeAsyncResultFunc(
   [import.meta.filename, 'isAccessControlDocumentSnapshotValid'],
