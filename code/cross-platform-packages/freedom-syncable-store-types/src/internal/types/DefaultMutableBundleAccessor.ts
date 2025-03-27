@@ -8,16 +8,17 @@ import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import type { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableFileAccessorBase } from './DefaultMutableFileAccessorBase.ts';
 
-export class DefaultMutableBundleAccessor extends DefaultMutableFileAccessorBase implements MutableBundleAccessor {
+export class DefaultMutableBundleAccessor implements MutableBundleAccessor {
   public readonly type = 'bundle';
+  public readonly path: StaticSyncablePath;
 
+  private readonly weakStore_: WeakRef<MutableSyncableStore>;
   private readonly data_: DefaultFileStoreBase;
 
   constructor({ store, path, data }: { store: WeakRef<MutableSyncableStore>; path: StaticSyncablePath; data: DefaultFileStoreBase }) {
-    super({ store, path });
-
+    this.weakStore_ = store;
+    this.path = path;
     this.data_ = data;
 
     this.createBinaryFile = data.createBinaryFile;
