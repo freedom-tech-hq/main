@@ -13,8 +13,8 @@ import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCr
 import type { HotSwappableCryptoService } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { makeHotSwappableCryptoServiceForTesting } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../../consts/special-file-ids.ts';
+import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
-import { InMemorySyncableStore } from '../../../types/InMemorySyncableStore.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
 import { createBundleFileAtPath } from '../../../utils/create/createBundleFileAtPath.ts';
 import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts';
@@ -31,7 +31,7 @@ describe('InMemoryAccessControlledFolder', () => {
   let cryptoService!: HotSwappableCryptoService;
   let primaryUserCryptoService!: TestingCryptoService;
   let storeBacking!: InMemorySyncableStoreBacking;
-  let store!: InMemorySyncableStore;
+  let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
 
@@ -49,7 +49,7 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(provenance);
 
     storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
-    store = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    store = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
 
     expectOk(await initializeRoot(trace, store));
   });

@@ -67,15 +67,14 @@ import type {
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
+import { DefaultEncryptedBundle } from './DefaultEncryptedBundle.ts';
+import { DefaultFolderStore } from './DefaultFolderStore.ts';
+import { DefaultPlainBundle } from './DefaultPlainBundle.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-import { InMemoryEncryptedBundle } from './InMemoryEncryptedBundle.ts';
-import { InMemoryFolder } from './InMemoryFolder.ts';
-import { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
 import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
-// TODO: rename to DefaultAccessControlledFolderBase in a separate PR
-export abstract class InMemoryAccessControlledFolderBase implements MutableAccessControlledFolder {
+export abstract class DefaultAccessControlledFolderBase implements MutableAccessControlledFolder {
   public readonly type = 'folder';
   public readonly path: StaticSyncablePath;
 
@@ -86,10 +85,10 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   private readonly backing_: SyncableStoreBacking;
 
-  private folder__: InMemoryFolder | undefined;
-  private get folder_(): InMemoryFolder {
+  private folder__: DefaultFolderStore | undefined;
+  private get folder_(): DefaultFolderStore {
     if (this.folder__ === undefined) {
-      this.folder__ = new InMemoryFolder({
+      this.folder__ = new DefaultFolderStore({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
@@ -102,10 +101,10 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     return this.folder__;
   }
 
-  private plainBundle__: InMemoryPlainBundle | undefined;
-  private get plainBundle_(): InMemoryPlainBundle {
+  private plainBundle__: DefaultPlainBundle | undefined;
+  private get plainBundle_(): DefaultPlainBundle {
     if (this.plainBundle__ === undefined) {
-      this.plainBundle__ = new InMemoryPlainBundle({
+      this.plainBundle__ = new DefaultPlainBundle({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
@@ -118,10 +117,10 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     return this.plainBundle__;
   }
 
-  private encryptedBundle__: InMemoryEncryptedBundle | undefined;
-  private get encryptedBundle_(): InMemoryEncryptedBundle {
+  private encryptedBundle__: DefaultEncryptedBundle | undefined;
+  private get encryptedBundle_(): DefaultEncryptedBundle {
     if (this.encryptedBundle__ === undefined) {
-      this.encryptedBundle__ = new InMemoryEncryptedBundle({
+      this.encryptedBundle__ = new DefaultEncryptedBundle({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,

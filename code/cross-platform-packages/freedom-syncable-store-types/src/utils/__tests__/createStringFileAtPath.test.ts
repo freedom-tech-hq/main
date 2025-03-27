@@ -11,7 +11,7 @@ import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
-import { InMemorySyncableStore } from '../../types/InMemorySyncableStore.ts';
+import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
@@ -23,7 +23,7 @@ describe('createStringFileAtPath', () => {
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: CryptoService;
   let storeBacking!: InMemorySyncableStoreBacking;
-  let store!: InMemorySyncableStore;
+  let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
 
@@ -40,7 +40,7 @@ describe('createStringFileAtPath', () => {
     expectOk(provenance);
 
     storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
-    store = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    store = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
 
     expectOk(await initializeRoot(trace, store));
   });

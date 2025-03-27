@@ -19,15 +19,15 @@ import { getFolderAtPath } from '../../utils/get/getFolderAtPath.ts';
 import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.ts';
 import { getStringFromFileAtPath } from '../../utils/get/getStringFromFileAtPath.ts';
 import { initializeRoot } from '../../utils/initializeRoot.ts';
+import { DefaultSyncableStore } from '../DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../in-memory-backing/InMemorySyncableStoreBacking.ts';
-import { InMemorySyncableStore } from '../InMemorySyncableStore.ts';
 
-describe('InMemorySyncableStore', () => {
+describe('DefaultSyncableStore', () => {
   let trace!: Trace;
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: CryptoService;
   let storeBacking!: InMemorySyncableStoreBacking;
-  let store!: InMemorySyncableStore;
+  let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
 
@@ -44,7 +44,7 @@ describe('InMemorySyncableStore', () => {
     expectOk(provenance);
 
     storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
-    store = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    store = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
 
     expectOk(await initializeRoot(trace, store));
   });
