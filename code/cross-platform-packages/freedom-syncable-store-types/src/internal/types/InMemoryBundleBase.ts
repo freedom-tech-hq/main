@@ -97,7 +97,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace: Trace, args): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.provenance);
+          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata.provenance);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -143,7 +143,7 @@ export abstract class InMemoryBundleBase implements MutableFileStore, BundleMana
     async (trace, args): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBundleFile_(trace, args.id, args.provenance);
+          return await this.createPreEncodedBundleFile_(trace, args.id, args.metadata.provenance);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();

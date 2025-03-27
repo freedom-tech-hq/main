@@ -15,7 +15,7 @@ export const allResultsMappedSkipFailures = makeAsyncResultFunc(
   [import.meta.filename],
   async function <V, T, ErrorCodeT extends string, SkipErrorCodeT extends ErrorCodeT | 'generic'>(
     trace: Trace,
-    values: V[],
+    values: readonly V[],
     {
       maxConcurrency = FREEDOM_MAX_CONCURRENCY_DEFAULT,
       onSuccess = 'continue',

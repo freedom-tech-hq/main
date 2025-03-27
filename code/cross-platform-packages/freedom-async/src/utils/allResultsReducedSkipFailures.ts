@@ -12,7 +12,7 @@ export const allResultsReducedSkipFailures = makeAsyncResultFunc(
   [import.meta.filename],
   async <V, T, ReducedT, ErrorCodeT extends string, SkipErrorCodeT extends ErrorCodeT | 'generic'>(
     trace: Trace,
-    values: V[],
+    values: readonly V[],
     options: {
       _successType?: T;
       _errorCodeType?: ErrorCodeT;

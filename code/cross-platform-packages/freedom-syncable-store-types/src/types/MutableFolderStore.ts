@@ -1,5 +1,5 @@
 import type { PRFunc } from 'freedom-async';
-import type { DynamicSyncableId, SyncableId, SyncableProvenance } from 'freedom-sync-types';
+import type { DynamicSyncableId, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FolderStore } from './FolderStore.ts';
 import type { MutableAccessControlledFolderAccessor } from './MutableAccessControlledFolderAccessor.ts';
@@ -22,7 +22,7 @@ export interface MutableFolderStore extends MutableStoreBase, FolderStore {
       | {
           mode: 'via-sync';
           id: SyncableId;
-          provenance: SyncableProvenance;
+          metadata: SyncableFolderMetadata;
         }
     ]
   >;
