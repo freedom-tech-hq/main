@@ -7,11 +7,11 @@ import { generateSha256HashFromString } from 'freedom-crypto';
 import type { SyncablePath } from 'freedom-sync-types';
 import { timeId } from 'freedom-sync-types';
 
-import { makeDeltasBundleFileId } from '../../consts/special-file-ids.ts';
+import { makeDeltasBundleId } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
-import { getBundleFileAtPath } from './getBundleFileAtPath.ts';
+import { getBundleAtPath } from './getBundleAtPath.ts';
 import type { GetConflictFreeDocumentFromBundleAtPathArgs } from './getConflictFreeDocumentFromBundleAtPath.ts';
 import { getConflictFreeDocumentFromBundleAtPath } from './getConflictFreeDocumentFromBundleAtPath.ts';
 
@@ -44,8 +44,8 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
           return makeFailure(new NotFoundError(trace, { message: 'No snapshot ID is set' }));
         }
 
-        const deltasPath = path.append(makeDeltasBundleFileId(document.value.snapshotId));
-        const deltas = await getBundleFileAtPath(trace, store, deltasPath);
+        const deltasPath = path.append(makeDeltasBundleId(document.value.snapshotId));
+        const deltas = await getBundleAtPath(trace, store, deltasPath);
         if (!deltas.ok) {
           return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
         }

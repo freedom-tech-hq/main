@@ -3,13 +3,8 @@ import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } fr
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { OutOfSyncBundleFile, OutOfSyncFlatFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
-import {
-  ACCESS_CONTROL_BUNDLE_FILE_ID,
-  getSyncableAtPath,
-  STORE_CHANGES_BUNDLE_FILE_ID,
-  type SyncableStore
-} from 'freedom-syncable-store-types';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
+import { ACCESS_CONTROL_BUNDLE_ID, getSyncableAtPath, STORE_CHANGES_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncService } from '../../types/SyncService.ts';
@@ -60,7 +55,7 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
     }: {
       store: SyncableStore;
       syncService: SyncService;
-      pulled: OutOfSyncFolder | OutOfSyncFlatFile | OutOfSyncBundleFile;
+      pulled: OutOfSyncFolder | OutOfSyncFile | OutOfSyncBundle;
     },
     { remoteId, path }: { remoteId: RemoteId; path: StaticSyncablePath }
   ): PR<undefined> => {
@@ -73,11 +68,11 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
           pulledHashesById: pulled.hashesById
         });
 
-      case 'flatFile':
-        return await pushFlatFile(trace, { remoteId, store, syncService, path });
+      case 'file':
+        return await pushFile(trace, { remoteId, store, syncService, path });
 
-      case 'bundleFile':
-        return await pushBundleFile(trace, { store, syncService, path, pulledHashesById: pulled.hashesById });
+      case 'bundle':
+        return await pushBundle(trace, { store, syncService, path, pulledHashesById: pulled.hashesById });
     }
   }
 );
@@ -114,29 +109,29 @@ const pushEverything = makeAsyncResultFunc(
         return await pushFolder(trace, { store, syncService, path });
       }
 
-      case 'flatFile':
-        return await pushFlatFile(trace, { remoteId, store, syncService, path });
+      case 'file':
+        return await pushFile(trace, { remoteId, store, syncService, path });
 
-      case 'bundleFile': {
+      case 'bundle': {
         const provenance = await localItemAccessor.value.getProvenance(trace);
         if (!provenance.ok) {
           return provenance;
         }
 
-        const pushed = await pushToRemote(trace, { remoteId, type: 'bundleFile', path, provenance: provenance.value });
+        const pushed = await pushToRemote(trace, { remoteId, type: 'bundle', path, provenance: provenance.value });
         if (!pushed.ok) {
           return pushed;
         }
-        syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'bundleFile', pathString: path.toString() });
+        syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'bundle', pathString: path.toString() });
 
-        return await pushBundleFile(trace, { store, syncService, path });
+        return await pushBundle(trace, { store, syncService, path });
       }
     }
   }
 );
 
-const pushBundleFile = makeAsyncResultFunc(
-  [import.meta.filename, 'pushBundleFile'],
+const pushBundle = makeAsyncResultFunc(
+  [import.meta.filename, 'pushBundle'],
   async (
     trace,
     {
@@ -151,7 +146,7 @@ const pushBundleFile = makeAsyncResultFunc(
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
   ): PR<undefined> => {
-    const localBundle = await getSyncableAtPath(trace, store, path, 'bundleFile');
+    const localBundle = await getSyncableAtPath(trace, store, path, 'bundle');
     if (!localBundle.ok) {
       return generalizeFailureResult(trace, localBundle, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
@@ -206,17 +201,17 @@ const pushFolder = makeAsyncResultFunc(
       return localHashesById;
     }
 
-    if (localHashesById.value[ACCESS_CONTROL_BUNDLE_FILE_ID] !== pulledHashesById[ACCESS_CONTROL_BUNDLE_FILE_ID]) {
+    if (localHashesById.value[ACCESS_CONTROL_BUNDLE_ID] !== pulledHashesById[ACCESS_CONTROL_BUNDLE_ID]) {
       // If the remote doesn't have the access control bundle, we need to push that first
       syncService.pushToRemotes({
-        path: path.append(ACCESS_CONTROL_BUNDLE_FILE_ID),
-        hash: localHashesById.value[ACCESS_CONTROL_BUNDLE_FILE_ID]!
+        path: path.append(ACCESS_CONTROL_BUNDLE_ID),
+        hash: localHashesById.value[ACCESS_CONTROL_BUNDLE_ID]!
       });
-    } else if (localHashesById.value[STORE_CHANGES_BUNDLE_FILE_ID] !== pulledHashesById[STORE_CHANGES_BUNDLE_FILE_ID]) {
+    } else if (localHashesById.value[STORE_CHANGES_BUNDLE_ID] !== pulledHashesById[STORE_CHANGES_BUNDLE_ID]) {
       // If the remote doesn't have the syncable store changes bundle, we need to push that second
       syncService.pushToRemotes({
-        path: path.append(STORE_CHANGES_BUNDLE_FILE_ID),
-        hash: localHashesById.value[STORE_CHANGES_BUNDLE_FILE_ID]!
+        path: path.append(STORE_CHANGES_BUNDLE_ID),
+        hash: localHashesById.value[STORE_CHANGES_BUNDLE_ID]!
       });
     } else {
       for (const [id, localHash] of objectEntries(localHashesById.value)) {
@@ -232,15 +227,15 @@ const pushFolder = makeAsyncResultFunc(
   }
 );
 
-const pushFlatFile = makeAsyncResultFunc(
-  [import.meta.filename, 'pushFlatFile'],
+const pushFile = makeAsyncResultFunc(
+  [import.meta.filename, 'pushFile'],
   async (
     trace,
     { remoteId, store, syncService, path }: { remoteId: RemoteId; store: SyncableStore; syncService: SyncService; path: StaticSyncablePath }
   ): PR<undefined> => {
     const pushToRemote = (syncService as InternalSyncService).pusher;
 
-    const localFile = await getSyncableAtPath(trace, store, path, 'flatFile');
+    const localFile = await getSyncableAtPath(trace, store, path, 'file');
     if (!localFile.ok) {
       return generalizeFailureResult(trace, localFile, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
@@ -255,11 +250,11 @@ const pushFlatFile = makeAsyncResultFunc(
       return provenance;
     }
 
-    const pushed = await pushToRemote(trace, { remoteId, type: 'flatFile', path, provenance: provenance.value, data: data.value });
+    const pushed = await pushToRemote(trace, { remoteId, type: 'file', path, provenance: provenance.value, data: data.value });
     if (!pushed.ok) {
       return pushed;
     }
-    syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'flatFile', pathString: path.toString() });
+    syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'file', pathString: path.toString() });
 
     return makeSuccess(undefined);
   }

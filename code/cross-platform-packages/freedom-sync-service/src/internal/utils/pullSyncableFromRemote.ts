@@ -4,11 +4,11 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OutOfSyncBundleFile, OutOfSyncFlatFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import {
   createViaSyncPreEncodedBinaryFileAtPath,
-  getOrCreateViaSyncBundleFileAtPath,
+  getOrCreateViaSyncBundleAtPath,
   getOrCreateViaSyncFolderAtPath
 } from 'freedom-syncable-store-types';
 
@@ -51,16 +51,16 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
 
           break;
         }
-        case 'flatFile': {
-          const handled = await onFlatFilePulled(trace, { store, syncService, file: pulled.value, path });
+        case 'file': {
+          const handled = await onFilePulled(trace, { store, syncService, file: pulled.value, path });
           if (!handled.ok) {
             return handled;
           }
 
           break;
         }
-        case 'bundleFile': {
-          const handled = await onBundleFilePulled(trace, { store, syncService, file: pulled.value }, { remoteId, path });
+        case 'bundle': {
+          const handled = await onBundlePulled(trace, { store, syncService, file: pulled.value }, { remoteId, path });
           if (!handled.ok) {
             return handled;
           }
@@ -76,16 +76,16 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
 
 // Helpers
 
-const onBundleFilePulled = makeAsyncResultFunc(
-  [import.meta.filename, 'onBundleFilePulled'],
+const onBundlePulled = makeAsyncResultFunc(
+  [import.meta.filename, 'onBundlePulled'],
   async (
     trace: Trace,
-    { store, syncService, file }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncBundleFile },
+    { store, syncService, file }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncBundle },
     fwd: { remoteId: RemoteId; path: StaticSyncablePath }
   ): PR<undefined> => {
     const path = fwd.path;
 
-    const localBundle = await getOrCreateViaSyncBundleFileAtPath(trace, store, path, file.metadata);
+    const localBundle = await getOrCreateViaSyncBundleAtPath(trace, store, path, file.metadata);
     if (!localBundle.ok) {
       if (localBundle.value.errorCode === 'deleted') {
         // Was locally deleted, so not interested in this content
@@ -155,11 +155,11 @@ const onFolderPulled = makeAsyncResultFunc(
   }
 );
 
-const onFlatFilePulled = makeAsyncResultFunc(
-  [import.meta.filename, 'onFlatFilePulled'],
+const onFilePulled = makeAsyncResultFunc(
+  [import.meta.filename, 'onFilePulled'],
   async (
     trace: Trace,
-    { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFlatFile; path: StaticSyncablePath }
+    { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFile; path: StaticSyncablePath }
   ): PR<undefined> => {
     if (file.data === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));

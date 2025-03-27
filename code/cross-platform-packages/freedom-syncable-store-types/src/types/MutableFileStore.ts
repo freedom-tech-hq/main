@@ -1,10 +1,10 @@
 import type { PRFunc } from 'freedom-async';
-import type { DynamicSyncableId, SyncableBundleFileMetadata, SyncableFlatFileMetadata, SyncableId } from 'freedom-sync-types';
+import type { DynamicSyncableId, SyncableBundleMetadata, SyncableFileMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FileStore } from './FileStore.ts';
-import type { MutableBundleFileAccessor } from './MutableBundleFileAccessor.ts';
-import type { MutableFlatFileAccessor } from './MutableFlatFileAccessor.ts';
 import type { MutableStoreBase } from './MutableStoreBase.ts';
+import type { MutableSyncableBundleAccessor } from './MutableSyncableBundleAccessor.ts';
+import type { MutableSyncableFileAccessor } from './MutableSyncableFileAccessor.ts';
 
 export interface MutableFileStore extends MutableStoreBase, FileStore {
   /**
@@ -13,7 +13,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    * Returns a 'conflict' failure if the object already exists.
    */
   readonly createBinaryFile: PRFunc<
-    MutableFlatFileAccessor,
+    MutableSyncableFileAccessor,
     'conflict' | 'deleted',
     [
       | {
@@ -25,7 +25,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
           mode: 'via-sync';
           id: SyncableId;
           encodedValue: Uint8Array;
-          metadata: SyncableFlatFileMetadata;
+          metadata: SyncableFileMetadata;
         }
     ]
   >;
@@ -35,8 +35,8 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    *
    * Returns a 'conflict' failure if the object already exists.
    */
-  readonly createBundleFile: PRFunc<
-    MutableBundleFileAccessor,
+  readonly createBundle: PRFunc<
+    MutableSyncableBundleAccessor,
     'conflict' | 'deleted',
     [
       | {
@@ -46,7 +46,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
       | {
           mode: 'via-sync';
           id: SyncableId;
-          metadata: SyncableBundleFileMetadata;
+          metadata: SyncableBundleMetadata;
         }
     ]
   >;

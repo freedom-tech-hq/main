@@ -8,7 +8,7 @@ import type { SignedValue } from 'freedom-crypto-data';
 import { makeSignedValueSchema } from 'freedom-crypto-data';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
-import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../consts/special-file-ids.ts';
+import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../consts/special-file-ids.ts';
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
 import { getFolderPath } from '../utils/get/getFolderPath.ts';
 import { getSyncableAtPath } from '../utils/get/getSyncableAtPath.ts';
@@ -131,7 +131,7 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
               }
 
               // Deletes are never allowed inside of special access control or store change bundles
-              if (path.ids.find((id) => id === ACCESS_CONTROL_BUNDLE_FILE_ID || id === STORE_CHANGES_BUNDLE_FILE_ID) !== undefined) {
+              if (path.ids.find((id) => id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) !== undefined) {
                 return makeSuccess(false);
               }
 

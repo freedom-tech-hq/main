@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalSchemaValidationError } from 'freedom-common-errors';
-import type { SyncableBundleFileMetadata, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
+import type { SyncableBundleMetadata, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
 import type { JsonValue } from 'yaschema';
 
 import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
@@ -13,7 +13,7 @@ import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 export const makeFolderMetaFuncForPath = (rootPath: string, ids: readonly SyncableId[]) =>
   makeAsyncResultFunc(
     [import.meta.filename],
-    async (trace): PR<(SyncableBundleFileMetadata | SyncableFolderMetadata) & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
+    async (trace): PR<(SyncableBundleMetadata | SyncableFolderMetadata) & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
       const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
       if (!filePath.ok) {
         return filePath;

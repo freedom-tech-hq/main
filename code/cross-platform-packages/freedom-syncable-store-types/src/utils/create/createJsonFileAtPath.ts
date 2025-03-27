@@ -5,7 +5,7 @@ import type { Trace } from 'freedom-contexts';
 import type { DynamicSyncableId, SyncablePath } from 'freedom-sync-types';
 import type { Schema } from 'yaschema';
 
-import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
+import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { createStringFileAtPath } from './createStringFileAtPath.ts';
 
@@ -18,7 +18,7 @@ export const createJsonFileAtPath = makeAsyncResultFunc(
     id: DynamicSyncableId,
     initialValue: T,
     schema: Schema<T>
-  ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const serialization = await schema.serializeAsync(initialValue);
     /* node:coverage disable */
     if (serialization.error !== undefined) {

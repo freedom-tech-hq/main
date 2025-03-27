@@ -1,4 +1,5 @@
-import type { AccessControlledFolderAccessor } from './AccessControlledFolderAccessor.ts';
-import type { FileAccessor } from './FileAccessor.ts';
+import type { SyncableBundleAccessor } from './SyncableBundleAccessor.ts';
+import type { SyncableFileAccessor } from './SyncableFileAccessor.ts';
+import type { SyncableFolderAccessor } from './SyncableFolderAccessor.ts';
 
-export type SyncableItemAccessor = FileAccessor | AccessControlledFolderAccessor;
+export type SyncableItemAccessor = SyncableBundleAccessor | SyncableFileAccessor | SyncableFolderAccessor;

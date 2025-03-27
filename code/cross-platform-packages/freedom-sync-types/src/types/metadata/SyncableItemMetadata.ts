@@ -1,5 +1,5 @@
-import type { SyncableBundleFileMetadata } from './SyncableBundleFileMetadata.ts';
-import type { SyncableFlatFileMetadata } from './SyncableFlatFileMetadata.ts';
+import type { SyncableBundleMetadata } from './SyncableBundleMetadata.ts';
+import type { SyncableFileMetadata } from './SyncableFileMetadata.ts';
 import type { SyncableFolderMetadata } from './SyncableFolderMetadata.ts';
 
-export type SyncableItemMetadata = SyncableBundleFileMetadata | SyncableFlatFileMetadata | SyncableFolderMetadata;
+export type SyncableItemMetadata = SyncableBundleMetadata | SyncableFileMetadata | SyncableFolderMetadata;

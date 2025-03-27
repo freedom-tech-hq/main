@@ -9,8 +9,8 @@ import { guardIsExpectedType } from '../../../../utils/guards/guardIsExpectedTyp
 import type { InMemorySyncableStoreBackingItem } from '../types/InMemorySyncableStoreBackingItem.ts';
 
 type BackingTypeBySyncableItemType<T extends SyncableItemType> =
-  | (T extends 'flatFile' ? 'flatFile' : never)
-  | (T extends 'bundleFile' ? 'folder' : never)
+  | (T extends 'file' ? 'file' : never)
+  | (T extends 'bundle' ? 'folder' : never)
   | (T extends 'folder' ? 'folder' : never);
 
 export const traversePath = makeSyncResultFunc(
@@ -34,10 +34,10 @@ export const traversePath = makeSyncResultFunc(
       idsSoFar.push(pathId);
 
       switch (cursor.type) {
-        case 'flatFile':
+        case 'file':
           return makeFailure(
             new NotFoundError(trace, {
-              message: `Expected folder or bundleFile, found: ${cursor.type}`,
+              message: `Expected folder or bundle, found: ${cursor.type}`,
               errorCode: 'wrong-type'
             })
           );

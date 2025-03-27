@@ -32,8 +32,8 @@ import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBack
 import type { FolderManagement } from '../../types/FolderManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
 import type { LocalItemMetadata } from '../../types/LocalItemMetadata.ts';
-import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
+import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
@@ -42,17 +42,18 @@ import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateP
 import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
-import { DefaultAccessControlledFolder } from './DefaultAccessControlledFolder.ts';
+import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export class DefaultFolderStore implements MutableFolderStore, FolderManagement {
+  public readonly type = 'folder';
   public readonly path: StaticSyncablePath;
 
   private readonly syncTracker_: SyncTracker;
 
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
   private readonly folderOperationsHandler_: FolderOperationsHandler;
-  private readonly makeFolderAccessor_: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
+  private readonly makeFolderAccessor_: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
 
   private readonly backing_: SyncableStoreBacking;
 
@@ -71,7 +72,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
     syncTracker: SyncTracker;
     folderOperationsHandler: FolderOperationsHandler;
     path: StaticSyncablePath;
-    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
+    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
   }) {
     this.weakStore_ = store;
     this.backing_ = backing;
@@ -85,7 +86,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
 
   public readonly createFolder: MutableFolderStore['createFolder'] = makeAsyncResultFunc(
     [import.meta.filename, 'createFolder'],
-    async (trace, args): PR<MutableAccessControlledFolderAccessor, 'conflict' | 'deleted'> => {
+    async (trace, args): PR<MutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedFolder_(trace, args.id, args.metadata);
@@ -505,8 +506,8 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
 
             break;
           }
-          case 'bundleFile':
-          case 'flatFile':
+          case 'bundle':
+          case 'file':
             break; // These won't happen
         }
 
@@ -573,7 +574,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
       trace,
       id: SyncableId,
       metadata: SyncableFolderMetadata & LocalItemMetadata
-    ): PR<DefaultAccessControlledFolder, 'conflict' | 'deleted'> => {
+    ): PR<DefaultMutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
@@ -593,7 +594,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
         return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
       }
 
-      const folder = new DefaultAccessControlledFolder({
+      const folder = new DefaultMutableSyncableFolderAccessor({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
@@ -679,11 +680,11 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
       case 'folder':
         return this.makeFolderAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
 
-      case 'bundleFile':
+      case 'bundle':
         throw new Error("Bundles can't be managed by DefaultFolderStore");
 
-      case 'flatFile':
-        throw new Error("Flat files can't be managed by DefaultFolderStore");
+      case 'file':
+        throw new Error("Files can't be managed by DefaultFolderStore");
     }
   }
 }

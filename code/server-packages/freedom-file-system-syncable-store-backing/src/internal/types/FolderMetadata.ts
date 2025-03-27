@@ -12,7 +12,7 @@ export const folderMetadataSchema = schema.allOf3(
       encrypted: schema.boolean(true)
     }),
     schema.object({
-      type: schema.string('bundleFile')
+      type: schema.string('bundle')
     })
   )
 );

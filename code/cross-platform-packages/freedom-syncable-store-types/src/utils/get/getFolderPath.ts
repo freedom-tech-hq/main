@@ -45,8 +45,8 @@ export const getFolderPath = makeAsyncResultFunc(
           cursor = nextCursor.value;
           break;
         }
-        case 'bundleFile':
-        case 'flatFile':
+        case 'bundle':
+        case 'file':
           return makeSuccess(lastOkPath);
       }
     }

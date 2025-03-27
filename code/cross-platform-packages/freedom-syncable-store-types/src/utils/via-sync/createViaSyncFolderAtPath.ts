@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { StaticSyncablePath, SyncableFolderMetadata } from 'freedom-sync-types';
 
-import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
+import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
 
@@ -14,7 +14,7 @@ export const createViaSyncFolderAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: StaticSyncablePath,
     metadata: SyncableFolderMetadata
-  ): PR<MutableAccessControlledFolderAccessor, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableFolderAccessor, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     if (path.ids.length === 0) {
       // Root will always already exist
       return makeFailure(new ConflictError(trace, { errorCode: 'conflict' }));

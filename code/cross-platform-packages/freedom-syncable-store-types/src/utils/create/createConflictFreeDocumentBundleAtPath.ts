@@ -8,11 +8,11 @@ import { generateSha256HashForEmptyString, generateSha256HashFromString } from '
 import type { DynamicSyncableId, StaticSyncablePath, SyncablePath } from 'freedom-sync-types';
 import { timeId } from 'freedom-sync-types';
 
-import { makeDeltasBundleFileId, SNAPSHOTS_BUNDLE_FILE_ID } from '../../consts/special-file-ids.ts';
+import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
-import { getBundleFileAtPath } from '../get/getBundleFileAtPath.ts';
-import { createBundleFileAtPath } from './createBundleFileAtPath.ts';
+import { getBundleAtPath } from '../get/getBundleAtPath.ts';
+import { createBundleAtPath } from './createBundleAtPath.ts';
 import { createStringFileAtPath } from './createStringFileAtPath.ts';
 
 export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
@@ -24,7 +24,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     id: DynamicSyncableId,
     { newDocument }: { newDocument: (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> }) => DocumentT }
   ): PR<SaveableDocument<DocumentT> & { path: StaticSyncablePath }, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const docBundle = await createBundleFileAtPath(trace, store, parentPath, id);
+    const docBundle = await createBundleAtPath(trace, store, parentPath, id);
     /* node:coverage disable */
     if (!docBundle.ok) {
       return docBundle;
@@ -32,7 +32,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     /* node:coverage enable */
     const path = docBundle.value.path;
 
-    const snapshots = await createBundleFileAtPath(trace, store, path, SNAPSHOTS_BUNDLE_FILE_ID);
+    const snapshots = await createBundleAtPath(trace, store, path, SNAPSHOTS_BUNDLE_ID);
     /* node:coverage disable */
     if (!snapshots.ok) {
       return snapshots;
@@ -49,7 +49,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
       return initialSnapshotId;
     }
 
-    const deltas = await createBundleFileAtPath(trace, store, path, makeDeltasBundleFileId(initialSnapshotId.value));
+    const deltas = await createBundleAtPath(trace, store, path, makeDeltasBundleId(initialSnapshotId.value));
     /* node:coverage disable */
     if (!deltas.ok) {
       return deltas;
@@ -75,8 +75,8 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
           return makeFailure(new NotFoundError(trace, { message: 'No snapshot ID is set' }));
         }
 
-        const deltasPath = path.append(makeDeltasBundleFileId(document.snapshotId));
-        const deltas = await getBundleFileAtPath(trace, store, deltasPath);
+        const deltasPath = path.append(makeDeltasBundleId(document.snapshotId));
+        const deltas = await getBundleAtPath(trace, store, deltasPath);
         if (!deltas.ok) {
           return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
         }

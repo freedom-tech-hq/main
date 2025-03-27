@@ -16,11 +16,11 @@ import type { Trace } from 'freedom-contexts';
 import type { StaticSyncablePath, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 import { once } from 'lodash-es';
 
-import { makeDeltasBundleFileId, SNAPSHOTS_BUNDLE_FILE_ID } from '../../consts/special-file-ids.ts';
+import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import type { SyncableStoreRole } from '../../types/SyncableStoreRole.ts';
 import { getRoleForOriginWithPath } from '../validation/getRoleForOriginWithPath.ts';
-import { getBundleFileAtPath } from './getBundleFileAtPath.ts';
+import { getBundleAtPath } from './getBundleAtPath.ts';
 import { getProvenanceOfSyncableAtPath } from './getProvenanceOfSyncableAtPath.ts';
 import { getStringFromFileAtPath } from './getStringFromFileAtPath.ts';
 
@@ -64,22 +64,22 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     path: SyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<DocumentT, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const docBundle = await getBundleFileAtPath(trace, store, path);
+    const docBundle = await getBundleAtPath(trace, store, path);
     /* node:coverage disable */
     if (!docBundle.ok) {
       return docBundle;
     }
     /* node:coverage enable */
 
-    const snapshotsPath = path.append(SNAPSHOTS_BUNDLE_FILE_ID);
-    const snapshots = await getBundleFileAtPath(trace, store, snapshotsPath);
+    const snapshotsPath = path.append(SNAPSHOTS_BUNDLE_ID);
+    const snapshots = await getBundleAtPath(trace, store, snapshotsPath);
     /* node:coverage disable */
     if (!snapshots.ok) {
       return snapshots;
     }
     /* node:coverage enable */
 
-    const snapshotIds = await snapshots.value.getIds(trace, { type: 'flatFile' });
+    const snapshotIds = await snapshots.value.getIds(trace, { type: 'file' });
     /* node:coverage disable */
     if (!snapshotIds.ok) {
       return snapshotIds;
@@ -139,8 +139,8 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
       const document = newDocument({ id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> });
 
-      const dynamicDeltasPath = path.append(makeDeltasBundleFileId(snapshotId));
-      const deltas = await getBundleFileAtPath(trace, store, dynamicDeltasPath);
+      const dynamicDeltasPath = path.append(makeDeltasBundleId(snapshotId));
+      const deltas = await getBundleAtPath(trace, store, dynamicDeltasPath);
       /* node:coverage disable */
       if (!deltas.ok) {
         return deltas;
@@ -148,7 +148,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       /* node:coverage enable */
       const deltasPath = deltas.value.path;
 
-      const deltaIds = await deltas.value.getIds(trace, { type: 'flatFile' });
+      const deltaIds = await deltas.value.getIds(trace, { type: 'file' });
       /* node:coverage disable */
       if (!deltaIds.ok) {
         return deltaIds;

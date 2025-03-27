@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { SyncableBundleFileMetadata, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
+import type { SyncableBundleMetadata, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { createMetadataFile } from './createMetadataFile.ts';
@@ -14,7 +14,7 @@ export const createFolder = makeAsyncResultFunc(
     trace,
     rootPath: string,
     ids: readonly SyncableId[],
-    metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & FileSystemLocalItemMetadata
+    metadata: (SyncableBundleMetadata | SyncableFolderMetadata) & FileSystemLocalItemMetadata
   ): PR<undefined> => {
     const dirPath = await getFsPath(trace, rootPath, ids);
     if (!dirPath.ok) {

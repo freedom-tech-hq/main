@@ -1,4 +1,4 @@
-import type { SyncableStoreBackingFlatFileAccessor } from './SyncableStoreBackingFlatFileAccessor.ts';
+import type { SyncableStoreBackingFileAccessor } from './SyncableStoreBackingFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from './SyncableStoreBackingFolderAccessor.ts';
 
-export type SyncableStoreBackingItemAccessor = SyncableStoreBackingFolderAccessor | SyncableStoreBackingFlatFileAccessor;
+export type SyncableStoreBackingItemAccessor = SyncableStoreBackingFolderAccessor | SyncableStoreBackingFileAccessor;

@@ -10,8 +10,8 @@ import type { SingleOrArray } from 'yaschema';
 import type { FileSystemSyncableStoreBackingItem } from '../types/FileSystemSyncableStoreBackingItem.ts';
 
 type BackingTypeBySyncableItemType<T extends SyncableItemType> =
-  | (T extends 'flatFile' ? 'flatFile' : never)
-  | (T extends 'bundleFile' ? 'folder' : never)
+  | (T extends 'file' ? 'file' : never)
+  | (T extends 'bundle' ? 'folder' : never)
   | (T extends 'folder' ? 'folder' : never);
 
 export const traversePath = makeAsyncResultFunc(
@@ -35,10 +35,10 @@ export const traversePath = makeAsyncResultFunc(
       idsSoFar.push(pathId);
 
       switch (cursor.type) {
-        case 'flatFile':
+        case 'file':
           return makeFailure(
             new NotFoundError(trace, {
-              message: `Expected folder or bundleFile, found: ${cursor.type}`,
+              message: `Expected folder or bundle, found: ${cursor.type}`,
               errorCode: 'wrong-type'
             })
           );

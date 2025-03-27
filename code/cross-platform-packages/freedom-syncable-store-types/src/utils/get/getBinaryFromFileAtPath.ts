@@ -13,7 +13,7 @@ export const getBinaryFromFileAtPath = makeAsyncResultFunc(
     store: SyncableStore,
     path: SyncablePath
   ): PR<Uint8Array, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const file = await getSyncableAtPath(trace, store, path, 'flatFile');
+    const file = await getSyncableAtPath(trace, store, path, 'file');
     if (!file.ok) {
       return file;
     }

@@ -9,7 +9,7 @@ import { get } from 'lodash-es';
 import type { FileSystemSyncableStoreBackingItem } from '../types/FileSystemSyncableStoreBackingItem.ts';
 import { getFsPath } from './getFsPath.ts';
 import { makeDataFuncForPath } from './makeDataFuncForPath.ts';
-import { makeFlatFileMetaFuncForPath } from './makeFlatFileMetaFuncForPath.ts';
+import { makeFileMetaFuncForPath } from './makeFileMetaFuncForPath.ts';
 import { makeFolderMetaFuncForPath } from './makeFolderMetaFuncForPath.ts';
 import { readLocalMetadata } from './readLocalMetadata.ts';
 
@@ -46,9 +46,9 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
 
           if (entry.isFile()) {
             result[id] = {
-              type: 'flatFile',
+              type: 'file',
               id,
-              metadata: makeFlatFileMetaFuncForPath(dirPath.value, [id]),
+              metadata: makeFileMetaFuncForPath(dirPath.value, [id]),
               data: makeDataFuncForPath(dirPath.value, [id])
             };
           } else if (entry.isDirectory()) {

@@ -2,7 +2,7 @@ import { makeSyncFunc } from 'freedom-async';
 import type { SyncableStoreBackingItemAccessor } from 'freedom-syncable-store-types';
 
 import type { FileSystemSyncableStoreBackingItem } from '../types/FileSystemSyncableStoreBackingItem.ts';
-import { makeFlatFileAccessor } from './makeFlatFileAccessor.ts';
+import { makeFileAccessor } from './makeFileAccessor.ts';
 import { makeFolderAccessor } from './makeFolderAccessor.ts';
 
 export const makeItemAccessor = makeSyncFunc(
@@ -12,8 +12,8 @@ export const makeItemAccessor = makeSyncFunc(
       case 'folder':
         return makeFolderAccessor(trace, item);
 
-      case 'flatFile':
-        return makeFlatFileAccessor(trace, item);
+      case 'file':
+        return makeFileAccessor(trace, item);
     }
   }
 );
