@@ -9,6 +9,7 @@ export * from './FolderManagement.ts';
 export * from './FolderStore.ts';
 export * from './GenerateNewSyncableItemIdFunc.ts';
 export * from './InMemorySyncableStore.ts';
+export * from './LocalItemMetadata.ts';
 export * from './MutableAccessControlledFolderAccessor.ts';
 export * from './MutableBundleFileAccessor.ts';
 export * from './MutableFileAccessor.ts';
