@@ -4,9 +4,10 @@ import type { DynamicSyncableId, SyncableItemType } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { MutableSyncableItemAccessor } from './MutableSyncableItemAccessor.ts';
+import type { MutableSyncableItemAccessorBase } from './MutableSyncableItemAccessorBase.ts';
 import type { StoreBase } from './StoreBase.ts';
 
-export interface MutableStoreBase extends StoreBase {
+export interface MutableStoreBase extends StoreBase, MutableSyncableItemAccessorBase {
   /** Marks the file or access controlled folder for deletion.  A future sweep operation on the file store will actually delete the entry.
    * Stores may support different retention periods. */
   readonly delete: PRFunc<undefined, 'not-found', [id: DynamicSyncableId]>;

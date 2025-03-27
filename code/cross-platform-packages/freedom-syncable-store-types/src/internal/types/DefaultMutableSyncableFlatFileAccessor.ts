@@ -6,11 +6,11 @@ import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
-import type { FlatFileAccessor } from '../../types/FlatFileAccessor.ts';
+import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 
-export class DefaultMutableFlatFileAccessor implements FlatFileAccessor {
+export class DefaultMutableSyncableFlatFileAccessor implements MutableSyncableFlatFileAccessor {
   public readonly type = 'flatFile';
 
   public readonly path: StaticSyncablePath;

@@ -1,8 +1,8 @@
 import type { PRFunc } from 'freedom-async';
 
-import type { FileAccessorBase } from './FileAccessorBase.ts';
+import type { SyncableItemAccessorBase } from './SyncableItemAccessorBase.ts';
 
-export interface FlatFileAccessor extends FileAccessorBase {
+export interface SyncableFlatFileAccessor extends SyncableItemAccessorBase {
   readonly type: 'flatFile';
 
   /** Gets the current contents of the file as binary data. */

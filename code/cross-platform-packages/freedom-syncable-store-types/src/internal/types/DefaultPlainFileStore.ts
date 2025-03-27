@@ -5,11 +5,11 @@ import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
-import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
-import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
+import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
+import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
 import type { DefaultFileStoreBaseConstructorArgs } from './DefaultFileStoreBase.ts';
 import { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableFlatFileAccessor } from './DefaultMutableFlatFileAccessor.ts';
+import { DefaultMutableSyncableFlatFileAccessor } from './DefaultMutableSyncableFlatFileAccessor.ts';
 
 export type DefaultPlainFileStoreConstructorArgs = DefaultFileStoreBaseConstructorArgs;
 
@@ -30,7 +30,7 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
     return makeSuccess(rawData);
   }
 
-  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleAccessor {
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableBundleAccessor {
     return new DefaultPlainFileStore({
       store: this.weakStore_,
       backing: this.backing_,
@@ -41,8 +41,8 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
     });
   }
 
-  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableFlatFileAccessor {
-    return new DefaultMutableFlatFileAccessor({
+  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFlatFileAccessor {
+    return new DefaultMutableSyncableFlatFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,
       path,

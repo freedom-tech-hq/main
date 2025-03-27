@@ -2,9 +2,9 @@ import type { PRFunc } from 'freedom-async';
 import type { DynamicSyncableId, SyncableBundleMetadata, SyncableFlatFileMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FileStore } from './FileStore.ts';
-import type { MutableBundleAccessor } from './MutableBundleAccessor.ts';
-import type { MutableFlatFileAccessor } from './MutableFlatFileAccessor.ts';
 import type { MutableStoreBase } from './MutableStoreBase.ts';
+import type { MutableSyncableBundleAccessor } from './MutableSyncableBundleAccessor.ts';
+import type { MutableSyncableFlatFileAccessor } from './MutableSyncableFlatFileAccessor.ts';
 
 export interface MutableFileStore extends MutableStoreBase, FileStore {
   /**
@@ -13,7 +13,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    * Returns a 'conflict' failure if the object already exists.
    */
   readonly createBinaryFile: PRFunc<
-    MutableFlatFileAccessor,
+    MutableSyncableFlatFileAccessor,
     'conflict' | 'deleted',
     [
       | {
@@ -36,7 +36,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    * Returns a 'conflict' failure if the object already exists.
    */
   readonly createBundle: PRFunc<
-    MutableBundleAccessor,
+    MutableSyncableBundleAccessor,
     'conflict' | 'deleted',
     [
       | {

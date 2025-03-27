@@ -3,14 +3,14 @@ import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-asyn
 import type { DynamicSyncableId, SyncableItemType } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
-import type { AccessControlledFolderAccessor } from '../../types/AccessControlledFolderAccessor.ts';
-import type { BundleAccessor } from '../../types/BundleAccessor.ts';
+import type { SyncableBundleAccessor } from '../../types/SyncableBundleAccessor.ts';
+import type { SyncableFolderAccessor } from '../../types/SyncableFolderAccessor.ts';
 
 export const getDynamicIds = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    inFolderLike: AccessControlledFolderAccessor | BundleAccessor,
+    inFolderLike: SyncableFolderAccessor | SyncableBundleAccessor,
     options?: { type?: SingleOrArray<SyncableItemType> }
   ): PR<DynamicSyncableId[]> => {
     const fileIds = await inFolderLike.getIds(trace, options);

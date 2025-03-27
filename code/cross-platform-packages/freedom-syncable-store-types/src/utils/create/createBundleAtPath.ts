@@ -3,7 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { DynamicSyncableId, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
-import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
+import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { getMutableSyncableAtPath } from '../get/getMutableSyncableAtPath.ts';
 
@@ -14,7 +14,7 @@ export const createBundleAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     parentPath: SyncablePath,
     id: DynamicSyncableId
-  ): PR<MutableBundleAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parent = await getMutableSyncableAtPath(trace, store, parentPath, syncableItemTypes.exclude('flatFile'));
     if (!parent.ok) {
       return parent;

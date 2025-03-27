@@ -40,9 +40,9 @@ import type { SingleOrArray } from 'yaschema';
 import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
-import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
+import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
@@ -71,16 +71,15 @@ import { DefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
 import { DefaultPlainFileStore } from './DefaultPlainFileStore.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
-export abstract class DefaultAccessControlledFolderBase implements MutableAccessControlledFolder {
+export abstract class DefaultMutableSyncableFolderAccessorBase implements MutableSyncableFolderAccessor {
   public readonly type = 'folder';
   public readonly path: StaticSyncablePath;
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
   private folderOperationsHandler_!: FolderOperationsHandler;
-  private makeFolderAccessor_!: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
+  private makeFolderAccessor_!: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
   private readonly syncTracker_: SyncTracker;
 
   private readonly backing_: SyncableStoreBacking;
@@ -145,7 +144,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
     makeFolderAccessor
   }: {
     store: WeakRef<MutableSyncableStore>;
-    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
+    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
   }) {
     this.weakStore_ = store;
     this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);

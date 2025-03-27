@@ -5,12 +5,12 @@ import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
-import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
-import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
+import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
+import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableFlatFileAccessor } from './DefaultMutableFlatFileAccessor.ts';
+import { DefaultMutableSyncableFlatFileAccessor } from './DefaultMutableSyncableFlatFileAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export interface DefaultEncryptedFileStoreConstructorArgs {
@@ -47,7 +47,7 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 
-  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleAccessor {
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableBundleAccessor {
     return new DefaultEncryptedFileStore({
       store: this.weakStore_,
       backing: this.backing_,
@@ -57,8 +57,8 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     });
   }
 
-  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableFlatFileAccessor {
-    return new DefaultMutableFlatFileAccessor({
+  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFlatFileAccessor {
+    return new DefaultMutableSyncableFlatFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,
       path,

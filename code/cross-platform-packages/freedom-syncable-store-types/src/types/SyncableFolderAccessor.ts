@@ -6,7 +6,7 @@ import type { FileStore } from './FileStore.ts';
 import type { FolderStore } from './FolderStore.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
 
-export interface AccessControlledFolderAccessor extends FileStore, FolderStore {
+export interface SyncableFolderAccessor extends FileStore, FolderStore {
   readonly type: 'folder';
 
   /** Returns `true` if this folder is ready to be pushed to remotes.  This returns `false` when the folder hasn't been initialized. */

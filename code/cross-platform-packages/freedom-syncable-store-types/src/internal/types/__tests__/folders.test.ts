@@ -25,7 +25,7 @@ import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
 import { getStringFromFileAtPath } from '../../../utils/get/getStringFromFileAtPath.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
 
-describe('InMemoryAccessControlledFolder', () => {
+describe('folders', () => {
   let trace!: Trace;
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;

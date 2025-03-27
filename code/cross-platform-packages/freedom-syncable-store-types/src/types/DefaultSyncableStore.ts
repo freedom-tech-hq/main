@@ -6,14 +6,14 @@ import { NotificationManager } from 'freedom-notification-types';
 import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
 import { StaticSyncablePath } from 'freedom-sync-types';
 
-import { DefaultAccessControlledFolder } from '../internal/types/DefaultAccessControlledFolder.ts';
-import { DefaultAccessControlledFolderBase } from '../internal/types/DefaultAccessControlledFolderBase.ts';
+import { DefaultMutableSyncableFolderAccessor } from '../internal/types/DefaultMutableSyncableFolderAccessor.ts';
+import { DefaultMutableSyncableFolderAccessorBase } from '../internal/types/DefaultMutableSyncableFolderAccessorBase.ts';
 import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
-export class DefaultSyncableStore extends DefaultAccessControlledFolderBase implements MutableSyncableStore {
+export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
   public readonly creatorCryptoKeySetId: CryptoKeySetId;
   public readonly cryptoService: CryptoService;
 
@@ -46,7 +46,7 @@ export class DefaultSyncableStore extends DefaultAccessControlledFolderBase impl
     const weakStore = new WeakRef(this);
     this.deferredInit_({
       store: weakStore,
-      makeFolderAccessor: ({ path }) => new DefaultAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
+      makeFolderAccessor: ({ path }) => new DefaultMutableSyncableFolderAccessor({ store: weakStore, backing, path, syncTracker })
     });
   }
 }

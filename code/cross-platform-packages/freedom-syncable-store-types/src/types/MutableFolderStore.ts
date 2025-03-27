@@ -2,8 +2,8 @@ import type { PRFunc } from 'freedom-async';
 import type { DynamicSyncableId, SyncableFolderMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FolderStore } from './FolderStore.ts';
-import type { MutableAccessControlledFolderAccessor } from './MutableAccessControlledFolderAccessor.ts';
 import type { MutableStoreBase } from './MutableStoreBase.ts';
+import type { MutableSyncableFolderAccessor } from './MutableSyncableFolderAccessor.ts';
 
 export interface MutableFolderStore extends MutableStoreBase, FolderStore {
   /**
@@ -12,7 +12,7 @@ export interface MutableFolderStore extends MutableStoreBase, FolderStore {
    * Returns a 'conflict' failure if the folder already exists
    */
   readonly createFolder: PRFunc<
-    MutableAccessControlledFolderAccessor,
+    MutableSyncableFolderAccessor,
     'conflict' | 'deleted',
     [
       | {

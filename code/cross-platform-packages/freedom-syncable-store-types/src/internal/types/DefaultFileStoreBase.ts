@@ -33,9 +33,9 @@ import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBack
 import type { BundleManagement } from '../../types/BundleManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
 import type { LocalItemMetadata } from '../../types/LocalItemMetadata.ts';
-import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
-import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
+import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
+import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
@@ -83,15 +83,15 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   protected abstract computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash>;
   protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
-  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableBundleAccessor;
-  protected abstract makeFlatFileAccessor_(args: { path: StaticSyncablePath }): MutableFlatFileAccessor;
+  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableSyncableBundleAccessor;
+  protected abstract makeFlatFileAccessor_(args: { path: StaticSyncablePath }): MutableSyncableFlatFileAccessor;
   protected abstract isEncrypted_(): boolean;
 
   // MutableFileStore Methods
 
   public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBinaryFile'],
-    async (trace: Trace, args): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
+    async (trace: Trace, args): PR<MutableSyncableFlatFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
@@ -142,7 +142,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly createBundle: MutableFileStore['createBundle'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBundle'],
-    async (trace, args): PR<MutableBundleAccessor, 'conflict' | 'deleted'> => {
+    async (trace, args): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBundle_(trace, args.id, args.metadata);
@@ -652,7 +652,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       id: SyncableId,
       encodedData: Uint8Array,
       metadata: SyncableFlatFileMetadata & LocalItemMetadata
-    ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted'> => {
+    ): PR<MutableSyncableFlatFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
@@ -711,7 +711,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace,
       id: SyncableId,
       metadata: SyncableBundleMetadata & LocalItemMetadata
-    ): PR<MutableBundleAccessor, 'conflict' | 'deleted'> => {
+    ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);

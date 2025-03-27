@@ -4,7 +4,7 @@ import type { Trace } from 'freedom-contexts';
 import type { DynamicSyncableId, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
-import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
+import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { getMutableSyncableAtPath } from '../get/getMutableSyncableAtPath.ts';
 
@@ -16,7 +16,7 @@ export const createBinaryFileAtPath = makeAsyncResultFunc(
     parentPath: SyncablePath,
     id: DynamicSyncableId,
     value: Uint8Array
-  ): PR<MutableFlatFileAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableFlatFileAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parent = await getMutableSyncableAtPath(trace, store, parentPath, syncableItemTypes.exclude('flatFile'));
     if (!parent.ok) {
       return parent;

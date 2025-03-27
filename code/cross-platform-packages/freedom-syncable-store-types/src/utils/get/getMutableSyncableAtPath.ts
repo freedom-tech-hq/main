@@ -6,8 +6,8 @@ import type { SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { StaticSyncablePath } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
-import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
-import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
+import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
+import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { guardIsExpectedType } from '../guards/guardIsExpectedType.ts';
@@ -57,7 +57,7 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
       switch (cursor.value.type) {
         case 'folder':
         case 'bundle': {
-          const folderLikeAccessor = cursor.value as MutableAccessControlledFolderAccessor | MutableBundleAccessor;
+          const folderLikeAccessor = cursor.value as MutableSyncableFolderAccessor | MutableSyncableBundleAccessor;
 
           const nextCursor = await folderLikeAccessor.getMutable(trace, id);
           if (!nextCursor.ok) {
