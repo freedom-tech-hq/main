@@ -117,11 +117,6 @@ export class FolderOperationsHandler {
   public readonly isPathMarkedAsDeleted = makeAsyncResultFunc(
     [import.meta.filename, 'isPathMarkedAsDeleted'],
     async (trace, path: StaticSyncablePath): PR<boolean> => {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
-
       // TODO: TEMP - this should work as a live document
       // if (this.storeChangesDoc_ === undefined) {
       const storeChangesDoc = await this.getMutableSyncableStoreChangesDocument_(trace);

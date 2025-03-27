@@ -115,6 +115,9 @@
             "path": "dev-packages/freedom-testing-tools"
         },
         {
+            "path": "server-packages/freedom-file-system-syncable-store-backing"
+        },
+        {
             "path": "server-packages/freedom-server-api-handling"
         },
         {

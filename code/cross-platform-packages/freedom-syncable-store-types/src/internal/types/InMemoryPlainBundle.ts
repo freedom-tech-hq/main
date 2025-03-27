@@ -3,13 +3,17 @@ import { makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { StaticSyncablePath } from 'freedom-sync-types';
 
+import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
+import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
 import type { InMemoryBundleBaseConstructorArgs } from './InMemoryBundleBase.ts';
 import { InMemoryBundleBase } from './InMemoryBundleBase.ts';
+import { InMemoryMutableFlatFileAccessor } from './InMemoryMutableFlatFileAccessor.ts';
 
 export type InMemoryPlainBundleConstructorArgs = InMemoryBundleBaseConstructorArgs;
 
+// TODO: rename to DefaultPlainBundle in separate PR
 export class InMemoryPlainBundle extends InMemoryBundleBase {
   // InMemoryBundleBase Abstract Method Implementations
 
@@ -27,19 +31,27 @@ export class InMemoryPlainBundle extends InMemoryBundleBase {
     return makeSuccess(rawData);
   }
 
-  protected override async newBundle_(
-    _trace: Trace,
-    { path, provenance }: { path: StaticSyncablePath; provenance: SyncableProvenance }
-  ): PR<InMemoryPlainBundle> {
-    return makeSuccess(
-      new InMemoryPlainBundle({
-        store: this.weakStore_,
-        syncTracker: this.syncTracker_,
-        path,
-        provenance,
-        folderOperationsHandler: this.folderOperationsHandler_,
-        supportsDeletion: this.supportsDeletion
-      })
-    );
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleFileAccessor {
+    return new InMemoryPlainBundle({
+      store: this.weakStore_,
+      backing: this.backing_,
+      syncTracker: this.syncTracker_,
+      path,
+      folderOperationsHandler: this.folderOperationsHandler_,
+      supportsDeletion: this.supportsDeletion
+    });
+  }
+
+  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableFlatFileAccessor {
+    return new InMemoryMutableFlatFileAccessor({
+      store: this.weakStore_,
+      backing: this.backing_,
+      path,
+      decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
+    });
+  }
+
+  protected override isEncrypted_(): boolean {
+    return false;
   }
 }
