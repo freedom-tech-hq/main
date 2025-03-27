@@ -4,16 +4,16 @@ import type { CryptoKeySetId } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { NotificationManager } from 'freedom-notification-types';
 import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
-import { invalidProvenance, StaticSyncablePath } from 'freedom-sync-types';
+import { StaticSyncablePath } from 'freedom-sync-types';
 
+import { InMemoryAccessControlledFolder } from '../internal/types/InMemoryAccessControlledFolder.ts';
 import { InMemoryAccessControlledFolderBase } from '../internal/types/InMemoryAccessControlledFolderBase.ts';
-import { InMemoryEncryptedBundle } from '../internal/types/InMemoryEncryptedBundle.ts';
-import { InMemoryFolder } from '../internal/types/InMemoryFolder.ts';
-import { InMemoryPlainBundle } from '../internal/types/InMemoryPlainBundle.ts';
+import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
+// TODO: rename to DefaultSyncableStore in a separate PR
 export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase implements MutableSyncableStore {
   public readonly creatorCryptoKeySetId: CryptoKeySetId;
   public readonly cryptoService: CryptoService;
@@ -22,17 +22,19 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
 
   constructor({
     storageRootId,
+    backing,
     cryptoService,
     provenance
   }: {
     storageRootId: StorageRootId;
+    backing: SyncableStoreBacking;
     cryptoService: CryptoService;
     provenance: SyncableProvenance;
   }) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
     const path = new StaticSyncablePath(storageRootId);
 
-    super({ syncTracker, path, provenance });
+    super({ backing, syncTracker, path });
 
     this.cryptoService = cryptoService;
 
@@ -43,31 +45,9 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
     this.creatorCryptoKeySetId = creatorCryptoKeySetId.value;
 
     const weakStore = new WeakRef(this);
-    const folderOperationsHandler = this.makeFolderOperationsHandler_(weakStore);
     this.deferredInit_({
       store: weakStore,
-      folderOperationsHandler,
-      plainBundle: new InMemoryPlainBundle({
-        store: weakStore,
-        syncTracker,
-        folderOperationsHandler,
-        path,
-        provenance: invalidProvenance,
-        supportsDeletion: false
-      }),
-      folder: new InMemoryFolder({
-        store: weakStore,
-        syncTracker,
-        folderOperationsHandler,
-        path
-      }),
-      encryptedBundle: new InMemoryEncryptedBundle({
-        store: weakStore,
-        syncTracker,
-        folderOperationsHandler,
-        provenance: invalidProvenance,
-        path
-      })
+      makeFolderAccessor: ({ path }) => new InMemoryAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
     });
   }
 }

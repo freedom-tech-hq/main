@@ -1,31 +1,35 @@
 import type { PR } from 'freedom-async';
-import { makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { StaticSyncablePath } from 'freedom-sync-types';
 
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
+import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
+import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 import { InMemoryBundleBase } from './InMemoryBundleBase.ts';
+import { InMemoryMutableFlatFileAccessor } from './InMemoryMutableFlatFileAccessor.ts';
 
 export interface InMemoryEncryptedBundleConstructorArgs {
   store: WeakRef<MutableSyncableStore>;
+  backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
   path: StaticSyncablePath;
-  provenance: SyncableProvenance;
 }
 
+// TODO: rename to DefaultEncryptedBundle in separate PR
 export class InMemoryEncryptedBundle extends InMemoryBundleBase {
-  constructor({ store, syncTracker, folderOperationsHandler, path, provenance }: InMemoryEncryptedBundleConstructorArgs) {
+  constructor({ store, backing, syncTracker, folderOperationsHandler, path }: InMemoryEncryptedBundleConstructorArgs) {
     super({
       store,
+      backing,
       syncTracker,
       folderOperationsHandler,
       path,
-      provenance,
       supportsDeletion: true
     });
   }
@@ -44,18 +48,26 @@ export class InMemoryEncryptedBundle extends InMemoryBundleBase {
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 
-  protected override async newBundle_(
-    _trace: Trace,
-    { path, provenance }: { path: StaticSyncablePath; provenance: SyncableProvenance }
-  ): PR<InMemoryEncryptedBundle> {
-    return makeSuccess(
-      new InMemoryEncryptedBundle({
-        store: this.weakStore_,
-        syncTracker: this.syncTracker_,
-        folderOperationsHandler: this.folderOperationsHandler_,
-        path,
-        provenance
-      })
-    );
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleFileAccessor {
+    return new InMemoryEncryptedBundle({
+      store: this.weakStore_,
+      backing: this.backing_,
+      syncTracker: this.syncTracker_,
+      folderOperationsHandler: this.folderOperationsHandler_,
+      path
+    });
+  }
+
+  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableFlatFileAccessor {
+    return new InMemoryMutableFlatFileAccessor({
+      store: this.weakStore_,
+      backing: this.backing_,
+      path,
+      decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
+    });
+  }
+
+  protected override isEncrypted_(): boolean {
+    return true;
   }
 }

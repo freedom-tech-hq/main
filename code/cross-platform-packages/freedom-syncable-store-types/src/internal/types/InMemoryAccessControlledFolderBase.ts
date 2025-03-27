@@ -22,14 +22,15 @@ import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId, SignedValue, TrustedTimeId } from 'freedom-crypto-data';
-import {
-  type DynamicSyncableId,
-  DynamicSyncablePath,
-  type StaticSyncablePath,
-  type SyncableId,
-  type SyncableItemType,
-  type SyncableProvenance
+import type {
+  DynamicSyncableId,
+  StaticSyncablePath,
+  SyncableId,
+  SyncableItemType,
+  SyncablePath,
+  SyncableProvenance
 } from 'freedom-sync-types';
+import { DynamicSyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
@@ -37,7 +38,9 @@ import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../consts/special-file-ids.ts';
+import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
+import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
@@ -65,52 +68,89 @@ import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/
 import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-import type { InMemoryEncryptedBundle } from './InMemoryEncryptedBundle.ts';
-import type { InMemoryFolder } from './InMemoryFolder.ts';
-import type { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
+import { InMemoryEncryptedBundle } from './InMemoryEncryptedBundle.ts';
+import { InMemoryFolder } from './InMemoryFolder.ts';
+import { InMemoryPlainBundle } from './InMemoryPlainBundle.ts';
 import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
+// TODO: rename to DefaultAccessControlledFolderBase in a separate PR
 export abstract class InMemoryAccessControlledFolderBase implements MutableAccessControlledFolder {
   public readonly type = 'folder';
   public readonly path: StaticSyncablePath;
-  public readonly provenance: SyncableProvenance;
-
-  private readonly syncTracker_: SyncTracker;
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
-  private folder_!: InMemoryFolder;
-  private plainBundle_!: InMemoryPlainBundle;
-  private encryptedBundle_!: InMemoryEncryptedBundle;
   private folderOperationsHandler_!: FolderOperationsHandler;
+  private makeFolderAccessor_!: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
+  private readonly syncTracker_: SyncTracker;
 
-  private hash_: Sha256Hash | undefined = undefined;
+  private readonly backing_: SyncableStoreBacking;
+
+  private folder__: InMemoryFolder | undefined;
+  private get folder_(): InMemoryFolder {
+    if (this.folder__ === undefined) {
+      this.folder__ = new InMemoryFolder({
+        store: this.weakStore_,
+        backing: this.backing_,
+        syncTracker: this.syncTracker_,
+        folderOperationsHandler: this.folderOperationsHandler_,
+        path: this.path,
+        makeFolderAccessor: this.makeFolderAccessor_
+      });
+    }
+
+    return this.folder__;
+  }
+
+  private plainBundle__: InMemoryPlainBundle | undefined;
+  private get plainBundle_(): InMemoryPlainBundle {
+    if (this.plainBundle__ === undefined) {
+      this.plainBundle__ = new InMemoryPlainBundle({
+        store: this.weakStore_,
+        backing: this.backing_,
+        syncTracker: this.syncTracker_,
+        folderOperationsHandler: this.folderOperationsHandler_,
+        path: this.path,
+        supportsDeletion: false
+      });
+    }
+
+    return this.plainBundle__;
+  }
+
+  private encryptedBundle__: InMemoryEncryptedBundle | undefined;
+  private get encryptedBundle_(): InMemoryEncryptedBundle {
+    if (this.encryptedBundle__ === undefined) {
+      this.encryptedBundle__ = new InMemoryEncryptedBundle({
+        store: this.weakStore_,
+        backing: this.backing_,
+        syncTracker: this.syncTracker_,
+        folderOperationsHandler: this.folderOperationsHandler_,
+        path: this.path
+      });
+    }
+
+    return this.encryptedBundle__;
+  }
+
   private needsRecomputeHashCount_ = 0;
 
-  constructor({ syncTracker, path, provenance }: { syncTracker: SyncTracker; path: StaticSyncablePath; provenance: SyncableProvenance }) {
+  constructor({ backing, syncTracker, path }: { backing: SyncableStoreBacking; syncTracker: SyncTracker; path: StaticSyncablePath }) {
+    this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.path = path;
-    this.provenance = provenance;
   }
 
   protected deferredInit_({
     store,
-    folderOperationsHandler,
-    plainBundle,
-    folder,
-    encryptedBundle
+    makeFolderAccessor
   }: {
     store: WeakRef<MutableSyncableStore>;
-    folderOperationsHandler: FolderOperationsHandler;
-    plainBundle: InMemoryPlainBundle;
-    folder: InMemoryFolder;
-    encryptedBundle: InMemoryEncryptedBundle;
+    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableAccessControlledFolderAccessor;
   }) {
     this.weakStore_ = store;
-    this.folderOperationsHandler_ = folderOperationsHandler;
-    this.plainBundle_ = plainBundle;
-    this.folder_ = folder;
-    this.encryptedBundle_ = encryptedBundle;
+    this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);
+    this.makeFolderAccessor_ = makeFolderAccessor;
   }
 
   // MutableAccessControlledFolderAccessor Methods
@@ -118,7 +158,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly updateAccess = makeAsyncResultFunc(
     [import.meta.filename, 'updateAccess'],
     async (trace: Trace, change: AccessChangeParams<SyncableStoreRole>): PR<undefined, 'conflict'> => {
-      const accessControlDoc = await this.getMutableAccessControlDocument_(trace);
+      const accessControlDoc = await getMutableAccessControlDocument(trace, this.weakStore_, this.path);
       /* node:coverage disable */
       if (!accessControlDoc.ok) {
         return accessControlDoc;
@@ -186,7 +226,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   // AccessControlledFolderAccessor Methods
 
   public readonly canPushToRemotes = makeAsyncResultFunc([import.meta.filename, 'canPushToRemotes'], async (trace): PR<boolean> => {
-    const accessControlDoc = await disableLam(trace, true, (trace) => this.getAccessControlDocument_(trace));
+    const accessControlDoc = await disableLam(trace, true, (trace) => getAccessControlDocument(trace, this.weakStore_, this.path));
     return makeSuccess(accessControlDoc.ok);
   });
 
@@ -196,7 +236,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       trace,
       { cryptoKeySetId, oneOfRoles, timeMSec }: { cryptoKeySetId: CryptoKeySetId; oneOfRoles: Set<SyncableStoreRole>; timeMSec: number }
     ): PR<boolean> => {
-      const accessControlDoc = await this.getAccessControlDocument_(trace);
+      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
       if (!accessControlDoc.ok) {
         return accessControlDoc;
       }
@@ -372,8 +412,14 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   public readonly getHash = makeAsyncResultFunc(
     [import.meta.filename, 'getHash'],
     async (trace, { recompute = false }: { recompute?: boolean } = {}): PR<Sha256Hash> => {
-      if (this.hash_ !== undefined && !recompute) {
-        return makeSuccess(this.hash_);
+      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+      if (!metadata.ok) {
+        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+      }
+
+      const hash = metadata.value.hash;
+      if (hash !== undefined && !recompute) {
+        return makeSuccess(hash);
       }
 
       do {
@@ -394,7 +440,11 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
         /* node:coverage enable */
 
         if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          this.hash_ = hash.value;
+          const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
+          if (!updatedHash.ok) {
+            return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+          }
+
           return makeSuccess(hash.value);
         }
       } while (true);
@@ -423,15 +473,23 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
     }
   );
 
-  public readonly getProvenance = makeAsyncResultFunc(
-    [import.meta.filename, 'getProvenance'],
-    async (_trace): PR<SyncableProvenance> => makeSuccess(this.provenance)
-  );
+  public readonly getProvenance = makeAsyncResultFunc([import.meta.filename, 'getProvenance'], async (trace): PR<SyncableProvenance> => {
+    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+    if (!metadata.ok) {
+      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    }
+
+    return makeSuccess(metadata.value.provenance);
+  });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
     async (trace): PR<undefined> => {
-      this.hash_ = undefined;
+      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
+      if (!updatedHash.ok) {
+        return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+      }
+
       this.needsRecomputeHashCount_ += 1;
 
       const store = this.weakStore_.deref();
@@ -548,60 +606,14 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
 
   // Protected Methods
 
-  protected readonly getAccessControlDocument_ = makeAsyncResultFunc([import.meta.filename, 'getAccessControlDocument'], async (trace) => {
-    const accessControlDoc = await this.getMutableAccessControlDocument_(trace);
-    /* node:coverage disable */
-    if (!accessControlDoc.ok) {
-      return accessControlDoc;
-    }
-    /* node:coverage enable */
-
-    return makeSuccess(accessControlDoc.value.document);
-  });
-
-  protected readonly getMutableSyncableStoreChangesDocument_ = makeAsyncResultFunc(
-    [import.meta.filename, 'getMutableSyncableStoreChangesDocument_'],
-    async (trace): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
-
-      // TODO: doc can be modified directly by changing bundle.  this should track that probably
-      const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, this.path.append(STORE_CHANGES_BUNDLE_FILE_ID), {
-        newDocument: makeSyncableStoreChangesDocumentFromSnapshot,
-        isSnapshotValid: isStoreChangesDocumentSnapshotValid,
-        isDeltaValidForDocument: isDeltaValidForStoreChangesDocument
-      });
-      /* node:coverage disable */
-      if (!doc.ok) {
-        return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-      }
-      /* node:coverage enable */
-
-      return makeSuccess(doc.value);
-    }
-  );
-
-  protected makeFolderOperationsHandler_(store: WeakRef<MutableSyncableStore>) {
-    const weakThis = new WeakRef(this);
+  protected makeFolderOperationsHandler_(weakStore: WeakRef<MutableSyncableStore>) {
+    const path = this.path;
 
     return new FolderOperationsHandler({
-      store,
-      getAccessControlDocument: async (trace: Trace): PR<SyncableStoreAccessControlDocument> => {
-        const self = weakThis.deref();
-        if (self === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'folder was released' }));
-        }
-        return await self.getAccessControlDocument_(trace);
-      },
-      getMutableSyncableStoreChangesDocument: async (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
-        const self = weakThis.deref();
-        if (self === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'folder was released' }));
-        }
-        return await self.getMutableSyncableStoreChangesDocument_(trace);
-      }
+      store: weakStore,
+      getAccessControlDocument: (trace: Trace): PR<SyncableStoreAccessControlDocument> => getAccessControlDocument(trace, weakStore, path),
+      getMutableSyncableStoreChangesDocument: (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> =>
+        getMutableSyncableStoreChangesDocument(trace, weakStore, path)
     });
   }
 
@@ -610,7 +622,7 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
   private readonly getAccessControlState_ = makeAsyncResultFunc(
     [import.meta.filename, 'getAccessControlState'],
     async (trace: Trace): PR<AccessControlState<SyncableStoreRole>> => {
-      const accessControlDoc = await this.getAccessControlDocument_(trace);
+      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
       /* node:coverage disable */
       if (!accessControlDoc.ok) {
         return accessControlDoc;
@@ -620,36 +632,74 @@ export abstract class InMemoryAccessControlledFolderBase implements MutableAcces
       return makeSuccess(accessControlDoc.value.accessControlState);
     }
   );
-
-  private readonly getMutableAccessControlDocument_ = makeAsyncResultFunc(
-    [import.meta.filename, 'getMutableAccessControlDocument_'],
-    async (trace): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
-
-      const newDocument = (snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'ACCESS-CONTROL'> }) =>
-        new SyncableStoreAccessControlDocument({ snapshot });
-
-      // TODO: doc can be modified directly by changing bundle.  this should track that probably
-      const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, this.path.append(ACCESS_CONTROL_BUNDLE_FILE_ID), {
-        newDocument,
-        isSnapshotValid: isAccessControlDocumentSnapshotValid,
-        isDeltaValidForDocument: isDeltaValidForAccessControlDocument
-      });
-      /* node:coverage disable */
-      if (!doc.ok) {
-        return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-      }
-      /* node:coverage enable */
-
-      return makeSuccess(doc.value);
-    }
-  );
 }
 
 // Helpers
+
+const getAccessControlDocument = makeAsyncResultFunc(
+  [import.meta.filename, 'getAccessControlDocument'],
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath) => {
+    const accessControlDoc = await getMutableAccessControlDocument(trace, weakStore, path);
+    /* node:coverage disable */
+    if (!accessControlDoc.ok) {
+      return accessControlDoc;
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(accessControlDoc.value.document);
+  }
+);
+
+const getMutableAccessControlDocument = makeAsyncResultFunc(
+  [import.meta.filename, 'getMutableAccessControlDocument'],
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
+    const store = weakStore.deref();
+    if (store === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+    }
+
+    const newDocument = (snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'ACCESS-CONTROL'> }) =>
+      new SyncableStoreAccessControlDocument({ snapshot });
+
+    // TODO: doc can be modified directly by changing bundle.  this should track that probably
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(ACCESS_CONTROL_BUNDLE_FILE_ID), {
+      newDocument,
+      isSnapshotValid: isAccessControlDocumentSnapshotValid,
+      isDeltaValidForDocument: isDeltaValidForAccessControlDocument
+    });
+    /* node:coverage disable */
+    if (!doc.ok) {
+      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(doc.value);
+  }
+);
+
+const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
+  [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
+    const store = weakStore.deref();
+    if (store === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+    }
+
+    // TODO: doc can be modified directly by changing bundle.  this should track that probably
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(STORE_CHANGES_BUNDLE_FILE_ID), {
+      newDocument: makeSyncableStoreChangesDocumentFromSnapshot,
+      isSnapshotValid: isStoreChangesDocumentSnapshotValid,
+      isDeltaValidForDocument: isDeltaValidForStoreChangesDocument
+    });
+    /* node:coverage disable */
+    if (!doc.ok) {
+      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(doc.value);
+  }
+);
 
 const isAccessControlDocumentSnapshotValid = makeAsyncResultFunc(
   [import.meta.filename, 'isAccessControlDocumentSnapshotValid'],
