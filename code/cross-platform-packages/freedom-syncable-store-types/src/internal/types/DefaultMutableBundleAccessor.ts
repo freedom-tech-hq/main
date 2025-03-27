@@ -7,15 +7,15 @@ import type { StaticSyncablePath } from 'freedom-sync-types';
 import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
-import type { DefaultBundleBase } from './DefaultBundleBase.ts';
+import type { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
 import { DefaultMutableFileAccessorBase } from './DefaultMutableFileAccessorBase.ts';
 
 export class DefaultMutableBundleAccessor extends DefaultMutableFileAccessorBase implements MutableBundleAccessor {
   public readonly type = 'bundle';
 
-  private readonly data_: DefaultBundleBase;
+  private readonly data_: DefaultFileStoreBase;
 
-  constructor({ store, path, data }: { store: WeakRef<MutableSyncableStore>; path: StaticSyncablePath; data: DefaultBundleBase }) {
+  constructor({ store, path, data }: { store: WeakRef<MutableSyncableStore>; path: StaticSyncablePath; data: DefaultFileStoreBase }) {
     super({ store, path });
 
     this.data_ = data;

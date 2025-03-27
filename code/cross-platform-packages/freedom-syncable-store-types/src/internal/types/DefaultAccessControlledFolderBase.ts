@@ -67,9 +67,9 @@ import type {
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
-import { DefaultEncryptedBundle } from './DefaultEncryptedBundle.ts';
+import { DefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
-import { DefaultPlainBundle } from './DefaultPlainBundle.ts';
+import { DefaultPlainFileStore } from './DefaultPlainFileStore.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 import type { MutableAccessControlledFolder } from './MutableAccessControlledFolderAndFiles.ts';
 
@@ -85,10 +85,10 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
 
   private readonly backing_: SyncableStoreBacking;
 
-  private folder__: DefaultFolderStore | undefined;
-  private get folder_(): DefaultFolderStore {
-    if (this.folder__ === undefined) {
-      this.folder__ = new DefaultFolderStore({
+  private folderStore__: DefaultFolderStore | undefined;
+  private get folderStore_(): DefaultFolderStore {
+    if (this.folderStore__ === undefined) {
+      this.folderStore__ = new DefaultFolderStore({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
@@ -98,13 +98,13 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       });
     }
 
-    return this.folder__;
+    return this.folderStore__;
   }
 
-  private plainBundle__: DefaultPlainBundle | undefined;
-  private get plainBundle_(): DefaultPlainBundle {
-    if (this.plainBundle__ === undefined) {
-      this.plainBundle__ = new DefaultPlainBundle({
+  private plainFileStore__: DefaultPlainFileStore | undefined;
+  private get plainFileStore_(): DefaultPlainFileStore {
+    if (this.plainFileStore__ === undefined) {
+      this.plainFileStore__ = new DefaultPlainFileStore({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
@@ -114,13 +114,13 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       });
     }
 
-    return this.plainBundle__;
+    return this.plainFileStore__;
   }
 
-  private encryptedBundle__: DefaultEncryptedBundle | undefined;
-  private get encryptedBundle_(): DefaultEncryptedBundle {
-    if (this.encryptedBundle__ === undefined) {
-      this.encryptedBundle__ = new DefaultEncryptedBundle({
+  private encryptedFileStore__: DefaultEncryptedFileStore | undefined;
+  private get encryptedFileStore_(): DefaultEncryptedFileStore {
+    if (this.encryptedFileStore__ === undefined) {
+      this.encryptedFileStore__ = new DefaultEncryptedFileStore({
         store: this.weakStore_,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
@@ -129,7 +129,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       });
     }
 
-    return this.encryptedBundle__;
+    return this.encryptedFileStore__;
   }
 
   private needsRecomputeHashCount_ = 0;
@@ -305,28 +305,28 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
     }
   );
 
-  public readonly createFolder: MutableFolderStore['createFolder'] = (trace, args) => this.folder_.createFolder(trace, args);
+  public readonly createFolder: MutableFolderStore['createFolder'] = (trace, args) => this.folderStore_.createFolder(trace, args);
 
   public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = (trace, args) =>
-    this.encryptedBundle_.createBinaryFile(trace, args);
+    this.encryptedFileStore_.createBinaryFile(trace, args);
 
   public readonly createBundle: MutableFileStore['createBundle'] = (trace, args) => {
     switch (args.mode) {
       case 'via-sync':
         if (args.id === ACCESS_CONTROL_BUNDLE_ID || args.id === STORE_CHANGES_BUNDLE_ID) {
-          return this.plainBundle_.createBundle(trace, args);
+          return this.plainFileStore_.createBundle(trace, args);
         }
         break;
 
       case undefined:
       case 'local':
         if (args.id === ACCESS_CONTROL_BUNDLE_ID || args.id === STORE_CHANGES_BUNDLE_ID) {
-          return this.plainBundle_.createBundle(trace, args);
+          return this.plainFileStore_.createBundle(trace, args);
         }
         break;
     }
 
-    return this.encryptedBundle_.createBundle(trace, args);
+    return this.encryptedFileStore_.createBundle(trace, args);
   };
 
   public readonly delete = makeAsyncResultFunc(
@@ -337,7 +337,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       }
 
       const results = await disableLam(trace, 'not-found', (trace) =>
-        Promise.all([this.folder_.delete(trace, id), this.encryptedBundle_.delete(trace, id)])
+        Promise.all([this.folderStore_.delete(trace, id), this.encryptedFileStore_.delete(trace, id)])
       );
 
       let failure: FailureResult<'not-found'> | undefined;
@@ -364,15 +364,15 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
 
   public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: DynamicSyncableId) => {
     if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
-      return await this.plainBundle_.exists(trace, id);
+      return await this.plainFileStore_.exists(trace, id);
     }
 
     const results = await allResultsNamed(
       trace,
       {},
       {
-        existsInFolder: this.folder_.exists(trace, id),
-        existsInEncryptedBundle: this.encryptedBundle_.exists(trace, id)
+        existsInFolder: this.folderStore_.exists(trace, id),
+        existsInEncryptedBundle: this.encryptedFileStore_.exists(trace, id)
       }
     );
     if (!results.ok) {
@@ -396,9 +396,9 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
     [import.meta.filename, 'dynamicToStaticId'],
     async (trace, id: DynamicSyncableId): PR<SyncableId, 'not-found'> => {
       const found = await firstSuccessResult(trace, [
-        this.folder_.dynamicToStaticId(trace, id),
-        this.plainBundle_.dynamicToStaticId(trace, id),
-        this.encryptedBundle_.dynamicToStaticId(trace, id)
+        this.folderStore_.dynamicToStaticId(trace, id),
+        this.plainFileStore_.dynamicToStaticId(trace, id),
+        this.encryptedFileStore_.dynamicToStaticId(trace, id)
       ]);
       if (!found.ok) {
         return excludeFailureResult(found, 'empty-data-set');
@@ -457,9 +457,9 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
         trace,
         {},
         {
-          idsFromFolder: this.folder_.getIds(trace, options),
-          idsFromPlainBundle: this.plainBundle_.getIds(trace, options),
-          idsFromEncryptedBundle: this.encryptedBundle_.getIds(trace, options)
+          idsFromFolder: this.folderStore_.getIds(trace, options),
+          idsFromPlainBundle: this.plainFileStore_.getIds(trace, options),
+          idsFromEncryptedBundle: this.encryptedFileStore_.getIds(trace, options)
         }
       );
       if (!results.ok) {
@@ -511,9 +511,9 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       trace,
       {},
       {
-        folderLs: this.folder_.ls(trace),
-        plainBundleLs: this.plainBundle_.ls(trace),
-        encryptedBundleLs: this.encryptedBundle_.ls(trace)
+        folderLs: this.folderStore_.ls(trace),
+        plainBundleLs: this.plainFileStore_.ls(trace),
+        encryptedBundleLs: this.encryptedFileStore_.ls(trace)
       }
     );
     if (!results.ok) {
@@ -533,13 +533,13 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
-        return await this.plainBundle_.getMutable(trace, id, expectedType);
+        return await this.plainFileStore_.getMutable(trace, id, expectedType);
       }
 
       const got = await disableLam(trace, 'not-found', (trace) =>
         firstSuccessResult(trace, [
-          this.folder_.getMutable(trace, id, expectedType),
-          this.encryptedBundle_.getMutable(trace, id, expectedType)
+          this.folderStore_.getMutable(trace, id, expectedType),
+          this.encryptedFileStore_.getMutable(trace, id, expectedType)
         ])
       );
       if (!got.ok) {
@@ -559,9 +559,9 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
         trace,
         {},
         {
-          folderHashes: this.folder_.getHashesById(trace, options),
-          plainBundleHashes: this.plainBundle_.getHashesById(trace, options),
-          encryptedBundleHashes: this.encryptedBundle_.getHashesById(trace, options)
+          folderHashes: this.folderStore_.getHashesById(trace, options),
+          plainBundleHashes: this.plainFileStore_.getHashesById(trace, options),
+          encryptedBundleHashes: this.encryptedFileStore_.getHashesById(trace, options)
         }
       );
       if (!results.ok) {
@@ -586,7 +586,11 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
   // BundleManagement Methods
 
   public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (trace: Trace) => {
-    const swept = await allResults(trace, [this.folder_.sweep(trace), this.plainBundle_.sweep(trace), this.encryptedBundle_.sweep(trace)]);
+    const swept = await allResults(trace, [
+      this.folderStore_.sweep(trace),
+      this.plainFileStore_.sweep(trace),
+      this.encryptedFileStore_.sweep(trace)
+    ]);
     /* node:coverage disable */
     if (!swept.ok) {
       return swept;

@@ -47,7 +47,7 @@ import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNe
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
-export interface DefaultBundleBaseConstructorArgs {
+export interface DefaultFileStoreBaseConstructorArgs {
   store: WeakRef<MutableSyncableStore>;
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
@@ -56,7 +56,7 @@ export interface DefaultBundleBaseConstructorArgs {
   supportsDeletion: boolean;
 }
 
-export abstract class DefaultBundleBase implements MutableFileStore, BundleManagement {
+export abstract class DefaultFileStoreBase implements MutableFileStore, BundleManagement {
   public readonly type = 'bundle';
   public readonly path: StaticSyncablePath;
   public readonly supportsDeletion: boolean;
@@ -69,7 +69,7 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
 
   private needsRecomputeHashCount_ = 0;
 
-  constructor({ store, backing, syncTracker, folderOperationsHandler, path, supportsDeletion }: DefaultBundleBaseConstructorArgs) {
+  constructor({ store, backing, syncTracker, folderOperationsHandler, path, supportsDeletion }: DefaultFileStoreBaseConstructorArgs) {
     this.supportsDeletion = supportsDeletion;
     this.weakStore_ = store;
     this.backing_ = backing;
