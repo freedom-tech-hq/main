@@ -13,8 +13,8 @@ import { encId, storageRootIdInfo } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
-import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
+import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';

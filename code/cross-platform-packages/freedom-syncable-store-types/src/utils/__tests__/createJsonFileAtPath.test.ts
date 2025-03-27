@@ -11,8 +11,8 @@ import { expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
-import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
+import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createJsonFileAtPath } from '../create/createJsonFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';

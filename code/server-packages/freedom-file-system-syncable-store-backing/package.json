@@ -1,13 +1,22 @@
 {
   "dependencies": {
-    "freedom-syncable-store-types": "0.0.0",
+    "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
+    "freedom-cast": "0.0.0",
+    "freedom-common-errors": "0.0.0",
+    "freedom-contexts": "0.0.0",
     "freedom-sync-types": "0.0.0",
+    "freedom-syncable-store-types": "0.0.0",
     "lodash-es": "4.17.21",
     "yaschema": "4.4.2"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",
     "freedom-build-tools": "0.0.0",
+    "freedom-crypto-data": "0.0.0",
+    "freedom-crypto-service": "0.0.0",
+    "freedom-crypto": "0.0.0",
+    "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.2"
   },
   "type": "module",
