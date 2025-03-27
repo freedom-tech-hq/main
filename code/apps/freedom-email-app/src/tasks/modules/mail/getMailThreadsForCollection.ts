@@ -5,14 +5,14 @@ import type { SyncableId } from 'freedom-sync-types';
 import { getBundleAtPath, getConflictFreeDocumentFromBundleAtPath, getJsonFromFileAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
-import { type MailCollectionId, mailCollectionIdInfo } from '../../../modules/mail-types/MailCollectionId.js';
-import type { MailThread } from '../../../modules/mail-types/MailThread.js';
-import { type MailThreadId, mailThreadIdInfo } from '../../../modules/mail-types/MailThreadId.js';
-import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID } from '../../consts/user-syncable-paths.js';
-import { useActiveUserId } from '../../contexts/active-user-id.js';
-import { makeMailCollectionDocumentFromSnapshot } from '../../types/MailCollectionDocument.js';
-import { storedMailSchema } from '../../types/StoredMail.js';
-import { getUserFs } from '../internal/storage/getUserFs.js';
+import { type MailCollectionId, mailCollectionIdInfo } from '../../../modules/mail-types/MailCollectionId.ts';
+import type { MailThread } from '../../../modules/mail-types/MailThread.ts';
+import { type MailThreadId, mailThreadIdInfo } from '../../../modules/mail-types/MailThreadId.ts';
+import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID } from '../../consts/user-syncable-paths.ts';
+import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { makeMailCollectionDocumentFromSnapshot } from '../../types/MailCollectionDocument.ts';
+import { storedMailSchema } from '../../types/StoredMail.ts';
+import { getUserFs } from '../internal/storage/getUserFs.ts';
 
 export interface GetMailThreadsForCollection_MailAddedPacket {
   readonly type: 'mail-added';
@@ -82,8 +82,12 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     }
 
     const syncableMailIds = Array.from(inboxDoc.value.syncableMailIds.values());
-    const storedMails = await allResultsMapped(trace, syncableMailIds, {}, async (trace, syncableMailId) =>
-      getJsonFromFileAtPath(trace, userFs.value, mailStorageBundle.value.path.dynamic.append(syncableMailId), storedMailSchema)
+    const storedMails = await allResultsMapped(
+      trace,
+      syncableMailIds,
+      {},
+      async (trace, syncableMailId) =>
+        await getJsonFromFileAtPath(trace, userFs.value, mailStorageBundle.value.path.dynamic.append(syncableMailId), storedMailSchema)
     );
     if (!storedMails.ok) {
       return generalizeFailureResult(trace, storedMails, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);

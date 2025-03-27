@@ -67,7 +67,7 @@ export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: Co
           return generalizeFailureResult(trace, cryptoKeys, 'not-found');
         }
 
-        return generateEncryptedValue(trace, { ...options, value, valueSchema, encryptingKeys: cryptoKeys.value });
+        return await generateEncryptedValue(trace, { ...options, value, valueSchema, encryptingKeys: cryptoKeys.value });
       }
     ),
 
@@ -95,13 +95,13 @@ export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: Co
     getEncryptingKeySetForId: makeAsyncResultFunc(
       [import.meta.filename, 'getEncryptingKeySetForId'],
       // TODO: should be able to look up keys for other users
-      async (trace, id: CryptoKeySetId): PR<EncryptingKeySet, 'not-found'> => getCryptoKeysById(trace, id)
+      async (trace, id: CryptoKeySetId): PR<EncryptingKeySet, 'not-found'> => await getCryptoKeysById(trace, id)
     ),
 
     getVerifyingKeySetForId: makeAsyncResultFunc(
       [import.meta.filename, 'getVerifyingKeySetForId'],
       // TODO: should be able to look up keys for other users
-      async (trace, id: CryptoKeySetId): PR<VerifyingKeySet, 'not-found'> => getCryptoKeysById(trace, id)
+      async (trace, id: CryptoKeySetId): PR<VerifyingKeySet, 'not-found'> => await getCryptoKeysById(trace, id)
     ),
 
     isSignatureValidForSignedBuffer: makeAsyncResultFunc(
@@ -127,7 +127,7 @@ export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: Co
           return generalizeFailureResult(trace, cryptoKeys, 'not-found');
         }
 
-        return isSignatureValidForSignedBuffer(trace, { signedBuffer, verifyingKeys: cryptoKeys.value });
+        return await isSignatureValidForSignedBuffer(trace, { signedBuffer, verifyingKeys: cryptoKeys.value });
       }
     ),
 
@@ -159,7 +159,7 @@ export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: Co
           return generalizeFailureResult(trace, cryptoKeys, 'not-found');
         }
 
-        return isSignedValueValid(trace, signedValue, signatureExtras, { ...options, verifyingKeys: cryptoKeys.value });
+        return await isSignedValueValid(trace, signedValue, signatureExtras, { ...options, verifyingKeys: cryptoKeys.value });
       }
     )
   };

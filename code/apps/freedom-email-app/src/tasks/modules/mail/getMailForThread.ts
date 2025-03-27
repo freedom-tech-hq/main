@@ -5,13 +5,13 @@ import type { SyncableId } from 'freedom-sync-types';
 import { getBundleAtPath, getJsonFromFileAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
-import type { Mail } from '../../../modules/mail-types/Mail.js';
-import { type MailId, mailIdInfo } from '../../../modules/mail-types/MailId.js';
-import { type MailThreadId, mailThreadIdInfo } from '../../../modules/mail-types/MailThreadId.js';
-import { MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID } from '../../consts/user-syncable-paths.js';
-import { useActiveUserId } from '../../contexts/active-user-id.js';
-import { storedMailSchema } from '../../types/StoredMail.js';
-import { getUserFs } from '../internal/storage/getUserFs.js';
+import type { Mail } from '../../../modules/mail-types/Mail.ts';
+import { type MailId, mailIdInfo } from '../../../modules/mail-types/MailId.ts';
+import { type MailThreadId, mailThreadIdInfo } from '../../../modules/mail-types/MailThreadId.ts';
+import { MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID } from '../../consts/user-syncable-paths.ts';
+import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { storedMailSchema } from '../../types/StoredMail.ts';
+import { getUserFs } from '../internal/storage/getUserFs.ts';
 
 export interface GetMailForThread_MailAddedPacket {
   readonly type: 'mail-added';

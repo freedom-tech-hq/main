@@ -1,6 +1,6 @@
 import { schema } from 'yaschema';
 
-import { mailIdInfo } from '../../modules/mail-types/MailId.js';
+import { mailIdInfo } from '../../modules/mail-types/MailId.ts';
 
 export const storedMailSchema = schema.object({
   id: mailIdInfo.schema,

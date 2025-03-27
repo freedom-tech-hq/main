@@ -1,8 +1,12 @@
-import type { SyncableFileMetadata } from '../metadata/SyncableFileMetadata.ts';
+import { uint8ArraySchema } from 'freedom-basic-data';
+import { schema } from 'yaschema';
 
-export interface OutOfSyncFile {
-  type: 'file';
-  outOfSync: true;
-  data?: Uint8Array;
-  metadata: SyncableFileMetadata;
-}
+import { syncableFileMetadataSchema } from '../metadata/SyncableFileMetadata.ts';
+
+export const outOfSyncFileSchema = schema.object({
+  type: schema.string('file'),
+  outOfSync: schema.boolean(true),
+  data: uint8ArraySchema.optional(),
+  metadata: syncableFileMetadataSchema
+});
+export type OutOfSyncFile = typeof outOfSyncFileSchema.valueType;

@@ -3,19 +3,19 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { createBundleAtPath, createConflictFreeDocumentBundleAtPath, initializeRoot } from 'freedom-syncable-store-types';
 
-import type { EmailUserId } from '../../../types/EmailUserId.js';
+import type { EmailUserId } from '../../../types/EmailUserId.ts';
 import {
   MAIL_COLLECTIONS_BUNDLE_ID,
   MAIL_COLLECTIONS_INBOX_DOCUMENT_ID,
   MAIL_FOLDER_ID,
   MAIL_STORAGE_BUNDLE_ID
 } from '../../consts/user-syncable-paths.js';
-import { useActiveUserId } from '../../contexts/active-user-id.js';
-import { makeNewMailCollectionDocument } from '../../types/MailCollectionDocument.js';
-import { createSyncableFolderForUserWithDefaultInitialAccess } from '../internal/storage/createSyncableFolderForUserWithDefaultInitialAccess.js';
-import { getUserFs } from '../internal/storage/getUserFs.js';
-import { createInitialMockContentForUser } from '../internal/user/createInitialMockContentForUser.js';
-import { createUserIdAndCryptoKeys } from '../internal/user/createUserIdAndCryptoKeys.js';
+import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { makeNewMailCollectionDocument } from '../../types/MailCollectionDocument.ts';
+import { createSyncableFolderForUserWithDefaultInitialAccess } from '../internal/storage/createSyncableFolderForUserWithDefaultInitialAccess.ts';
+import { getUserFs } from '../internal/storage/getUserFs.ts';
+import { createInitialMockContentForUser } from '../internal/user/createInitialMockContentForUser.ts';
+import { createUserIdAndCryptoKeys } from '../internal/user/createUserIdAndCryptoKeys.ts';
 
 /**
  * Creates:

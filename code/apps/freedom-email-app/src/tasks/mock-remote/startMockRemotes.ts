@@ -18,7 +18,7 @@ import type {
   OutOfSyncFolder,
   RemoteId,
   StorageRootId,
-  SyncableProvenance,
+  SyncableItemMetadata,
   SyncPuller,
   SyncPullResponse,
   SyncPusher
@@ -48,7 +48,7 @@ export interface MockRemotes {
   readonly createMockRemoteStore: PRFunc<
     DefaultSyncableStore,
     'conflict',
-    [remoteId: RemoteId, storageRootId: StorageRootId, provenance: SyncableProvenance]
+    [remoteId: RemoteId, storageRootId: StorageRootId, metadata: SyncableItemMetadata]
   >;
   readonly deviceNotificationClients: () => DeviceNotificationClient[];
   readonly stop: () => void;
@@ -68,7 +68,6 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
   const notificationQueue = new TaskQueue(makeTrace('setupMockRemotes'));
   notificationQueue.start();
 
-  // TODO: this isn't great since its using userSyncableRemotes().  really should stop using global configs
   const deviceNotificationClientsByRemoteId = userSyncableRemotes.reduce(
     (out, remoteInfo) => {
       out[remoteInfo.id] = new NotificationManager<DeviceNotifications>();
@@ -151,7 +150,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
       trace: Trace,
       remoteId: RemoteId,
       storageRootId: StorageRootId,
-      provenance: SyncableProvenance
+      metadata: SyncableItemMetadata
     ): PR<DefaultSyncableStore, 'conflict'> => {
       const key: `${RemoteId}.${StorageRootId}` = `${remoteId}.${storageRootId}`;
 
@@ -162,9 +161,9 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
 
       const cryptoService = makeCryptoServiceWithPublicKeys({ publicKeys: creatorPublicCryptoKeysSet });
 
-      const storeBacking = new InMemorySyncableStoreBacking({ provenance });
+      const storeBacking = new InMemorySyncableStoreBacking(metadata);
 
-      const newStore = new DefaultSyncableStore({ storageRootId, backing: storeBacking, provenance, cryptoService });
+      const newStore = new DefaultSyncableStore({ storageRootId, backing: storeBacking, provenance: metadata.provenance, cryptoService });
       store = newStore;
 
       userStores[key] = newStore;
@@ -227,7 +226,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
 
   const pusher: SyncPusher = makeAsyncResultFunc(
     [import.meta.filename, 'pusher'],
-    async (localTrace, { remoteId, type, path, data, provenance }): PR<undefined> => {
+    async (localTrace, { remoteId, type, path, data, metadata }): PR<undefined> => {
       const trace = makeSubTrace(localTrace, ['REMOTE']);
 
       let store: Result<DefaultSyncableStore, 'conflict' | 'not-found'> = await disableLam(trace, 'not-found', (trace) =>
@@ -236,7 +235,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
       if (!store.ok) {
         // Creating the storage on the first push of root if it doesn't exist
         if (store.value.errorCode === 'not-found' && path.ids.length === 0) {
-          store = await createMockRemoteStore(trace, remoteId, path.storageRootId, provenance);
+          store = await createMockRemoteStore(trace, remoteId, path.storageRootId, metadata);
           if (!store.ok) {
             return generalizeFailureResult(trace, store, ['conflict', 'not-found']);
           }
@@ -252,7 +251,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
             return makeSuccess(undefined);
           }
 
-          const folder = await createViaSyncFolderAtPath(trace, store.value, path, provenance);
+          const folder = await createViaSyncFolderAtPath(trace, store.value, path, metadata);
           if (!folder.ok) {
             if (folder.value.errorCode === 'deleted') {
               // Was locally (with respect to the mock remote) deleted, so not interested in this content
@@ -269,7 +268,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
           return makeSuccess(undefined);
         }
         case 'bundle': {
-          const bundle = await createViaSyncBundleAtPath(trace, store.value, path, provenance);
+          const bundle = await createViaSyncBundleAtPath(trace, store.value, path, metadata);
           if (!bundle.ok) {
             if (bundle.value.errorCode === 'deleted') {
               // Was locally (with respect to the mock remote) deleted, so not interested in this content
@@ -286,7 +285,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
           return makeSuccess(undefined);
         }
         case 'file': {
-          const file = await createViaSyncPreEncodedBinaryFileAtPath(trace, store.value, path, data, provenance);
+          const file = await createViaSyncPreEncodedBinaryFileAtPath(trace, store.value, path, data, metadata);
           if (!file.ok) {
             if (file.value.errorCode === 'deleted') {
               // Was locally (with respect to the mock remote) deleted, so not interested in this content
@@ -351,9 +350,9 @@ const pullBundle = makeAsyncResultFunc(
       return makeSuccess({ type: 'bundle', outOfSync: false } satisfies InSyncBundle);
     }
 
-    const remoteProvenance = await bundle.value.getProvenance(trace);
-    if (!remoteProvenance.ok) {
-      return remoteProvenance;
+    const remoteMetadata = await bundle.value.getMetadata(trace);
+    if (!remoteMetadata.ok) {
+      return remoteMetadata;
     }
 
     const hashesById = await bundle.value.getHashesById(trace);
@@ -365,7 +364,7 @@ const pullBundle = makeAsyncResultFunc(
       type: 'bundle',
       outOfSync: true,
       hashesById: hashesById.value,
-      provenance: remoteProvenance.value
+      metadata: remoteMetadata.value
     } satisfies OutOfSyncBundle);
   }
 );
@@ -394,9 +393,9 @@ const pullFolder = makeAsyncResultFunc(
       return makeSuccess({ type: 'folder', outOfSync: false } satisfies InSyncFolder);
     }
 
-    const remoteProvenance = await folder.value.getProvenance(trace);
-    if (!remoteProvenance.ok) {
-      return remoteProvenance;
+    const remoteMetadata = await folder.value.getMetadata(trace);
+    if (!remoteMetadata.ok) {
+      return remoteMetadata;
     }
 
     const hashesById = await folder.value.getHashesById(trace);
@@ -408,7 +407,7 @@ const pullFolder = makeAsyncResultFunc(
       type: 'folder',
       outOfSync: true,
       hashesById: hashesById.value,
-      provenance: remoteProvenance.value
+      metadata: remoteMetadata.value
     } satisfies OutOfSyncFolder);
   }
 );
@@ -439,13 +438,13 @@ const pullFile = makeAsyncResultFunc(
 
     // TODO: changing provenance (by accepting or rejecting) should probably trigger a hash change or something
 
-    const remoteProvenance = await file.value.getProvenance(trace);
-    if (!remoteProvenance.ok) {
-      return remoteProvenance;
+    const remoteMetadata = await file.value.getMetadata(trace);
+    if (!remoteMetadata.ok) {
+      return remoteMetadata;
     }
 
     if (!sendData) {
-      return makeSuccess({ type: 'file', outOfSync: true, provenance: remoteProvenance.value } satisfies OutOfSyncFile);
+      return makeSuccess({ type: 'file', outOfSync: true, metadata: remoteMetadata.value } satisfies OutOfSyncFile);
     } else {
       const data = await file.value.getEncodedBinary(trace);
       if (!data.ok) {
@@ -456,7 +455,7 @@ const pullFile = makeAsyncResultFunc(
         type: 'file',
         outOfSync: true,
         data: data.value,
-        provenance: remoteProvenance.value
+        metadata: remoteMetadata.value
       } satisfies OutOfSyncFile);
     }
   }

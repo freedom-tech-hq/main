@@ -2,9 +2,9 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import type { CryptoService } from 'freedom-crypto-service';
 import { makeCryptoService } from 'freedom-crypto-service';
 
-import type { EmailUserId } from '../../types/EmailUserId.js';
-import { getCryptoKeysDb } from '../modules/internal/storage/getCryptoKeysDb.js';
-import { getRequiredCryptoKeysForUser } from '../modules/internal/user/getRequiredCryptoKeysForUser.js';
+import type { EmailUserId } from '../../types/EmailUserId.ts';
+import { getCryptoKeysDb } from '../modules/internal/storage/getCryptoKeysDb.ts';
+import { getRequiredCryptoKeysForUser } from '../modules/internal/user/getRequiredCryptoKeysForUser.ts';
 
 export const makeCryptoServiceForUser = ({ userId }: { userId: EmailUserId }): CryptoService =>
   makeCryptoService({
@@ -12,7 +12,7 @@ export const makeCryptoServiceForUser = ({ userId }: { userId: EmailUserId }): C
       const cryptoKeysDb = await uncheckedResult(getCryptoKeysDb(trace));
 
       const userCryptoKeysDb = cryptoKeysDb({ userId });
-      return userCryptoKeysDb.keys.asc().keys(trace);
+      return await userCryptoKeysDb.keys.asc().keys(trace);
     }),
 
     getCryptoKeysById: makeAsyncResultFunc([import.meta.filename, 'getCryptoKeysById'], async (trace, id) => {
@@ -20,7 +20,7 @@ export const makeCryptoServiceForUser = ({ userId }: { userId: EmailUserId }): C
 
       const userCryptoKeysDb = cryptoKeysDb({ userId });
 
-      return userCryptoKeysDb.object(id).get(trace);
+      return await userCryptoKeysDb.object(id).get(trace);
     }),
 
     // TODO: add support for looking up public keys from other sources
@@ -37,7 +37,8 @@ export const makeCryptoServiceForUser = ({ userId }: { userId: EmailUserId }): C
       return makeSuccess(found.value.publicOnly());
     }),
 
-    getMostRecentCryptoKeys: makeAsyncResultFunc([import.meta.filename, 'getMostRecentCryptoKeys'], async (trace) =>
-      getRequiredCryptoKeysForUser(trace, { userId })
+    getMostRecentCryptoKeys: makeAsyncResultFunc(
+      [import.meta.filename, 'getMostRecentCryptoKeys'],
+      async (trace) => await getRequiredCryptoKeysForUser(trace, { userId })
     )
   });

@@ -6,8 +6,8 @@ import { privateCombinationCryptoKeySetSchema } from 'freedom-crypto-data';
 import type { MutableObjectStore } from 'freedom-object-store-types';
 import { makePrefixedKeyMutableObjectStore } from 'freedom-object-store-types';
 
-import type { EmailUserId } from '../../../../types/EmailUserId.js';
-import { useDataSources } from '../../../contexts/data-sources.js';
+import type { EmailUserId } from '../../../../types/EmailUserId.ts';
+import { useDataSources } from '../../../contexts/data-sources.ts';
 
 export const getCryptoKeysDb = makeAsyncResultFunc(
   [import.meta.filename],

@@ -1,8 +1,10 @@
-import type { Sha256Hash } from 'freedom-basic-data';
+import { sha256HashInfo } from 'freedom-basic-data';
+import { schema } from 'yaschema';
 
-export interface InSyncFolder {
-  type: 'folder';
-  outOfSync: false;
-  accessControlHash?: Sha256Hash;
-  hashesById?: undefined;
-}
+export const inSyncFolderSchema = schema.object({
+  type: schema.string('folder'),
+  outOfSync: schema.boolean(false),
+  accessControlHash: sha256HashInfo.schema.optional(),
+  hashesById: schema.undefinedValue().optional()
+});
+export type InSyncFolder = typeof inSyncFolderSchema.valueType;

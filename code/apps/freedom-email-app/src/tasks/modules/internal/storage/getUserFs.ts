@@ -3,10 +3,10 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import type { EmailUserId } from '../../../../types/EmailUserId.js';
-import { useDataSources } from '../../../contexts/data-sources.js';
-import { makeCryptoServiceForUser } from '../../../utils/makeCryptoServiceForUser.js';
-import { getRequiredCryptoKeysForUser } from '../user/getRequiredCryptoKeysForUser.js';
+import type { EmailUserId } from '../../../../types/EmailUserId.ts';
+import { useDataSources } from '../../../contexts/data-sources.ts';
+import { makeCryptoServiceForUser } from '../../../utils/makeCryptoServiceForUser.ts';
+import { getRequiredCryptoKeysForUser } from '../user/getRequiredCryptoKeysForUser.ts';
 
 export const getUserFs = makeAsyncResultFunc(
   [import.meta.filename],
@@ -20,6 +20,6 @@ export const getUserFs = makeAsyncResultFunc(
 
     const storageRootId = storageRootIdInfo.make(userId);
     const cryptoService = makeCryptoServiceForUser({ userId });
-    return dataSources.getOrCreateSyncableStore(trace, { storageRootId, cryptoService });
+    return await dataSources.getOrCreateSyncableStore(trace, { storageRootId, cryptoService });
   }
 );

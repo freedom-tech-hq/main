@@ -22,7 +22,7 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
       return userFs;
     }
 
-    return makeSyncService(trace, {
+    return await makeSyncService(trace, {
       ...fwdArgs,
       shouldSyncWithAllRemotes: async () => makeSuccess(false),
       store: userFs.value

@@ -3,8 +3,8 @@ import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, un
 import { InternalStateError } from 'freedom-common-errors';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 
-import type { EmailUserId } from '../../../../types/EmailUserId.js';
-import { getCryptoKeysDb } from '../storage/getCryptoKeysDb.js';
+import type { EmailUserId } from '../../../../types/EmailUserId.ts';
+import { getCryptoKeysDb } from '../storage/getCryptoKeysDb.ts';
 
 export const getRequiredCryptoKeysForUser = makeAsyncResultFunc(
   [import.meta.filename],

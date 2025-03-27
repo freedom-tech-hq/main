@@ -1,7 +1,7 @@
 import type { Trace } from 'freedom-contexts';
 import { createTraceContext, useTraceContext } from 'freedom-contexts';
 
-import type { MockRemotes } from './startMockRemotes.js';
+import type { MockRemotes } from './startMockRemotes.ts';
 
 const MockRemotesContext = createTraceContext<{ mockRemotes?: MockRemotes }>(() => ({}));
 
