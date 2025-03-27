@@ -21,8 +21,7 @@ import type {
   SyncableBundleMetadata,
   SyncableFileMetadata,
   SyncableId,
-  SyncableItemType,
-  SyncableProvenance
+  SyncableItemType
 } from 'freedom-sync-types';
 import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo, syncableItemTypes } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -510,15 +509,19 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
-  public readonly getProvenance = makeAsyncResultFunc([import.meta.filename, 'getProvenance'], async (trace): PR<SyncableProvenance> => {
+  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableBundleMetadata> => {
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    } else if (metadata.value.type !== 'bundle') {
+      return makeFailure(
+        new NotFoundError(trace, {
+          message: `Expected bundle metadata at ${this.path.toString()}, but found ${metadata.value.type}`
+        })
+      );
     }
 
-    const provenance = metadata.value.provenance;
-
-    return makeSuccess(provenance);
+    return makeSuccess(metadata.value);
   });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(

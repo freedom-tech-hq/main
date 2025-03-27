@@ -95,12 +95,12 @@ const pushEverything = makeAsyncResultFunc(
 
     switch (localItemAccessor.value.type) {
       case 'folder': {
-        const provenance = await localItemAccessor.value.getProvenance(trace);
-        if (!provenance.ok) {
-          return provenance;
+        const metadata = await localItemAccessor.value.getMetadata(trace);
+        if (!metadata.ok) {
+          return metadata;
         }
 
-        const pushed = await pushToRemote(trace, { remoteId, type: 'folder', path, provenance: provenance.value });
+        const pushed = await pushToRemote(trace, { remoteId, type: 'folder', path, metadata: metadata.value });
         if (!pushed.ok) {
           return pushed;
         }
@@ -113,12 +113,12 @@ const pushEverything = makeAsyncResultFunc(
         return await pushFile(trace, { remoteId, store, syncService, path });
 
       case 'bundle': {
-        const provenance = await localItemAccessor.value.getProvenance(trace);
-        if (!provenance.ok) {
-          return provenance;
+        const metadata = await localItemAccessor.value.getMetadata(trace);
+        if (!metadata.ok) {
+          return metadata;
         }
 
-        const pushed = await pushToRemote(trace, { remoteId, type: 'bundle', path, provenance: provenance.value });
+        const pushed = await pushToRemote(trace, { remoteId, type: 'bundle', path, metadata: metadata.value });
         if (!pushed.ok) {
           return pushed;
         }
@@ -245,12 +245,12 @@ const pushFile = makeAsyncResultFunc(
       return data;
     }
 
-    const provenance = await localFile.value.getProvenance(trace);
-    if (!provenance.ok) {
-      return provenance;
+    const metadata = await localFile.value.getMetadata(trace);
+    if (!metadata.ok) {
+      return metadata;
     }
 
-    const pushed = await pushToRemote(trace, { remoteId, type: 'file', path, provenance: provenance.value, data: data.value });
+    const pushed = await pushToRemote(trace, { remoteId, type: 'file', path, metadata: metadata.value, data: data.value });
     if (!pushed.ok) {
       return pushed;
     }

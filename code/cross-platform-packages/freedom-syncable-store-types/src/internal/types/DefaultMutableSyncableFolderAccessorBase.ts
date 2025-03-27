@@ -25,10 +25,10 @@ import type { CryptoKeySetId, SignedValue, TrustedTimeId } from 'freedom-crypto-
 import type {
   DynamicSyncableId,
   StaticSyncablePath,
+  SyncableFolderMetadata,
   SyncableId,
   SyncableItemType,
-  SyncablePath,
-  SyncableProvenance
+  SyncablePath
 } from 'freedom-sync-types';
 import { DynamicSyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -471,13 +471,19 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     }
   );
 
-  public readonly getProvenance = makeAsyncResultFunc([import.meta.filename, 'getProvenance'], async (trace): PR<SyncableProvenance> => {
+  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableFolderMetadata> => {
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    } else if (metadata.value.type !== 'folder') {
+      return makeFailure(
+        new NotFoundError(trace, {
+          message: `Expected folder metadata at ${this.path.toString()}, but found ${metadata.value.type}`
+        })
+      );
     }
 
-    return makeSuccess(metadata.value.provenance);
+    return makeSuccess(metadata.value);
   });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(

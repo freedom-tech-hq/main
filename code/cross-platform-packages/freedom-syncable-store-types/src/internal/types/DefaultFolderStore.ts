@@ -15,15 +15,8 @@ import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundErr
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
 import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
-import type {
-  DynamicSyncableId,
-  StaticSyncablePath,
-  SyncableFolderMetadata,
-  SyncableId,
-  SyncableItemType,
-  SyncableProvenance
-} from 'freedom-sync-types';
-import { areDynamicSyncableIdsEqual, invalidProvenance, syncableEncryptedIdInfo } from 'freedom-sync-types';
+import type { DynamicSyncableId, StaticSyncablePath, SyncableFolderMetadata, SyncableId, SyncableItemType } from 'freedom-sync-types';
+import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -45,7 +38,7 @@ import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.
 import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
-export class DefaultFolderStore implements MutableFolderStore, FolderManagement {
+export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderManagement {
   public readonly type = 'folder';
   public readonly path: StaticSyncablePath;
 
@@ -82,7 +75,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
     this.makeFolderAccessor_ = makeFolderAccessor;
   }
 
-  // MutableFolderStore Methods
+  // MutableFolderStore Methods (partially implemented)
 
   public readonly createFolder: MutableFolderStore['createFolder'] = makeAsyncResultFunc(
     [import.meta.filename, 'createFolder'],
@@ -442,11 +435,6 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
       id: DynamicSyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
-  );
-
-  public readonly getProvenance = makeAsyncResultFunc(
-    [import.meta.filename, 'getProvenance'],
-    async (_trace): PR<SyncableProvenance> => makeSuccess(invalidProvenance)
   );
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(

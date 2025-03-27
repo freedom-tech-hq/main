@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
@@ -18,6 +18,11 @@ export const getProvenanceOfSyncableAtPath = makeAsyncResultFunc(
       return item;
     }
 
-    return await item.value.getProvenance(trace);
+    const metadata = await item.value.getMetadata(trace);
+    if (!metadata.ok) {
+      return metadata;
+    }
+
+    return makeSuccess(metadata.value.provenance);
   }
 );

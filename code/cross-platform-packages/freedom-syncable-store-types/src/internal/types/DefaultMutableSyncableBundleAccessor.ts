@@ -31,8 +31,8 @@ export class DefaultMutableSyncableBundleAccessor implements MutableSyncableBund
     this.getHash = data.getHash;
     this.getHashesById = data.getHashesById;
     this.getIds = data.getIds;
+    this.getMetadata = data.getMetadata;
     this.getMutable = data.getMutable;
-    this.getProvenance = data.getProvenance;
     this.ls = data.ls;
     this.staticToDynamicId = data.staticToDynamicId;
   }
@@ -49,8 +49,8 @@ export class DefaultMutableSyncableBundleAccessor implements MutableSyncableBund
   public readonly getHash: MutableSyncableBundleAccessor['getHash'];
   public readonly getHashesById: MutableSyncableBundleAccessor['getHashesById'];
   public readonly getIds: MutableSyncableBundleAccessor['getIds'];
+  public readonly getMetadata: MutableSyncableBundleAccessor['getMetadata'];
   public readonly getMutable: MutableSyncableBundleAccessor['getMutable'];
-  public readonly getProvenance: MutableSyncableBundleAccessor['getProvenance'];
   public readonly ls: MutableSyncableBundleAccessor['ls'];
   public readonly staticToDynamicId: MutableSyncableBundleAccessor['staticToDynamicId'];
 

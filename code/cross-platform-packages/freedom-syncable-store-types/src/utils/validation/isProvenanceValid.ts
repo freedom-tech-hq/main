@@ -13,14 +13,16 @@ export const isProvenanceValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const provenance = await item.getProvenance(trace);
-    if (!provenance.ok) {
-      return provenance;
+    const metadata = await item.getMetadata(trace);
+    if (!metadata.ok) {
+      return metadata;
     }
 
+    const provenance = metadata.value.provenance;
+
     // If the acceptance is set, that's all we'll consider
-    if (provenance.value.acceptance !== undefined) {
-      const acceptanceValid = await isAcceptanceValid(trace, store, item, { acceptance: provenance.value.acceptance });
+    if (provenance.acceptance !== undefined) {
+      const acceptanceValid = await isAcceptanceValid(trace, store, item, { acceptance: provenance.acceptance });
       if (!acceptanceValid.ok) {
         return acceptanceValid;
       } else if (!acceptanceValid.value) {
@@ -31,7 +33,7 @@ export const isProvenanceValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const originValid = await isOriginValid(trace, store, item, { origin: provenance.value.origin });
+    const originValid = await isOriginValid(trace, store, item, { origin: provenance.origin });
     if (!originValid.ok) {
       return originValid;
     } else if (!originValid.value) {

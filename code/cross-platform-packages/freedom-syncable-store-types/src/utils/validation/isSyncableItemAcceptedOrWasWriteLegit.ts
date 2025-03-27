@@ -14,19 +14,21 @@ export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const provenance = await item.getProvenance(trace);
-    if (!provenance.ok) {
-      return provenance;
+    const metadata = await item.getMetadata(trace);
+    if (!metadata.ok) {
+      return metadata;
     }
+
+    const provenance = metadata.value.provenance;
 
     // If the acceptance is set, that's all we'll consider.  It's assumed that the validity of the acceptance and provenance as a whole are
     // validated elsewhere
-    if (provenance.value.acceptance !== undefined) {
+    if (provenance.acceptance !== undefined) {
       store.localTrustMarks.markTrusted(item.path, 'accepted-or-legit-write');
       return makeSuccess(true);
     }
 
-    const originRole = await getRoleForOriginWithPath(trace, store, { path: item.path, origin: provenance.value.origin });
+    const originRole = await getRoleForOriginWithPath(trace, store, { path: item.path, origin: provenance.origin });
     if (!originRole.ok) {
       return generalizeFailureResult(trace, originRole, ['deleted', 'not-found', 'wrong-type']);
     } else if (originRole.value === undefined) {
