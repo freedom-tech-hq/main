@@ -4,7 +4,7 @@ import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-c
 import type { Trace } from 'freedom-contexts';
 import {
   type StaticSyncablePath,
-  type SyncableBundleFileMetadata,
+  type SyncableBundleMetadata,
   type SyncableFlatFileMetadata,
   type SyncableFolderMetadata,
   type SyncableId,
@@ -242,7 +242,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: StaticSyncablePath,
-      { metadata }: { metadata: (SyncableBundleFileMetadata | SyncableFolderMetadata) & Omit<FileSystemLocalItemMetadata, 'id'> }
+      { metadata }: { metadata: (SyncableBundleMetadata | SyncableFolderMetadata) & Omit<FileSystemLocalItemMetadata, 'id'> }
     ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {

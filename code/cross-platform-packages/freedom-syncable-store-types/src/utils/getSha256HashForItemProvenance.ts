@@ -10,7 +10,7 @@ export const getSha256HashForItemProvenance = makeAsyncResultFunc(
   async (trace, item: SyncableItemAccessor): PR<Sha256Hash> => {
     switch (item.type) {
       case 'folder':
-      case 'bundleFile':
+      case 'bundle':
         return await generateSha256HashForEmptyString(trace);
       case 'flatFile':
         return await item.getHash(trace);

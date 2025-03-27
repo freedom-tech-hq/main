@@ -37,7 +37,7 @@ import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source
 import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
-import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../consts/special-file-ids.ts';
+import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
 import type { MutableAccessControlledFolderAccessor } from '../../types/MutableAccessControlledFolderAccessor.ts';
@@ -280,7 +280,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       }
 
       // Syncable Store Changes
-      const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path, STORE_CHANGES_BUNDLE_FILE_ID, {
+      const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path, STORE_CHANGES_BUNDLE_ID, {
         newDocument: makeNewSyncableStoreChangesDocument
       });
       /* node:coverage disable */
@@ -292,7 +292,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       // Access Control (should be created last since syncing will be allowed once this is created)
       const newAccessControlDocument = () => new SyncableStoreAccessControlDocument({ initialAccess: initialAccess.value });
 
-      const createdAccessControlDoc = await createConflictFreeDocumentBundleAtPath(trace, store, this.path, ACCESS_CONTROL_BUNDLE_FILE_ID, {
+      const createdAccessControlDoc = await createConflictFreeDocumentBundleAtPath(trace, store, this.path, ACCESS_CONTROL_BUNDLE_ID, {
         newDocument: newAccessControlDocument
       });
       /* node:coverage disable */
@@ -310,29 +310,29 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
   public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = (trace, args) =>
     this.encryptedBundle_.createBinaryFile(trace, args);
 
-  public readonly createBundleFile: MutableFileStore['createBundleFile'] = (trace, args) => {
+  public readonly createBundle: MutableFileStore['createBundle'] = (trace, args) => {
     switch (args.mode) {
       case 'via-sync':
-        if (args.id === ACCESS_CONTROL_BUNDLE_FILE_ID || args.id === STORE_CHANGES_BUNDLE_FILE_ID) {
-          return this.plainBundle_.createBundleFile(trace, args);
+        if (args.id === ACCESS_CONTROL_BUNDLE_ID || args.id === STORE_CHANGES_BUNDLE_ID) {
+          return this.plainBundle_.createBundle(trace, args);
         }
         break;
 
       case undefined:
       case 'local':
-        if (args.id === ACCESS_CONTROL_BUNDLE_FILE_ID || args.id === STORE_CHANGES_BUNDLE_FILE_ID) {
-          return this.plainBundle_.createBundleFile(trace, args);
+        if (args.id === ACCESS_CONTROL_BUNDLE_ID || args.id === STORE_CHANGES_BUNDLE_ID) {
+          return this.plainBundle_.createBundle(trace, args);
         }
         break;
     }
 
-    return this.encryptedBundle_.createBundleFile(trace, args);
+    return this.encryptedBundle_.createBundle(trace, args);
   };
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
     async (trace: Trace, id: DynamicSyncableId): PR<undefined, 'not-found'> => {
-      if (id === ACCESS_CONTROL_BUNDLE_FILE_ID || id === STORE_CHANGES_BUNDLE_FILE_ID) {
+      if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
         return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported for ${this.path.append(id).toString()}` }));
       }
 
@@ -363,7 +363,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
   );
 
   public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: DynamicSyncableId) => {
-    if (id === ACCESS_CONTROL_BUNDLE_FILE_ID || id === STORE_CHANGES_BUNDLE_FILE_ID) {
+    if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
       return await this.plainBundle_.exists(trace, id);
     }
 
@@ -532,7 +532,7 @@ export abstract class DefaultAccessControlledFolderBase implements MutableAccess
       id: DynamicSyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
-      if (id === ACCESS_CONTROL_BUNDLE_FILE_ID || id === STORE_CHANGES_BUNDLE_FILE_ID) {
+      if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
         return await this.plainBundle_.getMutable(trace, id, expectedType);
       }
 
@@ -661,7 +661,7 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
       new SyncableStoreAccessControlDocument({ snapshot });
 
     // TODO: doc can be modified directly by changing bundle.  this should track that probably
-    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(ACCESS_CONTROL_BUNDLE_FILE_ID), {
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(ACCESS_CONTROL_BUNDLE_ID), {
       newDocument,
       isSnapshotValid: isAccessControlDocumentSnapshotValid,
       isDeltaValidForDocument: isDeltaValidForAccessControlDocument
@@ -685,7 +685,7 @@ const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
     }
 
     // TODO: doc can be modified directly by changing bundle.  this should track that probably
-    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(STORE_CHANGES_BUNDLE_FILE_ID), {
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, path.append(STORE_CHANGES_BUNDLE_ID), {
       newDocument: makeSyncableStoreChangesDocumentFromSnapshot,
       isSnapshotValid: isStoreChangesDocumentSnapshotValid,
       isDeltaValidForDocument: isDeltaValidForStoreChangesDocument

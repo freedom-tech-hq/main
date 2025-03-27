@@ -11,7 +11,7 @@ import type { FileSystemSyncableStoreBackingItem } from '../types/FileSystemSync
 
 type BackingTypeBySyncableItemType<T extends SyncableItemType> =
   | (T extends 'flatFile' ? 'flatFile' : never)
-  | (T extends 'bundleFile' ? 'folder' : never)
+  | (T extends 'bundle' ? 'folder' : never)
   | (T extends 'folder' ? 'folder' : never);
 
 export const traversePath = makeAsyncResultFunc(
@@ -38,7 +38,7 @@ export const traversePath = makeAsyncResultFunc(
         case 'flatFile':
           return makeFailure(
             new NotFoundError(trace, {
-              message: `Expected folder or bundleFile, found: ${cursor.type}`,
+              message: `Expected folder or bundle, found: ${cursor.type}`,
               errorCode: 'wrong-type'
             })
           );

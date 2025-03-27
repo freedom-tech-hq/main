@@ -13,7 +13,7 @@ import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCr
 import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
-import { createBundleFileAtPath } from '../../../utils/create/createBundleFileAtPath.ts';
+import { createBundleAtPath } from '../../../utils/create/createBundleAtPath.ts';
 import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../../utils/generateProvenanceForNewSyncableStore.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
@@ -54,7 +54,7 @@ describe('hashes', () => {
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
 
-    const myBundle = await createBundleFileAtPath(trace, store, innerPath, encId('my-bundle'));
+    const myBundle = await createBundleAtPath(trace, store, innerPath, encId('my-bundle'));
     expectOk(myBundle);
     const myBundlePath = myBundle.value.path;
 
@@ -67,7 +67,7 @@ describe('hashes', () => {
     );
     expectOk(helloWorldTxtFile);
 
-    const nestedBundle = await createBundleFileAtPath(trace, store, myBundlePath, encId('nested-bundle'));
+    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath, encId('nested-bundle'));
     expectOk(nestedBundle);
     const nestedBundlePath = nestedBundle.value.path;
 

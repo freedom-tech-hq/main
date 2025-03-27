@@ -3,7 +3,7 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
 export interface FileAccessorBase {
-  readonly type: 'flatFile' | 'bundleFile';
+  readonly type: 'flatFile' | 'bundle';
 
   readonly path: StaticSyncablePath;
 

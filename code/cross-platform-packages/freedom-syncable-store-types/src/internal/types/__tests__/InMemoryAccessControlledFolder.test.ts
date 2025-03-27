@@ -12,11 +12,11 @@ import type { TestingCryptoService } from '../../../__test_dependency__/makeCryp
 import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import type { HotSwappableCryptoService } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { makeHotSwappableCryptoServiceForTesting } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
-import { ACCESS_CONTROL_BUNDLE_FILE_ID, STORE_CHANGES_BUNDLE_FILE_ID } from '../../../consts/special-file-ids.ts';
+import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../../../consts/special-file-ids.ts';
 import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
-import { createBundleFileAtPath } from '../../../utils/create/createBundleFileAtPath.ts';
+import { createBundleAtPath } from '../../../utils/create/createBundleAtPath.ts';
 import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../../utils/create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../../utils/generateProvenanceForNewSyncableStore.ts';
@@ -163,8 +163,8 @@ describe('InMemoryAccessControlledFolder', () => {
 
     const outerFolderItemIds = await getDynamicIds(trace, outerFolder2.value);
     expectOk(outerFolderItemIds);
-    expectIncludes(outerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_FILE_ID);
-    expectIncludes(outerFolderItemIds.value, STORE_CHANGES_BUNDLE_FILE_ID);
+    expectIncludes(outerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_ID);
+    expectIncludes(outerFolderItemIds.value, STORE_CHANGES_BUNDLE_ID);
     expectIncludes(outerFolderItemIds.value, encId('inner'));
 
     const innerFolder2 = await getFolderAtPath(trace, store, innerPath);
@@ -172,8 +172,8 @@ describe('InMemoryAccessControlledFolder', () => {
 
     const innerFolderItemIds = await getDynamicIds(trace, innerFolder2.value);
     expectOk(innerFolderItemIds);
-    expectIncludes(innerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_FILE_ID);
-    expectIncludes(innerFolderItemIds.value, STORE_CHANGES_BUNDLE_FILE_ID);
+    expectIncludes(innerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_ID);
+    expectIncludes(innerFolderItemIds.value, STORE_CHANGES_BUNDLE_ID);
     expectIncludes(innerFolderItemIds.value, encId('hello-world.txt'));
   });
 
@@ -186,19 +186,19 @@ describe('InMemoryAccessControlledFolder', () => {
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
 
-    const bundle = await createBundleFileAtPath(trace, store, innerPath, encId('my-bundle'));
+    const bundle = await createBundleAtPath(trace, store, innerPath, encId('my-bundle'));
     expectOk(bundle);
     const myBundlePath = bundle.value.path;
 
     expectOk(await createBinaryFileAtPath(trace, store, myBundlePath, encId('hello-world.txt'), Buffer.from('hello world', 'utf-8')));
 
-    expectOk(await createBundleFileAtPath(trace, store, myBundlePath, encId('nested-bundle')));
+    expectOk(await createBundleAtPath(trace, store, myBundlePath, encId('nested-bundle')));
 
     const fileIds = await getDynamicIds(trace, bundle.value, { type: syncableItemTypes.exclude('folder') });
     expectOk(fileIds);
     t.assert.deepStrictEqual(fileIds.value, [encId('hello-world.txt'), encId('nested-bundle')]);
 
-    const bundleIds = await getDynamicIds(trace, bundle.value, { type: 'bundleFile' });
+    const bundleIds = await getDynamicIds(trace, bundle.value, { type: 'bundle' });
     expectOk(bundleIds);
     t.assert.deepStrictEqual(bundleIds.value, [encId('nested-bundle')]);
   });

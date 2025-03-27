@@ -6,12 +6,12 @@ import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { getMutableSyncableAtPath } from './getMutableSyncableAtPath.ts';
 
-export const getMutableBundleFileAtPath = makeAsyncResultFunc(
+export const getMutableBundleAtPath = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     store: MutableSyncableStore,
     path: SyncablePath
   ): PR<MutableFileStore, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-    await getMutableSyncableAtPath(trace, store, path, 'bundleFile')
+    await getMutableSyncableAtPath(trace, store, path, 'bundle')
 );

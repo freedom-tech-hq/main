@@ -4,14 +4,14 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
-import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
+import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import type { DefaultBundleBase } from './DefaultBundleBase.ts';
 import { DefaultMutableFileAccessorBase } from './DefaultMutableFileAccessorBase.ts';
 
-export class DefaultMutableBundleFileAccessor extends DefaultMutableFileAccessorBase implements MutableBundleFileAccessor {
-  public readonly type = 'bundleFile';
+export class DefaultMutableBundleAccessor extends DefaultMutableFileAccessorBase implements MutableBundleAccessor {
+  public readonly type = 'bundle';
 
   private readonly data_: DefaultBundleBase;
 
@@ -21,7 +21,7 @@ export class DefaultMutableBundleFileAccessor extends DefaultMutableFileAccessor
     this.data_ = data;
 
     this.createBinaryFile = data.createBinaryFile;
-    this.createBundleFile = data.createBundleFile;
+    this.createBundle = data.createBundle;
     this.delete = data.delete;
     this.dynamicToStaticId = data.dynamicToStaticId;
     this.exists = data.exists;
@@ -36,24 +36,24 @@ export class DefaultMutableBundleFileAccessor extends DefaultMutableFileAccessor
     this.staticToDynamicId = data.staticToDynamicId;
   }
 
-  // MutableBundleFileAccessor Methods Pointing to this.data_
+  // MutableBundleAccessor Methods Pointing to this.data_
 
-  public readonly createBinaryFile: MutableBundleFileAccessor['createBinaryFile'];
-  public readonly createBundleFile: MutableBundleFileAccessor['createBundleFile'];
-  public readonly dynamicToStaticId: MutableBundleFileAccessor['dynamicToStaticId'];
-  public readonly delete: MutableBundleFileAccessor['delete'];
-  public readonly exists: MutableBundleFileAccessor['exists'];
-  public readonly generateNewSyncableItemId: MutableBundleFileAccessor['generateNewSyncableItemId'];
-  public readonly get: MutableBundleFileAccessor['get'];
-  public readonly getHash: MutableBundleFileAccessor['getHash'];
-  public readonly getHashesById: MutableBundleFileAccessor['getHashesById'];
-  public readonly getIds: MutableBundleFileAccessor['getIds'];
-  public readonly getMutable: MutableBundleFileAccessor['getMutable'];
-  public readonly getProvenance: MutableBundleFileAccessor['getProvenance'];
-  public readonly ls: MutableBundleFileAccessor['ls'];
-  public readonly staticToDynamicId: MutableBundleFileAccessor['staticToDynamicId'];
+  public readonly createBinaryFile: MutableBundleAccessor['createBinaryFile'];
+  public readonly createBundle: MutableBundleAccessor['createBundle'];
+  public readonly dynamicToStaticId: MutableBundleAccessor['dynamicToStaticId'];
+  public readonly delete: MutableBundleAccessor['delete'];
+  public readonly exists: MutableBundleAccessor['exists'];
+  public readonly generateNewSyncableItemId: MutableBundleAccessor['generateNewSyncableItemId'];
+  public readonly get: MutableBundleAccessor['get'];
+  public readonly getHash: MutableBundleAccessor['getHash'];
+  public readonly getHashesById: MutableBundleAccessor['getHashesById'];
+  public readonly getIds: MutableBundleAccessor['getIds'];
+  public readonly getMutable: MutableBundleAccessor['getMutable'];
+  public readonly getProvenance: MutableBundleAccessor['getProvenance'];
+  public readonly ls: MutableBundleAccessor['ls'];
+  public readonly staticToDynamicId: MutableBundleAccessor['staticToDynamicId'];
 
-  // MutableBundleFileAccessor Methods
+  // MutableBundleAccessor Methods
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],

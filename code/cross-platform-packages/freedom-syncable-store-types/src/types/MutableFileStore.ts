@@ -1,8 +1,8 @@
 import type { PRFunc } from 'freedom-async';
-import type { DynamicSyncableId, SyncableBundleFileMetadata, SyncableFlatFileMetadata, SyncableId } from 'freedom-sync-types';
+import type { DynamicSyncableId, SyncableBundleMetadata, SyncableFlatFileMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FileStore } from './FileStore.ts';
-import type { MutableBundleFileAccessor } from './MutableBundleFileAccessor.ts';
+import type { MutableBundleAccessor } from './MutableBundleAccessor.ts';
 import type { MutableFlatFileAccessor } from './MutableFlatFileAccessor.ts';
 import type { MutableStoreBase } from './MutableStoreBase.ts';
 
@@ -35,8 +35,8 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    *
    * Returns a 'conflict' failure if the object already exists.
    */
-  readonly createBundleFile: PRFunc<
-    MutableBundleFileAccessor,
+  readonly createBundle: PRFunc<
+    MutableBundleAccessor,
     'conflict' | 'deleted',
     [
       | {
@@ -46,7 +46,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
       | {
           mode: 'via-sync';
           id: SyncableId;
-          metadata: SyncableBundleFileMetadata;
+          metadata: SyncableBundleMetadata;
         }
     ]
   >;

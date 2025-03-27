@@ -5,7 +5,7 @@ import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
-import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
+import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
 import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
@@ -47,7 +47,7 @@ export class DefaultEncryptedBundle extends DefaultBundleBase {
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 
-  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleFileAccessor {
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleAccessor {
     return new DefaultEncryptedBundle({
       store: this.weakStore_,
       backing: this.backing_,

@@ -1,6 +1,6 @@
 export * from './AccessControlledFolderAccessor.ts';
 export * from './backing/exports.ts';
-export * from './BundleFileAccessor.ts';
+export * from './BundleAccessor.ts';
 export * from './BundleManagement.ts';
 export * from './DefaultSyncableStore.ts';
 export * from './FileAccessor.ts';
@@ -12,7 +12,7 @@ export * from './FolderStore.ts';
 export * from './GenerateNewSyncableItemIdFunc.ts';
 export * from './in-memory-backing/exports.ts';
 export * from './MutableAccessControlledFolderAccessor.ts';
-export * from './MutableBundleFileAccessor.ts';
+export * from './MutableBundleAccessor.ts';
 export * from './MutableFileAccessor.ts';
 export * from './MutableFileAccessorBase.ts';
 export * from './MutableFileStore.ts';

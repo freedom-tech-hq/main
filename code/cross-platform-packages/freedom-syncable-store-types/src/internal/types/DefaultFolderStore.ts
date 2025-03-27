@@ -505,7 +505,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
 
             break;
           }
-          case 'bundleFile':
+          case 'bundle':
           case 'flatFile':
             break; // These won't happen
         }
@@ -679,7 +679,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
       case 'folder':
         return this.makeFolderAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
 
-      case 'bundleFile':
+      case 'bundle':
         throw new Error("Bundles can't be managed by DefaultFolderStore");
 
       case 'flatFile':

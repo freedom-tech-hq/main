@@ -6,7 +6,7 @@ import { StaticSyncablePath, type SyncableItemType, type SyncablePath } from 'fr
 import type { SingleOrArray } from 'yaschema';
 
 import type { AccessControlledFolderAccessor } from '../../types/AccessControlledFolderAccessor.ts';
-import type { BundleFileAccessor } from '../../types/BundleFileAccessor.ts';
+import type { BundleAccessor } from '../../types/BundleAccessor.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import { guardIsExpectedType } from '../guards/guardIsExpectedType.ts';
@@ -55,8 +55,8 @@ export const getSyncableAtPath = makeAsyncResultFunc(
     for (const id of path.ids.slice(1)) {
       switch (cursor.value.type) {
         case 'folder':
-        case 'bundleFile': {
-          const folderLikeAccessor = cursor.value as AccessControlledFolderAccessor | BundleFileAccessor;
+        case 'bundle': {
+          const folderLikeAccessor = cursor.value as AccessControlledFolderAccessor | BundleAccessor;
 
           const nextCursor = await folderLikeAccessor.get(trace, id);
           if (!nextCursor.ok) {
@@ -78,7 +78,7 @@ export const getSyncableAtPath = makeAsyncResultFunc(
         case 'flatFile':
           return makeFailure(
             new NotFoundError(trace, {
-              message: `Expected folder or bundleFile, found ${cursor.value.type}`,
+              message: `Expected folder or bundle, found ${cursor.value.type}`,
               errorCode: 'not-found'
             })
           );

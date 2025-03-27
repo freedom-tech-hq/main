@@ -6,7 +6,7 @@ import type { SyncableProvenance } from './SyncableProvenance.ts';
 
 type SyncPushArgs = { remoteId: RemoteId; path: StaticSyncablePath; provenance: SyncableProvenance } & (
   | {
-      type: 'folder' | 'bundleFile';
+      type: 'folder' | 'bundle';
       data?: undefined;
     }
   | {

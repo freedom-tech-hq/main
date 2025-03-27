@@ -2,7 +2,7 @@ import type { PR, PRFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type {
   StaticSyncablePath,
-  SyncableBundleFileMetadata,
+  SyncableBundleMetadata,
   SyncableFlatFileMetadata,
   SyncableFolderMetadata,
   SyncableId,
@@ -48,7 +48,7 @@ export interface SyncableStoreBacking {
   readonly createFolderWithPath: PRFunc<
     SyncableStoreBackingFolderAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleFileMetadata) & LocalItemMetadata }]
+    [path: StaticSyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleMetadata) & LocalItemMetadata }]
   >;
 
   readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: StaticSyncablePath]>;

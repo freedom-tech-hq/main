@@ -18,7 +18,7 @@ import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trus
 import type {
   DynamicSyncableId,
   StaticSyncablePath,
-  SyncableBundleFileMetadata,
+  SyncableBundleMetadata,
   SyncableFlatFileMetadata,
   SyncableId,
   SyncableItemType,
@@ -33,7 +33,7 @@ import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBack
 import type { BundleManagement } from '../../types/BundleManagement.ts';
 import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
 import type { LocalItemMetadata } from '../../types/LocalItemMetadata.ts';
-import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
+import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
@@ -57,7 +57,7 @@ export interface DefaultBundleBaseConstructorArgs {
 }
 
 export abstract class DefaultBundleBase implements MutableFileStore, BundleManagement {
-  public readonly type = 'bundleFile';
+  public readonly type = 'bundle';
   public readonly path: StaticSyncablePath;
   public readonly supportsDeletion: boolean;
 
@@ -83,7 +83,7 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
   protected abstract computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash>;
   protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
-  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableBundleFileAccessor;
+  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableBundleAccessor;
   protected abstract makeFlatFileAccessor_(args: { path: StaticSyncablePath }): MutableFlatFileAccessor;
   protected abstract isEncrypted_(): boolean;
 
@@ -140,12 +140,12 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
     }
   );
 
-  public readonly createBundleFile: MutableFileStore['createBundleFile'] = makeAsyncResultFunc(
-    [import.meta.filename, 'createBundleFile'],
-    async (trace, args): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
+  public readonly createBundle: MutableFileStore['createBundle'] = makeAsyncResultFunc(
+    [import.meta.filename, 'createBundle'],
+    async (trace, args): PR<MutableBundleAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBundleFile_(trace, args.id, args.metadata);
+          return await this.createPreEncodedBundle_(trace, args.id, args.metadata);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -169,8 +169,8 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
             return provenance;
           }
 
-          return await this.createPreEncodedBundleFile_(trace, id.value, {
-            type: 'bundleFile',
+          return await this.createPreEncodedBundle_(trace, id.value, {
+            type: 'bundle',
             provenance: provenance.value,
             encrypted: this.isEncrypted_()
           });
@@ -569,7 +569,7 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
         switch (metadata.value.type) {
           case 'folder':
             break; // This won't happen
-          case 'bundleFile': {
+          case 'bundle': {
             const itemAccessor = this.makeItemAccessor_(getPath, metadata.value.type);
             const fileLs = await itemAccessor.ls(trace);
             if (!fileLs.ok) {
@@ -626,12 +626,12 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
       return generalizeFailureResult(trace, deletedInBacking, ['not-found', 'wrong-type']);
     }
 
-    const subBundleIds = await this.backing_.getIdsInPath(trace, this.path, { type: 'bundleFile' });
+    const subBundleIds = await this.backing_.getIdsInPath(trace, this.path, { type: 'bundle' });
     if (!subBundleIds.ok) {
       return generalizeFailureResult(trace, subBundleIds, ['not-found', 'wrong-type']);
     }
     const recursivelySwept = await allResultsMapped(trace, subBundleIds.value, {}, async (trace, bundleId) => {
-      const itemAccessor = this.makeMutableItemAccessor_(this.path.append(bundleId), 'bundleFile');
+      const itemAccessor = this.makeMutableItemAccessor_(this.path.append(bundleId), 'bundle');
       return await itemAccessor.sweep(trace);
     });
     /* node:coverage disable */
@@ -705,13 +705,13 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
     }
   );
 
-  public readonly createPreEncodedBundleFile_ = makeAsyncResultFunc(
-    [import.meta.filename, 'createPreEncodedBundleFile_'],
+  public readonly createPreEncodedBundle_ = makeAsyncResultFunc(
+    [import.meta.filename, 'createPreEncodedBundle_'],
     async (
       trace,
       id: SyncableId,
-      metadata: SyncableBundleFileMetadata & LocalItemMetadata
-    ): PR<MutableBundleFileAccessor, 'conflict' | 'deleted'> => {
+      metadata: SyncableBundleMetadata & LocalItemMetadata
+    ): PR<MutableBundleAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
@@ -741,12 +741,12 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
       // Never using a hash from metadata
       metadata.hash = hash.value;
 
-      const createdBundleFile = await this.backing_.createFolderWithPath(trace, newPath, { metadata });
-      if (!createdBundleFile.ok) {
-        return generalizeFailureResult(trace, createdBundleFile, ['not-found', 'wrong-type']);
+      const createdBundle = await this.backing_.createFolderWithPath(trace, newPath, { metadata });
+      if (!createdBundle.ok) {
+        return generalizeFailureResult(trace, createdBundle, ['not-found', 'wrong-type']);
       }
 
-      const itemAccessor = this.makeMutableItemAccessor_(newPath, 'bundleFile');
+      const itemAccessor = this.makeMutableItemAccessor_(newPath, 'bundle');
 
       const marked = await itemAccessor.markNeedsRecomputeHash(trace);
       /* node:coverage disable */
@@ -757,7 +757,7 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
 
       DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for bundle ${newPath.toString()}`));
       this.syncTracker_.notify('needsSync', {
-        type: 'bundleFile',
+        type: 'bundle',
         path: newPath,
         hash: hash.value
       });
@@ -825,7 +825,7 @@ export abstract class DefaultBundleBase implements MutableFileStore, BundleManag
       case 'folder':
         throw new Error("Folders can't be managed by DefaultBundleBase");
 
-      case 'bundleFile':
+      case 'bundle':
         return this.makeBundleAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
 
       case 'flatFile':

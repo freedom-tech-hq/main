@@ -5,7 +5,7 @@ import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
-import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
+import type { MutableBundleAccessor } from '../../types/MutableBundleAccessor.ts';
 import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
 import type { DefaultBundleBaseConstructorArgs } from './DefaultBundleBase.ts';
 import { DefaultBundleBase } from './DefaultBundleBase.ts';
@@ -30,7 +30,7 @@ export class DefaultPlainBundle extends DefaultBundleBase {
     return makeSuccess(rawData);
   }
 
-  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleFileAccessor {
+  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleAccessor {
     return new DefaultPlainBundle({
       store: this.weakStore_,
       backing: this.backing_,
