@@ -74,7 +74,7 @@ export class InMemoryFolder implements MutableFolderStore, FolderManagement {
     async (trace, args): PR<MutableAccessControlledFolderAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedFolder_(trace, args.id, args.provenance);
+          return await this.createPreEncodedFolder_(trace, args.id, args.metadata.provenance);
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();

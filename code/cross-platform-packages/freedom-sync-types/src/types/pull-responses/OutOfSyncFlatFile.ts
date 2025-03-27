@@ -1,8 +1,8 @@
-import type { SyncableProvenance } from '../SyncableProvenance.ts';
+import type { SyncableFlatFileMetadata } from '../metadata/SyncableFlatFileMetadata.ts';
 
 export interface OutOfSyncFlatFile {
   type: 'flatFile';
   outOfSync: true;
   data?: Uint8Array;
-  provenance: SyncableProvenance;
+  metadata: SyncableFlatFileMetadata;
 }
