@@ -10,8 +10,7 @@ import type { FlatFileAccessor } from '../../types/FlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 
-// TODO: rename to DefaultMutableFlatFileAccessor in separate PR
-export class InMemoryMutableFlatFileAccessor implements FlatFileAccessor {
+export class DefaultMutableFlatFileAccessor implements FlatFileAccessor {
   public readonly type = 'flatFile';
 
   public readonly path: StaticSyncablePath;

@@ -9,7 +9,7 @@ import { InMemoryLockStore } from 'freedom-locking-types';
 import type { InMemoryObjectStoreConstructorArgs, MutableObjectStore } from 'freedom-object-store-types';
 import { InMemoryObjectStore } from 'freedom-object-store-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
-import { generateProvenanceForNewSyncableStore, InMemorySyncableStore, InMemorySyncableStoreBacking } from 'freedom-syncable-store-types';
+import { DefaultSyncableStore, generateProvenanceForNewSyncableStore, InMemorySyncableStoreBacking } from 'freedom-syncable-store-types';
 
 import type { DataSources } from './DataSources.ts';
 import type { GetOrCreateIndexStoreArgs } from './GetOrCreateIndexStoreArgs.ts';
@@ -18,7 +18,7 @@ import type { GetOrCreateObjectStoreArgs } from './GetOrCreateObjectStoreArgs.ts
 import type { GetOrCreateSyncableStoreArgs } from './GetOrCreateSyncableStoreArgs.ts';
 
 export class InMemoryDataSources implements DataSources {
-  private readonly syncableStores_: Partial<Record<string, InMemorySyncableStore>> = {};
+  private readonly syncableStores_: Partial<Record<string, DefaultSyncableStore>> = {};
   private readonly lockStores_: Partial<Record<`${string}:${number}`, InMemoryLockStore<any>>> = {};
   private readonly indexStores_: Partial<Record<`${string}:${number}`, InMemoryIndexStore<any, any>>> = {};
   private readonly objectStores_: Partial<Record<`${string}:${number}`, InMemoryObjectStore<any, any>>> = {};
@@ -73,7 +73,7 @@ export class InMemoryDataSources implements DataSources {
 
     const storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
 
-    const newStore = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    const newStore = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
 
     this.syncableStores_[cacheKey] = newStore;
     return makeSuccess(newStore);

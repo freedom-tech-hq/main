@@ -13,14 +13,14 @@ import { encId, storageRootIdInfo } from 'freedom-sync-types';
 import {
   createFolderAtPath,
   createStringFileAtPath,
+  DefaultSyncableStore,
   deleteSyncableItemAtPath,
   generateProvenanceForNewSyncableStore,
   getDynamicIds,
   getFolderAtPath,
   getMutableFolderAtPath,
   getStringFromFileAtPath,
-  initializeRoot,
-  InMemorySyncableStore
+  initializeRoot
 } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectOk } from 'freedom-testing-tools';
 
@@ -32,7 +32,7 @@ describe('FileSystemSyncableStore', () => {
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: CryptoService;
   let storeBacking!: FileSystemSyncableStoreBacking;
-  let store!: InMemorySyncableStore;
+  let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
 
@@ -53,7 +53,7 @@ describe('FileSystemSyncableStore', () => {
 
     storeBacking = new FileSystemSyncableStoreBacking(rootPath);
     expectOk(await storeBacking.initialize(trace, { provenance: provenance.value }));
-    store = new InMemorySyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    store = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
 
     expectOk(await initializeRoot(trace, store));
   });

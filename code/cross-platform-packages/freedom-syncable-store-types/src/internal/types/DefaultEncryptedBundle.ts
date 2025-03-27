@@ -9,11 +9,11 @@ import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAcc
 import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
+import { DefaultBundleBase } from './DefaultBundleBase.ts';
+import { DefaultMutableFlatFileAccessor } from './DefaultMutableFlatFileAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-import { InMemoryBundleBase } from './InMemoryBundleBase.ts';
-import { InMemoryMutableFlatFileAccessor } from './InMemoryMutableFlatFileAccessor.ts';
 
-export interface InMemoryEncryptedBundleConstructorArgs {
+export interface DefaultEncryptedBundleConstructorArgs {
   store: WeakRef<MutableSyncableStore>;
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
@@ -21,9 +21,8 @@ export interface InMemoryEncryptedBundleConstructorArgs {
   path: StaticSyncablePath;
 }
 
-// TODO: rename to DefaultEncryptedBundle in separate PR
-export class InMemoryEncryptedBundle extends InMemoryBundleBase {
-  constructor({ store, backing, syncTracker, folderOperationsHandler, path }: InMemoryEncryptedBundleConstructorArgs) {
+export class DefaultEncryptedBundle extends DefaultBundleBase {
+  constructor({ store, backing, syncTracker, folderOperationsHandler, path }: DefaultEncryptedBundleConstructorArgs) {
     super({
       store,
       backing,
@@ -34,7 +33,7 @@ export class InMemoryEncryptedBundle extends InMemoryBundleBase {
     });
   }
 
-  // InMemoryBundleBase Abstract Method Implementations
+  // DefaultBundleBase Abstract Method Implementations
 
   protected override computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash> {
     return generateSha256HashFromBuffer(trace, encodedData);
@@ -49,7 +48,7 @@ export class InMemoryEncryptedBundle extends InMemoryBundleBase {
   }
 
   protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleFileAccessor {
-    return new InMemoryEncryptedBundle({
+    return new DefaultEncryptedBundle({
       store: this.weakStore_,
       backing: this.backing_,
       syncTracker: this.syncTracker_,
@@ -59,7 +58,7 @@ export class InMemoryEncryptedBundle extends InMemoryBundleBase {
   }
 
   protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableFlatFileAccessor {
-    return new InMemoryMutableFlatFileAccessor({
+    return new DefaultMutableFlatFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,
       path,

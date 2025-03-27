@@ -7,15 +7,14 @@ import type { StaticSyncablePath } from 'freedom-sync-types';
 
 import type { MutableBundleFileAccessor } from '../../types/MutableBundleFileAccessor.ts';
 import type { MutableFlatFileAccessor } from '../../types/MutableFlatFileAccessor.ts';
-import type { InMemoryBundleBaseConstructorArgs } from './InMemoryBundleBase.ts';
-import { InMemoryBundleBase } from './InMemoryBundleBase.ts';
-import { InMemoryMutableFlatFileAccessor } from './InMemoryMutableFlatFileAccessor.ts';
+import type { DefaultBundleBaseConstructorArgs } from './DefaultBundleBase.ts';
+import { DefaultBundleBase } from './DefaultBundleBase.ts';
+import { DefaultMutableFlatFileAccessor } from './DefaultMutableFlatFileAccessor.ts';
 
-export type InMemoryPlainBundleConstructorArgs = InMemoryBundleBaseConstructorArgs;
+export type DefaultPlainBundleConstructorArgs = DefaultBundleBaseConstructorArgs;
 
-// TODO: rename to DefaultPlainBundle in separate PR
-export class InMemoryPlainBundle extends InMemoryBundleBase {
-  // InMemoryBundleBase Abstract Method Implementations
+export class DefaultPlainBundle extends DefaultBundleBase {
+  // DefaultBundleBase Abstract Method Implementations
 
   protected override computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash> {
     return generateSha256HashFromBuffer(trace, encodedData);
@@ -32,7 +31,7 @@ export class InMemoryPlainBundle extends InMemoryBundleBase {
   }
 
   protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableBundleFileAccessor {
-    return new InMemoryPlainBundle({
+    return new DefaultPlainBundle({
       store: this.weakStore_,
       backing: this.backing_,
       syncTracker: this.syncTracker_,
@@ -43,7 +42,7 @@ export class InMemoryPlainBundle extends InMemoryBundleBase {
   }
 
   protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableFlatFileAccessor {
-    return new InMemoryMutableFlatFileAccessor({
+    return new DefaultMutableFlatFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,
       path,

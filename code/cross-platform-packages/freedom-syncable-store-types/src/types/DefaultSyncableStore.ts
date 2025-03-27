@@ -6,15 +6,14 @@ import { NotificationManager } from 'freedom-notification-types';
 import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
 import { StaticSyncablePath } from 'freedom-sync-types';
 
-import { InMemoryAccessControlledFolder } from '../internal/types/InMemoryAccessControlledFolder.ts';
-import { InMemoryAccessControlledFolderBase } from '../internal/types/InMemoryAccessControlledFolderBase.ts';
+import { DefaultAccessControlledFolder } from '../internal/types/DefaultAccessControlledFolder.ts';
+import { DefaultAccessControlledFolderBase } from '../internal/types/DefaultAccessControlledFolderBase.ts';
 import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
-// TODO: rename to DefaultSyncableStore in a separate PR
-export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase implements MutableSyncableStore {
+export class DefaultSyncableStore extends DefaultAccessControlledFolderBase implements MutableSyncableStore {
   public readonly creatorCryptoKeySetId: CryptoKeySetId;
   public readonly cryptoService: CryptoService;
 
@@ -38,7 +37,7 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
 
     this.cryptoService = cryptoService;
 
-    const creatorCryptoKeySetId = extractKeyIdFromSignedValue(makeTrace('new InMemorySyncableStore'), { signedValue: provenance.origin });
+    const creatorCryptoKeySetId = extractKeyIdFromSignedValue(makeTrace(import.meta.filename, 'new'), { signedValue: provenance.origin });
     if (!creatorCryptoKeySetId.ok) {
       throw creatorCryptoKeySetId.value;
     }
@@ -47,7 +46,7 @@ export class InMemorySyncableStore extends InMemoryAccessControlledFolderBase im
     const weakStore = new WeakRef(this);
     this.deferredInit_({
       store: weakStore,
-      makeFolderAccessor: ({ path }) => new InMemoryAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
+      makeFolderAccessor: ({ path }) => new DefaultAccessControlledFolder({ store: weakStore, backing, path, syncTracker })
     });
   }
 }
