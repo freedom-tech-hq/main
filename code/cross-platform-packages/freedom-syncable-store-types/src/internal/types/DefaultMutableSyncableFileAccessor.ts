@@ -6,12 +6,12 @@ import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
-import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
+import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 
-export class DefaultMutableSyncableFlatFileAccessor implements MutableSyncableFlatFileAccessor {
-  public readonly type = 'flatFile';
+export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAccessor {
+  public readonly type = 'file';
 
   public readonly path: StaticSyncablePath;
 
@@ -38,7 +38,7 @@ export class DefaultMutableSyncableFlatFileAccessor implements MutableSyncableFl
     this.decode_ = decode;
   }
 
-  // FlatFileAccessor Methods
+  // FileAccessor Methods
 
   public readonly getHash = makeAsyncResultFunc(
     [import.meta.filename, 'getHash'],
@@ -90,7 +90,7 @@ export class DefaultMutableSyncableFlatFileAccessor implements MutableSyncableFl
   );
 
   public readonly getEncodedBinary = makeAsyncResultFunc([import.meta.filename, 'getEncodedBinary'], async (trace): PR<Uint8Array> => {
-    const found = await this.backing_.getAtPath(trace, this.path, 'flatFile');
+    const found = await this.backing_.getAtPath(trace, this.path, 'file');
     if (!found.ok) {
       return generalizeFailureResult(trace, found, ['not-found', 'wrong-type']);
     }

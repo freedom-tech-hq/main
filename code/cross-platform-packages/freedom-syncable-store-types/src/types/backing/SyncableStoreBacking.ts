@@ -3,7 +3,7 @@ import type { Trace } from 'freedom-contexts';
 import type {
   StaticSyncablePath,
   SyncableBundleMetadata,
-  SyncableFlatFileMetadata,
+  SyncableFileMetadata,
   SyncableFolderMetadata,
   SyncableId,
   SyncableItemMetadata,
@@ -12,7 +12,7 @@ import type {
 import type { SingleOrArray } from 'yaschema';
 
 import type { LocalItemMetadata } from '../LocalItemMetadata.ts';
-import type { SyncableStoreBackingFlatFileAccessor } from './accessors/SyncableStoreBackingFlatFileAccessor.ts';
+import type { SyncableStoreBackingFileAccessor } from './accessors/SyncableStoreBackingFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from './accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { SyncableStoreBackingItemAccessor } from './accessors/SyncableStoreBackingItemAccessor.ts';
 
@@ -40,9 +40,9 @@ export interface SyncableStoreBacking {
   >;
 
   readonly createBinaryFileWithPath: PRFunc<
-    SyncableStoreBackingFlatFileAccessor,
+    SyncableStoreBackingFileAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { data: Uint8Array; metadata: SyncableFlatFileMetadata & LocalItemMetadata }]
+    [path: StaticSyncablePath, { data: Uint8Array; metadata: SyncableFileMetadata & LocalItemMetadata }]
   >;
 
   readonly createFolderWithPath: PRFunc<

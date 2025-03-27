@@ -2,9 +2,9 @@ import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
 
 import type { LocalItemMetadata } from '../../../LocalItemMetadata.ts';
 
-export interface InMemorySyncableStoreBackingFlatFileItem {
-  readonly type: 'flatFile';
+export interface InMemorySyncableStoreBackingFileItem {
+  readonly type: 'file';
   readonly id: SyncableId;
-  readonly metadata: SyncableItemMetadata & { type: 'flatFile' } & LocalItemMetadata;
+  readonly metadata: SyncableItemMetadata & { type: 'file' } & LocalItemMetadata;
   readonly data: Uint8Array;
 }

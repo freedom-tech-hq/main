@@ -12,7 +12,7 @@ export const getSha256HashForItemProvenance = makeAsyncResultFunc(
       case 'folder':
       case 'bundle':
         return await generateSha256HashForEmptyString(trace);
-      case 'flatFile':
+      case 'file':
         return await item.getHash(trace);
     }
   }

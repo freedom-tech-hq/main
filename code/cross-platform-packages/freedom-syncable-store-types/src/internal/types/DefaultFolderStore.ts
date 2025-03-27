@@ -507,7 +507,7 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
             break;
           }
           case 'bundle':
-          case 'flatFile':
+          case 'file':
             break; // These won't happen
         }
 
@@ -683,8 +683,8 @@ export class DefaultFolderStore implements MutableFolderStore, FolderManagement 
       case 'bundle':
         throw new Error("Bundles can't be managed by DefaultFolderStore");
 
-      case 'flatFile':
-        throw new Error("Flat files can't be managed by DefaultFolderStore");
+      case 'file':
+        throw new Error("Files can't be managed by DefaultFolderStore");
     }
   }
 }

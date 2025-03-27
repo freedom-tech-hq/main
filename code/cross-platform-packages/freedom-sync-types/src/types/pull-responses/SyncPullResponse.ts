@@ -1,8 +1,8 @@
 import type { InSyncBundle } from './InSyncBundle.ts';
-import type { InSyncFlatFile } from './InSyncFlatFile.ts';
+import type { InSyncFile } from './InSyncFile.ts';
 import type { InSyncFolder } from './InSyncFolder.ts';
 import type { OutOfSyncBundle } from './OutOfSyncBundle.ts';
-import type { OutOfSyncFlatFile } from './OutOfSyncFlatFile.ts';
+import type { OutOfSyncFile } from './OutOfSyncFile.ts';
 import type { OutOfSyncFolder } from './OutOfSyncFolder.ts';
 
-export type SyncPullResponse = InSyncFolder | OutOfSyncFolder | InSyncFlatFile | OutOfSyncFlatFile | InSyncBundle | OutOfSyncBundle;
+export type SyncPullResponse = InSyncFolder | OutOfSyncFolder | InSyncFile | OutOfSyncFile | InSyncBundle | OutOfSyncBundle;

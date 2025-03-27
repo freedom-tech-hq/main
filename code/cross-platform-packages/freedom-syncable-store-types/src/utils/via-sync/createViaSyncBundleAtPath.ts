@@ -15,7 +15,7 @@ export const createViaSyncBundleAtPath = makeAsyncResultFunc(
     path: StaticSyncablePath,
     metadata: SyncableBundleMetadata
   ): PR<MutableFileStore, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const parent = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('flatFile'));
+    const parent = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('file'));
     if (!parent.ok) {
       return parent;
     }

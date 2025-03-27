@@ -1,14 +1,14 @@
 import { makeSuccess, makeSyncFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableStoreBackingFlatFileAccessor } from 'freedom-syncable-store-types';
+import type { SyncableStoreBackingFileAccessor } from 'freedom-syncable-store-types';
 
-import type { FileSystemSyncableStoreBackingFlatFileItem } from '../types/FileSystemSyncableStoreBackingFlatFileItem.ts';
+import type { FileSystemSyncableStoreBackingFileItem } from '../types/FileSystemSyncableStoreBackingFileItem.ts';
 
-export const makeFlatFileAccessor = makeSyncFunc(
+export const makeFileAccessor = makeSyncFunc(
   [import.meta.filename],
-  (_trace, item: FileSystemSyncableStoreBackingFlatFileItem): SyncableStoreBackingFlatFileAccessor => {
+  (_trace, item: FileSystemSyncableStoreBackingFileItem): SyncableStoreBackingFileAccessor => {
     return {
-      type: 'flatFile',
+      type: 'file',
       id: item.id,
       getBinary: async (trace) => {
         const loaded = await item.data(trace);

@@ -6,11 +6,11 @@ import type { StaticSyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
-import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
+import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableSyncableFlatFileAccessor } from './DefaultMutableSyncableFlatFileAccessor.ts';
+import { DefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export interface DefaultEncryptedFileStoreConstructorArgs {
@@ -57,8 +57,8 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     });
   }
 
-  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFlatFileAccessor {
-    return new DefaultMutableSyncableFlatFileAccessor({
+  protected override makeFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFileAccessor {
+    return new DefaultMutableSyncableFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,
       path,

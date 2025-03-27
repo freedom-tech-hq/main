@@ -4,7 +4,7 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OutOfSyncBundle, OutOfSyncFlatFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import {
   createViaSyncPreEncodedBinaryFileAtPath,
@@ -51,8 +51,8 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
 
           break;
         }
-        case 'flatFile': {
-          const handled = await onFlatFilePulled(trace, { store, syncService, file: pulled.value, path });
+        case 'file': {
+          const handled = await onFilePulled(trace, { store, syncService, file: pulled.value, path });
           if (!handled.ok) {
             return handled;
           }
@@ -155,11 +155,11 @@ const onFolderPulled = makeAsyncResultFunc(
   }
 );
 
-const onFlatFilePulled = makeAsyncResultFunc(
-  [import.meta.filename, 'onFlatFilePulled'],
+const onFilePulled = makeAsyncResultFunc(
+  [import.meta.filename, 'onFilePulled'],
   async (
     trace: Trace,
-    { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFlatFile; path: StaticSyncablePath }
+    { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFile; path: StaticSyncablePath }
   ): PR<undefined> => {
     if (file.data === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));

@@ -46,7 +46,7 @@ export const getFolderPath = makeAsyncResultFunc(
           break;
         }
         case 'bundle':
-        case 'flatFile':
+        case 'file':
           return makeSuccess(lastOkPath);
       }
     }

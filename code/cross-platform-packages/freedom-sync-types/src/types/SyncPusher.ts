@@ -10,7 +10,7 @@ type SyncPushArgs = { remoteId: RemoteId; path: StaticSyncablePath; provenance: 
       data?: undefined;
     }
   | {
-      type: 'flatFile';
+      type: 'file';
       data: Uint8Array;
     }
 );

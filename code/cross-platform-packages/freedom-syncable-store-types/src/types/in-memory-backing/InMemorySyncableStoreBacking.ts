@@ -5,7 +5,7 @@ import type { Trace } from 'freedom-contexts';
 import {
   type StaticSyncablePath,
   type SyncableBundleMetadata,
-  type SyncableFlatFileMetadata,
+  type SyncableFileMetadata,
   type SyncableFolderMetadata,
   type SyncableId,
   type SyncableItemMetadata,
@@ -15,15 +15,15 @@ import {
 import type { SingleOrArray } from 'yaschema';
 
 import { isExpectedType } from '../../utils/validation/isExpectedType.ts';
-import type { SyncableStoreBackingFlatFileAccessor } from '../backing/accessors/SyncableStoreBackingFlatFileAccessor.ts';
+import type { SyncableStoreBackingFileAccessor } from '../backing/accessors/SyncableStoreBackingFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from '../backing/accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { SyncableStoreBackingItemAccessor } from '../backing/accessors/SyncableStoreBackingItemAccessor.ts';
 import type { SyncableStoreBacking } from '../backing/SyncableStoreBacking.ts';
 import type { LocalItemMetadata } from '../LocalItemMetadata.ts';
 import { ROOT_FOLDER_ID } from './internal/consts/special-ids.ts';
-import type { InMemorySyncableStoreBackingFlatFileItem } from './internal/types/InMemorySyncableStoreBackingFlatFileItem.ts';
+import type { InMemorySyncableStoreBackingFileItem } from './internal/types/InMemorySyncableStoreBackingFileItem.ts';
 import type { InMemorySyncableStoreBackingFolderItem } from './internal/types/InMemorySyncableStoreBackingFolderItem.ts';
-import { makeFlatFileAccessor } from './internal/utils/makeFlatFileAccessor.ts';
+import { makeFileAccessor } from './internal/utils/makeFileAccessor.ts';
 import { makeFolderAccessor } from './internal/utils/makeFolderAccessor.ts';
 import { makeItemAccessor } from './internal/utils/makeItemAccessor.ts';
 import { traversePath } from './internal/utils/traversePath.ts';
@@ -80,7 +80,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       options?: { type?: SingleOrArray<SyncableItemType> }
     ): PR<SyncableId[], 'not-found' | 'wrong-type'> => {
-      const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('flatFile'));
+      const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
       if (!found.ok) {
         return found;
       }
@@ -127,7 +127,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       path: StaticSyncablePath,
       ids?: Set<SyncableId>
     ): PR<Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>, 'not-found' | 'wrong-type'> => {
-      const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('flatFile'));
+      const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
       if (!found.ok) {
         return found;
       }
@@ -156,14 +156,14 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: StaticSyncablePath,
-      { data, metadata }: { data: Uint8Array; metadata: SyncableFlatFileMetadata & LocalItemMetadata }
-    ): PR<SyncableStoreBackingFlatFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
+      { data, metadata }: { data: Uint8Array; metadata: SyncableFileMetadata & LocalItemMetadata }
+    ): PR<SyncableStoreBackingFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('flatFile'));
+      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('file'));
       if (!foundParent.ok) {
         return foundParent;
       }
@@ -172,15 +172,15 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: `${path.toString()} already exists`, errorCode: 'conflict' }));
       }
 
-      const newItem: InMemorySyncableStoreBackingFlatFileItem = {
-        type: 'flatFile',
+      const newItem: InMemorySyncableStoreBackingFileItem = {
+        type: 'file',
         id: path.lastId!,
         metadata,
         data
       };
       foundParent.value.contents[path.lastId!] = newItem;
 
-      return makeSuccess(makeFlatFileAccessor(trace, newItem));
+      return makeSuccess(makeFileAccessor(trace, newItem));
     }
   );
 
@@ -196,7 +196,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('flatFile'));
+      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('file'));
       if (!foundParent.ok) {
         return foundParent;
       }
@@ -225,7 +225,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('flatFile'));
+      const foundParent = traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('file'));
       if (!foundParent.ok) {
         return foundParent;
       }

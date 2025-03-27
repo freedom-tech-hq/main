@@ -75,7 +75,7 @@ export const getSyncableAtPath = makeAsyncResultFunc(
 
           break;
         }
-        case 'flatFile':
+        case 'file':
           return makeFailure(
             new NotFoundError(trace, {
               message: `Expected folder or bundle, found ${cursor.value.type}`,

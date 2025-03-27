@@ -6,10 +6,10 @@ import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { StaticSyncablePath } from 'freedom-sync-types';
 
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
-import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
+import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
 import type { DefaultFileStoreBaseConstructorArgs } from './DefaultFileStoreBase.ts';
 import { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableSyncableFlatFileAccessor } from './DefaultMutableSyncableFlatFileAccessor.ts';
+import { DefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
 
 export type DefaultPlainFileStoreConstructorArgs = DefaultFileStoreBaseConstructorArgs;
 
@@ -41,8 +41,8 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
     });
   }
 
-  protected override makeFlatFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFlatFileAccessor {
-    return new DefaultMutableSyncableFlatFileAccessor({
+  protected override makeFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFileAccessor {
+    return new DefaultMutableSyncableFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,
       path,

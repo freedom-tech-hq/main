@@ -9,7 +9,7 @@ import { getMutableParentSyncable } from './get/getMutableParentSyncable.ts';
 export const deleteSyncableItemAtPath = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: MutableSyncableStore, path: SyncablePath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const parentFileStore = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('flatFile'));
+    const parentFileStore = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('file'));
     if (!parentFileStore.ok) {
       if (parentFileStore.value.errorCode === 'deleted') {
         // Parent already deleted

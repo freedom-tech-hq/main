@@ -79,7 +79,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const snapshotIds = await snapshots.value.getIds(trace, { type: 'flatFile' });
+    const snapshotIds = await snapshots.value.getIds(trace, { type: 'file' });
     /* node:coverage disable */
     if (!snapshotIds.ok) {
       return snapshotIds;
@@ -148,7 +148,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       /* node:coverage enable */
       const deltasPath = deltas.value.path;
 
-      const deltaIds = await deltas.value.getIds(trace, { type: 'flatFile' });
+      const deltaIds = await deltas.value.getIds(trace, { type: 'file' });
       /* node:coverage disable */
       if (!deltaIds.ok) {
         return deltaIds;

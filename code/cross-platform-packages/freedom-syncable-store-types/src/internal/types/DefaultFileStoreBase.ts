@@ -19,7 +19,7 @@ import type {
   DynamicSyncableId,
   StaticSyncablePath,
   SyncableBundleMetadata,
-  SyncableFlatFileMetadata,
+  SyncableFileMetadata,
   SyncableId,
   SyncableItemType,
   SyncableProvenance
@@ -35,7 +35,7 @@ import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSynca
 import type { LocalItemMetadata } from '../../types/LocalItemMetadata.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
-import type { MutableSyncableFlatFileAccessor } from '../../types/MutableSyncableFlatFileAccessor.ts';
+import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
@@ -84,14 +84,14 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
   protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableSyncableBundleAccessor;
-  protected abstract makeFlatFileAccessor_(args: { path: StaticSyncablePath }): MutableSyncableFlatFileAccessor;
+  protected abstract makeFileAccessor_(args: { path: StaticSyncablePath }): MutableSyncableFileAccessor;
   protected abstract isEncrypted_(): boolean;
 
   // MutableFileStore Methods
 
   public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBinaryFile'],
-    async (trace: Trace, args): PR<MutableSyncableFlatFileAccessor, 'conflict' | 'deleted'> => {
+    async (trace: Trace, args): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
@@ -130,9 +130,9 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
           }
 
           return await this.createPreEncodedBinaryFile_(trace, id.value, encodedData.value, {
-            type: 'flatFile',
+            type: 'file',
             provenance: provenance.value,
-            // Flat file encryption always matches the parent bundle or folder
+            // File encryption always matches the parent bundle or folder
             encrypted: this.isEncrypted_()
           });
         }
@@ -580,7 +580,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
             break;
           }
-          case 'flatFile':
+          case 'file':
             break; // Nothing to do
         }
 
@@ -651,8 +651,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace: Trace,
       id: SyncableId,
       encodedData: Uint8Array,
-      metadata: SyncableFlatFileMetadata & LocalItemMetadata
-    ): PR<MutableSyncableFlatFileAccessor, 'conflict' | 'deleted'> => {
+      metadata: SyncableFileMetadata & LocalItemMetadata
+    ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
@@ -677,15 +677,15 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       // Never using a hash from metadata
       metadata.hash = hash.value;
 
-      const createdFlatFile = await this.backing_.createBinaryFileWithPath(trace, newPath, {
+      const createdFile = await this.backing_.createBinaryFileWithPath(trace, newPath, {
         data: encodedData,
         metadata
       });
-      if (!createdFlatFile.ok) {
-        return generalizeFailureResult(trace, createdFlatFile, ['not-found', 'wrong-type']);
+      if (!createdFile.ok) {
+        return generalizeFailureResult(trace, createdFile, ['not-found', 'wrong-type']);
       }
 
-      const itemAccessor = this.makeItemAccessor_(newPath, 'flatFile');
+      const itemAccessor = this.makeItemAccessor_(newPath, 'file');
 
       const marked = await itemAccessor.markNeedsRecomputeHash(trace);
       /* node:coverage disable */
@@ -694,9 +694,9 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for flat file ${newPath.toString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for file ${newPath.toString()}`));
       this.syncTracker_.notify('needsSync', {
-        type: 'flatFile',
+        type: 'file',
         path: newPath,
         hash: hash.value
       });
@@ -828,8 +828,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       case 'bundle':
         return this.makeBundleAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
 
-      case 'flatFile':
-        return this.makeFlatFileAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
+      case 'file':
+        return this.makeFileAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
     }
   }
 }

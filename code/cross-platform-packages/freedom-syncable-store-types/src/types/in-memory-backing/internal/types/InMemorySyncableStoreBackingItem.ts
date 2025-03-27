@@ -1,4 +1,4 @@
-import type { InMemorySyncableStoreBackingFlatFileItem } from './InMemorySyncableStoreBackingFlatFileItem.ts';
+import type { InMemorySyncableStoreBackingFileItem } from './InMemorySyncableStoreBackingFileItem.ts';
 import type { InMemorySyncableStoreBackingFolderItem } from './InMemorySyncableStoreBackingFolderItem.ts';
 
-export type InMemorySyncableStoreBackingItem = InMemorySyncableStoreBackingFolderItem | InMemorySyncableStoreBackingFlatFileItem;
+export type InMemorySyncableStoreBackingItem = InMemorySyncableStoreBackingFolderItem | InMemorySyncableStoreBackingFileItem;
