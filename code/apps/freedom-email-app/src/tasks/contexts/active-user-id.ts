@@ -1,7 +1,7 @@
 import type { Trace } from 'freedom-contexts';
 import { createTraceContext, useTraceContext } from 'freedom-contexts';
 
-import type { EmailUserId } from '../../types/EmailUserId.js';
+import type { EmailUserId } from '../../types/EmailUserId.ts';
 
 const ActiveUserIdContext = createTraceContext<{ userId?: EmailUserId }>(() => ({}));
 

@@ -4,15 +4,15 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { getBundleAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
-import type { MailCollection } from '../../../modules/mail-types/MailCollection.js';
-import type { MailCollectionGroup } from '../../../modules/mail-types/MailCollectionGroup.js';
-import type { MailCollectionGroupId } from '../../../modules/mail-types/MailCollectionGroupId.js';
-import { mailCollectionGroupIdInfo } from '../../../modules/mail-types/MailCollectionGroupId.js';
-import type { MailCollectionId } from '../../../modules/mail-types/MailCollectionId.js';
-import { mailCollectionIdInfo } from '../../../modules/mail-types/MailCollectionId.js';
-import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID } from '../../consts/user-syncable-paths.js';
-import { useActiveUserId } from '../../contexts/active-user-id.js';
-import { getUserFs } from '../internal/storage/getUserFs.js';
+import type { MailCollection } from '../../../modules/mail-types/MailCollection.ts';
+import type { MailCollectionGroup } from '../../../modules/mail-types/MailCollectionGroup.ts';
+import type { MailCollectionGroupId } from '../../../modules/mail-types/MailCollectionGroupId.ts';
+import { mailCollectionGroupIdInfo } from '../../../modules/mail-types/MailCollectionGroupId.ts';
+import type { MailCollectionId } from '../../../modules/mail-types/MailCollectionId.ts';
+import { mailCollectionIdInfo } from '../../../modules/mail-types/MailCollectionId.ts';
+import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID } from '../../consts/user-syncable-paths.ts';
+import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { getUserFs } from '../internal/storage/getUserFs.ts';
 
 export interface GetMailCollection_GroupsAddedPacket {
   readonly type: 'groups-added';

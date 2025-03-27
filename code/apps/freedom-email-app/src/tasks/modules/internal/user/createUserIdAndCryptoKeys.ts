@@ -4,9 +4,9 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 
-import type { EmailUserId } from '../../../../types/EmailUserId.js';
-import { getCryptoKeysDb } from '../storage/getCryptoKeysDb.js';
-import { generateSignedUserId } from './generateSignedUserId.js';
+import type { EmailUserId } from '../../../../types/EmailUserId.ts';
+import { getCryptoKeysDb } from '../storage/getCryptoKeysDb.ts';
+import { generateSignedUserId } from './generateSignedUserId.ts';
 
 export const createUserIdAndCryptoKeys = makeAsyncResultFunc(
   [import.meta.filename],

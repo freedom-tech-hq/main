@@ -1,12 +1,12 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 
-import type { EmailUserId } from '../../../types/EmailUserId.js';
-import { useUserSyncableRemotes } from '../../contexts/user-syncable-remotes.js';
-import { useMockRemotes } from '../../mock-remote/mock-remotes-context.js';
-import { startMockRemotes } from '../../mock-remote/startMockRemotes.js';
-import { makeSyncServiceForUserSyncables } from '../internal/storage/makeSyncServiceForUserSyncables.js';
-import { getRequiredCryptoKeysForUser } from '../internal/user/getRequiredCryptoKeysForUser.js';
+import type { EmailUserId } from '../../../types/EmailUserId.ts';
+import { useUserSyncableRemotes } from '../../contexts/user-syncable-remotes.ts';
+import { useMockRemotes } from '../../mock-remote/mock-remotes-context.ts';
+import { startMockRemotes } from '../../mock-remote/startMockRemotes.ts';
+import { makeSyncServiceForUserSyncables } from '../internal/storage/makeSyncServiceForUserSyncables.ts';
+import { getRequiredCryptoKeysForUser } from '../internal/user/getRequiredCryptoKeysForUser.ts';
 
 export const startSyncServiceForUser = makeAsyncResultFunc(
   [import.meta.filename],

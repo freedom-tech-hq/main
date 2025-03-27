@@ -5,17 +5,17 @@ import { makeUuid } from 'freedom-contexts';
 import { encId } from 'freedom-sync-types';
 import { createJsonFileAtPath, getMutableConflictFreeDocumentFromBundleAtPath } from 'freedom-syncable-store-types';
 
-import { mailIdInfo } from '../../../../modules/mail-types/MailId.js';
-import type { EmailUserId } from '../../../../types/EmailUserId.js';
+import { mailIdInfo } from '../../../../modules/mail-types/MailId.ts';
+import type { EmailUserId } from '../../../../types/EmailUserId.ts';
 import {
   MAIL_COLLECTIONS_BUNDLE_ID,
   MAIL_COLLECTIONS_INBOX_DOCUMENT_ID,
   MAIL_FOLDER_ID,
   MAIL_STORAGE_BUNDLE_ID
 } from '../../../consts/user-syncable-paths.js';
-import { makeMailCollectionDocumentFromSnapshot } from '../../../types/MailCollectionDocument.js';
-import { storedMailSchema } from '../../../types/StoredMail.js';
-import { getUserFs } from '../storage/getUserFs.js';
+import { makeMailCollectionDocumentFromSnapshot } from '../../../types/MailCollectionDocument.ts';
+import { storedMailSchema } from '../../../types/StoredMail.ts';
+import { getUserFs } from '../storage/getUserFs.ts';
 
 // TODO: remove once services are available
 export const createInitialMockContentForUser = makeAsyncResultFunc(

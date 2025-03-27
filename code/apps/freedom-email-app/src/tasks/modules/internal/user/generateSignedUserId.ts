@@ -4,8 +4,8 @@ import { makeUuid } from 'freedom-contexts';
 import { generateSignatureForString } from 'freedom-crypto';
 import type { SigningKeySet } from 'freedom-crypto-data';
 
-import type { EmailUserId } from '../../../../types/EmailUserId.js';
-import { emailUserIdInfo } from '../../../../types/EmailUserId.js';
+import type { EmailUserId } from '../../../../types/EmailUserId.ts';
+import { emailUserIdInfo } from '../../../../types/EmailUserId.ts';
 
 export const generateSignedUserId = makeAsyncResultFunc(
   [import.meta.filename],
