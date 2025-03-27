@@ -15,7 +15,7 @@ export const allResultsMapped = makeAsyncResultFunc(
   [import.meta.filename],
   async function <V, T, ErrorCodeT extends string = never>(
     trace: Trace,
-    values: V[],
+    values: readonly V[],
     {
       maxConcurrency = FREEDOM_MAX_CONCURRENCY_DEFAULT,
       onFailure = 'continue'
