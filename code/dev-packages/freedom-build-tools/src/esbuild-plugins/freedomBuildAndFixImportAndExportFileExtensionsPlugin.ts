@@ -28,8 +28,8 @@ export const makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin = ({
         // When bundling we don't want to update the import extensions since they'll be processed by esbuild
         if (!bundle) {
           contents = contents
-            .replace(/from\s+'(\.\.?\/[^']+)\.[jt]s'/gm, "from '$1.mjs'")
-            .replace(/from\s+"(\.\.?\/[^"]+)\.[jt]s"/gm, 'from "$1.mjs"');
+            .replace(/from\s+'(\.\.?\/[^']+)\.[jt]sx?'/gm, "from '$1.mjs'")
+            .replace(/from\s+"(\.\.?\/[^"]+)\.[jt]sx?"/gm, 'from "$1.mjs"');
         }
 
         return { contents, loader: 'default' };
