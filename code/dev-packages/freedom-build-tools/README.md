@@ -24,7 +24,7 @@ In each monorepo package, the `package.json` file contains a build script simila
 
 ```bash
 …
-"build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && ../../dev-packages/freedom-build-tools/lib/mjs/freedom-build.js --tsconfig tsconfig.mjs.json"
+"build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/lib/mjs/freedom-build.mjs --tsconfig tsconfig.mjs.json"
 …
 ```
 

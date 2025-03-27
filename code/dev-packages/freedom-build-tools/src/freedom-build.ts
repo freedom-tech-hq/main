@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-default-type=module
+#!/usr/bin/env node
 
 import main from './freedom-build-impl/index.ts';
 

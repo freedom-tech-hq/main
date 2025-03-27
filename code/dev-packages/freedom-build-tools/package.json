@@ -33,7 +33,7 @@
     "finish-bin-files": "yarn make-bin-files-executable",
     "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
-    "make-bin-files-executable": "chmod 755 ./lib/mjs/*.js",
+    "make-bin-files-executable": "mv ./lib/mjs/freedom-build.js ./lib/mjs/freedom-build.mjs && mv ./lib/mjs/freedom-serve.js ./lib/mjs/freedom-serve.mjs && chmod 755 ./lib/mjs/*.mjs",
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_ALLOW_BLOCKING=${FREEDOM_LOG_ALLOW_BLOCKING:-false} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
     "test:perf": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
