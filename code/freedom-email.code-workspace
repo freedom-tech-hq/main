@@ -1,49 +1,134 @@
 {
     "folders": [
-        { "path": "apps/freedom-email-app"  },
-        { "path": "cross-platform-packages/freedom-access-control-types"  },
-        { "path": "cross-platform-packages/freedom-access-control"  },
-        { "path": "cross-platform-packages/freedom-async"  },
-        { "path": "cross-platform-packages/freedom-basic-data"  },
-        { "path": "cross-platform-packages/freedom-cast"  },
-        { "path": "cross-platform-packages/freedom-common-errors"  },
-        { "path": "cross-platform-packages/freedom-conflict-free-document-data"  },
-        { "path": "cross-platform-packages/freedom-conflict-free-document"  },
-        { "path": "cross-platform-packages/freedom-contexts"  },
-        { "path": "cross-platform-packages/freedom-crypto-data"  },
-        { "path": "cross-platform-packages/freedom-crypto-service"  },
-        { "path": "cross-platform-packages/freedom-crypto"  },
-        { "path": "cross-platform-packages/freedom-data-source-types"  },
-        { "path": "cross-platform-packages/freedom-device-notification-types"  },
-        { "path": "cross-platform-packages/freedom-do-soon"  },
-        { "path": "cross-platform-packages/freedom-indexing-types"  },
-        { "path": "cross-platform-packages/freedom-localization"  },
-        { "path": "cross-platform-packages/freedom-locking-types"  },
-        { "path": "cross-platform-packages/freedom-logging-types"  },
-        { "path": "cross-platform-packages/freedom-metrics-types"  },
-        { "path": "cross-platform-packages/freedom-notification-types"  },
-        { "path": "cross-platform-packages/freedom-object-store-types"  },
-        { "path": "cross-platform-packages/freedom-paginated-data"  },
-        { "path": "cross-platform-packages/freedom-periodic"  },
-        { "path": "cross-platform-packages/freedom-sync-service"  },
-        { "path": "cross-platform-packages/freedom-sync-types"  },
-        { "path": "cross-platform-packages/freedom-syncable-store-types"  },
-        { "path": "cross-platform-packages/freedom-task-queue"  },
-        { "path": "cross-platform-packages/freedom-trace-cache"  },
-        { "path": "cross-platform-packages/freedom-trace-logging-and-metrics"  },
-        { "path": "cross-platform-packages/freedom-trace-service-context"  },
-        { "path": "cross-platform-packages/freedom-trusted-time-source"  },
-        { "path": "dev-packages/freedom-build-tools"  },
-        { "path": "dev-packages/freedom-localization-tools"  },
-        { "path": "dev-packages/freedom-profiler"  },
-        { "path": "dev-packages/freedom-sync-service-testing-tools"  },
-        { "path": "dev-packages/freedom-testing-tools"  },
-        { "path": "server-packages/freedom-appliance-plugin-types"  },
-        { "path": "server-packages/freedom-server-api-handling"  },
-        { "path": "server-packages/freedom-server-auth"  },
-        { "path": "server-packages/freedom-server-localization" },
-        { "path": "server-packages/freedom-server-trace-auth-token"  },
-        { "path": "web-packages/freedom-react-localization"  },
+        {
+            "path": "apps/freedom-email-app"
+        },
+        {
+            "path": "cross-platform-packages/freedom-access-control-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-access-control"
+        },
+        {
+            "path": "cross-platform-packages/freedom-async"
+        },
+        {
+            "path": "cross-platform-packages/freedom-basic-data"
+        },
+        {
+            "path": "cross-platform-packages/freedom-cast"
+        },
+        {
+            "path": "cross-platform-packages/freedom-common-errors"
+        },
+        {
+            "path": "cross-platform-packages/freedom-conflict-free-document-data"
+        },
+        {
+            "path": "cross-platform-packages/freedom-conflict-free-document"
+        },
+        {
+            "path": "cross-platform-packages/freedom-contexts"
+        },
+        {
+            "path": "cross-platform-packages/freedom-crypto-data"
+        },
+        {
+            "path": "cross-platform-packages/freedom-crypto-service"
+        },
+        {
+            "path": "cross-platform-packages/freedom-crypto"
+        },
+        {
+            "path": "cross-platform-packages/freedom-data-source-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-device-notification-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-do-soon"
+        },
+        {
+            "path": "cross-platform-packages/freedom-indexing-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-localization"
+        },
+        {
+            "path": "cross-platform-packages/freedom-locking-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-logging-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-metrics-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-notification-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-object-store-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-paginated-data"
+        },
+        {
+            "path": "cross-platform-packages/freedom-periodic"
+        },
+        {
+            "path": "cross-platform-packages/freedom-sync-service"
+        },
+        {
+            "path": "cross-platform-packages/freedom-sync-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-syncable-store-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-task-queue"
+        },
+        {
+            "path": "cross-platform-packages/freedom-trace-cache"
+        },
+        {
+            "path": "cross-platform-packages/freedom-trace-logging-and-metrics"
+        },
+        {
+            "path": "cross-platform-packages/freedom-trace-service-context"
+        },
+        {
+            "path": "cross-platform-packages/freedom-trusted-time-source"
+        },
+        {
+            "path": "dev-packages/freedom-build-tools"
+        },
+        {
+            "path": "dev-packages/freedom-localization-tools"
+        },
+        {
+            "path": "dev-packages/freedom-profiler"
+        },
+        {
+            "path": "dev-packages/freedom-sync-service-testing-tools"
+        },
+        {
+            "path": "dev-packages/freedom-testing-tools"
+        },
+        {
+            "path": "server-packages/freedom-server-api-handling"
+        },
+        {
+            "path": "server-packages/freedom-server-auth"
+        },
+        {
+            "path": "server-packages/freedom-server-localization"
+        },
+        {
+            "path": "server-packages/freedom-server-trace-auth-token"
+        },
+        {
+            "path": "web-packages/freedom-react-localization"
+        }
     ],
     "settings": {}
 }
