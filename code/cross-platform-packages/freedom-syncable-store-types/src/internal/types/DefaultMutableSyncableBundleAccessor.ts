@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -11,12 +11,12 @@ import type { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
 
 export class DefaultMutableSyncableBundleAccessor implements MutableSyncableBundleAccessor {
   public readonly type = 'bundle';
-  public readonly path: StaticSyncablePath;
+  public readonly path: SyncablePath;
 
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
   private readonly data_: DefaultFileStoreBase;
 
-  constructor({ store, path, data }: { store: WeakRef<MutableSyncableStore>; path: StaticSyncablePath; data: DefaultFileStoreBase }) {
+  constructor({ store, path, data }: { store: WeakRef<MutableSyncableStore>; path: SyncablePath; data: DefaultFileStoreBase }) {
     this.weakStore_ = store;
     this.path = path;
     this.data_ = data;

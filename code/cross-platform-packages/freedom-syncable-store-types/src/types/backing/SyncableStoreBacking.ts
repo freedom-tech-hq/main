@@ -1,13 +1,13 @@
 import type { PR, PRFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type {
-  StaticSyncablePath,
   SyncableBundleMetadata,
   SyncableFileMetadata,
   SyncableFolderMetadata,
   SyncableId,
   SyncableItemMetadata,
-  SyncableItemType
+  SyncableItemType,
+  SyncablePath
 } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
@@ -17,45 +17,45 @@ import type { SyncableStoreBackingFolderAccessor } from './accessors/SyncableSto
 import type { SyncableStoreBackingItemAccessor } from './accessors/SyncableStoreBackingItemAccessor.ts';
 
 export interface SyncableStoreBacking {
-  readonly existsAtPath: PRFunc<boolean, never, [path: StaticSyncablePath]>;
+  readonly existsAtPath: PRFunc<boolean, never, [path: SyncablePath]>;
 
   readonly getAtPath: <T extends SyncableItemType = SyncableItemType>(
     trace: Trace,
-    path: StaticSyncablePath,
+    path: SyncablePath,
     expectedType?: SingleOrArray<T>
   ) => PR<SyncableStoreBackingItemAccessor & { type: T }, 'not-found' | 'wrong-type'>;
 
   readonly getIdsInPath: PRFunc<
     SyncableId[],
     'not-found' | 'wrong-type',
-    [path: StaticSyncablePath, options?: { type?: SingleOrArray<SyncableItemType> }]
+    [path: SyncablePath, options?: { type?: SingleOrArray<SyncableItemType> }]
   >;
 
-  readonly getMetadataAtPath: PRFunc<SyncableItemMetadata & LocalItemMetadata, 'not-found' | 'wrong-type', [path: StaticSyncablePath]>;
+  readonly getMetadataAtPath: PRFunc<SyncableItemMetadata & LocalItemMetadata, 'not-found' | 'wrong-type', [path: SyncablePath]>;
 
   readonly getMetadataByIdInPath: PRFunc<
     Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>,
     'not-found' | 'wrong-type',
-    [path: StaticSyncablePath, ids?: Set<SyncableId>]
+    [path: SyncablePath, ids?: Set<SyncableId>]
   >;
 
   readonly createBinaryFileWithPath: PRFunc<
     SyncableStoreBackingFileAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { data: Uint8Array; metadata: SyncableFileMetadata & LocalItemMetadata }]
+    [path: SyncablePath, { data: Uint8Array; metadata: SyncableFileMetadata & LocalItemMetadata }]
   >;
 
   readonly createFolderWithPath: PRFunc<
     SyncableStoreBackingFolderAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: StaticSyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleMetadata) & LocalItemMetadata }]
+    [path: SyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleMetadata) & LocalItemMetadata }]
   >;
 
-  readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: StaticSyncablePath]>;
+  readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: SyncablePath]>;
 
   readonly updateLocalMetadataAtPath: PRFunc<
     undefined,
     'not-found' | 'wrong-type',
-    [path: StaticSyncablePath, metadata: Partial<LocalItemMetadata>]
+    [path: SyncablePath, metadata: Partial<LocalItemMetadata>]
   >;
 }

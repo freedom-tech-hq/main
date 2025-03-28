@@ -21,10 +21,10 @@ import { generalizeFailureResult, InternalStateError, NotFoundError } from 'free
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { CryptoKeySetId, SignedValue, TrustedTimeId } from 'freedom-crypto-data';
+import type { CryptoKeySetId, SignedValue, TrustedTimeName } from 'freedom-crypto-data';
 import type {
   DynamicSyncableId,
-  StaticSyncablePath,
+  OldSyncablePath,
   SyncableFolderMetadata,
   SyncableId,
   SyncableItemType,
@@ -59,7 +59,7 @@ import type { SyncTracker, SyncTrackerNotifications } from '../../types/SyncTrac
 import { createConflictFreeDocumentBundleAtPath } from '../../utils/create/createConflictFreeDocumentBundleAtPath.ts';
 import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableStoreRoleHaveReadAccess.ts';
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
-import { generateTrustedTimeIdForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeIdForSyncableStoreAccessChange.ts';
+import { generateTrustedTimeNameForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeNameForSyncableStoreAccessChange.ts';
 import type {
   IsConflictFreeDocumentSnapshotValidArgs,
   IsDeltaValidForConflictFreeDocumentArgs
@@ -75,11 +75,11 @@ import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
 export abstract class DefaultMutableSyncableFolderAccessorBase implements MutableSyncableFolderAccessor {
   public readonly type = 'folder';
-  public readonly path: StaticSyncablePath;
+  public readonly path: SyncablePath;
 
   private weakStore_!: WeakRef<MutableSyncableStore>;
   private folderOperationsHandler_!: FolderOperationsHandler;
-  private makeFolderAccessor_!: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
+  private makeFolderAccessor_!: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   private readonly syncTracker_: SyncTracker;
 
   private readonly backing_: SyncableStoreBacking;
@@ -133,7 +133,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   private needsRecomputeHashCount_ = 0;
 
-  constructor({ backing, syncTracker, path }: { backing: SyncableStoreBacking; syncTracker: SyncTracker; path: StaticSyncablePath }) {
+  constructor({ backing, syncTracker, path }: { backing: SyncableStoreBacking; syncTracker: SyncTracker; path: SyncablePath }) {
     this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.path = path;
@@ -144,7 +144,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     makeFolderAccessor
   }: {
     store: WeakRef<MutableSyncableStore>;
-    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
+    makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
     this.weakStore_ = store;
     this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);
@@ -174,8 +174,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
           signedTimedChange = await generateSignedAddAccessChange(trace, {
             cryptoService: store.cryptoService,
             accessControlDoc: accessControlDoc.value.document,
-            generateTrustedTimeIdForAccessChange: async (trace: Trace, accessChange: AccessChange<SyncableStoreRole>): PR<TrustedTimeId> =>
-              await generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
+            generateTrustedTimeNameForAccessChange: async (
+              trace: Trace,
+              accessChange: AccessChange<SyncableStoreRole>
+            ): PR<TrustedTimeName> =>
+              await generateTrustedTimeNameForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
             params: change,
             doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
@@ -186,8 +189,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
           signedTimedChange = await generateSignedModifyAccessChange(trace, {
             cryptoService: store.cryptoService,
             accessControlDoc: accessControlDoc.value.document,
-            generateTrustedTimeIdForAccessChange: async (trace: Trace, accessChange: AccessChange<SyncableStoreRole>): PR<TrustedTimeId> =>
-              await generateTrustedTimeIdForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
+            generateTrustedTimeNameForAccessChange: async (
+              trace: Trace,
+              accessChange: AccessChange<SyncableStoreRole>
+            ): PR<TrustedTimeName> =>
+              await generateTrustedTimeNameForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
             params: change,
             doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
@@ -646,7 +652,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
 const getAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getAccessControlDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath) => {
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: OldSyncablePath) => {
     const accessControlDoc = await getMutableAccessControlDocument(trace, weakStore, path);
     /* node:coverage disable */
     if (!accessControlDoc.ok) {
@@ -660,7 +666,11 @@ const getAccessControlDocument = makeAsyncResultFunc(
 
 const getMutableAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableAccessControlDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
+  async (
+    trace,
+    weakStore: WeakRef<MutableSyncableStore>,
+    path: OldSyncablePath
+  ): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
     const store = weakStore.deref();
     if (store === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -687,7 +697,7 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
 
 const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: OldSyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
     const store = weakStore.deref();
     if (store === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -751,7 +761,7 @@ const isDeltaValidForStoreChangesDocument = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    let staticPath: StaticSyncablePath;
+    let staticPath: SyncablePath;
     if (path instanceof DynamicSyncablePath) {
       const resolvedPath = await getSyncableAtPath(trace, store, path);
       if (!resolvedPath.ok) {

@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
@@ -18,7 +18,7 @@ export interface DefaultEncryptedFileStoreConstructorArgs {
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
-  path: StaticSyncablePath;
+  path: SyncablePath;
 }
 
 export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
@@ -47,7 +47,7 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 
-  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableBundleAccessor {
+  protected override makeBundleAccessor_({ path }: { path: SyncablePath }): MutableSyncableBundleAccessor {
     return new DefaultEncryptedFileStore({
       store: this.weakStore_,
       backing: this.backing_,
@@ -57,7 +57,7 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     });
   }
 
-  protected override makeFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFileAccessor {
+  protected override makeFileAccessor_({ path }: { path: SyncablePath }): MutableSyncableFileAccessor {
     return new DefaultMutableSyncableFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,

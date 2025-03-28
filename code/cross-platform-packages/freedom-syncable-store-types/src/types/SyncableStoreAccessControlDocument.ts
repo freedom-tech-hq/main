@@ -5,12 +5,12 @@ import { inline, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath } from 'freedom-sync-types';
 import { isEqual } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
 import { generateContentHashForSyncableStoreAccessChange } from '../utils/generateContentHashForSyncableStoreAccessChange.ts';
-import { isTrustedTimeIdValidForPath } from '../utils/validation/isTrustedTimeIdValidForPath.ts';
+import { isTrustedTimeNameValidForPath } from '../utils/validation/isTrustedTimeNameValidForPath.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
 import { editorAndBelowRoles, ownerAndBelowRoles, syncableStoreRoleSchema } from './SyncableStoreRole.ts';
@@ -50,7 +50,7 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         encodedDelta
       }: {
         store: SyncableStore;
-        path: SyncablePath;
+        path: OldSyncablePath;
         role: SyncableStoreRole;
         encodedDelta: EncodedConflictFreeDocumentDelta<AccessControlDocumentPrefix>;
       }
@@ -129,12 +129,12 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
           return contentHash;
         }
 
-        const trustedTimeIdValid = await isTrustedTimeIdValidForPath(trace, store, {
+        const trustedTimeNameValid = await isTrustedTimeNameValidForPath(trace, store, {
           path,
-          trustedTimeId: addedChange.value.trustedTimeId,
+          trustedTimeName: addedChange.value.trustedTimeName,
           contentHash: contentHash.value
         });
-        if (!trustedTimeIdValid.ok) {
+        if (!trustedTimeNameValid.ok) {
           return makeSuccess(false);
         }
 

@@ -1,5 +1,5 @@
-import type { TrustedTimeId } from 'freedom-crypto-data';
-import { trustedTimeIdInfo } from 'freedom-crypto-data';
+import type { TrustedTimeName } from 'freedom-crypto-data';
+import { trustedTimeNameInfo } from 'freedom-crypto-data';
 import type { Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
@@ -10,7 +10,7 @@ export const makeTimedAccessChangeSchema = <RoleT extends string>({ roleSchema }
   schema.allOf(
     makeAccessChangeSchema({ roleSchema }),
     schema.object({
-      trustedTimeId: trustedTimeIdInfo.schema
+      trustedTimeName: trustedTimeNameInfo.schema
     })
   );
-export type TimedAccessChange<RoleT extends string> = AccessChange<RoleT> & { trustedTimeId: TrustedTimeId };
+export type TimedAccessChange<RoleT extends string> = AccessChange<RoleT> & { trustedTimeName: TrustedTimeName };

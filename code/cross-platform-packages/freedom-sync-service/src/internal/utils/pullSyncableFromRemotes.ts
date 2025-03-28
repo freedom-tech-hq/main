@@ -3,7 +3,7 @@ import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuc
 import type { Sha256Hash } from 'freedom-basic-data';
 import { Cast } from 'freedom-cast';
 import { InternalStateError } from 'freedom-common-errors';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
@@ -15,7 +15,7 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
     trace,
     { store, syncService }: { store: MutableSyncableStore; syncService: SyncService },
     args: {
-      path: StaticSyncablePath;
+      path: SyncablePath;
       hash?: Sha256Hash;
     }
   ): PR<undefined, 'not-found'> => {

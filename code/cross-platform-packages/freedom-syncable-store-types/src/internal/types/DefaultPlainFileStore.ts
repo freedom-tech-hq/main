@@ -3,7 +3,7 @@ import { makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
 import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
@@ -30,7 +30,7 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
     return makeSuccess(rawData);
   }
 
-  protected override makeBundleAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableBundleAccessor {
+  protected override makeBundleAccessor_({ path }: { path: SyncablePath }): MutableSyncableBundleAccessor {
     return new DefaultPlainFileStore({
       store: this.weakStore_,
       backing: this.backing_,
@@ -41,7 +41,7 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
     });
   }
 
-  protected override makeFileAccessor_({ path }: { path: StaticSyncablePath }): MutableSyncableFileAccessor {
+  protected override makeFileAccessor_({ path }: { path: SyncablePath }): MutableSyncableFileAccessor {
     return new DefaultMutableSyncableFileAccessor({
       store: this.weakStore_,
       backing: this.backing_,

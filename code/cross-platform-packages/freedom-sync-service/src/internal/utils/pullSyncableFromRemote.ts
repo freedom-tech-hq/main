@@ -4,7 +4,7 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import {
   createViaSyncPreEncodedBinaryFileAtPath,
@@ -21,7 +21,7 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: MutableSyncableStore; syncService: SyncService },
-    args: { remoteId: RemoteId; path: StaticSyncablePath; hash?: Sha256Hash }
+    args: { remoteId: RemoteId; path: SyncablePath; hash?: Sha256Hash }
   ): PR<undefined, 'not-found'> => {
     const pullFromRemote = (syncService as InternalSyncService).puller;
 
@@ -81,7 +81,7 @@ const onBundlePulled = makeAsyncResultFunc(
   async (
     trace: Trace,
     { store, syncService, file }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncBundle },
-    fwd: { remoteId: RemoteId; path: StaticSyncablePath }
+    fwd: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
     const path = fwd.path;
 
@@ -124,7 +124,7 @@ const onFolderPulled = makeAsyncResultFunc(
   async (
     trace: Trace,
     { store, syncService, folder }: { store: MutableSyncableStore; syncService: SyncService; folder: OutOfSyncFolder },
-    fwd: { remoteId: RemoteId; path: StaticSyncablePath }
+    fwd: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
     const path = fwd.path;
 
@@ -159,7 +159,7 @@ const onFilePulled = makeAsyncResultFunc(
   [import.meta.filename, 'onFilePulled'],
   async (
     trace: Trace,
-    { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFile; path: StaticSyncablePath }
+    { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFile; path: SyncablePath }
   ): PR<undefined> => {
     if (file.data === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));

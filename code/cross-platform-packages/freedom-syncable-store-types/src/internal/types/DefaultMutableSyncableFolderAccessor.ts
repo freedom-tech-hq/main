@@ -1,4 +1,4 @@
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -16,7 +16,7 @@ export class DefaultMutableSyncableFolderAccessor extends DefaultMutableSyncable
     store: WeakRef<MutableSyncableStore>;
     backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
-    path: StaticSyncablePath;
+    path: SyncablePath;
   }) {
     super({ backing, syncTracker, path });
 

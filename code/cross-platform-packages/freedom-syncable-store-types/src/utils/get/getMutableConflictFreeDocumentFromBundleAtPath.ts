@@ -4,8 +4,8 @@ import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import { makeUuid, type Trace } from 'freedom-contexts';
 import { generateSha256HashFromString } from 'freedom-crypto';
-import type { SyncablePath } from 'freedom-sync-types';
-import { timeId } from 'freedom-sync-types';
+import type { OldSyncablePath } from 'freedom-sync-types';
+import { timeName } from 'freedom-sync-types';
 
 import { makeDeltasBundleId } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -25,7 +25,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
   async <PrefixT extends string, DocumentT extends ConflictFreeDocument<PrefixT>>(
     trace: Trace,
     store: MutableSyncableStore,
-    path: SyncablePath,
+    path: OldSyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetMutableConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const document = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, {
@@ -53,7 +53,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
         const encodedDelta = document.value.encodeDelta();
 
         const deltaId = await deltas.value.generateNewSyncableItemId(trace, {
-          id: timeId(makeUuid()),
+          id: timeName(makeUuid()),
           parentPath: deltasPath,
           getSha256ForItemProvenance: (trace) => generateSha256HashFromString(trace, encodedDelta)
         });

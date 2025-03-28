@@ -3,41 +3,41 @@ import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-asyn
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractKeyIdFromSignedValue } from 'freedom-crypto';
-import type { TrustedTimeId } from 'freedom-crypto-data';
-import { extractSignedTimeIdFromTrustedTimeId } from 'freedom-crypto-data';
+import type { TrustedTimeName } from 'freedom-crypto-data';
+import { extractSignedTimeNameFromTrustedTimeName } from 'freedom-crypto-data';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 
-export const isTrustedTimeIdValid = makeAsyncResultFunc(
+export const isTrustedTimeNameValid = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     store: SyncableStore,
     {
-      trustedTimeId,
+      trustedTimeName,
       parentPathHash,
       contentHash,
       trustedTimeSources
     }: {
-      trustedTimeId: TrustedTimeId;
+      trustedTimeName: TrustedTimeName;
       parentPathHash: Sha256Hash;
       contentHash: Sha256Hash;
       trustedTimeSources: TrustedTimeSource[];
     }
   ): PR<boolean> => {
-    const signedTimeId = await extractSignedTimeIdFromTrustedTimeId(trace, trustedTimeId);
-    if (!signedTimeId.ok) {
-      return signedTimeId;
+    const signedTimeName = await extractSignedTimeNameFromTrustedTimeName(trace, trustedTimeName);
+    if (!signedTimeName.ok) {
+      return signedTimeName;
     }
 
-    const signingCryptoKeySetId = extractKeyIdFromSignedValue(trace, { signedValue: signedTimeId.value });
+    const signingCryptoKeySetId = extractKeyIdFromSignedValue(trace, { signedValue: signedTimeName.value });
     if (!signingCryptoKeySetId.ok) {
       return generalizeFailureResult(trace, signingCryptoKeySetId, 'not-found');
     }
 
     if (signingCryptoKeySetId.value === store.creatorCryptoKeySetId) {
-      return await store.cryptoService.isSignedValueValid(trace, signedTimeId.value, { parentPathHash, contentHash });
+      return await store.cryptoService.isSignedValueValid(trace, signedTimeName.value, { parentPathHash, contentHash });
     }
 
     const trustedTimeValid = await allResultsMapped(
@@ -45,7 +45,7 @@ export const isTrustedTimeIdValid = makeAsyncResultFunc(
       trustedTimeSources,
       {},
       async (trace, trustedTimeSource) =>
-        await trustedTimeSource.isTrustedTimeIdValid(trace, trustedTimeId, { parentPathHash, contentHash })
+        await trustedTimeSource.isTrustedTimeNameValid(trace, trustedTimeName, { parentPathHash, contentHash })
     );
     if (!trustedTimeValid.ok) {
       return trustedTimeValid;

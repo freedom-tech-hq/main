@@ -1,11 +1,11 @@
 import type { PRFunc } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import type { StaticSyncablePath, SyncableItemMetadata, SyncableItemType } from 'freedom-sync-types';
+import type { SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 
 export interface SyncableItemAccessorBase {
   readonly type: SyncableItemType;
 
-  readonly path: StaticSyncablePath;
+  readonly path: SyncablePath;
 
   /** Gets the hash of this file */
   readonly getHash: PRFunc<Sha256Hash, never, [{ recompute?: boolean }?]>;

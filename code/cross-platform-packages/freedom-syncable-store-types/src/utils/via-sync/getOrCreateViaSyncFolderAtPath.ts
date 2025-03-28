@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { StaticSyncablePath, SyncableFolderMetadata } from 'freedom-sync-types';
+import type { SyncableFolderMetadata, SyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
@@ -13,7 +13,7 @@ export const getOrCreateViaSyncFolderAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: MutableSyncableStore,
-    path: StaticSyncablePath,
+    path: SyncablePath,
     metadata: SyncableFolderMetadata
   ): PR<{ folder: MutableSyncableFolderAccessor; isNewlyCreated: boolean }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const created = await disableLam(trace, 'conflict', (trace) => createViaSyncFolderAtPath(trace, store, path, metadata));

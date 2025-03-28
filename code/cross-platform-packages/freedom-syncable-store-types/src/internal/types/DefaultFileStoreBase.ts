@@ -14,14 +14,14 @@ import { objectEntries } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
-import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
+import { extractPartsFromTimeName, extractPartsFromTrustedTimeName, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
 import type {
   DynamicSyncableId,
-  StaticSyncablePath,
   SyncableBundleMetadata,
   SyncableFileMetadata,
   SyncableId,
-  SyncableItemType
+  SyncableItemType,
+  SyncablePath
 } from 'freedom-sync-types';
 import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo, syncableItemTypes } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -51,13 +51,13 @@ export interface DefaultFileStoreBaseConstructorArgs {
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
-  path: StaticSyncablePath;
+  path: SyncablePath;
   supportsDeletion: boolean;
 }
 
 export abstract class DefaultFileStoreBase implements MutableFileStore, BundleManagement {
   public readonly type = 'bundle';
-  public readonly path: StaticSyncablePath;
+  public readonly path: SyncablePath;
   public readonly supportsDeletion: boolean;
 
   protected readonly weakStore_: WeakRef<MutableSyncableStore>;
@@ -82,8 +82,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   protected abstract computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash>;
   protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
-  protected abstract makeBundleAccessor_(args: { path: StaticSyncablePath }): MutableSyncableBundleAccessor;
-  protected abstract makeFileAccessor_(args: { path: StaticSyncablePath }): MutableSyncableFileAccessor;
+  protected abstract makeBundleAccessor_(args: { path: SyncablePath }): MutableSyncableBundleAccessor;
+  protected abstract makeFileAccessor_(args: { path: SyncablePath }): MutableSyncableFileAccessor;
   protected abstract isEncrypted_(): boolean;
 
   // MutableFileStore Methods
@@ -441,22 +441,22 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
               break;
 
             case 'time':
-              if (timeIdInfo.is(id)) {
-                const timeIdParts = await extractPartsFromTimeId(trace, id);
-                if (!timeIdParts.ok) {
+              if (timeNameInfo.is(id)) {
+                const timeNameParts = await extractPartsFromTimeName(trace, id);
+                if (!timeNameParts.ok) {
                   continue;
                 }
 
-                if (timeIdParts.value.uuid === dynamicId.uuid) {
+                if (timeNameParts.value.uuid === dynamicId.uuid) {
                   return makeSuccess(id);
                 }
-              } else if (trustedTimeIdInfo.is(id)) {
-                const timeIdParts = await extractPartsFromTrustedTimeId(trace, id);
-                if (!timeIdParts.ok) {
+              } else if (trustedTimeNameInfo.is(id)) {
+                const timeNameParts = await extractPartsFromTrustedTimeName(trace, id);
+                if (!timeNameParts.ok) {
                   continue;
                 }
 
-                if (timeIdParts.value.uuid === dynamicId.uuid) {
+                if (timeNameParts.value.uuid === dynamicId.uuid) {
                   return makeSuccess(id);
                 }
               }
@@ -800,7 +800,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   private readonly guardNotDeleted_ = makeAsyncResultFunc(
     [import.meta.filename, 'guardNotDeleted_'],
-    async <ErrorCodeT extends string>(trace: Trace, path: StaticSyncablePath, errorCode: ErrorCodeT): PR<undefined, ErrorCodeT> => {
+    async <ErrorCodeT extends string>(trace: Trace, path: SyncablePath, errorCode: ErrorCodeT): PR<undefined, ErrorCodeT> => {
       if (!this.supportsDeletion) {
         return makeSuccess(undefined);
       }
@@ -816,14 +816,11 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     }
   );
 
-  private makeItemAccessor_<T extends SyncableItemType>(path: StaticSyncablePath, itemType: T): SyncableItemAccessor & { type: T } {
+  private makeItemAccessor_<T extends SyncableItemType>(path: SyncablePath, itemType: T): SyncableItemAccessor & { type: T } {
     return this.makeMutableItemAccessor_<T>(path, itemType);
   }
 
-  private makeMutableItemAccessor_<T extends SyncableItemType>(
-    path: StaticSyncablePath,
-    itemType: T
-  ): MutableSyncableItemAccessor & { type: T } {
+  private makeMutableItemAccessor_<T extends SyncableItemType>(path: SyncablePath, itemType: T): MutableSyncableItemAccessor & { type: T } {
     switch (itemType) {
       case 'folder':
         throw new Error("Folders can't be managed by DefaultBundleBase");

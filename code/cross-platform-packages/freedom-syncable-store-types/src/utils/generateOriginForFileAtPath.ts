@@ -2,7 +2,7 @@ import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SignedSyncableOrigin, StaticSyncablePath, SyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath, SignedSyncableOrigin, SyncablePath } from 'freedom-sync-types';
 import { DynamicSyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
@@ -14,14 +14,14 @@ export const generateOriginForFileAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    { path, getSha256ForItemProvenance }: { path: SyncablePath; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
+    { path, getSha256ForItemProvenance }: { path: OldSyncablePath; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
   ): PR<SignedSyncableOrigin> => {
     const contentHash = await getSha256ForItemProvenance(trace);
     if (!contentHash.ok) {
       return contentHash;
     }
 
-    let staticPath: StaticSyncablePath;
+    let staticPath: SyncablePath;
     if (path instanceof DynamicSyncablePath) {
       const resolvedPath = await getSyncableAtPath(trace, store, path);
       if (!resolvedPath.ok) {

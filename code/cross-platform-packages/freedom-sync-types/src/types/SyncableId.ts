@@ -1,5 +1,5 @@
 import { makeIdInfo } from 'freedom-basic-data';
-import { type TimeId, timeIdInfo, type TrustedTimeId, trustedTimeIdInfo } from 'freedom-crypto-data';
+import { type TimeName, timeNameInfo, type TrustedTimeName, trustedTimeNameInfo } from 'freedom-crypto-data';
 import { schema } from 'yaschema';
 
 export const syncablePlainIdInfo = makeIdInfo('._');
@@ -12,7 +12,7 @@ export type SyncableEncryptedId = typeof syncableEncryptedIdInfo.schema.valueTyp
 export const syncableIdSchema = schema.oneOf4(
   syncablePlainIdInfo.schema,
   syncableEncryptedIdInfo.schema,
-  timeIdInfo.schema,
-  trustedTimeIdInfo.schema
+  timeNameInfo.schema,
+  trustedTimeNameInfo.schema
 );
-export type SyncableId = SyncablePlainId | SyncableEncryptedId | TimeId | TrustedTimeId;
+export type SyncableId = SyncablePlainId | SyncableEncryptedId | TimeName | TrustedTimeName;

@@ -2,7 +2,7 @@ import { sha256HashInfo } from 'freedom-basic-data';
 import { makeSignedValueSchema } from 'freedom-crypto-data';
 import { schema } from 'yaschema';
 
-import { syncablePathSchema } from './StaticSyncablePath.ts';
+import { syncablePathSchema } from './SyncablePath.ts';
 
 export const syncableOriginSchema = schema.object({
   contentHash: sha256HashInfo.schema

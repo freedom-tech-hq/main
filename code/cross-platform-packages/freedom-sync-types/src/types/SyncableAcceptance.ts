@@ -1,10 +1,10 @@
 import { sha256HashInfo } from 'freedom-basic-data';
-import { makeSignedValueSchema, trustedTimeIdInfo } from 'freedom-crypto-data';
+import { makeSignedValueSchema, trustedTimeNameInfo } from 'freedom-crypto-data';
 import { schema } from 'yaschema';
 
-import { syncablePathSchema } from './StaticSyncablePath.ts';
+import { syncablePathSchema } from './SyncablePath.ts';
 
-export const syncableAcceptanceSchema = schema.object({ trustedTimeId: trustedTimeIdInfo.schema });
+export const syncableAcceptanceSchema = schema.object({ trustedTimeName: trustedTimeNameInfo.schema });
 export const syncableAcceptanceSignatureExtrasSchema = schema.object({
   contentHash: sha256HashInfo.schema,
   path: syncablePathSchema

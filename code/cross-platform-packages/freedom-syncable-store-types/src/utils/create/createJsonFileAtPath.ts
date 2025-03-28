@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { DynamicSyncableId, SyncablePath } from 'freedom-sync-types';
+import type { DynamicSyncableId, OldSyncablePath } from 'freedom-sync-types';
 import type { Schema } from 'yaschema';
 
 import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
@@ -14,7 +14,7 @@ export const createJsonFileAtPath = makeAsyncResultFunc(
   async <T>(
     trace: Trace,
     store: MutableSyncableStore,
-    parentPath: SyncablePath,
+    parentPath: OldSyncablePath,
     id: DynamicSyncableId,
     initialValue: T,
     schema: Schema<T>

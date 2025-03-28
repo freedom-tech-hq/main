@@ -2,7 +2,7 @@ import type { Result } from 'freedom-async';
 import { makeFailure, makeSuccess, makeSyncResultFunc } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath, SyncableItemType } from 'freedom-sync-types';
 
 import { isExpectedType } from '../validation/isExpectedType.ts';
 
@@ -10,7 +10,7 @@ export const guardIsExpectedType = makeSyncResultFunc(
   [import.meta.filename],
   <ErrorCodeT extends string>(
     trace: Trace,
-    path: SyncablePath,
+    path: OldSyncablePath,
     item: { type: SyncableItemType },
     expectedType: SyncableItemType | Array<SyncableItemType> | undefined,
     errorCode: ErrorCodeT

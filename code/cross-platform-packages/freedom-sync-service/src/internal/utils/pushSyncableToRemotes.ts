@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
@@ -13,7 +13,7 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
-    { path, hash }: { path: StaticSyncablePath; hash: Sha256Hash }
+    { path, hash }: { path: SyncablePath; hash: Sha256Hash }
   ): PR<undefined> => {
     const remotes = syncService.getRemotes();
 

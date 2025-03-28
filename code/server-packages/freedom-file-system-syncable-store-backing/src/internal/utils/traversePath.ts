@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableId, SyncableItemType } from 'freedom-sync-types';
-import { StaticSyncablePath } from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 import { guardIsExpectedType } from 'freedom-syncable-store-types';
 import type { SingleOrArray } from 'yaschema';
 
@@ -19,7 +19,7 @@ export const traversePath = makeAsyncResultFunc(
   async <T extends SyncableItemType = SyncableItemType>(
     trace: Trace,
     item: FileSystemSyncableStoreBackingItem,
-    path: StaticSyncablePath,
+    path: SyncablePath,
     expectedType?: SingleOrArray<T>
   ): PR<
     FileSystemSyncableStoreBackingItem & {
@@ -54,7 +54,7 @@ export const traversePath = makeAsyncResultFunc(
           if (nextCursor === undefined) {
             return makeFailure(
               new NotFoundError(trace, {
-                message: `No item found at ${new StaticSyncablePath(path.storageRootId, ...idsSoFar).toString()}`,
+                message: `No item found at ${new SyncablePath(path.storageRootId, ...idsSoFar).toString()}`,
                 errorCode: 'not-found'
               })
             );

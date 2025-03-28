@@ -4,7 +4,7 @@ import type { CryptoKeySetId } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { NotificationManager } from 'freedom-notification-types';
 import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
-import { StaticSyncablePath } from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 
 import { DefaultMutableSyncableFolderAccessor } from '../internal/types/DefaultMutableSyncableFolderAccessor.ts';
 import { DefaultMutableSyncableFolderAccessorBase } from '../internal/types/DefaultMutableSyncableFolderAccessorBase.ts';
@@ -31,7 +31,7 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
     provenance: SyncableProvenance;
   }) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
-    const path = new StaticSyncablePath(storageRootId);
+    const path = new SyncablePath(storageRootId);
 
     super({ backing, syncTracker, path });
 

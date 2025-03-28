@@ -9,7 +9,7 @@ import { makeTimedAccessChangeSchema } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { SignedValue, TrustedTimeId } from 'freedom-crypto-data';
+import type { SignedValue, TrustedTimeName } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import type { Schema } from 'yaschema';
 
@@ -20,14 +20,14 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
   async <RoleT extends string>(
     trace: Trace,
     {
-      generateTrustedTimeIdForAccessChange,
+      generateTrustedTimeNameForAccessChange,
       cryptoService,
       accessControlDoc,
       params,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
-      generateTrustedTimeIdForAccessChange: PRFunc<TrustedTimeId, never, [AccessChange<RoleT>]>;
+      generateTrustedTimeNameForAccessChange: PRFunc<TrustedTimeName, never, [AccessChange<RoleT>]>;
       cryptoService: CryptoService;
       accessControlDoc: AccessControlDocument<RoleT>;
       params: Omit<AddAccessChangeParams<RoleT>, 'type'>;
@@ -61,15 +61,15 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
       encryptedSecretKeysForNewUserBySharedKeysId: encryptedSecretKeysForNewUserBySharedKeysId.value
     };
 
-    const trustedTimeId = await generateTrustedTimeIdForAccessChange(trace, addAccessChange);
+    const trustedTimeName = await generateTrustedTimeNameForAccessChange(trace, addAccessChange);
     /* node:coverage disable */
-    if (!trustedTimeId.ok) {
-      return trustedTimeId;
+    if (!trustedTimeName.ok) {
+      return trustedTimeName;
     }
     /* node:coverage enable */
 
     return await cryptoService.generateSignedValue<TimedAccessChange<RoleT>>(trace, {
-      value: { ...addAccessChange, trustedTimeId: trustedTimeId.value },
+      value: { ...addAccessChange, trustedTimeName: trustedTimeName.value },
       valueSchema: makeTimedAccessChangeSchema({ roleSchema }),
       signatureExtras: undefined,
       signatureExtrasSchema: undefined

@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
-import type { SyncablePath } from 'freedom-sync-types';
-import { DynamicSyncablePath, StaticSyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath } from 'freedom-sync-types';
+import { DynamicSyncablePath, SyncablePath } from 'freedom-sync-types';
 
 import type { StoreBase } from '../../types/StoreBase.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
@@ -12,9 +12,9 @@ import { getSyncableAtPath } from './getSyncableAtPath.ts';
  * same path */
 export const getFolderPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, path: SyncablePath): PR<StaticSyncablePath, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: SyncableStore, path: OldSyncablePath): PR<SyncablePath, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     if (path.ids.length === 0) {
-      return makeSuccess(new StaticSyncablePath(path.storageRootId));
+      return makeSuccess(new SyncablePath(path.storageRootId));
     }
 
     if (store.path.storageRootId !== path.storageRootId) {

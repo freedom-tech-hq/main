@@ -3,7 +3,7 @@ import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } fr
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, StaticSyncablePath } from 'freedom-sync-types';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
 import { ACCESS_CONTROL_BUNDLE_ID, getSyncableAtPath, STORE_CHANGES_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
@@ -17,7 +17,7 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
     args: {
       remoteId: RemoteId;
-      path: StaticSyncablePath;
+      path: SyncablePath;
       hash: Sha256Hash;
     }
   ): PR<undefined> => {
@@ -57,7 +57,7 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
       syncService: SyncService;
       pulled: OutOfSyncFolder | OutOfSyncFile | OutOfSyncBundle;
     },
-    { remoteId, path }: { remoteId: RemoteId; path: StaticSyncablePath }
+    { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
     switch (pulled.type) {
       case 'folder':
@@ -84,7 +84,7 @@ const pushEverything = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
-    { remoteId, path }: { remoteId: RemoteId; path: StaticSyncablePath }
+    { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
     const pushToRemote = (syncService as InternalSyncService).pusher;
 
@@ -142,7 +142,7 @@ const pushBundle = makeAsyncResultFunc(
     }: {
       store: SyncableStore;
       syncService: SyncService;
-      path: StaticSyncablePath;
+      path: SyncablePath;
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
   ): PR<undefined> => {
@@ -180,7 +180,7 @@ const pushFolder = makeAsyncResultFunc(
     }: {
       store: SyncableStore;
       syncService: SyncService;
-      path: StaticSyncablePath;
+      path: SyncablePath;
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
   ): PR<undefined> => {
@@ -231,7 +231,7 @@ const pushFile = makeAsyncResultFunc(
   [import.meta.filename, 'pushFile'],
   async (
     trace,
-    { remoteId, store, syncService, path }: { remoteId: RemoteId; store: SyncableStore; syncService: SyncService; path: StaticSyncablePath }
+    { remoteId, store, syncService, path }: { remoteId: RemoteId; store: SyncableStore; syncService: SyncService; path: SyncablePath }
   ): PR<undefined> => {
     const pushToRemote = (syncService as InternalSyncService).pusher;
 

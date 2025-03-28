@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import type { SyncableStoreRole } from '../types/SyncableStoreRole.ts';
@@ -15,7 +15,7 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
   async (
     trace,
     store: SyncableStore,
-    { path }: { path: SyncablePath }
+    { path }: { path: OldSyncablePath }
   ): PR<{ role: SyncableStoreRole; cryptoKeySetId: CryptoKeySetId }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const cryptoKeySetIds = await store.cryptoService.getCryptoKeySetIds(trace);
     if (!cryptoKeySetIds.ok) {

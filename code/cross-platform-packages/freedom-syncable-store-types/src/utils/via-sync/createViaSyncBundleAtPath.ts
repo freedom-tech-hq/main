@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { StaticSyncablePath, SyncableBundleMetadata } from 'freedom-sync-types';
+import type { SyncableBundleMetadata, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
@@ -12,7 +12,7 @@ export const createViaSyncBundleAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: MutableSyncableStore,
-    path: StaticSyncablePath,
+    path: SyncablePath,
     metadata: SyncableBundleMetadata
   ): PR<MutableFileStore, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parent = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('file'));

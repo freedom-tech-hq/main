@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { makeSuccess } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
-import { trustedTimeIdInfo } from 'freedom-crypto-data';
+import { trustedTimeNameInfo } from 'freedom-crypto-data';
 import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -41,8 +41,8 @@ describe('generateSignedAddAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.value.id,
         role: 'editor'

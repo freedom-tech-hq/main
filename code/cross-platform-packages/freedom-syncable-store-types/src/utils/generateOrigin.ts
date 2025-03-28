@@ -3,7 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generateSha256HashForEmptyString } from 'freedom-crypto';
 import type { CryptoService } from 'freedom-crypto-service';
-import type { SignedSyncableOrigin, StaticSyncablePath } from 'freedom-sync-types';
+import type { SignedSyncableOrigin, SyncablePath } from 'freedom-sync-types';
 import { syncableOriginSchema, syncableOriginSignatureExtrasSchema } from 'freedom-sync-types';
 
 export const generateOrigin = makeAsyncResultFunc(
@@ -15,7 +15,7 @@ export const generateOrigin = makeAsyncResultFunc(
       contentHash,
       cryptoService
     }: {
-      path: StaticSyncablePath;
+      path: SyncablePath;
       /** Use `undefined` if the path represents a folder-like item */
       contentHash: Sha256Hash | undefined;
       cryptoService: CryptoService;

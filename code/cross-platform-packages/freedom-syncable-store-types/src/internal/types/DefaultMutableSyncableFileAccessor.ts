@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { StaticSyncablePath, SyncableFileMetadata } from 'freedom-sync-types';
+import type { SyncableFileMetadata, SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
@@ -13,7 +13,7 @@ import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNe
 export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAccessor {
   public readonly type = 'file';
 
-  public readonly path: StaticSyncablePath;
+  public readonly path: SyncablePath;
 
   protected readonly weakStore_: WeakRef<MutableSyncableStore>;
   protected readonly backing_: SyncableStoreBacking;
@@ -28,7 +28,7 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
   }: {
     store: WeakRef<MutableSyncableStore>;
     backing: SyncableStoreBacking;
-    path: StaticSyncablePath;
+    path: SyncablePath;
     decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
   }) {
     this.weakStore_ = store;

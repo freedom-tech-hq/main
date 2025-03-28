@@ -4,9 +4,9 @@ import type { SyncableBundleMetadata } from './metadata/SyncableBundleMetadata.t
 import type { SyncableFileMetadata } from './metadata/SyncableFileMetadata.ts';
 import type { SyncableFolderMetadata } from './metadata/SyncableFolderMetadata.ts';
 import type { RemoteId } from './RemoteId.ts';
-import type { StaticSyncablePath } from './StaticSyncablePath.ts';
+import type { SyncablePath } from './SyncablePath.ts';
 
-type SyncPushArgs = { remoteId: RemoteId; path: StaticSyncablePath } & (
+type SyncPushArgs = { remoteId: RemoteId; path: SyncablePath } & (
   | {
       type: 'folder';
       data?: undefined;

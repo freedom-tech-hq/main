@@ -5,7 +5,7 @@ import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
 import type { CryptoKeySetId, EncryptedValue, SignedValue } from 'freedom-crypto-data';
-import { extractPartsFromTrustedTimeId, makeSignedValueSchema } from 'freedom-crypto-data';
+import { extractPartsFromTrustedTimeName, makeSignedValueSchema } from 'freedom-crypto-data';
 import type { Schema } from 'yaschema';
 
 import type { AccessControlState } from './AccessControlState.ts';
@@ -86,11 +86,11 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
       const state = this.initialState_.get()!.value;
 
       for (const change of this.changes_.values()) {
-        const trustedTimeIdParts = await extractPartsFromTrustedTimeId(trace, change.value.trustedTimeId);
-        if (!trustedTimeIdParts.ok) {
+        const trustedTimeNameParts = await extractPartsFromTrustedTimeName(trace, change.value.trustedTimeName);
+        if (!trustedTimeNameParts.ok) {
           continue; // Skipping invalid time
         }
-        if (trustedTimeIdParts.value.timeMSec <= timeMSec) {
+        if (trustedTimeNameParts.value.timeMSec <= timeMSec) {
           applyChangeToState(state, change.value);
         }
       }

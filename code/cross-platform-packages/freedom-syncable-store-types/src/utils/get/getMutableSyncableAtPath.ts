@@ -2,8 +2,8 @@ import type { PR } from 'freedom-async';
 import { allResults, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { StaticSyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath, SyncableItemType } from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
@@ -19,7 +19,7 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
   async <T extends SyncableItemType = SyncableItemType>(
     trace: Trace,
     store: MutableSyncableStore,
-    path: SyncablePath,
+    path: OldSyncablePath,
     expectedType?: SingleOrArray<T>
   ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     if (store.path.storageRootId !== path.storageRootId) {
@@ -32,7 +32,7 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
     }
 
     if (path.ids.length === 0) {
-      const guards = guardIsExpectedType(trace, new StaticSyncablePath(path.storageRootId), store, expectedType, 'wrong-type');
+      const guards = guardIsExpectedType(trace, new SyncablePath(path.storageRootId), store, expectedType, 'wrong-type');
       if (!guards.ok) {
         return generalizeFailureResult(trace, guards, 'wrong-type');
       }

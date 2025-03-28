@@ -16,4 +16,4 @@ export * from './PureSigningKeySet.ts';
 export * from './PureVerifyingKeySet.ts';
 export * from './SignedValue.ts';
 export * from './SigningMode.ts';
-export * from './TrustedTimeId.ts';
+export * from './TrustedTimeName.ts';

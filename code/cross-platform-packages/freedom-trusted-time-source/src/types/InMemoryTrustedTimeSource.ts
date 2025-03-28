@@ -5,8 +5,8 @@ import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import { generateCryptoSignVerifyKeySet, generateSignedValue, isSignedValueValid } from 'freedom-crypto';
-import type { PureSigningKeySet, PureVerifyingKeySet, TrustedTimeId } from 'freedom-crypto-data';
-import { signedTimeIdSchema, signedTimeIdSignatureExtrasSchema, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
+import type { PureSigningKeySet, PureVerifyingKeySet, TrustedTimeName } from 'freedom-crypto-data';
+import { signedTimeNameSchema, signedTimeNameSignatureExtrasSchema, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
 import { once } from 'lodash-es';
 
 import type { TrustedTimeSource } from './TrustedTimeSource.ts';
@@ -18,39 +18,39 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
     this.signingAndVerifyingKeys_ = signingAndVerifyingKeys;
   }
 
-  public readonly generateTrustedTimeId = makeAsyncResultFunc(
-    [import.meta.filename, 'generateTrustedTimeId'],
-    async (trace, { parentPathHash, contentHash }: { parentPathHash: Sha256Hash; contentHash: Sha256Hash }): PR<TrustedTimeId> => {
+  public readonly generateTrustedTimeName = makeAsyncResultFunc(
+    [import.meta.filename, 'generateTrustedTimeName'],
+    async (trace, { parentPathHash, contentHash }: { parentPathHash: Sha256Hash; contentHash: Sha256Hash }): PR<TrustedTimeName> => {
       const signingAndVerifyingKeys = await resolveChain(this.getSigningAndVerifyingKeys_(trace));
       if (!signingAndVerifyingKeys.ok) {
         return signingAndVerifyingKeys;
       }
 
-      const signedTimeId = await generateSignedValue(trace, {
-        value: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
-        valueSchema: timeIdInfo.schema,
+      const signedTimeName = await generateSignedValue(trace, {
+        value: timeNameInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+        valueSchema: timeNameInfo.schema,
         signatureExtras: { parentPathHash, contentHash },
-        signatureExtrasSchema: signedTimeIdSignatureExtrasSchema,
+        signatureExtrasSchema: signedTimeNameSignatureExtrasSchema,
         signingKeys: signingAndVerifyingKeys.value
       });
-      if (!signedTimeId.ok) {
-        return signedTimeId;
+      if (!signedTimeName.ok) {
+        return signedTimeName;
       }
 
-      const serialization = await signedTimeIdSchema.serializeAsync(signedTimeId.value, { validation: 'hard' });
+      const serialization = await signedTimeNameSchema.serializeAsync(signedTimeName.value, { validation: 'hard' });
       if (serialization.error !== undefined) {
         return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));
       }
 
-      return makeSuccess(trustedTimeIdInfo.make(serialization.serialized as string));
+      return makeSuccess(trustedTimeNameInfo.make(serialization.serialized as string));
     }
   );
 
-  public readonly isTrustedTimeIdValid = makeAsyncResultFunc(
-    [import.meta.filename, 'isTrustedTimeIdValid'],
+  public readonly isTrustedTimeNameValid = makeAsyncResultFunc(
+    [import.meta.filename, 'isTrustedTimeNameValid'],
     async (
       trace,
-      trustedTimeId: TrustedTimeId,
+      trustedTimeName: TrustedTimeName,
       { parentPathHash, contentHash }: { parentPathHash: Sha256Hash; contentHash: Sha256Hash }
     ): PR<boolean> => {
       const signingAndVerifyingKeys = await resolveChain(this.getSigningAndVerifyingKeys_(trace));
@@ -58,9 +58,9 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
         return signingAndVerifyingKeys;
       }
 
-      const serializedSignedTimeId = trustedTimeIdInfo.removePrefix(trustedTimeId);
+      const serializedSignedTimeName = trustedTimeNameInfo.removePrefix(trustedTimeName);
 
-      const deserialization = await signedTimeIdSchema.deserializeAsync(serializedSignedTimeId, { validation: 'hard' });
+      const deserialization = await signedTimeNameSchema.deserializeAsync(serializedSignedTimeName, { validation: 'hard' });
       if (deserialization.error !== undefined) {
         return makeSuccess(false);
       }

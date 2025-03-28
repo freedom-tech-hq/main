@@ -1,4 +1,4 @@
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import type { MutableTrustMarkStore } from './MutableTrustMarkStore.ts';
 
@@ -10,7 +10,7 @@ interface TrustMarkStoreStorage {
 export class InMemoryTrustMarkStore implements MutableTrustMarkStore {
   private readonly storage: TrustMarkStoreStorage = {};
 
-  public isTrusted(path: StaticSyncablePath, markId: string): boolean {
+  public isTrusted(path: SyncablePath, markId: string): boolean {
     let cursor: TrustMarkStoreStorage | undefined = this.storage;
     for (const id of path.ids) {
       cursor = cursor?.[`/${id}`];
@@ -22,7 +22,7 @@ export class InMemoryTrustMarkStore implements MutableTrustMarkStore {
     return cursor?.[`#${markId}`] === true;
   }
 
-  public markTrusted(path: StaticSyncablePath, markId: string) {
+  public markTrusted(path: SyncablePath, markId: string) {
     let cursor: TrustMarkStoreStorage = this.storage;
     for (const id of path.ids) {
       if (cursor[`/${id}`] === undefined) {
@@ -35,7 +35,7 @@ export class InMemoryTrustMarkStore implements MutableTrustMarkStore {
     cursor[`#${markId}`] = true;
   }
 
-  public clearTrust(path: StaticSyncablePath, markId?: string) {
+  public clearTrust(path: SyncablePath, markId?: string) {
     let cursor: TrustMarkStoreStorage | undefined = this.storage;
     let index = 0;
     for (const id of path.ids) {

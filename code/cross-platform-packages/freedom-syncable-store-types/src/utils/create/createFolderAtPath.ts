@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { DynamicSyncableId, SyncablePath } from 'freedom-sync-types';
+import type { DynamicSyncableId, OldSyncablePath } from 'freedom-sync-types';
 
 import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -11,7 +11,7 @@ export const createFolderAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: MutableSyncableStore,
-    parentPath: SyncablePath,
+    parentPath: OldSyncablePath,
     id: DynamicSyncableId
   ): PR<MutableSyncableFolderAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parent = await getMutableSyncableAtPath(trace, store, parentPath, 'folder');

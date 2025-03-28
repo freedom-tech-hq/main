@@ -6,7 +6,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { addCoordinatedHashSaltChangeListener } from 'freedom-crypto';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import { doPeriodic } from 'freedom-periodic';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { getRecursiveFolderPaths, getSyncableHashAtPath } from 'freedom-syncable-store-types';
 
@@ -36,7 +36,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
 
     const onRemoteContentChange = makeAsyncResultFunc(
       [import.meta.filename, 'onRemoteContentChange'],
-      async (trace, { path, hash: remoteHash }: { path: StaticSyncablePath; hash: Sha256Hash }): PR<undefined> => {
+      async (trace, { path, hash: remoteHash }: { path: SyncablePath; hash: Sha256Hash }): PR<undefined> => {
         syncService.appendLogEntry?.({ type: 'notified', pathString: path.toString() });
 
         const localHash = await getSyncableHashAtPath(trace, store, path);
@@ -59,41 +59,38 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       }
     );
 
-    const onFolderAdded = makeAsyncResultFunc(
-      [import.meta.filename, 'onFolderAdded'],
-      async (trace, path: StaticSyncablePath): PR<undefined> => {
-        const streamId = await generateStreamIdForPath(trace, { path });
-        if (!streamId.ok) {
-          return streamId;
-        }
-        // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
-
-        const pathString = path.toString();
-
-        DEV: debugTopic('SYNC', (log) => log(`Adding contentChange listeners for ${path.toString()}`));
-        for (const deviceNotificationClient of deviceNotificationClients) {
-          removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
-          removeListenersByFolderPath[pathString].push(
-            deviceNotificationClient.addListener(`contentChange:${streamId.value}`, ({ hash }) => {
-              onRemoteContentChange(trace, { path, hash });
-            })
-          );
-        }
-
-        const localHash = await getSyncableHashAtPath(trace, store, path);
-        if (!localHash.ok) {
-          return generalizeFailureResult(trace, localHash, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-        }
-
-        // Pulling whenever we add a new folder because otherwise there's a race condition where the folder could have been changed on the
-        // remote in the meantime
-        syncService.pullFromRemotes({ path, hash: localHash.value });
-
-        return makeSuccess(undefined);
+    const onFolderAdded = makeAsyncResultFunc([import.meta.filename, 'onFolderAdded'], async (trace, path: SyncablePath): PR<undefined> => {
+      const streamId = await generateStreamIdForPath(trace, { path });
+      if (!streamId.ok) {
+        return streamId;
       }
-    );
+      // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
 
-    const onFolderRemoved = (folderPath: StaticSyncablePath) => {
+      const pathString = path.toString();
+
+      DEV: debugTopic('SYNC', (log) => log(`Adding contentChange listeners for ${path.toString()}`));
+      for (const deviceNotificationClient of deviceNotificationClients) {
+        removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
+        removeListenersByFolderPath[pathString].push(
+          deviceNotificationClient.addListener(`contentChange:${streamId.value}`, ({ hash }) => {
+            onRemoteContentChange(trace, { path, hash });
+          })
+        );
+      }
+
+      const localHash = await getSyncableHashAtPath(trace, store, path);
+      if (!localHash.ok) {
+        return generalizeFailureResult(trace, localHash, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      }
+
+      // Pulling whenever we add a new folder because otherwise there's a race condition where the folder could have been changed on the
+      // remote in the meantime
+      syncService.pullFromRemotes({ path, hash: localHash.value });
+
+      return makeSuccess(undefined);
+    });
+
+    const onFolderRemoved = (folderPath: SyncablePath) => {
       const folderPathString = folderPath.toString();
       const removeListeners = removeListenersByFolderPath[folderPathString];
       delete removeListenersByFolderPath[folderPathString];

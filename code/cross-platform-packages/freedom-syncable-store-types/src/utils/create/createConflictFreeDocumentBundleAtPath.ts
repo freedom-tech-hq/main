@@ -5,8 +5,8 @@ import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { makeUuid, type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromString } from 'freedom-crypto';
-import type { DynamicSyncableId, StaticSyncablePath, SyncablePath } from 'freedom-sync-types';
-import { timeId } from 'freedom-sync-types';
+import type { DynamicSyncableId, OldSyncablePath, SyncablePath } from 'freedom-sync-types';
+import { timeName } from 'freedom-sync-types';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -20,10 +20,10 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
   async <PrefixT extends string, DocumentT extends ConflictFreeDocument<PrefixT>>(
     trace: Trace,
     store: MutableSyncableStore,
-    parentPath: SyncablePath,
+    parentPath: OldSyncablePath,
     id: DynamicSyncableId,
     { newDocument }: { newDocument: (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> }) => DocumentT }
-  ): PR<SaveableDocument<DocumentT> & { path: StaticSyncablePath }, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<SaveableDocument<DocumentT> & { path: SyncablePath }, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const docBundle = await createBundleAtPath(trace, store, parentPath, id);
     /* node:coverage disable */
     if (!docBundle.ok) {
@@ -41,7 +41,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     const snapshotsPath = snapshots.value.path;
 
     const initialSnapshotId = await snapshots.value.generateNewSyncableItemId(trace, {
-      id: timeId(makeUuid()),
+      id: timeName(makeUuid()),
       parentPath: snapshotsPath,
       getSha256ForItemProvenance: generateSha256HashForEmptyString
     });
@@ -84,7 +84,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
         const encodedDelta = document.encodeDelta();
 
         const deltaId = await deltas.value.generateNewSyncableItemId(trace, {
-          id: timeId(makeUuid()),
+          id: timeName(makeUuid()),
           parentPath: deltasPath,
           getSha256ForItemProvenance: (trace) => generateSha256HashFromString(trace, encodedDelta)
         });

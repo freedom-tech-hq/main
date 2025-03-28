@@ -14,8 +14,8 @@ import { objectEntries } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
-import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
-import type { DynamicSyncableId, StaticSyncablePath, SyncableFolderMetadata, SyncableId, SyncableItemType } from 'freedom-sync-types';
+import { extractPartsFromTimeName, extractPartsFromTrustedTimeName, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
+import type { DynamicSyncableId, SyncableFolderMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
@@ -40,13 +40,13 @@ import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderManagement {
   public readonly type = 'folder';
-  public readonly path: StaticSyncablePath;
+  public readonly path: SyncablePath;
 
   private readonly syncTracker_: SyncTracker;
 
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
   private readonly folderOperationsHandler_: FolderOperationsHandler;
-  private readonly makeFolderAccessor_: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
+  private readonly makeFolderAccessor_: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
 
   private readonly backing_: SyncableStoreBacking;
 
@@ -64,8 +64,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
     folderOperationsHandler: FolderOperationsHandler;
-    path: StaticSyncablePath;
-    makeFolderAccessor: (args: { path: StaticSyncablePath }) => MutableSyncableFolderAccessor;
+    path: SyncablePath;
+    makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
     this.weakStore_ = store;
     this.backing_ = backing;
@@ -384,22 +384,22 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
               break;
 
             case 'time':
-              if (timeIdInfo.is(id)) {
-                const timeIdParts = await extractPartsFromTimeId(trace, id);
-                if (!timeIdParts.ok) {
+              if (timeNameInfo.is(id)) {
+                const timeNameParts = await extractPartsFromTimeName(trace, id);
+                if (!timeNameParts.ok) {
                   continue;
                 }
 
-                if (timeIdParts.value.uuid === dynamicId.uuid) {
+                if (timeNameParts.value.uuid === dynamicId.uuid) {
                   return makeSuccess(id);
                 }
-              } else if (trustedTimeIdInfo.is(id)) {
-                const timeIdParts = await extractPartsFromTrustedTimeId(trace, id);
-                if (!timeIdParts.ok) {
+              } else if (trustedTimeNameInfo.is(id)) {
+                const timeNameParts = await extractPartsFromTrustedTimeName(trace, id);
+                if (!timeNameParts.ok) {
                   continue;
                 }
 
-                if (timeIdParts.value.uuid === dynamicId.uuid) {
+                if (timeNameParts.value.uuid === dynamicId.uuid) {
                   return makeSuccess(id);
                 }
               }
@@ -644,7 +644,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
   private readonly guardNotDeleted_ = makeAsyncResultFunc(
     [import.meta.filename, 'guardNotDeleted_'],
-    async <ErrorCodeT extends string>(trace: Trace, path: StaticSyncablePath, errorCode: ErrorCodeT): PR<undefined, ErrorCodeT> => {
+    async <ErrorCodeT extends string>(trace: Trace, path: SyncablePath, errorCode: ErrorCodeT): PR<undefined, ErrorCodeT> => {
       const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, path);
       if (!isDeleted.ok) {
         return isDeleted;
@@ -656,14 +656,11 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     }
   );
 
-  private makeItemAccessor_<T extends SyncableItemType>(path: StaticSyncablePath, itemType: T): SyncableItemAccessor & { type: T } {
+  private makeItemAccessor_<T extends SyncableItemType>(path: SyncablePath, itemType: T): SyncableItemAccessor & { type: T } {
     return this.makeMutableItemAccessor_<T>(path, itemType);
   }
 
-  private makeMutableItemAccessor_<T extends SyncableItemType>(
-    path: StaticSyncablePath,
-    itemType: T
-  ): MutableSyncableItemAccessor & { type: T } {
+  private makeMutableItemAccessor_<T extends SyncableItemType>(path: SyncablePath, itemType: T): MutableSyncableItemAccessor & { type: T } {
     switch (itemType) {
       case 'folder':
         return this.makeFolderAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };

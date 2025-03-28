@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath } from 'freedom-sync-types';
 
 import type { SyncableFolderAccessor } from '../../types/SyncableFolderAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
@@ -11,7 +11,7 @@ export const getFolderAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    path: SyncablePath
+    path: OldSyncablePath
   ): PR<SyncableFolderAccessor, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
     await getSyncableAtPath(trace, store, path, 'folder')
 );

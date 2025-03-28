@@ -6,7 +6,7 @@ import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnaps
 import type { Trace } from 'freedom-contexts';
 import type { SignedValue } from 'freedom-crypto-data';
 import { makeSignedValueSchema } from 'freedom-crypto-data';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../consts/special-file-ids.ts';
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
@@ -48,7 +48,7 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
 
   // Field Helpers
 
-  public readonly isDeletedPath = (path: StaticSyncablePath) => {
+  public readonly isDeletedPath = (path: SyncablePath) => {
     return this.deletedPathStrings_.has(path.toString());
   };
 
@@ -76,7 +76,7 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
         encodedDelta
       }: {
         store: SyncableStore;
-        path: StaticSyncablePath;
+        path: SyncablePath;
         role: SyncableStoreRole;
         encodedDelta: EncodedConflictFreeDocumentDelta<SyncableStoreChangesDocumentPrefix>;
       }

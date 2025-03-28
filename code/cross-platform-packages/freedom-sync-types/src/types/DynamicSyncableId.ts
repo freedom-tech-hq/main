@@ -9,11 +9,11 @@ export interface DynamicSyncableEncryptedId {
 
 export const encId = (plainId: string): DynamicSyncableEncryptedId => ({ type: 'encrypted', plainId });
 
-export interface DynamicSyncableTimeId {
+export interface DynamicSyncableTimeName {
   type: 'time';
   uuid: Uuid;
 }
 
-export const timeId = (uuid: Uuid): DynamicSyncableTimeId => ({ type: 'time', uuid });
+export const timeName = (uuid: Uuid): DynamicSyncableTimeName => ({ type: 'time', uuid });
 
-export type DynamicSyncableId = SyncableId | DynamicSyncableEncryptedId | DynamicSyncableTimeId;
+export type DynamicSyncableId = SyncableId | DynamicSyncableEncryptedId | DynamicSyncableTimeName;

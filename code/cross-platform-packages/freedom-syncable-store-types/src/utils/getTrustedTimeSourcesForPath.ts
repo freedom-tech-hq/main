@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { OldSyncablePath } from 'freedom-sync-types';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
@@ -12,7 +12,7 @@ export const getTrustedTimeSourcesForPath = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    path: SyncablePath
+    path: OldSyncablePath
   ): PR<TrustedTimeSource[], 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parentFolderPath = await getFolderPath(trace, store, path);
     if (!parentFolderPath.ok) {

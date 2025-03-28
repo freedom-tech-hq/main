@@ -3,14 +3,14 @@ import { objectEntries } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import {
-  type StaticSyncablePath,
   type SyncableBundleMetadata,
   type SyncableFileMetadata,
   type SyncableFolderMetadata,
   type SyncableId,
   type SyncableItemMetadata,
   type SyncableItemType,
-  syncableItemTypes
+  syncableItemTypes,
+  type SyncablePath
 } from 'freedom-sync-types';
 import { isExpectedType, type SyncableStoreBacking } from 'freedom-syncable-store-types';
 import type { SyncableStoreBackingFileAccessor } from 'freedom-syncable-store-types/lib/types/backing/accessors/SyncableStoreBackingFileAccessor';
@@ -65,7 +65,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly existsAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'existsAtPath'],
-    async (trace, path: StaticSyncablePath): PR<boolean> => {
+    async (trace, path: SyncablePath): PR<boolean> => {
       const found = await traversePath(trace, this.root_, path);
       if (!found.ok) {
         if (found.value.errorCode === 'not-found') {
@@ -83,7 +83,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     [import.meta.filename, 'getAtPath'],
     async <T extends SyncableItemType = SyncableItemType>(
       trace: Trace,
-      path: StaticSyncablePath,
+      path: SyncablePath,
       expectedType?: SingleOrArray<T>
     ): PR<SyncableStoreBackingItemAccessor & { type: T }, 'not-found' | 'wrong-type'> => {
       const found = await traversePath(trace, this.root_, path, expectedType);
@@ -100,7 +100,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     [import.meta.filename, 'getIdsInPath'],
     async (
       trace,
-      path: StaticSyncablePath,
+      path: SyncablePath,
       options?: { type?: SingleOrArray<SyncableItemType> }
     ): PR<SyncableId[], 'not-found' | 'wrong-type'> => {
       const found = await traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
@@ -142,7 +142,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly getMetadataAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'getMetadataAtPath'],
-    async (trace, path: StaticSyncablePath): PR<SyncableItemMetadata & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath): PR<SyncableItemMetadata & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
       if (path.ids.length === 0) {
         return await this.root_.metadata(trace);
       }
@@ -165,7 +165,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     [import.meta.filename, 'getMetadataByIdInPath'],
     async (
       trace,
-      path: StaticSyncablePath,
+      path: SyncablePath,
       ids?: Set<SyncableId>
     ): PR<Partial<Record<SyncableId, SyncableItemMetadata & FileSystemLocalItemMetadata>>, 'not-found' | 'wrong-type'> => {
       const found = await traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
@@ -206,7 +206,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     [import.meta.filename, 'createBinaryFileWithPath'],
     async (
       trace,
-      path: StaticSyncablePath,
+      path: SyncablePath,
       { data, metadata }: { data: Uint8Array; metadata: SyncableFileMetadata & Omit<FileSystemLocalItemMetadata, 'id'> }
     ): PR<SyncableStoreBackingFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
@@ -241,7 +241,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     [import.meta.filename, 'createFolderWithPath'],
     async (
       trace,
-      path: StaticSyncablePath,
+      path: SyncablePath,
       { metadata }: { metadata: (SyncableBundleMetadata | SyncableFolderMetadata) & Omit<FileSystemLocalItemMetadata, 'id'> }
     ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
@@ -274,7 +274,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly deleteAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'deleteAtPath'],
-    async (trace, path: StaticSyncablePath): PR<undefined, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath): PR<undefined, 'not-found' | 'wrong-type'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
@@ -296,7 +296,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly updateLocalMetadataAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'updateLocalMetadataAtPath'],
-    async (trace, path: StaticSyncablePath, metadata: Partial<FileSystemLocalItemMetadata>): PR<undefined, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath, metadata: Partial<FileSystemLocalItemMetadata>): PR<undefined, 'not-found' | 'wrong-type'> => {
       const found = await traversePath(trace, this.root_, path);
       if (!found.ok) {
         return found;

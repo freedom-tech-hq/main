@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractKeyIdFromSignedValue } from 'freedom-crypto';
-import { extractPartsFromTrustedTimeId } from 'freedom-crypto-data';
+import { extractPartsFromTrustedTimeName } from 'freedom-crypto-data';
 import type { SignedSyncableAcceptance } from 'freedom-sync-types';
 
 import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.ts';
@@ -11,7 +11,7 @@ import { ownerAndAboveRoles } from '../../../types/SyncableStoreRole.ts';
 import { getFolderPath } from '../../get/getFolderPath.ts';
 import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
-import { isTrustedTimeIdValidForPath } from '../isTrustedTimeIdValidForPath.ts';
+import { isTrustedTimeNameValidForPath } from '../isTrustedTimeNameValidForPath.ts';
 
 export const isAcceptanceValid = makeAsyncResultFunc(
   [import.meta.filename],
@@ -50,21 +50,21 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const trustedTimeValid = await isTrustedTimeIdValidForPath(trace, store, {
+    const trustedTimeValid = await isTrustedTimeNameValidForPath(trace, store, {
       path: item.path,
-      trustedTimeId: acceptance.value.trustedTimeId,
+      trustedTimeName: acceptance.value.trustedTimeName,
       contentHash: contentHash.value
     });
     if (!trustedTimeValid.ok) {
       return generalizeFailureResult(trace, trustedTimeValid, ['deleted', 'not-found', 'wrong-type']);
     } else if (!trustedTimeValid.value) {
-      DEV: debugTopic('VALIDATION', (log) => log(`Invalid trusted time ID for ${item.path.toString()}`));
+      DEV: debugTopic('VALIDATION', (log) => log(`Invalid trusted time name for ${item.path.toString()}`));
       return makeSuccess(false);
     }
 
-    const acceptanceTrustedTimeIdParts = await extractPartsFromTrustedTimeId(trace, acceptance.value.trustedTimeId);
-    if (!acceptanceTrustedTimeIdParts.ok) {
-      return acceptanceTrustedTimeIdParts;
+    const acceptanceTrustedTimeNameParts = await extractPartsFromTrustedTimeName(trace, acceptance.value.trustedTimeName);
+    if (!acceptanceTrustedTimeNameParts.ok) {
+      return acceptanceTrustedTimeNameParts;
     }
 
     const folderPath = await getFolderPath(trace, store, item.path);
@@ -80,14 +80,14 @@ export const isAcceptanceValid = makeAsyncResultFunc(
     const isValid = await folder.value.didCryptoKeyHaveRoleAtTimeMSec(trace, {
       cryptoKeySetId: signingCryptoKeySetId.value,
       oneOfRoles: ownerAndAboveRoles,
-      timeMSec: acceptanceTrustedTimeIdParts.value.timeMSec
+      timeMSec: acceptanceTrustedTimeNameParts.value.timeMSec
     });
     if (!isValid.ok) {
       return isValid;
     } else if (!isValid.value) {
       DEV: debugTopic('VALIDATION', (log) =>
         log(
-          `Origin didn't have change accepting access at ${new Date(acceptanceTrustedTimeIdParts.value.timeMSec).toString()} for ${item.path.toString()}`
+          `Origin didn't have change accepting access at ${new Date(acceptanceTrustedTimeNameParts.value.timeMSec).toString()} for ${item.path.toString()}`
         )
       );
       return makeSuccess(false);

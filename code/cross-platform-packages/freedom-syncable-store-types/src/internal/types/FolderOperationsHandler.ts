@@ -4,9 +4,9 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { base64String, makeIsoDateTime } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalSchemaValidationError, InternalStateError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
-import { extractPartsFromTimeId, extractPartsFromTrustedTimeId, timeIdInfo, trustedTimeIdInfo } from 'freedom-crypto-data';
-import type { DynamicSyncableId, StaticSyncablePath, SyncableId, SyncablePath } from 'freedom-sync-types';
-import { encId, syncableEncryptedIdInfo, timeId } from 'freedom-sync-types';
+import { extractPartsFromTimeName, extractPartsFromTrustedTimeName, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
+import type { DynamicSyncableId, OldSyncablePath, SyncableId, SyncablePath } from 'freedom-sync-types';
+import { encId, syncableEncryptedIdInfo, timeName } from 'freedom-sync-types';
 
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
@@ -15,8 +15,8 @@ import type { SyncableStoreChange } from '../../types/SyncableStoreChange.ts';
 import { syncableStoreChangeSchema } from '../../types/SyncableStoreChange.ts';
 import type { SyncableStoreChangesDocument } from '../../types/SyncableStoreChangesDocument.ts';
 import { encryptAndSignBinary } from '../../utils/encryptAndSignBinary.ts';
-import { generateTrustedTimeIdForSyncable } from '../../utils/generateTrustedTimeIdForSyncable.ts';
-import { shouldUseTrustedTimeIdsInPath } from '../../utils/shouldUseTrustedTimeIdsInPath.ts';
+import { generateTrustedTimeNameForSyncable } from '../../utils/generateTrustedTimeNameForSyncable.ts';
+import { shouldUseTrustedTimeNamesInPath } from '../../utils/shouldUseTrustedTimeNamesInPath.ts';
 import { verifyAndDecryptBinary } from '../../utils/verifyAndDecryptBinary.ts';
 
 export class FolderOperationsHandler {
@@ -50,18 +50,18 @@ export class FolderOperationsHandler {
           return decrypted;
         }
         return makeSuccess(encId(decrypted.value));
-      } else if (trustedTimeIdInfo.is(id)) {
-        const timeIdParts = await extractPartsFromTrustedTimeId(trace, id);
-        if (!timeIdParts.ok) {
-          return timeIdParts;
+      } else if (trustedTimeNameInfo.is(id)) {
+        const timeNameParts = await extractPartsFromTrustedTimeName(trace, id);
+        if (!timeNameParts.ok) {
+          return timeNameParts;
         }
-        return makeSuccess(timeId(timeIdParts.value.uuid));
-      } else if (timeIdInfo.is(id)) {
-        const timeIdParts = await extractPartsFromTimeId(trace, id);
-        if (!timeIdParts.ok) {
-          return timeIdParts;
+        return makeSuccess(timeName(timeNameParts.value.uuid));
+      } else if (timeNameInfo.is(id)) {
+        const timeNameParts = await extractPartsFromTimeName(trace, id);
+        if (!timeNameParts.ok) {
+          return timeNameParts;
         }
-        return makeSuccess(timeId(timeIdParts.value.uuid));
+        return makeSuccess(timeName(timeNameParts.value.uuid));
       } else {
         return makeSuccess(id);
       }
@@ -76,7 +76,7 @@ export class FolderOperationsHandler {
         parentPath,
         id,
         getSha256ForItemProvenance
-      }: { parentPath: SyncablePath; id: DynamicSyncableId; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
+      }: { parentPath: OldSyncablePath; id: DynamicSyncableId; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
     ): PR<SyncableId> => {
       if (typeof id === 'string') {
         // Already a SyncableId
@@ -99,15 +99,15 @@ export class FolderOperationsHandler {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const shouldUseTrustedTime = await shouldUseTrustedTimeIdsInPath(trace, store, parentPath);
+          const shouldUseTrustedTime = await shouldUseTrustedTimeNamesInPath(trace, store, parentPath);
           if (!shouldUseTrustedTime.ok) {
             return shouldUseTrustedTime;
           }
 
           if (shouldUseTrustedTime.value) {
-            return await generateTrustedTimeIdForSyncable(trace, store, { parentPath, uuid: id.uuid, getSha256ForItemProvenance });
+            return await generateTrustedTimeNameForSyncable(trace, store, { parentPath, uuid: id.uuid, getSha256ForItemProvenance });
           } else {
-            return makeSuccess(timeIdInfo.make(`${makeIsoDateTime()}-${id.uuid}`));
+            return makeSuccess(timeNameInfo.make(`${makeIsoDateTime()}-${id.uuid}`));
           }
         }
       }
@@ -116,7 +116,7 @@ export class FolderOperationsHandler {
 
   public readonly isPathMarkedAsDeleted = makeAsyncResultFunc(
     [import.meta.filename, 'isPathMarkedAsDeleted'],
-    async (trace, path: StaticSyncablePath): PR<boolean> => {
+    async (trace, path: SyncablePath): PR<boolean> => {
       // TODO: TEMP - this should work as a live document
       // if (this.storeChangesDoc_ === undefined) {
       const storeChangesDoc = await this.getMutableSyncableStoreChangesDocument_(trace);
@@ -133,7 +133,7 @@ export class FolderOperationsHandler {
 
   public readonly markPathAsDeleted = makeAsyncResultFunc(
     [import.meta.filename, 'markPathAsDeleted'],
-    async (trace, path: StaticSyncablePath): PR<undefined> => {
+    async (trace, path: SyncablePath): PR<undefined> => {
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));

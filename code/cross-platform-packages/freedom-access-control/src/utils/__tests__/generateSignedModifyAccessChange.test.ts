@@ -7,7 +7,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { trustedTimeIdInfo } from 'freedom-crypto-data';
+import { trustedTimeNameInfo } from 'freedom-crypto-data';
 import { expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -56,8 +56,8 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.id,
         role: 'editor'
@@ -73,8 +73,8 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.id,
         oldRole: 'editor',
@@ -98,8 +98,8 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.id,
         role: 'editor'
@@ -115,8 +115,8 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.id,
         oldRole: 'editor',
@@ -144,8 +144,8 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.id,
         role: 'appender'
@@ -161,8 +161,8 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time IDs here
-      generateTrustedTimeIdForAccessChange: async () => makeSuccess(trustedTimeIdInfo.make('test')),
+      // Not validating trusted time names here
+      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
       params: {
         publicKeyId: cryptoKeys2.id,
         oldRole: 'appender',

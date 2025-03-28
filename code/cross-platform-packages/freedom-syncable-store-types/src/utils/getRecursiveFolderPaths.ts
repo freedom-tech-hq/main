@@ -2,20 +2,20 @@ import type { PR } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { StaticSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import { TaskQueue } from 'freedom-task-queue';
 
 import type { FolderStore } from '../types/FolderStore.ts';
 
 export const getRecursiveFolderPaths = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: FolderStore): PR<StaticSyncablePath[]> => {
+  async (trace, store: FolderStore): PR<SyncablePath[]> => {
     const queue = new TaskQueue(trace);
 
-    const out: StaticSyncablePath[] = [];
+    const out: SyncablePath[] = [];
 
     const makeProcessPathFunc =
-      ({ store, path }: { store: FolderStore; path: StaticSyncablePath }) =>
+      ({ store, path }: { store: FolderStore; path: SyncablePath }) =>
       async (trace: Trace): PR<undefined> => {
         const folderIds = await store.getIds(trace, { type: 'folder' });
         if (!folderIds.ok) {

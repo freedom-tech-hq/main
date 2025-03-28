@@ -13,7 +13,7 @@ import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
-import type { StaticSyncablePath, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { OldSyncablePath, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 import { once } from 'lodash-es';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
@@ -26,7 +26,7 @@ import { getStringFromFileAtPath } from './getStringFromFileAtPath.ts';
 
 export interface IsConflictFreeDocumentSnapshotValidArgs<PrefixT extends string> {
   store: SyncableStore;
-  path: SyncablePath;
+  path: OldSyncablePath;
   validatedProvenance: SyncableProvenance;
   originRole: SyncableStoreRole;
   snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> };
@@ -39,7 +39,7 @@ export type IsConflictFreeDocumentSnapshotValidFunc<PrefixT extends string> = PR
 
 export interface IsDeltaValidForConflictFreeDocumentArgs<PrefixT extends string> {
   store: SyncableStore;
-  path: SyncablePath;
+  path: OldSyncablePath;
   validatedProvenance: SyncableProvenance;
   originRole: SyncableStoreRole;
   encodedDelta: EncodedConflictFreeDocumentDelta<PrefixT>;
@@ -61,7 +61,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
   async <PrefixT extends string, DocumentT extends ConflictFreeDocument<PrefixT>>(
     trace: Trace,
     store: SyncableStore,
-    path: SyncablePath,
+    path: OldSyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<DocumentT, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const docBundle = await getBundleAtPath(trace, store, path);
@@ -170,7 +170,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
           trace,
           deltaId
         ): PR<
-          { deltaPath: StaticSyncablePath; provenance: SyncableProvenance; encodedDelta: string },
+          { deltaPath: SyncablePath; provenance: SyncableProvenance; encodedDelta: string },
           'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'
         > => {
           const deltaPath = deltasPath.append(deltaId);
