@@ -13,7 +13,7 @@ export class DefaultMutableSyncableFolderAccessor extends DefaultMutableSyncable
     syncTracker,
     path
   }: {
-    store: WeakRef<MutableSyncableStore>;
+    store: MutableSyncableStore;
     backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
     path: SyncablePath;

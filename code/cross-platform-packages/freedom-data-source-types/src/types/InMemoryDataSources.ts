@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeSuccess } from 'freedom-async';
 import { Cast } from 'freedom-cast';
-import type { Trace } from 'freedom-contexts';
+import { type Trace } from 'freedom-contexts';
 import type { MutableIndexStore } from 'freedom-indexing-types';
 import { InMemoryIndexStore } from 'freedom-indexing-types';
 import type { LockStore } from 'freedom-locking-types';
@@ -58,7 +58,7 @@ export class InMemoryDataSources implements DataSources {
 
   private readonly getOrCreateSyncableStore_ = async (
     trace: Trace,
-    { storageRootId, cryptoService }: GetOrCreateSyncableStoreArgs
+    { storageRootId, cryptoService, saltsById }: GetOrCreateSyncableStoreArgs
   ): PR<MutableSyncableStore> => {
     const cacheKey = storageRootId;
     const found = this.syncableStores_[cacheKey];
@@ -73,7 +73,13 @@ export class InMemoryDataSources implements DataSources {
 
     const storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
 
-    const newStore = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    const newStore = new DefaultSyncableStore({
+      storageRootId,
+      backing: storeBacking,
+      cryptoService,
+      provenance: provenance.value,
+      saltsById
+    });
 
     this.syncableStores_[cacheKey] = newStore;
     return makeSuccess(newStore);

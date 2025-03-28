@@ -2,14 +2,16 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import type { TestContext } from 'node:test';
-import { before, beforeEach, describe, it } from 'node:test';
+import { before, beforeEach, describe, it, skip } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { encName, storageRootIdInfo } from 'freedom-sync-types';
+import { defaultSaltId, encName, storageRootIdInfo, syncableItemTypes } from 'freedom-sync-types';
 import {
+  createBinaryFileAtPath,
+  createBundleAtPath,
   createFolderAtPath,
   createStringFileAtPath,
   DefaultSyncableStore,
@@ -18,7 +20,8 @@ import {
   getFolderAtPath,
   getMutableFolderAtPath,
   getStringFromFileAtPath,
-  initializeRoot
+  initializeRoot,
+  saltedId
 } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
@@ -60,7 +63,13 @@ describe('FileSystemSyncableStore', () => {
 
     storeBacking = new FileSystemSyncableStoreBacking(rootPath);
     expectOk(await storeBacking.initialize(trace, { provenance: provenance.value }));
-    store = new DefaultSyncableStore({ storageRootId, backing: storeBacking, cryptoService, provenance: provenance.value });
+    store = new DefaultSyncableStore({
+      storageRootId,
+      backing: storeBacking,
+      cryptoService,
+      provenance: provenance.value,
+      saltsById: { [defaultSaltId]: makeUuid() }
+    });
 
     expectOk(await initializeRoot(trace, store));
   });
@@ -184,5 +193,79 @@ describe('FileSystemSyncableStore', () => {
     const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
+  });
+
+  // TODO: work on these
+  skip('creating nested folders and bundles should work', async (_t: TestContext) => {
+    const outerFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('outer') });
+    expectOk(outerFolder);
+    const outerPath = outerFolder.value.path;
+
+    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(makeUuid()), { name: encName('inner') });
+    expectOk(innerFolder);
+    const innerPath = innerFolder.value.path;
+
+    const bundle = await createBundleAtPath(trace, store, innerPath.append(makeUuid()), { name: encName('my-bundle') });
+    expectOk(bundle);
+    const myBundlePath = bundle.value.path;
+
+    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(makeUuid()), {
+      name: encName('hello-world.txt'),
+      value: Buffer.from('hello world', 'utf-8')
+    });
+    expectOk(helloWorldTxtFile);
+
+    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(makeUuid()), { name: encName('nested-bundle') });
+    expectOk(nestedBundle);
+
+    const fileIds = await bundle.value.getIds(trace, { type: syncableItemTypes.exclude('folder') });
+    expectOk(fileIds);
+    expectIncludes(fileIds.value, helloWorldTxtFile.value.path.lastId);
+    expectIncludes(fileIds.value, nestedBundle.value.path.lastId);
+
+    const bundleIds = await bundle.value.getIds(trace, { type: 'bundle' });
+    expectOk(bundleIds);
+    expectIncludes(bundleIds.value, nestedBundle.value.path.lastId);
+  });
+
+  // TODO: work on these
+  skip('salted IDs should work', async (_t: TestContext) => {
+    const outerId = saltedId('outer');
+    const innerId = saltedId('inner');
+    const myBundleId = saltedId('my-bundle');
+    const helloWorldTxtId = saltedId('hello-world.txt');
+    const nestedBundleId = saltedId('nested-bundle');
+
+    const outerFolder = await createFolderAtPath(trace, store, store.path.append(await outerId(store)), { name: encName('outer') });
+    expectOk(outerFolder);
+    const outerPath = outerFolder.value.path;
+
+    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(await innerId(store)), { name: encName('inner') });
+    expectOk(innerFolder);
+    const innerPath = innerFolder.value.path;
+
+    const bundle = await createBundleAtPath(trace, store, innerPath.append(await myBundleId(store)), { name: encName('my-bundle') });
+    expectOk(bundle);
+    const myBundlePath = bundle.value.path;
+
+    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(await helloWorldTxtId(store)), {
+      name: encName('hello-world.txt'),
+      value: Buffer.from('hello world', 'utf-8')
+    });
+    expectOk(helloWorldTxtFile);
+
+    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(await nestedBundleId(store)), {
+      name: encName('nested-bundle')
+    });
+    expectOk(nestedBundle);
+
+    const fileIds = await bundle.value.getIds(trace, { type: syncableItemTypes.exclude('folder') });
+    expectOk(fileIds);
+    expectIncludes(fileIds.value, helloWorldTxtFile.value.path.lastId);
+    expectIncludes(fileIds.value, nestedBundle.value.path.lastId);
+
+    const bundleIds = await bundle.value.getIds(trace, { type: 'bundle' });
+    expectOk(bundleIds);
+    expectIncludes(bundleIds.value, nestedBundle.value.path.lastId);
   });
 });

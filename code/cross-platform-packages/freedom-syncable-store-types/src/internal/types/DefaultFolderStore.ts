@@ -492,6 +492,11 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       id: SyncableId,
       metadata: SyncableFolderMetadata & LocalItemMetadata
     ): PR<DefaultMutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
       const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
@@ -512,7 +517,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       }
 
       const folder = new DefaultMutableSyncableFolderAccessor({
-        store: this.weakStore_,
+        store,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
         path: newPath
