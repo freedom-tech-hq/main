@@ -24,35 +24,31 @@ export class DefaultMutableSyncableBundleAccessor implements MutableSyncableBund
     this.createBinaryFile = data.createBinaryFile;
     this.createBundle = data.createBundle;
     this.delete = data.delete;
-    this.dynamicToStaticId = data.dynamicToStaticId;
     this.exists = data.exists;
-    this.generateNewSyncableItemId = data.generateNewSyncableItemId;
+    this.generateNewSyncableItemName = data.generateNewSyncableItemName;
     this.get = data.get;
     this.getHash = data.getHash;
-    this.getHashesById = data.getHashesById;
     this.getIds = data.getIds;
     this.getMetadata = data.getMetadata;
+    this.getMetadataById = data.getMetadataById;
     this.getMutable = data.getMutable;
     this.ls = data.ls;
-    this.staticToDynamicId = data.staticToDynamicId;
   }
 
   // MutableBundleAccessor Methods Pointing to this.data_
 
   public readonly createBinaryFile: MutableSyncableBundleAccessor['createBinaryFile'];
   public readonly createBundle: MutableSyncableBundleAccessor['createBundle'];
-  public readonly dynamicToStaticId: MutableSyncableBundleAccessor['dynamicToStaticId'];
   public readonly delete: MutableSyncableBundleAccessor['delete'];
   public readonly exists: MutableSyncableBundleAccessor['exists'];
-  public readonly generateNewSyncableItemId: MutableSyncableBundleAccessor['generateNewSyncableItemId'];
+  public readonly generateNewSyncableItemName: MutableSyncableBundleAccessor['generateNewSyncableItemName'];
   public readonly get: MutableSyncableBundleAccessor['get'];
   public readonly getHash: MutableSyncableBundleAccessor['getHash'];
-  public readonly getHashesById: MutableSyncableBundleAccessor['getHashesById'];
   public readonly getIds: MutableSyncableBundleAccessor['getIds'];
   public readonly getMetadata: MutableSyncableBundleAccessor['getMetadata'];
+  public readonly getMetadataById: MutableSyncableBundleAccessor['getMetadataById'];
   public readonly getMutable: MutableSyncableBundleAccessor['getMutable'];
   public readonly ls: MutableSyncableBundleAccessor['ls'];
-  public readonly staticToDynamicId: MutableSyncableBundleAccessor['staticToDynamicId'];
 
   // MutableBundleAccessor Methods
 

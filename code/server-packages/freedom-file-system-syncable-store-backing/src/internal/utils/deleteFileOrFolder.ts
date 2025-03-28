@@ -7,13 +7,10 @@ import { getFsPath } from './getFsPath.ts';
 
 export const deleteFileOrFolder = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, rootPath: string, ids: readonly SyncableId[]) => {
-    const fsPath = await getFsPath(trace, rootPath, ids);
-    if (!fsPath.ok) {
-      return fsPath;
-    }
+  async (_trace, rootPath: string, ids: readonly SyncableId[]) => {
+    const fsPath = getFsPath(rootPath, ids);
 
-    await fs.rm(fsPath.value, { recursive: true });
+    await fs.rm(fsPath, { recursive: true });
 
     return makeSuccess(undefined);
   }

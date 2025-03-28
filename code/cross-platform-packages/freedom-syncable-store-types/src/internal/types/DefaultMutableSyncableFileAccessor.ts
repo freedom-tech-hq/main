@@ -40,36 +40,33 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
 
   // FileAccessor Methods
 
-  public readonly getHash = makeAsyncResultFunc(
-    [import.meta.filename, 'getHash'],
-    async (trace, _options?: { recompute?: boolean }): PR<Sha256Hash> => {
-      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
-      if (!metadata.ok) {
-        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
-      }
-
-      if (metadata.value.hash !== undefined) {
-        return makeSuccess(metadata.value.hash);
-      }
-
-      const encodedBinary = await this.getEncodedBinary(trace);
-      if (!encodedBinary.ok) {
-        return encodedBinary;
-      }
-
-      const hash = await generateSha256HashFromBuffer(trace, encodedBinary.value);
-      if (!hash.ok) {
-        return hash;
-      }
-
-      const updatedMetadata = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
-      if (!updatedMetadata.ok) {
-        return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
-      }
-
-      return makeSuccess(hash.value);
+  public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
+    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+    if (!metadata.ok) {
+      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
     }
-  );
+
+    if (metadata.value.hash !== undefined) {
+      return makeSuccess(metadata.value.hash);
+    }
+
+    const encodedBinary = await this.getEncodedBinary(trace);
+    if (!encodedBinary.ok) {
+      return encodedBinary;
+    }
+
+    const hash = await generateSha256HashFromBuffer(trace, encodedBinary.value);
+    if (!hash.ok) {
+      return hash;
+    }
+
+    const updatedMetadata = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
+    if (!updatedMetadata.ok) {
+      return generalizeFailureResult(trace, updatedMetadata, ['not-found', 'wrong-type']);
+    }
+
+    return makeSuccess(hash.value);
+  });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],

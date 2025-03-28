@@ -1,7 +1,6 @@
 import { isEqual } from 'lodash-es';
 import { schema } from 'yaschema';
 
-import { DynamicSyncablePath } from './DynamicSyncablePath.ts';
 import type { StorageRootId } from './StorageRootId.ts';
 import { storageRootIdInfo } from './StorageRootId.ts';
 import type { SyncableId } from './SyncableId.ts';
@@ -19,10 +18,6 @@ export class SyncablePath {
   /** Returns a new path with an appended ID */
   public append(...ids: SyncableId[]) {
     return new SyncablePath(this.storageRootId, ...this.ids, ...ids);
-  }
-
-  public get dynamic() {
-    return new DynamicSyncablePath(this.storageRootId, ...this.ids);
   }
 
   /** Returns a new path one level up.  For the root path, this returns `undefined`. */

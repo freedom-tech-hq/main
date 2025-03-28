@@ -1,5 +1,11 @@
-import type { SyncableItemMetadataBase } from './SyncableItemMetadataBase.ts';
+import { schema } from 'yaschema';
 
-export interface SyncableFileMetadata extends SyncableItemMetadataBase {
-  readonly type: 'file';
-}
+import { syncableItemMetadataBaseSchema } from './SyncableItemMetadataBase.ts';
+
+export const syncableFileMetadataSchema = schema.extendsObject(
+  syncableItemMetadataBaseSchema,
+  schema.object({
+    type: schema.string('file')
+  })
+);
+export type SyncableFileMetadata = typeof syncableFileMetadataSchema.valueType;

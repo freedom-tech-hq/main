@@ -17,13 +17,10 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
   makeAsyncResultFunc(
     [import.meta.filename],
     async (trace): PR<Partial<Record<SyncableId, FileSystemSyncableStoreBackingItem>>, 'not-found' | 'wrong-type'> => {
-      const dirPath = await getFsPath(trace, rootPath, ids);
-      if (!dirPath.ok) {
-        return dirPath;
-      }
+      const dirPath = getFsPath(rootPath, ids);
 
       try {
-        const entries = await fs.readdir(dirPath.value, { withFileTypes: true });
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
         const result: Partial<Record<SyncableId, FileSystemSyncableStoreBackingItem>> = {};
 
@@ -32,12 +29,9 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
             return makeSuccess(undefined); // Skip local-only files
           }
 
-          const fsPath = await getFsPath(trace, rootPath, ids, { suffixPaths: [`metadata.${entry.name}`], extension: 'json' });
-          if (!fsPath.ok) {
-            return fsPath;
-          }
+          const fsPath = getFsPath(rootPath, ids, { suffixPaths: [`metadata.${entry.name}`], extension: 'json' });
 
-          const localMetadata = await readLocalMetadata(trace, fsPath.value);
+          const localMetadata = await readLocalMetadata(trace, fsPath);
           if (!localMetadata.ok) {
             return localMetadata;
           }
@@ -48,15 +42,15 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
             result[id] = {
               type: 'file',
               id,
-              metadata: makeFileMetaFuncForPath(dirPath.value, [id]),
-              data: makeDataFuncForPath(dirPath.value, [id])
+              metadata: makeFileMetaFuncForPath(dirPath, [id]),
+              data: makeDataFuncForPath(dirPath, [id])
             };
           } else if (entry.isDirectory()) {
             result[id] = {
               type: 'folder',
               id,
-              metadata: makeFolderMetaFuncForPath(dirPath.value, [id]),
-              contents: makeContentsFuncForPath(dirPath.value, [id])
+              metadata: makeFolderMetaFuncForPath(dirPath, [id]),
+              contents: makeContentsFuncForPath(dirPath, [id])
             };
           }
 
@@ -69,7 +63,7 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
         return makeSuccess(result);
       } catch (e) {
         if (get(e, 'code') === 'ENOENT') {
-          return makeFailure(new NotFoundError(trace, { message: `No folder found at ${dirPath.value}`, errorCode: 'not-found' }));
+          return makeFailure(new NotFoundError(trace, { message: `No folder found at ${dirPath}`, errorCode: 'not-found' }));
         }
 
         return makeFailure(new GeneralError(trace, e));

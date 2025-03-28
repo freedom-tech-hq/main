@@ -2,10 +2,10 @@ import type { TestContext } from 'node:test';
 import { beforeEach, describe, it } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
-import { makeTrace } from 'freedom-contexts';
+import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { encId, storageRootIdInfo, syncableItemTypes } from 'freedom-sync-types';
+import { encName, storageRootIdInfo, syncableItemTypes } from 'freedom-sync-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -20,7 +20,6 @@ import { createBundleAtPath } from '../../../utils/create/createBundleAtPath.ts'
 import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../../utils/create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../../utils/generateProvenanceForNewSyncableStore.ts';
-import { getDynamicIds } from '../../../utils/get/getDynamicIds.ts';
 import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
 import { getStringFromFileAtPath } from '../../../utils/get/getStringFromFileAtPath.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
@@ -55,7 +54,7 @@ describe('folders', () => {
   });
 
   it('giving access to a second user should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
@@ -70,17 +69,20 @@ describe('folders', () => {
     cryptoService.hotSwap(secondaryUserCryptoService);
 
     // Should be able to write new file
-    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path, encId('test.txt'), 'hello world');
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(makeUuid()), {
+      name: encName('test.txt'),
+      value: 'hello world'
+    });
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
+    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
 
   it('giving appender (write-only) access to a second user should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
@@ -95,23 +97,26 @@ describe('folders', () => {
     cryptoService.hotSwap(secondaryUserCryptoService);
 
     // Should be able to write new file
-    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path, encId('test.txt'), 'hello world');
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(makeUuid()), {
+      name: encName('test.txt'),
+      value: 'hello world'
+    });
     expectOk(createdTestTxtFile);
 
     // Should NOT be able to read back that file
-    const textContent2 = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
+    const textContent2 = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
     cryptoService.hotSwap(primaryUserCryptoService);
 
     // Primary user should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, testingFolder.value.path.dynamic.append(encId('test.txt')));
+    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
 
   it('modifying user access should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
@@ -142,15 +147,18 @@ describe('folders', () => {
   });
 
   it('creating nested folders and files should work', async (t: TestContext) => {
-    const outerFolder = await createFolderAtPath(trace, store, store.path, encId('outer'));
+    const outerFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('outer') });
     expectOk(outerFolder);
     const outerPath = outerFolder.value.path;
 
-    const innerFolder = await createFolderAtPath(trace, store, outerPath, encId('inner'));
+    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(makeUuid()), { name: encName('inner') });
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
 
-    const helloWorldTxtFile = await createStringFileAtPath(trace, store, innerPath, encId('hello-world.txt'), 'hello world');
+    const helloWorldTxtFile = await createStringFileAtPath(trace, store, innerPath.append(makeUuid()), {
+      name: encName('hello-world.txt'),
+      value: 'hello world'
+    });
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
@@ -161,45 +169,51 @@ describe('folders', () => {
     const outerFolder2 = await getFolderAtPath(trace, store, outerPath);
     expectOk(outerFolder2);
 
-    const outerFolderItemIds = await getDynamicIds(trace, outerFolder2.value);
+    const outerFolderItemIds = await outerFolder2.value.getIds(trace);
     expectOk(outerFolderItemIds);
     expectIncludes(outerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_ID);
     expectIncludes(outerFolderItemIds.value, STORE_CHANGES_BUNDLE_ID);
-    expectIncludes(outerFolderItemIds.value, encId('inner'));
+    expectIncludes(outerFolderItemIds.value, innerFolder.value.path.lastId);
 
     const innerFolder2 = await getFolderAtPath(trace, store, innerPath);
     expectOk(innerFolder2);
 
-    const innerFolderItemIds = await getDynamicIds(trace, innerFolder2.value);
+    const innerFolderItemIds = await innerFolder2.value.getIds(trace);
     expectOk(innerFolderItemIds);
     expectIncludes(innerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_ID);
     expectIncludes(innerFolderItemIds.value, STORE_CHANGES_BUNDLE_ID);
-    expectIncludes(innerFolderItemIds.value, encId('hello-world.txt'));
+    expectIncludes(innerFolderItemIds.value, helloWorldTxtFile.value.path.lastId!);
   });
 
-  it('creating nested folders and bundles should work', async (t: TestContext) => {
-    const outerFolder = await createFolderAtPath(trace, store, store.path, encId('outer'));
+  it('creating nested folders and bundles should work', async (_t: TestContext) => {
+    const outerFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('outer') });
     expectOk(outerFolder);
     const outerPath = outerFolder.value.path;
 
-    const innerFolder = await createFolderAtPath(trace, store, outerPath, encId('inner'));
+    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(makeUuid()), { name: encName('inner') });
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
 
-    const bundle = await createBundleAtPath(trace, store, innerPath, encId('my-bundle'));
+    const bundle = await createBundleAtPath(trace, store, innerPath.append(makeUuid()), { name: encName('my-bundle') });
     expectOk(bundle);
     const myBundlePath = bundle.value.path;
 
-    expectOk(await createBinaryFileAtPath(trace, store, myBundlePath, encId('hello-world.txt'), Buffer.from('hello world', 'utf-8')));
+    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(makeUuid()), {
+      name: encName('hello-world.txt'),
+      value: Buffer.from('hello world', 'utf-8')
+    });
+    expectOk(helloWorldTxtFile);
 
-    expectOk(await createBundleAtPath(trace, store, myBundlePath, encId('nested-bundle')));
+    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(makeUuid()), { name: encName('nested-bundle') });
+    expectOk(nestedBundle);
 
-    const fileIds = await getDynamicIds(trace, bundle.value, { type: syncableItemTypes.exclude('folder') });
+    const fileIds = await bundle.value.getIds(trace, { type: syncableItemTypes.exclude('folder') });
     expectOk(fileIds);
-    t.assert.deepStrictEqual(fileIds.value, [encId('hello-world.txt'), encId('nested-bundle')]);
+    expectIncludes(fileIds.value, helloWorldTxtFile.value.path.lastId);
+    expectIncludes(fileIds.value, nestedBundle.value.path.lastId);
 
-    const bundleIds = await getDynamicIds(trace, bundle.value, { type: 'bundle' });
+    const bundleIds = await bundle.value.getIds(trace, { type: 'bundle' });
     expectOk(bundleIds);
-    t.assert.deepStrictEqual(bundleIds.value, [encId('nested-bundle')]);
+    expectIncludes(bundleIds.value, nestedBundle.value.path.lastId);
   });
 });

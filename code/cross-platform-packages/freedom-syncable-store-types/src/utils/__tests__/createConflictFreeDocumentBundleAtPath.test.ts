@@ -5,11 +5,11 @@ import { makeSuccess } from 'freedom-async';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
-import { makeTrace } from 'freedom-contexts';
+import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
-import { encId, storageRootIdInfo } from 'freedom-sync-types';
+import { encName, storageRootIdInfo } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -49,14 +49,17 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
   });
 
   it('should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
     const newDocument = (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'TEST_'> }) =>
       new ConflictFreeDocument('TEST_', snapshot);
 
-    const doc = await createConflictFreeDocumentBundleAtPath(trace, store, testingPath, encId('doc'), { newDocument });
+    const doc = await createConflictFreeDocumentBundleAtPath(trace, store, testingPath.append(makeUuid()), {
+      name: encName('doc'),
+      newDocument
+    });
     expectOk(doc);
     const docPath = doc.value.path;
 

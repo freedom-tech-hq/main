@@ -8,12 +8,12 @@ import {
   makeFailure,
   makeSuccess
 } from 'freedom-async';
-import { Cast } from 'freedom-cast';
+import { Cast, objectEntries } from 'freedom-cast';
 import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
-import type { OldSyncablePath, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { SyncableId, SyncableItemName, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 import { once } from 'lodash-es';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
@@ -26,7 +26,7 @@ import { getStringFromFileAtPath } from './getStringFromFileAtPath.ts';
 
 export interface IsConflictFreeDocumentSnapshotValidArgs<PrefixT extends string> {
   store: SyncableStore;
-  path: OldSyncablePath;
+  path: SyncablePath;
   validatedProvenance: SyncableProvenance;
   originRole: SyncableStoreRole;
   snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> };
@@ -39,7 +39,7 @@ export type IsConflictFreeDocumentSnapshotValidFunc<PrefixT extends string> = PR
 
 export interface IsDeltaValidForConflictFreeDocumentArgs<PrefixT extends string> {
   store: SyncableStore;
-  path: OldSyncablePath;
+  path: SyncablePath;
   validatedProvenance: SyncableProvenance;
   originRole: SyncableStoreRole;
   encodedDelta: EncodedConflictFreeDocumentDelta<PrefixT>;
@@ -61,7 +61,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
   async <PrefixT extends string, DocumentT extends ConflictFreeDocument<PrefixT>>(
     trace: Trace,
     store: SyncableStore,
-    path: OldSyncablePath,
+    path: SyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<DocumentT, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const docBundle = await getBundleAtPath(trace, store, path);
@@ -88,9 +88,27 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       return makeFailure(new NotFoundError(trace, { message: `No snapshots found for: ${path.toString()}`, errorCode: 'not-found' }));
     }
 
+    const metadataById = await snapshots.value.getMetadataById(trace);
+    if (!metadataById.ok) {
+      return metadataById;
+    }
+
+    const namesById = objectEntries(metadataById.value).reduce(
+      (out, [id, metadata]) => {
+        if (metadata === undefined) {
+          return out;
+        }
+
+        out[id] = metadata.name;
+
+        return out;
+      },
+      {} as Partial<Record<SyncableId, SyncableItemName>>
+    );
+
     // TODO: should really try to load approved snapshots first and then not-yet-approved ones
-    // Snapshot IDs are prefixed by ISO timestamps, so sorting them will give us the most recent one last
-    snapshotIds.value.sort();
+    // Snapshot names are prefixed by ISO timestamps, so sorting them will give us the most recent one last
+    snapshotIds.value.sort((a, b) => (namesById[a] ?? '').localeCompare(namesById[b] ?? ''));
 
     let snapshotIndex = snapshotIds.value.length - 1;
     while (snapshotIndex >= 0) {
@@ -155,9 +173,27 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       }
       /* node:coverage enable */
 
+      const metadataById = await deltas.value.getMetadataById(trace);
+      if (!metadataById.ok) {
+        return metadataById;
+      }
+
+      const namesById = objectEntries(metadataById.value).reduce(
+        (out, [id, metadata]) => {
+          if (metadata === undefined) {
+            return out;
+          }
+
+          out[id] = metadata.name;
+
+          return out;
+        },
+        {} as Partial<Record<SyncableId, SyncableItemName>>
+      );
+
       // TODO: should really try to load approved deltas first and then not-yet-approved ones
-      // Snapshot IDs are prefixed by ISO timestamps, so sorting them will give us the most recent one last
-      deltaIds.value.sort();
+      // Delta names are prefixed by ISO timestamps, so sorting them will give us the most recent one last
+      deltaIds.value.sort((a, b) => (namesById[a] ?? '').localeCompare(namesById[b] ?? ''));
 
       const encodedDeltasAndProvenances = await allResultsMappedSkipFailures(
         trace,

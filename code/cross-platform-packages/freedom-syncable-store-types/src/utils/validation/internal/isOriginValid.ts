@@ -24,7 +24,16 @@ export const isOriginValid = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    const signedValueValid = await store.cryptoService.isSignedValueValid(trace, origin, { path: item.path });
+    const metadata = await item.getMetadata(trace);
+    if (!metadata.ok) {
+      return metadata;
+    }
+
+    const signedValueValid = await store.cryptoService.isSignedValueValid(trace, origin, {
+      path: item.path,
+      type: item.type,
+      name: metadata.value.name
+    });
     if (!signedValueValid.ok) {
       return signedValueValid;
     } else if (!signedValueValid.value) {

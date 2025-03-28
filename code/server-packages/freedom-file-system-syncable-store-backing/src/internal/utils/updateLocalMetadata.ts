@@ -18,12 +18,9 @@ export const updateLocalMetadata = makeAsyncResultFunc(
     ids: readonly SyncableId[],
     metadataChanges: Partial<FileSystemChangeableLocalItemMetadata>
   ): PR<undefined> => {
-    const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
-    if (!filePath.ok) {
-      return filePath;
-    }
+    const filePath = getFsPathForMetadataFile(rootPath, ids);
 
-    const metadataJsonString = await fs.readFile(filePath.value, 'utf-8');
+    const metadataJsonString = await fs.readFile(filePath, 'utf-8');
     try {
       const metadataJson = JSON.parse(metadataJsonString) as JsonValue;
       const deserialization = await anyMetadataSchema.deserializeAsync(metadataJson, { validation: 'hard' });
@@ -42,7 +39,7 @@ export const updateLocalMetadata = makeAsyncResultFunc(
         }
 
         const outMetadataJsonString = JSON.stringify(serialization.serialized);
-        await fs.writeFile(filePath.value, outMetadataJsonString, 'utf-8');
+        await fs.writeFile(filePath, outMetadataJsonString, 'utf-8');
       }
 
       return makeSuccess(undefined);

@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { OldSyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import { getSyncableAtPath } from './getSyncableAtPath.ts';
@@ -11,7 +11,7 @@ export const getProvenanceOfSyncableAtPath = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    path: OldSyncablePath
+    path: SyncablePath
   ): PR<SyncableProvenance, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const item = await getSyncableAtPath(trace, store, path);
     if (!item.ok) {

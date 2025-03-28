@@ -10,27 +10,26 @@ import {
   makeSuccess
 } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { objectEntries } from 'freedom-cast';
+import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
-import { type Trace } from 'freedom-contexts';
+import { makeUuid, type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
-import { extractPartsFromTimeName, extractPartsFromTrustedTimeName, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
 import type {
-  DynamicSyncableId,
   SyncableBundleMetadata,
   SyncableFileMetadata,
   SyncableId,
+  SyncableItemMetadata,
   SyncableItemType,
   SyncablePath
 } from 'freedom-sync-types';
-import { areDynamicSyncableIdsEqual, syncableEncryptedIdInfo, syncableItemTypes } from 'freedom-sync-types';
+import { syncableItemTypes } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { BundleManagement } from '../../types/BundleManagement.ts';
-import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
+import type { GenerateNewSyncableItemNameFunc } from '../../types/GenerateNewSyncableItemNameFunc.ts';
 import type { LocalItemMetadata } from '../../types/LocalItemMetadata.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
@@ -110,26 +109,33 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const getSha256ForItemProvenance = (trace: Trace) => generateSha256HashFromBuffer(trace, encodedData.value);
 
-          const id = await this.folderOperationsHandler_.generateNewSyncableItemId(trace, {
-            id: args.id,
-            parentPath: this.path,
+          const id = args.id ?? makeUuid();
+          const newPath = this.path.append(id);
+
+          const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
+            name: args.name ?? id,
+            path: this.path,
             getSha256ForItemProvenance
           });
           /* node:coverage disable */
-          if (!id.ok) {
-            return id;
+          if (!name.ok) {
+            return name;
           }
           /* node:coverage enable */
 
-          const newPath = this.path.append(id.value);
-
-          const provenance = await generateProvenanceForFileAtPath(trace, store, { path: newPath, getSha256ForItemProvenance });
+          const provenance = await generateProvenanceForFileAtPath(trace, store, {
+            path: newPath,
+            type: 'file',
+            name: name.value,
+            getSha256ForItemProvenance
+          });
           if (!provenance.ok) {
             return provenance;
           }
 
-          return await this.createPreEncodedBinaryFile_(trace, id.value, encodedData.value, {
+          return await this.createPreEncodedBinaryFile_(trace, id, encodedData.value, {
             type: 'file',
+            name: name.value,
             provenance: provenance.value,
             // File encryption always matches the parent bundle or folder
             encrypted: this.isEncrypted_()
@@ -152,24 +158,32 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const id = await this.folderOperationsHandler_.generateNewSyncableItemId(trace, {
-            id: args.id,
-            parentPath: this.path,
+          const id = args.id ?? makeUuid();
+          const newPath = this.path.append(id);
+
+          const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
+            name: args.name ?? id,
+            path: newPath,
             getSha256ForItemProvenance: generateSha256HashForEmptyString
           });
           /* node:coverage disable */
-          if (!id.ok) {
-            return id;
+          if (!name.ok) {
+            return name;
           }
           /* node:coverage enable */
 
-          const provenance = await generateProvenanceForFolderLikeItemAtPath(trace, store, { path: this.path.append(id.value) });
+          const provenance = await generateProvenanceForFolderLikeItemAtPath(trace, store, {
+            path: newPath,
+            type: 'bundle',
+            name: name.value
+          });
           if (!provenance.ok) {
             return provenance;
           }
 
-          return await this.createPreEncodedBundle_(trace, id.value, {
+          return await this.createPreEncodedBundle_(trace, id, {
             type: 'bundle',
+            name: name.value,
             provenance: provenance.value,
             encrypted: this.isEncrypted_()
           });
@@ -180,16 +194,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
-    async (trace, id: DynamicSyncableId): PR<undefined, 'not-found'> => {
-      if (typeof id !== 'string') {
-        const staticId = await this.dynamicToStaticId(trace, id);
-        if (!staticId.ok) {
-          return staticId;
-        }
-
-        id = staticId.value;
-      }
-
+    async (trace, id: SyncableId): PR<undefined, 'not-found'> => {
       if (!this.supportsDeletion) {
         return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported in ${this.path.toString()}` }));
       }
@@ -237,19 +242,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     }
   );
 
-  public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace, id: DynamicSyncableId): PR<boolean> => {
-    if (typeof id !== 'string') {
-      const staticId = await this.dynamicToStaticId(trace, id);
-      if (!staticId.ok) {
-        if (staticId.value.errorCode === 'not-found') {
-          return makeSuccess(false);
-        }
-        return excludeFailureResult(staticId, 'not-found');
-      }
-
-      id = staticId.value;
-    }
-
+  public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace, id: SyncableId): PR<boolean> => {
     const checkingPath = this.path.append(id);
 
     // Checking that the requested file exists in the backing
@@ -277,18 +270,9 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     [import.meta.filename, 'getMutable'],
     async <T extends SyncableItemType = SyncableItemType>(
       trace: Trace,
-      id: DynamicSyncableId,
+      id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
-      if (typeof id !== 'string') {
-        const staticId = await this.dynamicToStaticId(trace, id);
-        if (!staticId.ok) {
-          return staticId;
-        }
-
-        id = staticId.value;
-      }
-
       const getPath = this.path.append(id);
 
       const metadata = await this.backing_.getMetadataAtPath(trace, getPath);
@@ -314,59 +298,66 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     }
   );
 
-  public readonly generateNewSyncableItemId: GenerateNewSyncableItemIdFunc = (trace, args) =>
-    this.folderOperationsHandler_.generateNewSyncableItemId(trace, args);
-
-  public readonly staticToDynamicId = (trace: Trace, id: SyncableId): PR<DynamicSyncableId> =>
-    this.folderOperationsHandler_.staticToDynamicId(trace, id);
+  public readonly generateNewSyncableItemName: GenerateNewSyncableItemNameFunc = (trace, args) =>
+    this.folderOperationsHandler_.generateNewSyncableItemName(trace, args);
 
   // FileStore Methods
 
-  public readonly getHash = makeAsyncResultFunc(
-    [import.meta.filename, 'getHash'],
-    async (trace, { recompute = false }: { recompute?: boolean } = {}): PR<Sha256Hash> => {
-      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
-      if (!metadata.ok) {
-        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+  public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
+    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+    if (!metadata.ok) {
+      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    }
+
+    const hash = metadata.value.hash;
+    if (hash !== undefined) {
+      return makeSuccess(hash);
+    }
+
+    do {
+      const needsRecomputeHashCount = this.needsRecomputeHashCount_;
+
+      const metadataById = await this.getMetadataById(trace);
+      /* node:coverage disable */
+      if (!metadataById.ok) {
+        return metadataById;
       }
+      /* node:coverage enable */
 
-      const hash = metadata.value.hash;
-      if (hash !== undefined && !recompute) {
-        return makeSuccess(hash);
-      }
-
-      do {
-        const needsRecomputeHashCount = this.needsRecomputeHashCount_;
-
-        const hashesById = await this.getHashesById(trace, { recompute });
-        /* node:coverage disable */
-        if (!hashesById.ok) {
-          return hashesById;
-        }
-        /* node:coverage enable */
-
-        const hash = await generateSha256HashFromHashesById(trace, hashesById.value);
-        /* node:coverage disable */
-        if (!hash.ok) {
-          return hash;
-        }
-        /* node:coverage enable */
-
-        if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
-          if (!updatedHash.ok) {
-            return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+      const hashesById = objectEntries(metadataById.value).reduce(
+        (out, [id, metadata]) => {
+          if (metadata === undefined) {
+            return out;
           }
 
-          return makeSuccess(hash.value);
-        }
-      } while (true);
-    }
-  );
+          out[id] = metadata.hash;
 
-  public readonly getHashesById = makeAsyncResultFunc(
-    [import.meta.filename, 'getHashesById'],
-    async (trace: Trace, { recompute = false }: { recompute?: boolean } = {}): PR<Partial<Record<SyncableId, Sha256Hash>>> => {
+          return out;
+        },
+        {} as Partial<Record<SyncableId, Sha256Hash>>
+      );
+
+      const hash = await generateSha256HashFromHashesById(trace, hashesById);
+      /* node:coverage disable */
+      if (!hash.ok) {
+        return hash;
+      }
+      /* node:coverage enable */
+
+      if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
+        const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
+        if (!updatedHash.ok) {
+          return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+        }
+
+        return makeSuccess(hash.value);
+      }
+    } while (true);
+  });
+
+  public readonly getMetadataById = makeAsyncResultFunc(
+    [import.meta.filename, 'getMetadataById'],
+    async (trace: Trace): PR<Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>> => {
       // Deleted files are already filtered out using getIds
       const ids = await this.getIds(trace);
       /* node:coverage disable */
@@ -380,11 +371,16 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return generalizeFailureResult(trace, metadataByIds, ['not-found', 'wrong-type']);
       }
 
-      return await allResultsReduced(
+      const idsWithMissingHashes = objectKeys(metadataByIds.value).filter((id) => metadataByIds.value[id]?.hash === undefined);
+      if (idsWithMissingHashes.length === 0) {
+        return makeSuccess(metadataByIds.value);
+      }
+
+      const gotMissingHashes = await allResultsMapped(
         trace,
         objectEntries(metadataByIds.value),
         {},
-        async (trace, [itemId, metadata]): PR<Sha256Hash | undefined> => {
+        async (trace, [itemId, metadata]): PR<undefined> => {
           if (metadata === undefined) {
             return makeSuccess(undefined);
           }
@@ -393,81 +389,22 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const itemAccessor = this.makeItemAccessor_(getPath, metadata.type);
 
-          return await itemAccessor.getHash(trace, { recompute });
-        },
-        async (_trace, out, hash, [itemId, _metadata]) => {
-          if (hash === undefined) {
-            return makeSuccess(out);
+          const hash = await itemAccessor.getHash(trace);
+          if (!hash.ok) {
+            return hash;
           }
 
-          out[itemId] = hash;
-          return makeSuccess(out);
-        },
-        {} as Partial<Record<string, Sha256Hash>>
-      );
-    }
-  );
+          // Mutating previously fetched metadata
+          metadata.hash = hash.value;
 
-  public readonly dynamicToStaticId = makeAsyncResultFunc(
-    [import.meta.filename, 'dynamicToStaticId'],
-    async (trace, dynamicId: DynamicSyncableId): PR<SyncableId, 'not-found'> => {
-      // Deleted files are already filtered out using getIds
-      const ids = await this.getIds(trace);
-      /* node:coverage disable */
-      if (!ids.ok) {
-        return ids;
-      }
-      /* node:coverage enable */
-
-      // TODO: this is very inefficient, we should have a map for this / cache after computing once
-      for (const id of ids.value) {
-        if (typeof dynamicId === 'string') {
-          if (id === dynamicId) {
-            return makeSuccess(id);
-          }
-        } else {
-          switch (dynamicId.type) {
-            case 'encrypted':
-              if (syncableEncryptedIdInfo.is(id)) {
-                const foundId = await this.staticToDynamicId(trace, id);
-                if (!foundId.ok) {
-                  continue;
-                }
-
-                if (areDynamicSyncableIdsEqual(foundId.value, dynamicId)) {
-                  return makeSuccess(id);
-                }
-              }
-              break;
-
-            case 'time':
-              if (timeNameInfo.is(id)) {
-                const timeNameParts = await extractPartsFromTimeName(trace, id);
-                if (!timeNameParts.ok) {
-                  continue;
-                }
-
-                if (timeNameParts.value.uuid === dynamicId.uuid) {
-                  return makeSuccess(id);
-                }
-              } else if (trustedTimeNameInfo.is(id)) {
-                const timeNameParts = await extractPartsFromTrustedTimeName(trace, id);
-                if (!timeNameParts.ok) {
-                  continue;
-                }
-
-                if (timeNameParts.value.uuid === dynamicId.uuid) {
-                  return makeSuccess(id);
-                }
-              }
-              break;
-          }
+          return makeSuccess(undefined);
         }
+      );
+      if (!gotMissingHashes.ok) {
+        return gotMissingHashes;
       }
 
-      return makeFailure(
-        new NotFoundError(trace, { message: `No encoded ID found for dynamic ID ${JSON.stringify(dynamicId)}`, errorCode: 'not-found' })
-      );
+      return makeSuccess(metadataByIds.value);
     }
   );
 
@@ -504,7 +441,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     [import.meta.filename, 'get'],
     async <T extends SyncableItemType = SyncableItemType>(
       trace: Trace,
-      id: DynamicSyncableId,
+      id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
@@ -550,30 +487,30 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   );
 
   public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace): PR<string[]> => {
-    const hashesByFileId = await this.getHashesById(trace);
-    if (!hashesByFileId.ok) {
-      return hashesByFileId;
+    const metadataById = await this.getMetadataById(trace);
+    if (!metadataById.ok) {
+      return metadataById;
     }
 
     const recursiveLs = await allResultsMapped(
       trace,
-      objectEntries(hashesByFileId.value).sort((a, b) => a[0].localeCompare(b[0])),
+      objectEntries(metadataById.value).sort((a, b) => a[0].localeCompare(b[0])),
       {},
-      async (trace, [itemId, hash]): PR<string[]> => {
-        const getPath = this.path.append(itemId);
-        const metadata = await this.backing_.getMetadataAtPath(trace, getPath);
-        if (!metadata.ok) {
-          return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+      async (trace, [itemId, metadata]): PR<string[]> => {
+        if (metadata === undefined) {
+          return makeSuccess([]);
         }
 
-        const dynamicId = await this.staticToDynamicId(trace, itemId);
+        const itemPath = this.path.append(itemId);
 
-        const output: string[] = [`${dynamicId.ok ? JSON.stringify(dynamicId.value) : itemId}: ${hash}`];
-        switch (metadata.value.type) {
+        const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
+
+        const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
+        switch (metadata.type) {
           case 'folder':
             break; // This won't happen
           case 'bundle': {
-            const itemAccessor = this.makeItemAccessor_(getPath, metadata.value.type);
+            const itemAccessor = this.makeItemAccessor_(itemPath, metadata.type);
             const fileLs = await itemAccessor.ls(trace);
             if (!fileLs.ok) {
               return fileLs;

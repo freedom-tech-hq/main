@@ -8,15 +8,11 @@ import type { SyncableStore } from '../types/SyncableStore.ts';
 
 export const generateSelfSignedTrustedTimeName = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    store: SyncableStore,
-    { parentPathHash, uuid, contentHash }: { parentPathHash: Sha256Hash; uuid: Uuid; contentHash: Sha256Hash }
-  ) => {
+  async (trace, store: SyncableStore, { pathHash, uuid, contentHash }: { pathHash: Sha256Hash; uuid: Uuid; contentHash: Sha256Hash }) => {
     const signedTimeName = await store.cryptoService.generateSignedValue(trace, {
       value: timeNameInfo.make(`${makeIsoDateTime()}-${uuid}`),
       valueSchema: timeNameInfo.schema,
-      signatureExtras: { parentPathHash, contentHash },
+      signatureExtras: { pathHash, contentHash },
       signatureExtrasSchema: signedTimeNameSignatureExtrasSchema
     });
     if (!signedTimeName.ok) {

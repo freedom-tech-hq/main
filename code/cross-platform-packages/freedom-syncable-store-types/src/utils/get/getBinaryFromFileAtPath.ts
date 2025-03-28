@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { OldSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import { getSyncableAtPath } from './getSyncableAtPath.ts';
@@ -11,7 +11,7 @@ export const getBinaryFromFileAtPath = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    path: OldSyncablePath
+    path: SyncablePath
   ): PR<Uint8Array, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const file = await getSyncableAtPath(trace, store, path, 'file');
     if (!file.ok) {

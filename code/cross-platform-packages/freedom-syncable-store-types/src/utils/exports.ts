@@ -1,7 +1,6 @@
 export * from './checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
 export * from './create/exports.ts';
 export * from './deleteSyncableItemAtPath.ts';
-export * from './dynamicToStaticPath.ts';
 export * from './encryptAndSignBinary.ts';
 export * from './generateAcceptanceForPathIfPossible.ts';
 export * from './generateContentHashForSyncableStoreAccessChange.ts';

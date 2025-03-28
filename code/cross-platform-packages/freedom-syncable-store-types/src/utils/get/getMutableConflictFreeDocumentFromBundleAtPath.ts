@@ -4,7 +4,7 @@ import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import { makeUuid, type Trace } from 'freedom-contexts';
 import { generateSha256HashFromString } from 'freedom-crypto';
-import type { OldSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import { timeName } from 'freedom-sync-types';
 
 import { makeDeltasBundleId } from '../../consts/special-file-ids.ts';
@@ -25,7 +25,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
   async <PrefixT extends string, DocumentT extends ConflictFreeDocument<PrefixT>>(
     trace: Trace,
     store: MutableSyncableStore,
-    path: OldSyncablePath,
+    path: SyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetMutableConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const document = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, {
@@ -52,16 +52,20 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
 
         const encodedDelta = document.value.encodeDelta();
 
-        const deltaId = await deltas.value.generateNewSyncableItemId(trace, {
-          id: timeName(makeUuid()),
-          parentPath: deltasPath,
+        const deltaId = makeUuid();
+        const deltaName = await deltas.value.generateNewSyncableItemName(trace, {
+          name: timeName(makeUuid()),
+          path: deltasPath.append(deltaId),
           getSha256ForItemProvenance: (trace) => generateSha256HashFromString(trace, encodedDelta)
         });
-        if (!deltaId.ok) {
-          return deltaId;
+        if (!deltaName.ok) {
+          return deltaName;
         }
 
-        const savedDelta = await createStringFileAtPath(trace, store, deltasPath, deltaId.value, encodedDelta);
+        const savedDelta = await createStringFileAtPath(trace, store, deltasPath.append(deltaId), {
+          name: deltaName.value,
+          value: encodedDelta
+        });
         /* node:coverage disable */
         if (!savedDelta.ok) {
           // Conflicts shouldn't happen since we're using a UUID for the delta ID

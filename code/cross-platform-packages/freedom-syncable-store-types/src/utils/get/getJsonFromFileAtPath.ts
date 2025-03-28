@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OldSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import type { Schema } from 'yaschema';
 
 import type { SyncableStore } from '../../types/SyncableStore.ts';
@@ -13,7 +13,7 @@ export const getJsonFromFileAtPath = makeAsyncResultFunc(
   async <T>(
     trace: Trace,
     store: SyncableStore,
-    path: OldSyncablePath,
+    path: SyncablePath,
     schema: Schema<T>
   ): PR<T, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const jsonString = await getStringFromFileAtPath(trace, store, path);
