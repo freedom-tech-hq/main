@@ -2,6 +2,7 @@
 import type { PR, PRFunc, Result } from 'freedom-async';
 import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
+import { objectEntries } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { makeSubTrace, makeTrace } from 'freedom-contexts';
@@ -18,12 +19,13 @@ import type {
   OutOfSyncFolder,
   RemoteId,
   StorageRootId,
+  SyncableId,
   SyncableItemMetadata,
   SyncPuller,
   SyncPullResponse,
   SyncPusher
 } from 'freedom-sync-types';
-import { StaticSyncablePath } from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 import {
   createViaSyncBundleAtPath,
@@ -79,12 +81,8 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
 
   const onFolderAddedOrRemoved = makeAsyncResultFunc(
     [import.meta.filename, 'onFolderAddedOrRemoved'],
-    async (trace, args: { store: SyncableStore; remoteId: RemoteId; path: StaticSyncablePath }) => {
-      const parentFolderPath = await getFolderPath(
-        trace,
-        args.store,
-        args.path.parentPath ?? new StaticSyncablePath(args.path.storageRootId)
-      );
+    async (trace, args: { store: SyncableStore; remoteId: RemoteId; path: SyncablePath }) => {
+      const parentFolderPath = await getFolderPath(trace, args.store, args.path.parentPath ?? new SyncablePath(args.path.storageRootId));
       if (!parentFolderPath.ok) {
         return parentFolderPath;
       }
@@ -95,7 +93,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
 
   const onNeedsSync = makeAsyncResultFunc(
     [import.meta.filename, 'onNeedsSync'],
-    async (trace, args: { store: SyncableStore; remoteId: RemoteId; path: StaticSyncablePath }) => {
+    async (trace, args: { store: SyncableStore; remoteId: RemoteId; path: SyncablePath }) => {
       const folderPath = await getFolderPath(trace, args.store, args.path);
       if (!folderPath.ok) {
         return folderPath;
@@ -107,7 +105,7 @@ export const startMockRemotes = async (trace: Trace, { creatorPublicCryptoKeysSe
 
   const triggerContentChangeNotificationSoonForPath = makeAsyncResultFunc(
     [import.meta.filename, 'triggerContentChangeNotificationSoonForPath'],
-    async (trace, { store, remoteId, path }: { store: SyncableStore; remoteId: RemoteId; path: StaticSyncablePath }): PR<undefined> => {
+    async (trace, { store, remoteId, path }: { store: SyncableStore; remoteId: RemoteId; path: SyncablePath }): PR<undefined> => {
       const hash = await getSyncableHashAtPath(trace, store, path);
       if (!hash.ok) {
         return generalizeFailureResult(trace, hash, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
@@ -330,7 +328,7 @@ const pullBundle = makeAsyncResultFunc(
   [import.meta.filename, 'pullBundle'],
   async (
     trace: Trace,
-    { store, hash, path }: { store: SyncableStore; path: StaticSyncablePath; hash: Sha256Hash | undefined }
+    { store, hash, path }: { store: SyncableStore; path: SyncablePath; hash: Sha256Hash | undefined }
   ): PR<InSyncBundle | OutOfSyncBundle, 'not-found'> => {
     const bundle = await getSyncableAtPath(trace, store, path, 'bundle');
     if (!bundle.ok) {
@@ -355,15 +353,28 @@ const pullBundle = makeAsyncResultFunc(
       return remoteMetadata;
     }
 
-    const hashesById = await bundle.value.getHashesById(trace);
-    if (!hashesById.ok) {
-      return hashesById;
+    const metadataById = await bundle.value.getMetadataById(trace);
+    if (!metadataById.ok) {
+      return metadataById;
     }
+
+    const hashesById = objectEntries(metadataById.value).reduce(
+      (out, [id, metadata]) => {
+        if (metadata === undefined) {
+          return out;
+        }
+
+        out[id] = metadata.hash;
+
+        return out;
+      },
+      {} as Partial<Record<SyncableId, Sha256Hash>>
+    );
 
     return makeSuccess({
       type: 'bundle',
       outOfSync: true,
-      hashesById: hashesById.value,
+      hashesById,
       metadata: remoteMetadata.value
     } satisfies OutOfSyncBundle);
   }
@@ -373,7 +384,7 @@ const pullFolder = makeAsyncResultFunc(
   [import.meta.filename, 'pullFolder'],
   async (
     trace: Trace,
-    { store, hash, path }: { store: SyncableStore; path: StaticSyncablePath; hash: Sha256Hash | undefined }
+    { store, hash, path }: { store: SyncableStore; path: SyncablePath; hash: Sha256Hash | undefined }
   ): PR<InSyncFolder | OutOfSyncFolder, 'not-found'> => {
     const folder = await getSyncableAtPath(trace, store, path, 'folder');
     if (!folder.ok) {
@@ -398,15 +409,28 @@ const pullFolder = makeAsyncResultFunc(
       return remoteMetadata;
     }
 
-    const hashesById = await folder.value.getHashesById(trace);
-    if (!hashesById.ok) {
-      return hashesById;
+    const metadataById = await folder.value.getMetadataById(trace);
+    if (!metadataById.ok) {
+      return metadataById;
     }
+
+    const hashesById = objectEntries(metadataById.value).reduce(
+      (out, [id, metadata]) => {
+        if (metadata === undefined) {
+          return out;
+        }
+
+        out[id] = metadata.hash;
+
+        return out;
+      },
+      {} as Partial<Record<SyncableId, Sha256Hash>>
+    );
 
     return makeSuccess({
       type: 'folder',
       outOfSync: true,
-      hashesById: hashesById.value,
+      hashesById,
       metadata: remoteMetadata.value
     } satisfies OutOfSyncFolder);
   }
@@ -416,7 +440,7 @@ const pullFile = makeAsyncResultFunc(
   [import.meta.filename, 'pullFile'],
   async (
     trace: Trace,
-    { store, hash, path, sendData }: { store: SyncableStore; path: StaticSyncablePath; hash: Sha256Hash | undefined; sendData: boolean }
+    { store, hash, path, sendData }: { store: SyncableStore; path: SyncablePath; hash: Sha256Hash | undefined; sendData: boolean }
   ): PR<InSyncFile | OutOfSyncFile, 'not-found'> => {
     const file = await getSyncableAtPath(trace, store, path, 'file');
     if (!file.ok) {

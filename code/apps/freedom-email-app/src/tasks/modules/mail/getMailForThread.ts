@@ -1,7 +1,7 @@
 import type { PR, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableId } from 'freedom-sync-types';
+import { plainId } from 'freedom-sync-types';
 import { getBundleAtPath, getJsonFromFileAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
@@ -46,20 +46,16 @@ export const getMailForThread = makeAsyncResultFunc(
       return userFs;
     }
 
-    const mailStorageBundle = await getBundleAtPath(
-      trace,
-      userFs.value,
-      userFs.value.path.dynamic.append(MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID)
-    );
+    const mailStorageBundle = await getBundleAtPath(trace, userFs.value, userFs.value.path.append(MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID));
     if (!mailStorageBundle.ok) {
       return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
 
-    const syncableMailId = mailThreadIdInfo.removePrefix(threadId) as SyncableId;
+    const syncableMailId = plainId(mailThreadIdInfo.removePrefix(threadId));
     const storedMail = await getJsonFromFileAtPath(
       trace,
       userFs.value,
-      mailStorageBundle.value.path.dynamic.append(syncableMailId),
+      mailStorageBundle.value.path.append(syncableMailId),
       storedMailSchema
     );
     if (!storedMail.ok) {
