@@ -5,7 +5,7 @@ import { inline, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { OldSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import { isEqual } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
@@ -50,7 +50,7 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         encodedDelta
       }: {
         store: SyncableStore;
-        path: OldSyncablePath;
+        path: SyncablePath;
         role: SyncableStoreRole;
         encodedDelta: EncodedConflictFreeDocumentDelta<AccessControlDocumentPrefix>;
       }

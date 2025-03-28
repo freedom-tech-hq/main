@@ -4,7 +4,7 @@ export * from './DefaultSyncableStore.ts';
 export * from './FileStore.ts';
 export * from './FolderManagement.ts';
 export * from './FolderStore.ts';
-export * from './GenerateNewSyncableItemIdFunc.ts';
+export * from './GenerateNewSyncableItemNameFunc.ts';
 export * from './in-memory-backing/exports.ts';
 export * from './MutableFileStore.ts';
 export * from './MutableFolderStore.ts';

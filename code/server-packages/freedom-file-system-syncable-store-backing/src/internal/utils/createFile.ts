@@ -17,12 +17,9 @@ export const createFile = makeAsyncResultFunc(
     data: Uint8Array,
     metadata: SyncableFileMetadata & FileSystemLocalItemMetadata
   ): PR<undefined> => {
-    const filePath = await getFsPath(trace, rootPath, ids);
-    if (!filePath.ok) {
-      return filePath;
-    }
+    const filePath = getFsPath(rootPath, ids);
 
-    await fs.writeFile(filePath.value, data);
+    await fs.writeFile(filePath, data);
 
     const savedMetadata = await createMetadataFile(trace, rootPath, ids, metadata);
     if (!savedMetadata.ok) {

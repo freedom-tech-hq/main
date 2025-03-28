@@ -1,5 +1,5 @@
 import type { PRFunc } from 'freedom-async';
-import type { DynamicSyncableId, SyncableBundleMetadata, SyncableFileMetadata, SyncableId } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncableBundleMetadata, SyncableFileMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FileStore } from './FileStore.ts';
 import type { MutableStoreBase } from './MutableStoreBase.ts';
@@ -18,7 +18,10 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
     [
       | {
           mode?: 'local';
-          id: DynamicSyncableId;
+          /** @defaultValue generated using `makeUuid()` */
+          id?: SyncableId;
+          /** @defaultValue `id` */
+          name?: DynamicSyncableItemName;
           value: Uint8Array;
         }
       | {
@@ -41,7 +44,10 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
     [
       | {
           mode?: 'local';
-          id: DynamicSyncableId;
+          /** @defaultValue generated using `makeUuid()` */
+          id?: SyncableId;
+          /** @defaultValue `id` */
+          name?: DynamicSyncableItemName;
         }
       | {
           mode: 'via-sync';

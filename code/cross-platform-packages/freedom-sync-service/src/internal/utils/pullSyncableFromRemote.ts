@@ -99,19 +99,19 @@ const onBundlePulled = makeAsyncResultFunc(
       ]);
     }
 
-    const localHashesById = await localBundle.value.bundle.getHashesById(trace);
-    if (!localHashesById.ok) {
-      return localHashesById;
+    const localMetadataById = await localBundle.value.bundle.getMetadataById(trace);
+    if (!localMetadataById.ok) {
+      return localMetadataById;
     }
 
     // Trying to pull in sorted key order for better determinism
     for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(file.hashesById))) {
-      const localHash = localHashesById.value[id];
-      if (remoteHash === undefined || localHash === remoteHash) {
+      const localMetadata = localMetadataById.value[id];
+      if (remoteHash === undefined || localMetadata?.hash === remoteHash) {
         continue;
       }
 
-      syncService.pullFromRemotes({ path: path.append(id), hash: localHash });
+      syncService.pullFromRemotes({ path: path.append(id), hash: localMetadata?.hash });
     }
 
     // Pushing any missing content to the remote
@@ -137,16 +137,16 @@ const onFolderPulled = makeAsyncResultFunc(
       return generalizeFailureResult(trace, excludeFailureResult(localFolder, 'deleted'), ['not-found', 'untrusted', 'wrong-type']);
     }
 
-    const localHashesById = await localFolder.value.folder.getHashesById(trace);
-    if (!localHashesById.ok) {
-      return localHashesById;
+    const localMetadataById = await localFolder.value.folder.getMetadataById(trace);
+    if (!localMetadataById.ok) {
+      return localMetadataById;
     }
 
     // Trying to pull in sorted key order for better determinism
     for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(folder.hashesById))) {
-      const localHash = localHashesById.value[id];
-      if (remoteHash !== undefined && localHash !== remoteHash) {
-        syncService.pullFromRemotes({ path: path.append(id), hash: localHash });
+      const localMetadata = localMetadataById.value[id];
+      if (remoteHash !== undefined && localMetadata?.hash !== remoteHash) {
+        syncService.pullFromRemotes({ path: path.append(id), hash: localMetadata?.hash });
       }
     }
 

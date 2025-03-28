@@ -12,10 +12,7 @@ import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 export const createMetadataFile = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, rootPath: string, ids: readonly SyncableId[], metadata: AnyMetadata & FileSystemLocalItemMetadata): PR<undefined> => {
-    const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
-    if (!filePath.ok) {
-      return filePath;
-    }
+    const filePath = getFsPathForMetadataFile(rootPath, ids);
 
     const serialization = await anyMetadataSchema.serializeAsync(metadata, { validation: 'hard' });
     if (serialization.error !== undefined) {
@@ -23,7 +20,7 @@ export const createMetadataFile = makeAsyncResultFunc(
     }
 
     const outMetadataJsonString = JSON.stringify(serialization.serialized);
-    await fs.writeFile(filePath.value, outMetadataJsonString, 'utf-8');
+    await fs.writeFile(filePath, outMetadataJsonString, 'utf-8');
 
     return makeSuccess(undefined);
   }

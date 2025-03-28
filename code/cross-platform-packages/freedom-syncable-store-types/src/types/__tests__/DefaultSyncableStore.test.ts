@@ -2,19 +2,18 @@ import type { TestContext } from 'node:test';
 import { beforeEach, describe, it } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
-import { makeTrace } from 'freedom-contexts';
+import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
-import { encId, storageRootIdInfo } from 'freedom-sync-types';
-import { expectErrorCode, expectOk } from 'freedom-testing-tools';
+import { encName, storageRootIdInfo } from 'freedom-sync-types';
+import { expectErrorCode, expectIncludes, expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../utils/create/createStringFileAtPath.ts';
 import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../utils/generateProvenanceForNewSyncableStore.ts';
-import { getDynamicIds } from '../../utils/get/getDynamicIds.ts';
 import { getFolderAtPath } from '../../utils/get/getFolderAtPath.ts';
 import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.ts';
 import { getStringFromFileAtPath } from '../../utils/get/getStringFromFileAtPath.ts';
@@ -51,12 +50,15 @@ describe('DefaultSyncableStore', () => {
 
   it('deleting files and folders should work', async (t: TestContext) => {
     // Creating folder with default initial access
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
     // Creating file
-    const helloWorldTxtFile = await createStringFileAtPath(trace, store, testingPath, encId('hello-world.txt'), 'hello world');
+    const helloWorldTxtFile = await createStringFileAtPath(trace, store, testingPath.append(makeUuid()), {
+      name: encName('hello-world.txt'),
+      value: 'hello world'
+    });
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
@@ -75,19 +77,19 @@ describe('DefaultSyncableStore', () => {
     expectErrorCode(await getFolderAtPath(trace, store, testingPath), 'deleted');
   });
 
-  it('getIds should work', async (t: TestContext) => {
+  it('getIds should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
 
-    const folderIds = await getDynamicIds(trace, store, { type: 'folder' });
+    const folderIds = await store.getIds(trace, { type: 'folder' });
     expectOk(folderIds);
-    t.assert.deepStrictEqual(folderIds.value, [encId('testing')]);
+    expectIncludes(folderIds.value, testingFolder.value.path.lastId);
   });
 
   it('getFolderAtPath should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
@@ -97,7 +99,7 @@ describe('DefaultSyncableStore', () => {
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path, encId('testing'));
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 

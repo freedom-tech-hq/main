@@ -1,16 +1,14 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { OldSyncablePath, SignedSyncableAcceptance } from 'freedom-sync-types';
-import { DynamicSyncablePath, syncableAcceptanceSchema, syncableAcceptanceSignatureExtrasSchema, SyncablePath } from 'freedom-sync-types';
+import type { SignedSyncableAcceptance } from 'freedom-sync-types';
+import { syncableAcceptanceSchema, syncableAcceptanceSignatureExtrasSchema, SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import { ownerAndAboveRoles } from '../types/SyncableStoreRole.ts';
 import { generateTrustedTimeNameForSyncable } from './generateTrustedTimeNameForSyncable.ts';
-import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
 import { getCryptoKeyIdForHighestCurrentUserRoleAtPath } from './getCryptoKeyIdForHighestCurrentUserRoleAtPath.ts';
 
 export const generateAcceptanceForPathIfPossible = makeAsyncResultFunc(
@@ -18,7 +16,7 @@ export const generateAcceptanceForPathIfPossible = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    { path, getSha256ForItemProvenance }: { path: OldSyncablePath; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
+    { path, getSha256ForItemProvenance }: { path: SyncablePath; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
   ): PR<SignedSyncableAcceptance | undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const roleAndCryptoKeySetId = await getCryptoKeyIdForHighestCurrentUserRoleAtPath(trace, store, {
       // Acceptance is relative to the permissions of the parent folder since the item is being added to it
@@ -32,20 +30,8 @@ export const generateAcceptanceForPathIfPossible = makeAsyncResultFunc(
       return makeSuccess(undefined);
     }
 
-    let staticPath: SyncablePath;
-    if (path instanceof DynamicSyncablePath) {
-      const resolvedPath = await getSyncableAtPath(trace, store, path);
-      if (!resolvedPath.ok) {
-        return resolvedPath;
-      }
-
-      staticPath = resolvedPath.value.path;
-    } else {
-      staticPath = path;
-    }
-
     return await internalGenerateAcceptanceForFileAtPathWithKeySet(trace, store, {
-      path: staticPath,
+      path,
       getSha256ForItemProvenance,
       cryptoKeySetId: roleAndCryptoKeySetId.value.cryptoKeySetId
     });
@@ -64,7 +50,7 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       getSha256ForItemProvenance,
       cryptoKeySetId
     }: {
-      path: OldSyncablePath;
+      path: SyncablePath;
       getSha256ForItemProvenance: PRFunc<Sha256Hash>;
       cryptoKeySetId: CryptoKeySetId;
     }
@@ -75,7 +61,7 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
     }
 
     const trustedTimeName = await generateTrustedTimeNameForSyncable(trace, store, {
-      parentPath: path.parentPath ?? new SyncablePath(path.storageRootId),
+      path,
       uuid: makeUuid(),
       getSha256ForItemProvenance
     });
@@ -83,23 +69,11 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       return trustedTimeName;
     }
 
-    let staticPath: SyncablePath;
-    if (path instanceof DynamicSyncablePath) {
-      const resolvedPath = await getSyncableAtPath(trace, store, path);
-      if (!resolvedPath.ok) {
-        return generalizeFailureResult(trace, resolvedPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-      }
-
-      staticPath = resolvedPath.value.path;
-    } else {
-      staticPath = path;
-    }
-
     return await store.cryptoService.generateSignedValue(trace, {
       cryptoKeySetId,
       value: { trustedTimeName: trustedTimeName.value },
       valueSchema: syncableAcceptanceSchema,
-      signatureExtras: { path: staticPath, contentHash: contentHash.value },
+      signatureExtras: { path, contentHash: contentHash.value },
       signatureExtrasSchema: syncableAcceptanceSignatureExtrasSchema
     });
   }

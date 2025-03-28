@@ -5,8 +5,8 @@ import { base64String, makeIsoDateTime } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalSchemaValidationError, InternalStateError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
 import { extractPartsFromTimeName, extractPartsFromTrustedTimeName, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
-import type { DynamicSyncableId, OldSyncablePath, SyncableId, SyncablePath } from 'freedom-sync-types';
-import { encId, syncableEncryptedIdInfo, timeName } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncableItemName, SyncablePath } from 'freedom-sync-types';
+import { encName, syncableEncryptedItemNameInfo, timeName } from 'freedom-sync-types';
 
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
@@ -41,56 +41,29 @@ export class FolderOperationsHandler {
     this.getMutableSyncableStoreChangesDocument_ = getMutableSyncableStoreChangesDocument;
   }
 
-  public readonly staticToDynamicId = makeAsyncResultFunc(
-    [import.meta.filename, 'staticToDynamicId'],
-    async (trace, id: SyncableId): PR<DynamicSyncableId> => {
-      if (syncableEncryptedIdInfo.is(id)) {
-        const decrypted = await this.verifyAndDecryptString(trace, syncableEncryptedIdInfo.removePrefix(id));
-        if (!decrypted.ok) {
-          return decrypted;
-        }
-        return makeSuccess(encId(decrypted.value));
-      } else if (trustedTimeNameInfo.is(id)) {
-        const timeNameParts = await extractPartsFromTrustedTimeName(trace, id);
-        if (!timeNameParts.ok) {
-          return timeNameParts;
-        }
-        return makeSuccess(timeName(timeNameParts.value.uuid));
-      } else if (timeNameInfo.is(id)) {
-        const timeNameParts = await extractPartsFromTimeName(trace, id);
-        if (!timeNameParts.ok) {
-          return timeNameParts;
-        }
-        return makeSuccess(timeName(timeNameParts.value.uuid));
-      } else {
-        return makeSuccess(id);
-      }
-    }
-  );
-
-  public readonly generateNewSyncableItemId = makeAsyncResultFunc(
-    [import.meta.filename, 'generateNewSyncableItemId'],
+  public readonly generateNewSyncableItemName = makeAsyncResultFunc(
+    [import.meta.filename, 'generateNewSyncableItemName'],
     async (
       trace: Trace,
       {
-        parentPath,
-        id,
+        path,
+        name,
         getSha256ForItemProvenance
-      }: { parentPath: OldSyncablePath; id: DynamicSyncableId; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
-    ): PR<SyncableId> => {
-      if (typeof id === 'string') {
-        // Already a SyncableId
-        return makeSuccess(id);
+      }: { path: SyncablePath; name: DynamicSyncableItemName; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
+    ): PR<SyncableItemName> => {
+      if (typeof name === 'string') {
+        // Already a SyncableItemName
+        return makeSuccess(name);
       }
 
-      switch (id.type) {
+      switch (name.type) {
         case 'encrypted': {
-          const encryptedAndSignedId = await this.encryptAndSignString(trace, id.plainId);
-          if (!encryptedAndSignedId.ok) {
-            return encryptedAndSignedId;
+          const encryptedAndSignedName = await this.encryptAndSignString(trace, name.plainName);
+          if (!encryptedAndSignedName.ok) {
+            return encryptedAndSignedName;
           }
 
-          return makeSuccess(syncableEncryptedIdInfo.make(encryptedAndSignedId.value));
+          return makeSuccess(syncableEncryptedItemNameInfo.make(encryptedAndSignedName.value));
         }
 
         case 'time': {
@@ -99,17 +72,55 @@ export class FolderOperationsHandler {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const shouldUseTrustedTime = await shouldUseTrustedTimeNamesInPath(trace, store, parentPath);
+          const shouldUseTrustedTime = await shouldUseTrustedTimeNamesInPath(trace, store, path.parentPath!);
           if (!shouldUseTrustedTime.ok) {
             return shouldUseTrustedTime;
           }
 
           if (shouldUseTrustedTime.value) {
-            return await generateTrustedTimeNameForSyncable(trace, store, { parentPath, uuid: id.uuid, getSha256ForItemProvenance });
+            const trustedTimeName = await generateTrustedTimeNameForSyncable(trace, store, {
+              path,
+              uuid: name.uuid,
+              getSha256ForItemProvenance
+            });
+            if (!trustedTimeName.ok) {
+              return trustedTimeName;
+            }
+            return makeSuccess(trustedTimeName.value);
           } else {
-            return makeSuccess(timeNameInfo.make(`${makeIsoDateTime()}-${id.uuid}`));
+            return makeSuccess(timeNameInfo.make(`${makeIsoDateTime()}-${name.uuid}`));
           }
         }
+      }
+    }
+  );
+
+  public readonly getDynamicName = makeAsyncResultFunc(
+    [import.meta.filename, 'getDynamicName'],
+    async (trace, name: SyncableItemName): PR<DynamicSyncableItemName> => {
+      if (syncableEncryptedItemNameInfo.is(name)) {
+        const decryptedName = await this.verifyAndDecryptString(trace, syncableEncryptedItemNameInfo.removePrefix(name));
+        if (!decryptedName.ok) {
+          return decryptedName;
+        }
+
+        return makeSuccess(encName(decryptedName.value));
+      } else if (trustedTimeNameInfo.is(name)) {
+        const timeNameParts = await extractPartsFromTrustedTimeName(trace, name);
+        if (!timeNameParts.ok) {
+          return timeNameParts;
+        }
+
+        return makeSuccess(timeName(timeNameParts.value.uuid));
+      } else if (timeNameInfo.is(name)) {
+        const timeNameParts = await extractPartsFromTimeName(trace, name);
+        if (!timeNameParts.ok) {
+          return timeNameParts;
+        }
+
+        return makeSuccess(timeName(timeNameParts.value.uuid));
+      } else {
+        return makeSuccess(name);
       }
     }
   );

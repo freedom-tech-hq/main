@@ -16,12 +16,12 @@ export const isTrustedTimeNameValid = makeAsyncResultFunc(
     store: SyncableStore,
     {
       trustedTimeName,
-      parentPathHash,
+      pathHash,
       contentHash,
       trustedTimeSources
     }: {
       trustedTimeName: TrustedTimeName;
-      parentPathHash: Sha256Hash;
+      pathHash: Sha256Hash;
       contentHash: Sha256Hash;
       trustedTimeSources: TrustedTimeSource[];
     }
@@ -37,15 +37,14 @@ export const isTrustedTimeNameValid = makeAsyncResultFunc(
     }
 
     if (signingCryptoKeySetId.value === store.creatorCryptoKeySetId) {
-      return await store.cryptoService.isSignedValueValid(trace, signedTimeName.value, { parentPathHash, contentHash });
+      return await store.cryptoService.isSignedValueValid(trace, signedTimeName.value, { pathHash, contentHash });
     }
 
     const trustedTimeValid = await allResultsMapped(
       trace,
       trustedTimeSources,
       {},
-      async (trace, trustedTimeSource) =>
-        await trustedTimeSource.isTrustedTimeNameValid(trace, trustedTimeName, { parentPathHash, contentHash })
+      async (trace, trustedTimeSource) => await trustedTimeSource.isTrustedTimeNameValid(trace, trustedTimeName, { pathHash, contentHash })
     );
     if (!trustedTimeValid.ok) {
       return trustedTimeValid;

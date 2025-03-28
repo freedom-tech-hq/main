@@ -21,7 +21,7 @@ export const timeNameInfo = makeIdInfo<'T_', `${IsoDateTime}-${Uuid}`>('T_', {
 export type TimeName = typeof timeNameInfo.schema.valueType;
 
 export const signedTimeNameSignatureExtrasSchema = schema.object({
-  parentPathHash: sha256HashInfo.schema,
+  pathHash: sha256HashInfo.schema,
   contentHash: sha256HashInfo.schema
 });
 export type SignedTimeNameSignatureExtras = typeof signedTimeNameSignatureExtrasSchema.valueType;

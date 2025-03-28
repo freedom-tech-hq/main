@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { OldSyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
 import type { MutableSyncableStore } from '../types/MutableSyncableStore.ts';
@@ -8,7 +8,7 @@ import { getMutableParentSyncable } from './get/getMutableParentSyncable.ts';
 
 export const deleteSyncableItemAtPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: MutableSyncableStore, path: OldSyncablePath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: MutableSyncableStore, path: SyncablePath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parentFileStore = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('file'));
     if (!parentFileStore.ok) {
       if (parentFileStore.value.errorCode === 'deleted') {

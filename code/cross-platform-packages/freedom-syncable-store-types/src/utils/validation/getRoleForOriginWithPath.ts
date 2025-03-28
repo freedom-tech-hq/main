@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { extractKeyIdFromSignedValue } from 'freedom-crypto';
-import type { OldSyncablePath, SignedSyncableOrigin } from 'freedom-sync-types';
+import type { SignedSyncableOrigin, SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import type { SyncableStoreRole } from '../../types/SyncableStoreRole.ts';
@@ -13,7 +13,7 @@ export const getRoleForOriginWithPath = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    { path, origin }: { path: OldSyncablePath; origin: SignedSyncableOrigin }
+    { path, origin }: { path: SyncablePath; origin: SignedSyncableOrigin }
   ): PR<SyncableStoreRole | undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const signingCryptoKeySetId = extractKeyIdFromSignedValue(trace, { signedValue: origin });
     if (!signingCryptoKeySetId.ok) {

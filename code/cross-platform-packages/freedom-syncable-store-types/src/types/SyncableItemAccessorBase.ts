@@ -8,7 +8,7 @@ export interface SyncableItemAccessorBase {
   readonly path: SyncablePath;
 
   /** Gets the hash of this file */
-  readonly getHash: PRFunc<Sha256Hash, never, [{ recompute?: boolean }?]>;
+  readonly getHash: PRFunc<Sha256Hash>;
 
   /** Gets the metadata */
   readonly getMetadata: PRFunc<SyncableItemMetadata>;

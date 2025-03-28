@@ -4,7 +4,7 @@ import type { Sha256Hash, Uuid } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import { generateSha256HashFromString } from 'freedom-crypto';
 import type { TrustedTimeName } from 'freedom-crypto-data';
-import type { OldSyncablePath } from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import { generateSelfSignedTrustedTimeName } from './generateSelfSignedTrustedTimeName.ts';
@@ -16,12 +16,14 @@ export const generateTrustedTimeName = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    { parentPath, uuid, contentHash }: { parentPath: OldSyncablePath; uuid: Uuid; contentHash: Sha256Hash }
+    { path, uuid, contentHash }: { path: SyncablePath; uuid: Uuid; contentHash: Sha256Hash }
   ): PR<TrustedTimeName> => {
-    const parentPathHash = await generateSha256HashFromString(trace, parentPath.toString());
-    if (!parentPathHash.ok) {
-      return parentPathHash;
+    const pathHash = await generateSha256HashFromString(trace, path.toString());
+    if (!pathHash.ok) {
+      return pathHash;
     }
+
+    const parentPath = path.parentPath ?? new SyncablePath(path.storageRootId);
 
     const roleAndCryptoKeySetId = await getCryptoKeyIdForHighestCurrentUserRoleAtPath(trace, store, {
       // Acceptance is relative to the permissions of the parent folder since the item is being added to it
@@ -34,7 +36,7 @@ export const generateTrustedTimeName = makeAsyncResultFunc(
     // If the user is a creator, they can sign their own trusted time names
     if (roleAndCryptoKeySetId.value.role === 'creator') {
       return await generateSelfSignedTrustedTimeName(trace, store, {
-        parentPathHash: parentPathHash.value,
+        pathHash: pathHash.value,
         uuid,
         contentHash
       });
@@ -50,7 +52,7 @@ export const generateTrustedTimeName = makeAsyncResultFunc(
       trustedTimeSources.value,
       { onSuccess: 'stop', skipErrorCodes: ['generic'] },
       async (trace, trustedTimeSource) =>
-        await trustedTimeSource.generateTrustedTimeName(trace, { parentPathHash: parentPathHash.value, uuid, contentHash })
+        await trustedTimeSource.generateTrustedTimeName(trace, { pathHash: pathHash.value, uuid, contentHash })
     );
     if (!trustedTimeNames.ok) {
       return trustedTimeNames;

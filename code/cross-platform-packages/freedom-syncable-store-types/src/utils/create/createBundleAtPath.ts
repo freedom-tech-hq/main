@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { DynamicSyncableId, OldSyncablePath } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
@@ -12,14 +12,14 @@ export const createBundleAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: MutableSyncableStore,
-    parentPath: OldSyncablePath,
-    id: DynamicSyncableId
+    path: SyncablePath,
+    { name }: { name?: DynamicSyncableItemName }
   ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const parent = await getMutableSyncableAtPath(trace, store, parentPath, syncableItemTypes.exclude('file'));
+    const parent = await getMutableSyncableAtPath(trace, store, path.parentPath!, syncableItemTypes.exclude('file'));
     if (!parent.ok) {
       return parent;
     }
 
-    return await parent.value.createBundle(trace, { id });
+    return await parent.value.createBundle(trace, { id: path.lastId!, name });
   }
 );

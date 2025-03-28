@@ -17,20 +17,13 @@ import {
   makeSuccess
 } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
+import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId, SignedValue, TrustedTimeName } from 'freedom-crypto-data';
-import type {
-  DynamicSyncableId,
-  OldSyncablePath,
-  SyncableFolderMetadata,
-  SyncableId,
-  SyncableItemType,
-  SyncablePath
-} from 'freedom-sync-types';
-import { DynamicSyncablePath } from 'freedom-sync-types';
+import type { SyncableFolderMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
@@ -39,7 +32,7 @@ import type { SingleOrArray } from 'yaschema';
 
 import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
-import type { GenerateNewSyncableItemIdFunc } from '../../types/GenerateNewSyncableItemIdFunc.ts';
+import type { GenerateNewSyncableItemNameFunc } from '../../types/GenerateNewSyncableItemNameFunc.ts';
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
 import type { MutableFolderStore } from '../../types/MutableFolderStore.ts';
 import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableFolderAccessor.ts';
@@ -65,7 +58,6 @@ import type {
   IsDeltaValidForConflictFreeDocumentArgs
 } from '../../utils/get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
-import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { DefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
@@ -285,7 +277,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       }
 
       // Syncable Store Changes
-      const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path, STORE_CHANGES_BUNDLE_ID, {
+      const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path.append(STORE_CHANGES_BUNDLE_ID), {
         newDocument: makeNewSyncableStoreChangesDocument
       });
       /* node:coverage disable */
@@ -297,9 +289,12 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       // Access Control (should be created last since syncing will be allowed once this is created)
       const newAccessControlDocument = () => new SyncableStoreAccessControlDocument({ initialAccess: initialAccess.value });
 
-      const createdAccessControlDoc = await createConflictFreeDocumentBundleAtPath(trace, store, this.path, ACCESS_CONTROL_BUNDLE_ID, {
-        newDocument: newAccessControlDocument
-      });
+      const createdAccessControlDoc = await createConflictFreeDocumentBundleAtPath(
+        trace,
+        store,
+        this.path.append(ACCESS_CONTROL_BUNDLE_ID),
+        { newDocument: newAccessControlDocument }
+      );
       /* node:coverage disable */
       if (!createdAccessControlDoc.ok) {
         return generalizeFailureResult(trace, createdAccessControlDoc, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
@@ -336,7 +331,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
-    async (trace: Trace, id: DynamicSyncableId): PR<undefined, 'not-found'> => {
+    async (trace: Trace, id: SyncableId): PR<undefined, 'not-found'> => {
       if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
         return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported for ${this.path.append(id).toString()}` }));
       }
@@ -367,7 +362,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     }
   );
 
-  public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: DynamicSyncableId) => {
+  public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: SyncableId) => {
     if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
       return await this.plainFileStore_.exists(trace, id);
     }
@@ -389,71 +384,62 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     return makeSuccess(existsInFolder || existsInEncryptedBundle);
   });
 
-  public readonly generateNewSyncableItemId: GenerateNewSyncableItemIdFunc = async (trace: Trace, args) =>
-    await this.folderOperationsHandler_.generateNewSyncableItemId(trace, args);
-
-  public readonly staticToDynamicId = (trace: Trace, id: SyncableId): PR<DynamicSyncableId> =>
-    this.folderOperationsHandler_.staticToDynamicId(trace, id);
+  public readonly generateNewSyncableItemName: GenerateNewSyncableItemNameFunc = async (trace: Trace, args) =>
+    await this.folderOperationsHandler_.generateNewSyncableItemName(trace, args);
 
   // FolderStore Methods
 
-  public readonly dynamicToStaticId = makeAsyncResultFunc(
-    [import.meta.filename, 'dynamicToStaticId'],
-    async (trace, id: DynamicSyncableId): PR<SyncableId, 'not-found'> => {
-      const found = await firstSuccessResult(trace, [
-        this.folderStore_.dynamicToStaticId(trace, id),
-        this.plainFileStore_.dynamicToStaticId(trace, id),
-        this.encryptedFileStore_.dynamicToStaticId(trace, id)
-      ]);
-      if (!found.ok) {
-        return excludeFailureResult(found, 'empty-data-set');
-      }
-
-      return makeSuccess(found.value);
+  public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
+    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
+    if (!metadata.ok) {
+      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
     }
-  );
 
-  public readonly getHash = makeAsyncResultFunc(
-    [import.meta.filename, 'getHash'],
-    async (trace, { recompute = false }: { recompute?: boolean } = {}): PR<Sha256Hash> => {
-      const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
-      if (!metadata.ok) {
-        return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
+    const hash = metadata.value.hash;
+    if (hash !== undefined) {
+      return makeSuccess(hash);
+    }
+
+    do {
+      const needsRecomputeHashCount = this.needsRecomputeHashCount_;
+
+      const metadataById = await this.getMetadataById(trace);
+      /* node:coverage disable */
+      if (!metadataById.ok) {
+        return metadataById;
       }
+      /* node:coverage enable */
 
-      const hash = metadata.value.hash;
-      if (hash !== undefined && !recompute) {
-        return makeSuccess(hash);
-      }
-
-      do {
-        const needsRecomputeHashCount = this.needsRecomputeHashCount_;
-
-        const hashesById = await this.getHashesById(trace, { recompute });
-        /* node:coverage disable */
-        if (!hashesById.ok) {
-          return hashesById;
-        }
-        /* node:coverage enable */
-
-        const hash = await generateSha256HashFromHashesById(trace, hashesById.value);
-        /* node:coverage disable */
-        if (!hash.ok) {
-          return hash;
-        }
-        /* node:coverage enable */
-
-        if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-          const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
-          if (!updatedHash.ok) {
-            return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
+      const hashesById = objectEntries(metadataById.value).reduce(
+        (out, [id, metadata]) => {
+          if (metadata === undefined) {
+            return out;
           }
 
-          return makeSuccess(hash.value);
+          out[id] = metadata.hash;
+
+          return out;
+        },
+        {} as Partial<Record<SyncableId, Sha256Hash>>
+      );
+
+      const hash = await generateSha256HashFromHashesById(trace, hashesById);
+      /* node:coverage disable */
+      if (!hash.ok) {
+        return hash;
+      }
+      /* node:coverage enable */
+
+      if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
+        const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
+        if (!updatedHash.ok) {
+          return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
         }
-      } while (true);
-    }
-  );
+
+        return makeSuccess(hash.value);
+      }
+    } while (true);
+  });
 
   public readonly getIds = makeAsyncResultFunc(
     [import.meta.filename, 'getIds'],
@@ -540,7 +526,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     [import.meta.filename, 'getMutable'],
     async <T extends SyncableItemType = SyncableItemType>(
       trace: Trace,
-      id: DynamicSyncableId,
+      id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
@@ -563,33 +549,30 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // BundleAccessor Methods
 
-  public readonly getHashesById = makeAsyncResultFunc(
-    [import.meta.filename, 'getHashesById'],
-    async (trace: Trace, options?: { recompute?: boolean }) => {
-      const results = await allResultsNamed(
-        trace,
-        {},
-        {
-          folderHashes: this.folderStore_.getHashesById(trace, options),
-          plainBundleHashes: this.plainFileStore_.getHashesById(trace, options),
-          encryptedBundleHashes: this.encryptedFileStore_.getHashesById(trace, options)
-        }
-      );
-      if (!results.ok) {
-        return results;
+  public readonly getMetadataById = makeAsyncResultFunc([import.meta.filename, 'getMetadataById'], async (trace: Trace) => {
+    const results = await allResultsNamed(
+      trace,
+      {},
+      {
+        folderStore: this.folderStore_.getMetadataById(trace),
+        plainFileStore: this.plainFileStore_.getMetadataById(trace),
+        encryptedFileStore: this.encryptedFileStore_.getMetadataById(trace)
       }
-
-      const { folderHashes, plainBundleHashes, encryptedBundleHashes } = results.value;
-
-      return makeSuccess({ ...folderHashes, ...plainBundleHashes, ...encryptedBundleHashes });
+    );
+    if (!results.ok) {
+      return results;
     }
-  );
+
+    const { folderStore, plainFileStore, encryptedFileStore } = results.value;
+
+    return makeSuccess({ ...folderStore, ...plainFileStore, ...encryptedFileStore });
+  });
 
   public readonly get = makeAsyncResultFunc(
     [import.meta.filename, 'get'],
     async <T extends SyncableItemType = SyncableItemType>(
       trace: Trace,
-      id: DynamicSyncableId,
+      id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
@@ -652,7 +635,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
 const getAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getAccessControlDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: OldSyncablePath) => {
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath) => {
     const accessControlDoc = await getMutableAccessControlDocument(trace, weakStore, path);
     /* node:coverage disable */
     if (!accessControlDoc.ok) {
@@ -666,11 +649,7 @@ const getAccessControlDocument = makeAsyncResultFunc(
 
 const getMutableAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableAccessControlDocument'],
-  async (
-    trace,
-    weakStore: WeakRef<MutableSyncableStore>,
-    path: OldSyncablePath
-  ): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
     const store = weakStore.deref();
     if (store === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -697,7 +676,7 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
 
 const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: OldSyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
+  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
     const store = weakStore.deref();
     if (store === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -761,18 +740,6 @@ const isDeltaValidForStoreChangesDocument = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    let staticPath: SyncablePath;
-    if (path instanceof DynamicSyncablePath) {
-      const resolvedPath = await getSyncableAtPath(trace, store, path);
-      if (!resolvedPath.ok) {
-        return generalizeFailureResult(trace, resolvedPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-      }
-
-      staticPath = resolvedPath.value.path;
-    } else {
-      staticPath = path;
-    }
-
-    return await document.isDeltaValidForRole(trace, { store, path: staticPath, role: originRole, encodedDelta });
+    return await document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
   }
 );

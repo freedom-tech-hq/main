@@ -1,5 +1,5 @@
 import { allResultsMapped, excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
-import { objectEntries } from 'freedom-cast';
+import { objectEntries, objectValues } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import {
@@ -12,10 +12,13 @@ import {
   syncableItemTypes,
   type SyncablePath
 } from 'freedom-sync-types';
-import { isExpectedType, type SyncableStoreBacking } from 'freedom-syncable-store-types';
-import type { SyncableStoreBackingFileAccessor } from 'freedom-syncable-store-types/lib/types/backing/accessors/SyncableStoreBackingFileAccessor';
-import type { SyncableStoreBackingFolderAccessor } from 'freedom-syncable-store-types/lib/types/backing/accessors/SyncableStoreBackingFolderAccessor';
-import type { SyncableStoreBackingItemAccessor } from 'freedom-syncable-store-types/lib/types/backing/accessors/SyncableStoreBackingItemAccessor';
+import type {
+  SyncableStoreBacking,
+  SyncableStoreBackingFileAccessor,
+  SyncableStoreBackingFolderAccessor,
+  SyncableStoreBackingItemAccessor
+} from 'freedom-syncable-store-types';
+import { isExpectedType } from 'freedom-syncable-store-types';
 import type { SingleOrArray } from 'yaschema';
 
 import { ROOT_FOLDER_ID } from '../internal/consts/special-ids.ts';
@@ -48,12 +51,13 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
   /** Initializes the backing for use.  This must be done exactly once for newly-created backings. */
   public readonly initialize = makeAsyncResultFunc(
     [import.meta.filename, 'initialize'],
-    async (trace, metadata: Omit<SyncableFolderMetadata, 'type' | 'encrypted'> & Omit<FileSystemLocalItemMetadata, 'id'>) => {
+    async (trace, metadata: Omit<SyncableFolderMetadata, 'type' | 'name' | 'encrypted'> & Omit<FileSystemLocalItemMetadata, 'id'>) => {
       const savedMetadata = await createMetadataFile(trace, this.rootPath_, [], {
         ...metadata,
         type: 'folder' as const,
-        encrypted: true as const,
-        id: ROOT_FOLDER_ID
+        id: ROOT_FOLDER_ID,
+        name: ROOT_FOLDER_ID,
+        encrypted: true as const
       });
       if (!savedMetadata.ok) {
         return savedMetadata;
@@ -115,7 +119,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
 
       const ids: SyncableId[] = [];
 
-      const didFilterIds = await allResultsMapped(trace, objectEntries(contents.value), {}, async (trace, [id, item]) => {
+      const didExtractIdsFromMetadata = await allResultsMapped(trace, objectValues(contents.value), {}, async (trace, item) => {
         if (item === undefined) {
           return makeSuccess(undefined);
         }
@@ -127,13 +131,13 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
 
         const isExpected = isExpectedType(trace, metadata.value, options?.type);
         if (isExpected.ok && isExpected.value) {
-          ids.push(id);
+          ids.push(metadata.value.id);
         }
 
         return makeSuccess(undefined);
       });
-      if (!didFilterIds.ok) {
-        return didFilterIds;
+      if (!didExtractIdsFromMetadata.ok) {
+        return didExtractIdsFromMetadata;
       }
 
       return makeSuccess(ids);

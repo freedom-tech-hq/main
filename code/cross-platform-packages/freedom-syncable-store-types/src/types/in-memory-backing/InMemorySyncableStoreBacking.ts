@@ -2,16 +2,16 @@ import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, ty
 import { objectEntries } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import {
-  type SyncableBundleMetadata,
-  type SyncableFileMetadata,
-  type SyncableFolderMetadata,
-  type SyncableId,
-  type SyncableItemMetadata,
-  type SyncableItemType,
-  syncableItemTypes,
-  type SyncablePath
+import type {
+  SyncableBundleMetadata,
+  SyncableFileMetadata,
+  SyncableFolderMetadata,
+  SyncableId,
+  SyncableItemMetadata,
+  SyncableItemType,
+  SyncablePath
 } from 'freedom-sync-types';
+import { syncableItemTypes } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import { isExpectedType } from '../../utils/validation/isExpectedType.ts';
@@ -31,11 +31,11 @@ import { traversePath } from './internal/utils/traversePath.ts';
 export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   private readonly root_: InMemorySyncableStoreBackingFolderItem;
 
-  constructor(metadata: Omit<SyncableFolderMetadata & LocalItemMetadata, 'type' | 'encrypted'>) {
+  constructor(metadata: Omit<SyncableFolderMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>) {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
-      metadata: { ...metadata, type: 'folder', encrypted: true },
+      metadata: { ...metadata, name: ROOT_FOLDER_ID, type: 'folder', encrypted: true },
       contents: {}
     };
   }

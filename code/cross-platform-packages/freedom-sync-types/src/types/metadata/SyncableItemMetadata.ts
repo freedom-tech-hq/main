@@ -1,5 +1,12 @@
-import type { SyncableBundleMetadata } from './SyncableBundleMetadata.ts';
-import type { SyncableFileMetadata } from './SyncableFileMetadata.ts';
-import type { SyncableFolderMetadata } from './SyncableFolderMetadata.ts';
+import { schema } from 'yaschema';
 
-export type SyncableItemMetadata = SyncableBundleMetadata | SyncableFileMetadata | SyncableFolderMetadata;
+import { syncableBundleMetadataSchema } from './SyncableBundleMetadata.ts';
+import { syncableFileMetadataSchema } from './SyncableFileMetadata.ts';
+import { syncableFolderMetadataSchema } from './SyncableFolderMetadata.ts';
+
+export const syncableItemMetadataSchema = schema.oneOf3(
+  syncableBundleMetadataSchema,
+  syncableFileMetadataSchema,
+  syncableFolderMetadataSchema
+);
+export type SyncableItemMetadata = typeof syncableItemMetadataSchema.valueType;

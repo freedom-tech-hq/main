@@ -16,12 +16,9 @@ export const createFolder = makeAsyncResultFunc(
     ids: readonly SyncableId[],
     metadata: (SyncableBundleMetadata | SyncableFolderMetadata) & FileSystemLocalItemMetadata
   ): PR<undefined> => {
-    const dirPath = await getFsPath(trace, rootPath, ids);
-    if (!dirPath.ok) {
-      return dirPath;
-    }
+    const dirPath = getFsPath(rootPath, ids);
 
-    await fs.mkdir(dirPath.value);
+    await fs.mkdir(dirPath);
 
     const savedMetadata = await createMetadataFile(trace, rootPath, ids, metadata);
     if (!savedMetadata.ok) {

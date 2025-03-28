@@ -1,6 +1,11 @@
-import type { AccessChange, AccessControlDocument, TimedAccessChange } from 'freedom-access-control-types';
+import type {
+  AccessChange,
+  AccessControlDocument,
+  ModifyAccessChange,
+  ModifyAccessChangeParams,
+  TimedAccessChange
+} from 'freedom-access-control-types';
 import { makeTimedAccessChangeSchema } from 'freedom-access-control-types';
-import type { ModifyAccessChange, ModifyAccessChangeParams } from 'freedom-access-control-types/lib/types/ModifyAccessChange.ts';
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';

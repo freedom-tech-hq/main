@@ -20,7 +20,7 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
 
   public readonly generateTrustedTimeName = makeAsyncResultFunc(
     [import.meta.filename, 'generateTrustedTimeName'],
-    async (trace, { parentPathHash, contentHash }: { parentPathHash: Sha256Hash; contentHash: Sha256Hash }): PR<TrustedTimeName> => {
+    async (trace, { pathHash, contentHash }: { pathHash: Sha256Hash; contentHash: Sha256Hash }): PR<TrustedTimeName> => {
       const signingAndVerifyingKeys = await resolveChain(this.getSigningAndVerifyingKeys_(trace));
       if (!signingAndVerifyingKeys.ok) {
         return signingAndVerifyingKeys;
@@ -29,7 +29,7 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
       const signedTimeName = await generateSignedValue(trace, {
         value: timeNameInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
         valueSchema: timeNameInfo.schema,
-        signatureExtras: { parentPathHash, contentHash },
+        signatureExtras: { pathHash, contentHash },
         signatureExtrasSchema: signedTimeNameSignatureExtrasSchema,
         signingKeys: signingAndVerifyingKeys.value
       });
@@ -51,7 +51,7 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
     async (
       trace,
       trustedTimeName: TrustedTimeName,
-      { parentPathHash, contentHash }: { parentPathHash: Sha256Hash; contentHash: Sha256Hash }
+      { pathHash, contentHash }: { pathHash: Sha256Hash; contentHash: Sha256Hash }
     ): PR<boolean> => {
       const signingAndVerifyingKeys = await resolveChain(this.getSigningAndVerifyingKeys_(trace));
       if (!signingAndVerifyingKeys.ok) {
@@ -68,7 +68,7 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
       return await isSignedValueValid(
         trace,
         deserialization.deserialized,
-        { parentPathHash, contentHash },
+        { pathHash, contentHash },
         { verifyingKeys: signingAndVerifyingKeys.value }
       );
     }

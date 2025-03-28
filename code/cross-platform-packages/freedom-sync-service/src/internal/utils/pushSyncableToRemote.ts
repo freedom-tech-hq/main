@@ -151,17 +151,17 @@ const pushBundle = makeAsyncResultFunc(
       return generalizeFailureResult(trace, localBundle, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    const localHashesById = await localBundle.value.getHashesById(trace);
-    if (!localHashesById.ok) {
-      return localHashesById;
+    const localMetadataById = await localBundle.value.getMetadataById(trace);
+    if (!localMetadataById.ok) {
+      return localMetadataById;
     }
 
-    for (const [id, localHash] of objectEntries(localHashesById.value)) {
-      if (localHash === undefined || pulledHashesById[id] === localHash) {
+    for (const [id, localMetadata] of objectEntries(localMetadataById.value)) {
+      if (localMetadata?.hash === undefined || pulledHashesById[id] === localMetadata.hash) {
         continue;
       }
 
-      syncService.pushToRemotes({ path: path.append(id), hash: localHash });
+      syncService.pushToRemotes({ path: path.append(id), hash: localMetadata.hash });
     }
 
     return makeSuccess(undefined);
@@ -196,30 +196,30 @@ const pushFolder = makeAsyncResultFunc(
       return makeSuccess(undefined); // Not ready yet
     }
 
-    const localHashesById = await localFolder.value.getHashesById(trace);
-    if (!localHashesById.ok) {
-      return localHashesById;
+    const localMetadataById = await localFolder.value.getMetadataById(trace);
+    if (!localMetadataById.ok) {
+      return localMetadataById;
     }
 
-    if (localHashesById.value[ACCESS_CONTROL_BUNDLE_ID] !== pulledHashesById[ACCESS_CONTROL_BUNDLE_ID]) {
+    if (localMetadataById.value[ACCESS_CONTROL_BUNDLE_ID]?.hash !== pulledHashesById[ACCESS_CONTROL_BUNDLE_ID]) {
       // If the remote doesn't have the access control bundle, we need to push that first
       syncService.pushToRemotes({
         path: path.append(ACCESS_CONTROL_BUNDLE_ID),
-        hash: localHashesById.value[ACCESS_CONTROL_BUNDLE_ID]!
+        hash: localMetadataById.value[ACCESS_CONTROL_BUNDLE_ID]!.hash!
       });
-    } else if (localHashesById.value[STORE_CHANGES_BUNDLE_ID] !== pulledHashesById[STORE_CHANGES_BUNDLE_ID]) {
+    } else if (localMetadataById.value[STORE_CHANGES_BUNDLE_ID]?.hash !== pulledHashesById[STORE_CHANGES_BUNDLE_ID]) {
       // If the remote doesn't have the syncable store changes bundle, we need to push that second
       syncService.pushToRemotes({
         path: path.append(STORE_CHANGES_BUNDLE_ID),
-        hash: localHashesById.value[STORE_CHANGES_BUNDLE_ID]!
+        hash: localMetadataById.value[STORE_CHANGES_BUNDLE_ID]!.hash!
       });
     } else {
-      for (const [id, localHash] of objectEntries(localHashesById.value)) {
-        if (localHash === undefined || pulledHashesById[id] === localHash) {
+      for (const [id, localMetadata] of objectEntries(localMetadataById.value)) {
+        if (localMetadata?.hash === undefined || pulledHashesById[id] === localMetadata.hash) {
           continue;
         }
 
-        syncService.pushToRemotes({ path: path.append(id), hash: localHash });
+        syncService.pushToRemotes({ path: path.append(id), hash: localMetadata.hash });
       }
     }
 

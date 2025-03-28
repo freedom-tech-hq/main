@@ -14,12 +14,9 @@ export const makeFileMetaFuncForPath = (rootPath: string, ids: readonly Syncable
   makeAsyncResultFunc(
     [import.meta.filename],
     async (trace): PR<SyncableItemMetadata & { type: 'file' } & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'> => {
-      const filePath = await getFsPathForMetadataFile(trace, rootPath, ids);
-      if (!filePath.ok) {
-        return filePath;
-      }
+      const filePath = getFsPathForMetadataFile(rootPath, ids);
 
-      const metadataJsonString = await fs.readFile(filePath.value, 'utf8');
+      const metadataJsonString = await fs.readFile(filePath, 'utf8');
       try {
         const metadataJson = JSON.parse(metadataJsonString) as JsonValue;
         const deserialization = await fileMetadataSchema.deserializeAsync(metadataJson, { validation: 'hard' });

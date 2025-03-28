@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { allResults, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OldSyncablePath, SyncableItemType } from 'freedom-sync-types';
+import type { SyncableItemType } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
@@ -19,7 +19,7 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
   async <T extends SyncableItemType = SyncableItemType>(
     trace: Trace,
     store: MutableSyncableStore,
-    path: OldSyncablePath,
+    path: SyncablePath,
     expectedType?: SingleOrArray<T>
   ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     if (store.path.storageRootId !== path.storageRootId) {
