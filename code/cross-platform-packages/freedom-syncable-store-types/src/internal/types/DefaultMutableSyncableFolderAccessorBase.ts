@@ -135,11 +135,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     store,
     makeFolderAccessor
   }: {
-    store: WeakRef<MutableSyncableStore>;
+    store: MutableSyncableStore;
     makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
-    this.weakStore_ = store;
-    this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);
+    this.weakStore_ = new WeakRef(store);
+    this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(this.weakStore_);
     this.makeFolderAccessor_ = makeFolderAccessor;
   }
 

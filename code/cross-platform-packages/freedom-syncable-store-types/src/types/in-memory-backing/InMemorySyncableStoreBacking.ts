@@ -28,6 +28,10 @@ import { makeFolderAccessor } from './internal/utils/makeFolderAccessor.ts';
 import { makeItemAccessor } from './internal/utils/makeItemAccessor.ts';
 import { traversePath } from './internal/utils/traversePath.ts';
 
+export interface InMemorySyncableStoreBackingConstructorArgs {
+  metadata: Omit<SyncableFolderMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>;
+}
+
 export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   private readonly root_: InMemorySyncableStoreBackingFolderItem;
 
