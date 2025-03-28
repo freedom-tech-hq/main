@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { DynamicSyncableId, SyncablePath } from 'freedom-sync-types';
+import type { SyncableItemName, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableFolderAccessor } from 'freedom-syncable-store-types';
 import { createFolderAtPath } from 'freedom-syncable-store-types';
 
@@ -12,7 +12,7 @@ export const createSyncableFolderForUserWithDefaultInitialAccess = makeAsyncResu
   [import.meta.filename],
   async (
     trace,
-    { userId, parentPath, id }: { userId: EmailUserId; parentPath: SyncablePath; id: DynamicSyncableId }
+    { userId, path, name }: { userId: EmailUserId; path: SyncablePath; name?: SyncableItemName }
   ): PR<MutableSyncableFolderAccessor, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const cryptoKeys = await getRequiredCryptoKeysForUser(trace, { userId });
     if (!cryptoKeys.ok) {
@@ -24,6 +24,6 @@ export const createSyncableFolderForUserWithDefaultInitialAccess = makeAsyncResu
       return userFs;
     }
 
-    return await createFolderAtPath(trace, userFs.value, parentPath, id);
+    return await createFolderAtPath(trace, userFs.value, path, { name });
   }
 );

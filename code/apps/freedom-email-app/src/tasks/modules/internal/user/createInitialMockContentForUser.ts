@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
-import { encId } from 'freedom-sync-types';
+import { plainId } from 'freedom-sync-types';
 import { createJsonFileAtPath, getMutableConflictFreeDocumentFromBundleAtPath } from 'freedom-syncable-store-types';
 
 import { mailIdInfo } from '../../../../modules/mail-types/MailId.ts';
@@ -26,14 +26,10 @@ export const createInitialMockContentForUser = makeAsyncResultFunc(
       return userFs;
     }
 
-    const mailStoragePath = userFs.value.path.dynamic.append(MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID);
+    const mailStoragePath = userFs.value.path.append(MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID);
     const id = mailIdInfo.make(makeUuid());
-    const createdEmailFile = await createJsonFileAtPath(
-      trace,
-      userFs.value,
-      mailStoragePath,
-      encId(id),
-      {
+    const createdEmailFile = await createJsonFileAtPath(trace, userFs.value, mailStoragePath.append(plainId(id)), {
+      value: {
         id,
         from: 'test@freedomtechhq.com',
         to: 'test@freedomtechhq.com',
@@ -41,8 +37,8 @@ export const createInitialMockContentForUser = makeAsyncResultFunc(
         body: 'This is a test email',
         timeMSec: Date.now()
       },
-      storedMailSchema
-    );
+      schema: storedMailSchema
+    });
     if (!createdEmailFile.ok) {
       return generalizeFailureResult(trace, createdEmailFile, [
         'not-found',
@@ -55,7 +51,7 @@ export const createInitialMockContentForUser = makeAsyncResultFunc(
     }
     const syncableId = createdEmailFile.value.path.lastId!;
 
-    const inboxPath = userFs.value.path.dynamic.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID, MAIL_COLLECTIONS_INBOX_DOCUMENT_ID);
+    const inboxPath = userFs.value.path.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID, MAIL_COLLECTIONS_INBOX_DOCUMENT_ID);
     const inboxDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs.value, inboxPath, {
       newDocument: makeMailCollectionDocumentFromSnapshot,
       // TODO: TEMP

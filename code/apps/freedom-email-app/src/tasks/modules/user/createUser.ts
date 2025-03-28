@@ -49,21 +49,20 @@ export const createUser = makeAsyncResultFunc([import.meta.filename], async (tra
   // Mail Folder
   const mailFolder = await createSyncableFolderForUserWithDefaultInitialAccess(trace, {
     userId,
-    parentPath: userFs.value.path,
-    id: MAIL_FOLDER_ID
+    path: userFs.value.path.append(MAIL_FOLDER_ID)
   });
   if (!mailFolder.ok) {
     return generalizeFailureResult(trace, mailFolder, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
 
   // Mail Storage Bundle
-  const mailStorageBundle = await createBundleAtPath(trace, userFs.value, mailFolder.value.path, MAIL_STORAGE_BUNDLE_ID);
+  const mailStorageBundle = await createBundleAtPath(trace, userFs.value, mailFolder.value.path.append(MAIL_STORAGE_BUNDLE_ID), {});
   if (!mailStorageBundle.ok) {
     return generalizeFailureResult(trace, mailStorageBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
 
   // Mail Collections Bundle
-  const mailCollectionsBundle = await createBundleAtPath(trace, userFs.value, mailFolder.value.path, MAIL_COLLECTIONS_BUNDLE_ID);
+  const mailCollectionsBundle = await createBundleAtPath(trace, userFs.value, mailFolder.value.path.append(MAIL_COLLECTIONS_BUNDLE_ID), {});
   if (!mailCollectionsBundle.ok) {
     return generalizeFailureResult(trace, mailCollectionsBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
@@ -72,8 +71,7 @@ export const createUser = makeAsyncResultFunc([import.meta.filename], async (tra
   const inboxBundle = await createConflictFreeDocumentBundleAtPath(
     trace,
     userFs.value,
-    mailCollectionsBundle.value.path,
-    MAIL_COLLECTIONS_INBOX_DOCUMENT_ID,
+    mailCollectionsBundle.value.path.append(MAIL_COLLECTIONS_INBOX_DOCUMENT_ID),
     { newDocument: () => makeNewMailCollectionDocument({ name: '[loc:inbox]' }) }
   );
   if (!inboxBundle.ok) {

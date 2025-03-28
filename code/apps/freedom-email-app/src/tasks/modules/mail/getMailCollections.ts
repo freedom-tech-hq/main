@@ -61,7 +61,7 @@ export const getMailCollections = makeAsyncResultFunc(
     const mailCollectionsBundle = await getBundleAtPath(
       trace,
       userFs.value,
-      userFs.value.path.dynamic.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID)
+      userFs.value.path.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID)
     );
     if (!mailCollectionsBundle.ok) {
       return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
