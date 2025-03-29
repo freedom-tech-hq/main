@@ -23,7 +23,7 @@ import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId, SignedValue, TrustedTimeName } from 'freedom-crypto-data';
-import type { SyncableFolderMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
@@ -463,16 +463,10 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     }
   );
 
-  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableFolderMetadata> => {
+  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
-    } else if (metadata.value.type !== 'folder') {
-      return makeFailure(
-        new NotFoundError(trace, {
-          message: `Expected folder metadata at ${this.path.toString()}, but found ${metadata.value.type}`
-        })
-      );
     }
 
     return makeSuccess(metadata.value);

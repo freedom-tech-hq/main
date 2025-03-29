@@ -6,7 +6,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
-import { defaultSaltId, encName, storageRootIdInfo } from 'freedom-sync-types';
+import { defaultSaltId, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import { expectErrorCode, expectIncludes, expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -56,12 +56,12 @@ describe('DefaultSyncableStore', () => {
 
   it('deleting files and folders should work', async (t: TestContext) => {
     // Creating folder with default initial access
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
     // Creating file
-    const helloWorldTxtFile = await createStringFileAtPath(trace, store, testingPath.append(makeUuid()), {
+    const helloWorldTxtFile = await createStringFileAtPath(trace, store, testingPath.append(uuidId('file')), {
       name: encName('hello-world.txt'),
       value: 'hello world'
     });
@@ -85,7 +85,7 @@ describe('DefaultSyncableStore', () => {
 
   it('getIds should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
 
     const folderIds = await store.getIds(trace, { type: 'folder' });
@@ -95,7 +95,7 @@ describe('DefaultSyncableStore', () => {
 
   it('getFolderAtPath should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
@@ -105,7 +105,7 @@ describe('DefaultSyncableStore', () => {
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 

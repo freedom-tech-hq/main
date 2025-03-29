@@ -1,5 +1,5 @@
 import type { PRFunc } from 'freedom-async';
-import type { SyncableFileMetadata } from 'freedom-sync-types';
+import type { SyncableItemMetadata } from 'freedom-sync-types';
 
 import type { SyncableItemAccessorBase } from './SyncableItemAccessorBase.ts';
 
@@ -13,5 +13,5 @@ export interface SyncableFileAccessor extends SyncableItemAccessorBase {
   readonly getEncodedBinary: PRFunc<Uint8Array>;
 
   /** Gets the metadata */
-  readonly getMetadata: PRFunc<SyncableFileMetadata>;
+  readonly getMetadata: PRFunc<SyncableItemMetadata>;
 }

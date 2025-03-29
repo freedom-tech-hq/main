@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableId, SyncableItemType } from 'freedom-sync-types';
-import { SyncablePath } from 'freedom-sync-types';
+import { extractSyncableIdParts, SyncablePath } from 'freedom-sync-types';
 import { guardIsExpectedType } from 'freedom-syncable-store-types';
 import type { SingleOrArray } from 'yaschema';
 
@@ -65,12 +65,9 @@ export const traversePath = makeAsyncResultFunc(
       }
     }
 
-    const metadata = await cursor.metadata(trace);
-    if (!metadata.ok) {
-      return metadata;
-    }
-
-    const guards = guardIsExpectedType(trace, path, metadata.value, expectedType, 'wrong-type');
+    const idParts =
+      path.lastId === undefined ? { encrypted: true, type: 'folder' as const, unmarkedId: '' } : extractSyncableIdParts(path.lastId!);
+    const guards = guardIsExpectedType(trace, path, idParts, expectedType, 'wrong-type');
     if (!guards.ok) {
       return guards;
     }

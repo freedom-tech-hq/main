@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 
 import type { PR } from 'freedom-async';
-import { allResultsMapped, GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
 import type { SyncableId } from 'freedom-sync-types';
 import { get } from 'lodash-es';
@@ -11,7 +11,7 @@ import { getFsPath } from './getFsPath.ts';
 import { makeDataFuncForPath } from './makeDataFuncForPath.ts';
 import { makeFileMetaFuncForPath } from './makeFileMetaFuncForPath.ts';
 import { makeFolderMetaFuncForPath } from './makeFolderMetaFuncForPath.ts';
-import { readLocalMetadata } from './readLocalMetadata.ts';
+import { desanitizeFileSystemComponent } from './sanitizeFileSystemComponent.ts';
 
 export const makeContentsFuncForPath = (rootPath: string, ids: readonly SyncableId[]) =>
   makeAsyncResultFunc(
@@ -24,19 +24,12 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
 
         const result: Partial<Record<SyncableId, FileSystemSyncableStoreBackingItem>> = {};
 
-        const processedEntries = await allResultsMapped(trace, entries, {}, async (trace, entry) => {
+        for (const entry of entries) {
           if (entry.name.startsWith('metadata.') && entry.name.endsWith('.json')) {
-            return makeSuccess(undefined); // Skip local-only files
+            continue; // Skip local-only files
           }
 
-          const fsPath = getFsPath(rootPath, ids, { suffixPaths: [`metadata.${entry.name}`], extension: 'json' });
-
-          const localMetadata = await readLocalMetadata(trace, fsPath);
-          if (!localMetadata.ok) {
-            return localMetadata;
-          }
-
-          const id = localMetadata.value.id;
+          const id = desanitizeFileSystemComponent(entry.name) as SyncableId;
 
           if (entry.isFile()) {
             result[id] = {
@@ -53,11 +46,6 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
               contents: makeContentsFuncForPath(dirPath, [id])
             };
           }
-
-          return makeSuccess(undefined);
-        });
-        if (!processedEntries.ok) {
-          return processedEntries;
         }
 
         return makeSuccess(result);

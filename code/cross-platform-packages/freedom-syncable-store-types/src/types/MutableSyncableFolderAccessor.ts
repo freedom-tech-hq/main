@@ -1,6 +1,6 @@
 import type { AccessChangeParams } from 'freedom-access-control-types';
 import type { PRFunc } from 'freedom-async';
-import type { SyncableFolderMetadata } from 'freedom-sync-types';
+import type { SyncableItemMetadata } from 'freedom-sync-types';
 
 import type { FolderManagement } from './FolderManagement.ts';
 import type { MutableFileStore } from './MutableFileStore.ts';
@@ -12,7 +12,7 @@ export interface MutableSyncableFolderAccessor extends SyncableFolderAccessor, M
   readonly type: 'folder';
 
   /** Gets the metadata */
-  readonly getMetadata: PRFunc<SyncableFolderMetadata>;
+  readonly getMetadata: PRFunc<SyncableItemMetadata>;
 
   /** Updates access levels */
   readonly updateAccess: PRFunc<undefined, 'conflict', [change: AccessChangeParams<SyncableStoreRole>]>;

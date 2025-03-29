@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { SyncableFileMetadata, SyncableId } from 'freedom-sync-types';
+import type { SyncableItemMetadata, SyncableId } from 'freedom-sync-types';
 
 import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { createMetadataFile } from './createMetadataFile.ts';
@@ -15,7 +15,7 @@ export const createFile = makeAsyncResultFunc(
     rootPath: string,
     ids: readonly SyncableId[],
     data: Uint8Array,
-    metadata: SyncableFileMetadata & FileSystemLocalItemMetadata
+    metadata: SyncableItemMetadata & FileSystemLocalItemMetadata
   ): PR<undefined> => {
     const filePath = getFsPath(rootPath, ids);
 

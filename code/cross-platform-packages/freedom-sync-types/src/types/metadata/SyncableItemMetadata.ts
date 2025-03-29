@@ -1,12 +1,10 @@
 import { schema } from 'yaschema';
 
-import { syncableBundleMetadataSchema } from './SyncableBundleMetadata.ts';
-import { syncableFileMetadataSchema } from './SyncableFileMetadata.ts';
-import { syncableFolderMetadataSchema } from './SyncableFolderMetadata.ts';
+import { syncableProvenanceSchema } from '../SyncableProvenance.ts';
+import { syncableItemNameSchema } from './SyncableItemName.ts';
 
-export const syncableItemMetadataSchema = schema.oneOf3(
-  syncableBundleMetadataSchema,
-  syncableFileMetadataSchema,
-  syncableFolderMetadataSchema
-);
+export const syncableItemMetadataSchema = schema.object({
+  name: syncableItemNameSchema,
+  provenance: syncableProvenanceSchema
+});
 export type SyncableItemMetadata = typeof syncableItemMetadataSchema.valueType;

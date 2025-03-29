@@ -5,7 +5,7 @@ import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import { makeUuid, type Trace } from 'freedom-contexts';
 import { generateSha256HashFromString } from 'freedom-crypto';
 import type { SyncablePath } from 'freedom-sync-types';
-import { timeName } from 'freedom-sync-types';
+import { extractSyncableIdParts, timeName, uuidId } from 'freedom-sync-types';
 
 import { makeDeltasBundleId } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -44,7 +44,9 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
           return makeFailure(new NotFoundError(trace, { message: 'No snapshot ID is set' }));
         }
 
-        const deltasPath = path.append(makeDeltasBundleId(document.value.snapshotId));
+        // Deltas are encrypted if their parent bundle is encrypted
+        const areDeltaEncrypted = extractSyncableIdParts(path.lastId!).encrypted;
+        const deltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltaEncrypted }, document.value.snapshotId));
         const deltas = await getBundleAtPath(trace, store, deltasPath);
         if (!deltas.ok) {
           return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
@@ -52,7 +54,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
 
         const encodedDelta = document.value.encodeDelta();
 
-        const deltaId = makeUuid();
+        const deltaId = uuidId({ encrypted: areDeltaEncrypted, type: 'file' });
         const deltaName = await deltas.value.generateNewSyncableItemName(trace, {
           name: timeName(makeUuid()),
           path: deltasPath.append(deltaId),

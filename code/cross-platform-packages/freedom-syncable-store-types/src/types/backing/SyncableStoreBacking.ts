@@ -1,14 +1,6 @@
 import type { PR, PRFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type {
-  SyncableBundleMetadata,
-  SyncableFileMetadata,
-  SyncableFolderMetadata,
-  SyncableId,
-  SyncableItemMetadata,
-  SyncableItemType,
-  SyncablePath
-} from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { LocalItemMetadata } from '../LocalItemMetadata.ts';
@@ -42,13 +34,13 @@ export interface SyncableStoreBacking {
   readonly createBinaryFileWithPath: PRFunc<
     SyncableStoreBackingFileAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: SyncablePath, { data: Uint8Array; metadata: SyncableFileMetadata & LocalItemMetadata }]
+    [path: SyncablePath, { data: Uint8Array; metadata: SyncableItemMetadata & LocalItemMetadata }]
   >;
 
   readonly createFolderWithPath: PRFunc<
     SyncableStoreBackingFolderAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: SyncablePath, { metadata: (SyncableFolderMetadata | SyncableBundleMetadata) & LocalItemMetadata }]
+    [path: SyncablePath, { metadata: SyncableItemMetadata & LocalItemMetadata }]
   >;
 
   readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: SyncablePath]>;

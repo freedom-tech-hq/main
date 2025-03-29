@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { SyncableBundleMetadata, SyncablePath } from 'freedom-sync-types';
+import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { MutableFileStore } from '../../types/MutableFileStore.ts';
@@ -14,7 +14,7 @@ export const getOrCreateViaSyncBundleAtPath = makeAsyncResultFunc(
     trace,
     store: MutableSyncableStore,
     path: SyncablePath,
-    metadata: SyncableBundleMetadata
+    metadata: SyncableItemMetadata
   ): PR<{ bundle: MutableFileStore; isNewlyCreated: boolean }, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const created = await disableLam(trace, 'conflict', (trace) => createViaSyncBundleAtPath(trace, store, path, metadata));
     if (!created.ok) {

@@ -6,7 +6,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
-import { defaultSaltId, encName, storageRootIdInfo } from 'freedom-sync-types';
+import { defaultSaltId, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -52,25 +52,25 @@ describe('hashes', () => {
   });
 
   it('should be invalidated correctly', async (t: TestContext) => {
-    const outerFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('outer') });
+    const outerFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('outer') });
     expectOk(outerFolder);
     const outerPath = outerFolder.value.path;
 
-    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(makeUuid()), { name: encName('inner') });
+    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(uuidId('folder')), { name: encName('inner') });
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
 
-    const myBundle = await createBundleAtPath(trace, store, innerPath.append(makeUuid()), { name: encName('my-bundle') });
+    const myBundle = await createBundleAtPath(trace, store, innerPath.append(uuidId('bundle')), { name: encName('my-bundle') });
     expectOk(myBundle);
     const myBundlePath = myBundle.value.path;
 
-    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(makeUuid()), {
+    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(uuidId('file')), {
       name: encName('hello-world.txt'),
       value: Buffer.from('hello world', 'utf-8')
     });
     expectOk(helloWorldTxtFile);
 
-    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(makeUuid()), { name: encName('nested-bundle') });
+    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(uuidId('bundle')), { name: encName('nested-bundle') });
     expectOk(nestedBundle);
     const nestedBundlePath = nestedBundle.value.path;
 
@@ -79,7 +79,7 @@ describe('hashes', () => {
 
     const createdFiles = await Promise.all(
       ['a', 'b', 'c', 'd', 'e'].map((letter) =>
-        createBinaryFileAtPath(trace, store, nestedBundlePath.append(makeUuid()), {
+        createBinaryFileAtPath(trace, store, nestedBundlePath.append(uuidId('file')), {
           name: encName(`${letter}.txt`),
           value: Buffer.from(letter, 'utf-8')
         })

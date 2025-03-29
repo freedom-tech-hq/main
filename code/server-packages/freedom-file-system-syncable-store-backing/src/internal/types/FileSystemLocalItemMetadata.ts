@@ -1,5 +1,4 @@
 import { sha256HashInfo } from 'freedom-basic-data';
-import { syncableIdSchema } from 'freedom-sync-types';
 import { schema } from 'yaschema';
 
 export const fileSystemChangeableLocalItemMetadataSchema = schema.object({
@@ -7,10 +6,5 @@ export const fileSystemChangeableLocalItemMetadataSchema = schema.object({
 });
 export type FileSystemChangeableLocalItemMetadata = typeof fileSystemChangeableLocalItemMetadataSchema.valueType;
 
-export const fileSystemLocalItemMetadataSchema = schema.extendsObject(
-  fileSystemChangeableLocalItemMetadataSchema,
-  schema.object({
-    id: syncableIdSchema
-  })
-);
+export const fileSystemLocalItemMetadataSchema = fileSystemChangeableLocalItemMetadataSchema;
 export type FileSystemLocalItemMetadata = typeof fileSystemLocalItemMetadataSchema.valueType;

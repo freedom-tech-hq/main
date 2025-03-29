@@ -12,9 +12,16 @@ import {
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
-import { makeUuid, type Trace } from 'freedom-contexts';
+import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { SyncableFolderMetadata, SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import {
+  extractSyncableIdParts,
+  type SyncableId,
+  type SyncableItemMetadata,
+  type SyncableItemType,
+  type SyncablePath,
+  uuidId
+} from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -88,7 +95,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const id = args.id ?? makeUuid();
+          const id = args.id ?? uuidId('folder');
           const newPath = this.path.append(id);
 
           const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
@@ -111,12 +118,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
             return provenance;
           }
 
-          const folder = await this.createPreEncodedFolder_(trace, id, {
-            type: 'folder',
-            name: name.value,
-            provenance: provenance.value,
-            encrypted: true
-          });
+          const folder = await this.createPreEncodedFolder_(trace, id, { name: name.value, provenance: provenance.value });
           if (!folder.ok) {
             return folder;
           }
@@ -216,20 +218,17 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
-      const metadata = await this.backing_.getMetadataAtPath(trace, getPath);
-      if (!metadata.ok) {
-        return metadata;
-      }
+      const idParts = extractSyncableIdParts(id);
 
       const guards = await allResults(trace, [
         this.guardNotDeleted_(trace, getPath, 'deleted'),
-        guardIsExpectedType(trace, getPath, metadata.value, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type')
+        guardIsExpectedType(trace, getPath, idParts, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type')
       ]);
       if (!guards.ok) {
         return guards;
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, metadata.value.type as T));
+      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, idParts.type as T));
     }
   );
 
@@ -322,7 +321,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
           const getPath = this.path.append(itemId);
 
-          const itemAccessor = this.makeItemAccessor_(getPath, metadata.type);
+          const idParts = extractSyncableIdParts(itemId);
+          const itemAccessor = this.makeItemAccessor_(getPath, idParts.type);
 
           const hash = await itemAccessor.getHash(trace);
           if (!hash.ok) {
@@ -411,9 +411,10 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
 
         const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
-        switch (metadata.type) {
+        const idParts = extractSyncableIdParts(itemId);
+        switch (idParts.type) {
           case 'folder': {
-            const itemAccessor = this.makeItemAccessor_(itemPath, metadata.type);
+            const itemAccessor = this.makeItemAccessor_(itemPath, idParts.type);
             const fileLs = await itemAccessor.ls(trace);
             if (!fileLs.ok) {
               return fileLs;
@@ -490,7 +491,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     async (
       trace,
       id: SyncableId,
-      metadata: SyncableFolderMetadata & LocalItemMetadata
+      metadata: SyncableItemMetadata & LocalItemMetadata
     ): PR<DefaultMutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
       const store = this.weakStore_.deref();
       if (store === undefined) {

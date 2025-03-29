@@ -8,7 +8,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { defaultSaltId, encName, storageRootIdInfo, syncableItemTypes } from 'freedom-sync-types';
+import { defaultSaltId, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import {
   createBinaryFileAtPath,
   createBundleAtPath,
@@ -76,12 +76,12 @@ describe('FileSystemSyncableStore', () => {
 
   it('deleting files and folders should work', async (t: TestContext) => {
     // Creating folder with default initial access
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
     // Creating file
-    const helloWorldTxtFile = await createStringFileAtPath(trace, store, testingPath.append(makeUuid()), {
+    const helloWorldTxtFile = await createStringFileAtPath(trace, store, testingPath.append(uuidId('file')), {
       name: encName('hello-world.txt'),
       value: 'hello world'
     });
@@ -105,7 +105,7 @@ describe('FileSystemSyncableStore', () => {
 
   it('getIds should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
 
     const folderIds = await store.getIds(trace, { type: 'folder' });
@@ -115,7 +115,7 @@ describe('FileSystemSyncableStore', () => {
 
   it('getFolderAtPath should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
@@ -125,7 +125,7 @@ describe('FileSystemSyncableStore', () => {
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {
     // Creating folder
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
     const testingPath = testingFolder.value.path;
 
@@ -134,7 +134,7 @@ describe('FileSystemSyncableStore', () => {
   });
 
   it('giving access to a second user should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
@@ -149,7 +149,7 @@ describe('FileSystemSyncableStore', () => {
     cryptoService.hotSwap(secondaryUserCryptoService);
 
     // Should be able to write new file
-    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(makeUuid()), {
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
       name: encName('test.txt'),
       value: 'hello world'
     });
@@ -162,7 +162,7 @@ describe('FileSystemSyncableStore', () => {
   });
 
   it('giving appender (write-only) access to a second user should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('testing') });
+    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
@@ -177,7 +177,7 @@ describe('FileSystemSyncableStore', () => {
     cryptoService.hotSwap(secondaryUserCryptoService);
 
     // Should be able to write new file
-    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(makeUuid()), {
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
       name: encName('test.txt'),
       value: 'hello world'
     });
@@ -195,27 +195,26 @@ describe('FileSystemSyncableStore', () => {
     t.assert.strictEqual(textContent.value, 'hello world');
   });
 
-  // TODO: work on these
-  skip('creating nested folders and bundles should work', async (_t: TestContext) => {
-    const outerFolder = await createFolderAtPath(trace, store, store.path.append(makeUuid()), { name: encName('outer') });
+  it('creating nested folders and bundles should work', async (_t: TestContext) => {
+    const outerFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('outer') });
     expectOk(outerFolder);
     const outerPath = outerFolder.value.path;
 
-    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(makeUuid()), { name: encName('inner') });
+    const innerFolder = await createFolderAtPath(trace, store, outerPath.append(uuidId('folder')), { name: encName('inner') });
     expectOk(innerFolder);
     const innerPath = innerFolder.value.path;
 
-    const bundle = await createBundleAtPath(trace, store, innerPath.append(makeUuid()), { name: encName('my-bundle') });
+    const bundle = await createBundleAtPath(trace, store, innerPath.append(uuidId('bundle')), { name: encName('my-bundle') });
     expectOk(bundle);
     const myBundlePath = bundle.value.path;
 
-    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(makeUuid()), {
+    const helloWorldTxtFile = await createBinaryFileAtPath(trace, store, myBundlePath.append(uuidId('file')), {
       name: encName('hello-world.txt'),
       value: Buffer.from('hello world', 'utf-8')
     });
     expectOk(helloWorldTxtFile);
 
-    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(makeUuid()), { name: encName('nested-bundle') });
+    const nestedBundle = await createBundleAtPath(trace, store, myBundlePath.append(uuidId('bundle')), { name: encName('nested-bundle') });
     expectOk(nestedBundle);
 
     const fileIds = await bundle.value.getIds(trace, { type: syncableItemTypes.exclude('folder') });
@@ -228,13 +227,12 @@ describe('FileSystemSyncableStore', () => {
     expectIncludes(bundleIds.value, nestedBundle.value.path.lastId);
   });
 
-  // TODO: work on these
-  skip('salted IDs should work', async (_t: TestContext) => {
-    const outerId = saltedId('outer');
-    const innerId = saltedId('inner');
-    const myBundleId = saltedId('my-bundle');
-    const helloWorldTxtId = saltedId('hello-world.txt');
-    const nestedBundleId = saltedId('nested-bundle');
+  it('salted IDs should work', async (_t: TestContext) => {
+    const outerId = saltedId('folder', 'outer');
+    const innerId = saltedId('folder', 'inner');
+    const myBundleId = saltedId('bundle', 'my-bundle');
+    const helloWorldTxtId = saltedId('file', 'hello-world.txt');
+    const nestedBundleId = saltedId('bundle', 'nested-bundle');
 
     const outerFolder = await createFolderAtPath(trace, store, store.path.append(await outerId(store)), { name: encName('outer') });
     expectOk(outerFolder);

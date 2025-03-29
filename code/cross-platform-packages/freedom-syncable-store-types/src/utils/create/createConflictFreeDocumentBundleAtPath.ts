@@ -4,7 +4,7 @@ import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { makeUuid, type Trace } from 'freedom-contexts';
-import { type DynamicSyncableItemName, type SyncablePath, timeName } from 'freedom-sync-types';
+import { type DynamicSyncableItemName, extractSyncableIdParts, type SyncablePath, timeName, uuidId } from 'freedom-sync-types';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
@@ -36,7 +36,9 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     /* node:coverage enable */
     const docPath = docBundle.value.path;
 
-    const snapshots = await createBundleAtPath(trace, store, docPath.append(SNAPSHOTS_BUNDLE_ID), {});
+    // Snapshots are encrypted if their parent bundle is encrypted
+    const isEncrypted = extractSyncableIdParts(docPath.lastId!).encrypted;
+    const snapshots = await createBundleAtPath(trace, store, docPath.append(SNAPSHOTS_BUNDLE_ID({ encrypted: isEncrypted })), {});
     /* node:coverage disable */
     if (!snapshots.ok) {
       return snapshots;
@@ -44,9 +46,14 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     /* node:coverage enable */
     const snapshotsPath = snapshots.value.path;
 
-    const initialSnapshotId = makeUuid();
+    const initialSnapshotId = uuidId({ encrypted: isEncrypted, type: 'file' });
 
-    const deltas = await createBundleAtPath(trace, store, docPath.append(makeDeltasBundleId(initialSnapshotId)), {});
+    const deltas = await createBundleAtPath(
+      trace,
+      store,
+      docPath.append(makeDeltasBundleId({ encrypted: isEncrypted }, initialSnapshotId)),
+      {}
+    );
     /* node:coverage disable */
     if (!deltas.ok) {
       return deltas;
@@ -75,7 +82,9 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
           return makeFailure(new NotFoundError(trace, { message: 'No snapshot ID is set' }));
         }
 
-        const deltasPath = docPath.append(makeDeltasBundleId(document.snapshotId));
+        // Deltas are encrypted if their parent bundle is encrypted
+        const areDeltasEncrypted = extractSyncableIdParts(docPath.lastId!).encrypted;
+        const deltasPath = docPath.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.snapshotId));
         const deltas = await getBundleAtPath(trace, store, deltasPath);
         if (!deltas.ok) {
           return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
@@ -83,10 +92,15 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
 
         const encodedDelta = document.encodeDelta();
 
-        const savedDelta = await createStringFileAtPath(trace, store, deltasPath.append(makeUuid()), {
-          name: timeName(makeUuid()),
-          value: encodedDelta
-        });
+        const savedDelta = await createStringFileAtPath(
+          trace,
+          store,
+          deltasPath.append(uuidId({ encrypted: areDeltasEncrypted, type: 'file' })),
+          {
+            name: timeName(makeUuid()),
+            value: encodedDelta
+          }
+        );
         /* node:coverage disable */
         if (!savedDelta.ok) {
           // Conflicts shouldn't happen since we're using a UUID for the delta ID

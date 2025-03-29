@@ -1,9 +1,9 @@
 import type { PR, PRFunc } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
-import type { SyncableFileMetadata, SyncablePath } from 'freedom-sync-types';
+import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
 import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
@@ -111,16 +111,10 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
     return makeSuccess(decoded.value);
   });
 
-  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableFileMetadata> => {
+  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
-    } else if (metadata.value.type !== 'file') {
-      return makeFailure(
-        new NotFoundError(trace, {
-          message: `Expected file metadata at ${this.path.toString()}, but found ${metadata.value.type}`
-        })
-      );
     }
 
     return makeSuccess(metadata.value);
