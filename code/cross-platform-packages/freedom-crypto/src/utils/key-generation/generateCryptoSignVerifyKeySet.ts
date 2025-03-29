@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess, Pool } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
 import type { CryptoKeySetId, PureSigningKeySet, PureVerifyingKeySet, SigningMode } from 'freedom-crypto-data';
 import {
@@ -17,14 +17,12 @@ export const generateCryptoSignVerifyKeySet = makeAsyncResultFunc(
     try {
       switch (mode) {
         case 'RSASSA-PKCS1-v1_5/4096/SHA-256': {
-          const rsaKeyPair = await crypto.subtle.generateKey(algorithmBySigningMode[mode], true, ['sign', 'verify']);
-          /* node:coverage disable */
-          if (rsaKeyPair instanceof CryptoKey) {
-            throw new Error('Expected CryptoKeyPair');
+          const rsaKeyPair = await rsaSsaPkcs1V154096Sha256Pool.get();
+          if (!rsaKeyPair.ok) {
+            return rsaKeyPair;
           }
-          /* node:coverage enable */
 
-          return makeSuccess(new PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256(id, { rsaKeyPair }));
+          return makeSuccess(new PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256(id, { rsaKeyPair: rsaKeyPair.value }));
         }
       }
     } catch (e) {
@@ -32,4 +30,21 @@ export const generateCryptoSignVerifyKeySet = makeAsyncResultFunc(
       return makeFailure(new GeneralError(trace, e));
     }
   }
+);
+
+// Helpers
+
+const rsaSsaPkcs1V154096Sha256Pool = new Pool<CryptoKeyPair>(
+  [import.meta.filename, 'rsaSsaPkcs1V154096Sha256Pool'],
+  4,
+  makeAsyncResultFunc([], async (_trace): PR<CryptoKeyPair> => {
+    const rsaKeyPair = await crypto.subtle.generateKey(algorithmBySigningMode['RSASSA-PKCS1-v1_5/4096/SHA-256'], true, ['sign', 'verify']);
+    /* node:coverage disable */
+    if (rsaKeyPair instanceof CryptoKey) {
+      throw new Error('Expected CryptoKeyPair');
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(rsaKeyPair);
+  })
 );

@@ -1,6 +1,8 @@
 /* node:coverage disable */
 
 export * from './expectAsyncThrows.ts';
+export * from './expectDurationAtLeastMSec.ts';
+export * from './expectDurationLessThanMSec.ts';
 export * from './expectErrorCode.ts';
 export * from './expectEventually.ts';
 export * from './expectIncludes.ts';

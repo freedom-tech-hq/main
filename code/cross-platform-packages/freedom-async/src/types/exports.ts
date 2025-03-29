@@ -3,6 +3,7 @@ export * from './ChainableResult.ts';
 export * from './FuncOptions.ts';
 export * from './GeneralError.ts';
 export * from './MetricsTracker.ts';
+export * from './Pool.ts';
 export * from './PR.ts';
 export * from './PRFunc.ts';
 export * from './Resolvable.ts';
