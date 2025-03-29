@@ -12,17 +12,10 @@ import {
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
-import { makeUuid, type Trace } from 'freedom-contexts';
+import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
-import type {
-  SyncableBundleMetadata,
-  SyncableFileMetadata,
-  SyncableId,
-  SyncableItemMetadata,
-  SyncableItemType,
-  SyncablePath
-} from 'freedom-sync-types';
-import { syncableItemTypes } from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableIdParts, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -109,7 +102,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const getSha256ForItemProvenance = (trace: Trace) => generateSha256HashFromBuffer(trace, encodedData.value);
 
-          const id = args.id ?? makeUuid();
+          const id = args.id ?? uuidId('file');
           const newPath = this.path.append(id);
 
           const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
@@ -133,13 +126,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
             return provenance;
           }
 
-          return await this.createPreEncodedBinaryFile_(trace, id, encodedData.value, {
-            type: 'file',
-            name: name.value,
-            provenance: provenance.value,
-            // File encryption always matches the parent bundle or folder
-            encrypted: this.isEncrypted_()
-          });
+          return await this.createPreEncodedBinaryFile_(trace, id, encodedData.value, { name: name.value, provenance: provenance.value });
         }
       }
     }
@@ -158,7 +145,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const id = args.id ?? makeUuid();
+          const id = args.id ?? uuidId('bundle');
           const newPath = this.path.append(id);
 
           const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
@@ -181,12 +168,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
             return provenance;
           }
 
-          return await this.createPreEncodedBundle_(trace, id, {
-            type: 'bundle',
-            name: name.value,
-            provenance: provenance.value,
-            encrypted: this.isEncrypted_()
-          });
+          return await this.createPreEncodedBundle_(trace, id, { name: name.value, provenance: provenance.value });
         }
       }
     }
@@ -275,17 +257,13 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
-      const metadata = await this.backing_.getMetadataAtPath(trace, getPath);
-      if (!metadata.ok) {
-        return metadata;
-      }
-
+      const idParts = extractSyncableIdParts(id);
       const guards = await allResults(trace, [
         this.guardNotDeleted_(trace, getPath, 'deleted'),
         guardIsExpectedType(
           trace,
           getPath,
-          metadata.value,
+          idParts,
           intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
           'wrong-type'
         )
@@ -294,7 +272,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return guards;
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, metadata.value.type as T));
+      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, idParts.type as T));
     }
   );
 
@@ -387,7 +365,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const getPath = this.path.append(itemId);
 
-          const itemAccessor = this.makeItemAccessor_(getPath, metadata.type);
+          const idParts = extractSyncableIdParts(itemId);
+          const itemAccessor = this.makeItemAccessor_(getPath, idParts.type);
 
           const hash = await itemAccessor.getHash(trace);
           if (!hash.ok) {
@@ -423,15 +402,11 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return nonDeletedIds;
       }
 
-      const metadataById = await this.backing_.getMetadataByIdInPath(trace, this.path, new Set(nonDeletedIds.value));
-      if (!metadataById.ok) {
-        return generalizeFailureResult(trace, metadataById, ['not-found', 'wrong-type']);
-      }
-
       const isEncrypted = this.isEncrypted_();
-      const idsWithMatchingEncryptionMode = objectEntries(metadataById.value)
-        .filter(([_id, metadata]) => metadata?.encrypted === isEncrypted)
-        .map(([id, _metadata]) => id);
+      const idsWithMatchingEncryptionMode = nonDeletedIds.value.filter((id) => {
+        const idParts = extractSyncableIdParts(id);
+        return idParts.encrypted === isEncrypted;
+      });
 
       return makeSuccess(idsWithMatchingEncryptionMode);
     }
@@ -446,16 +421,10 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
-  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableBundleMetadata> => {
+  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
-    } else if (metadata.value.type !== 'bundle') {
-      return makeFailure(
-        new NotFoundError(trace, {
-          message: `Expected bundle metadata at ${this.path.toString()}, but found ${metadata.value.type}`
-        })
-      );
     }
 
     return makeSuccess(metadata.value);
@@ -506,11 +475,12 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
 
         const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
-        switch (metadata.type) {
+        const idParts = extractSyncableIdParts(itemId);
+        switch (idParts.type) {
           case 'folder':
             break; // This won't happen
           case 'bundle': {
-            const itemAccessor = this.makeItemAccessor_(itemPath, metadata.type);
+            const itemAccessor = this.makeItemAccessor_(itemPath, idParts.type);
             const fileLs = await itemAccessor.ls(trace);
             if (!fileLs.ok) {
               return fileLs;
@@ -591,7 +561,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace: Trace,
       id: SyncableId,
       encodedData: Uint8Array,
-      metadata: SyncableFileMetadata & LocalItemMetadata
+      metadata: SyncableItemMetadata & LocalItemMetadata
     ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
@@ -650,7 +620,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     async (
       trace,
       id: SyncableId,
-      metadata: SyncableBundleMetadata & LocalItemMetadata
+      metadata: SyncableItemMetadata & LocalItemMetadata
     ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 

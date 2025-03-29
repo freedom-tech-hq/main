@@ -1,8 +1,6 @@
 import type { PRFunc } from 'freedom-async';
 
-import type { SyncableBundleMetadata } from './metadata/SyncableBundleMetadata.ts';
-import type { SyncableFileMetadata } from './metadata/SyncableFileMetadata.ts';
-import type { SyncableFolderMetadata } from './metadata/SyncableFolderMetadata.ts';
+import type { SyncableItemMetadata } from './metadata/SyncableItemMetadata.ts';
 import type { RemoteId } from './RemoteId.ts';
 import type { SyncablePath } from './SyncablePath.ts';
 
@@ -10,17 +8,17 @@ type SyncPushArgs = { remoteId: RemoteId; path: SyncablePath } & (
   | {
       type: 'folder';
       data?: undefined;
-      metadata: SyncableFolderMetadata;
+      metadata: SyncableItemMetadata;
     }
   | {
       type: 'bundle';
       data?: undefined;
-      metadata: SyncableBundleMetadata;
+      metadata: SyncableItemMetadata;
     }
   | {
       type: 'file';
       data: Uint8Array;
-      metadata: SyncableFileMetadata;
+      metadata: SyncableItemMetadata;
     }
 );
 

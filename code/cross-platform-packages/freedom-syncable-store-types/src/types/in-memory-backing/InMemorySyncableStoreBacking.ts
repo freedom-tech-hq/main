@@ -1,17 +1,9 @@
 import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
-import { objectEntries } from 'freedom-cast';
+import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type {
-  SyncableBundleMetadata,
-  SyncableFileMetadata,
-  SyncableFolderMetadata,
-  SyncableId,
-  SyncableItemMetadata,
-  SyncableItemType,
-  SyncablePath
-} from 'freedom-sync-types';
-import { syncableItemTypes } from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableIdParts, syncableItemTypes } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import { isExpectedType } from '../../utils/validation/isExpectedType.ts';
@@ -29,17 +21,17 @@ import { makeItemAccessor } from './internal/utils/makeItemAccessor.ts';
 import { traversePath } from './internal/utils/traversePath.ts';
 
 export interface InMemorySyncableStoreBackingConstructorArgs {
-  metadata: Omit<SyncableFolderMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>;
+  metadata: Omit<SyncableItemMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>;
 }
 
 export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   private readonly root_: InMemorySyncableStoreBackingFolderItem;
 
-  constructor(metadata: Omit<SyncableFolderMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>) {
+  constructor(metadata: Omit<SyncableItemMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>) {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
-      metadata: { ...metadata, name: ROOT_FOLDER_ID, type: 'folder', encrypted: true },
+      metadata: { ...metadata, name: ROOT_FOLDER_ID },
       contents: {}
     };
   }
@@ -89,16 +81,12 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return found;
       }
 
-      const ids = objectEntries(found.value.contents)
-        .filter(([_id, item]) => {
-          if (item === undefined) {
-            return false;
-          }
+      const ids = objectKeys(found.value.contents).filter((id) => {
+        const idParts = extractSyncableIdParts(id);
 
-          const isExpected = isExpectedType(trace, item.metadata, options?.type);
-          return isExpected.ok && isExpected.value;
-        })
-        .map(([id, _item]) => id);
+        const isExpected = isExpectedType(trace, idParts, options?.type);
+        return isExpected.ok && isExpected.value;
+      });
       return makeSuccess(ids);
     }
   );
@@ -160,7 +148,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { data, metadata }: { data: Uint8Array; metadata: SyncableFileMetadata & LocalItemMetadata }
+      { data, metadata }: { data: Uint8Array; metadata: SyncableItemMetadata & LocalItemMetadata }
     ): PR<SyncableStoreBackingFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
@@ -193,7 +181,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { metadata }: { metadata: (SyncableBundleMetadata | SyncableFolderMetadata) & LocalItemMetadata }
+      { metadata }: { metadata: SyncableItemMetadata & LocalItemMetadata }
     ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {

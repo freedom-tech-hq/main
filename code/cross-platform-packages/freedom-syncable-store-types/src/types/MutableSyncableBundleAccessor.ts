@@ -1,5 +1,5 @@
 import type { PRFunc } from 'freedom-async';
-import type { SyncableBundleMetadata } from 'freedom-sync-types';
+import type { SyncableItemMetadata } from 'freedom-sync-types';
 
 import type { BundleManagement } from './BundleManagement.ts';
 import type { MutableFileStore } from './MutableFileStore.ts';
@@ -14,5 +14,5 @@ export interface MutableSyncableBundleAccessor
   readonly type: 'bundle';
 
   /** Gets the metadata */
-  readonly getMetadata: PRFunc<SyncableBundleMetadata>;
+  readonly getMetadata: PRFunc<SyncableItemMetadata>;
 }

@@ -1,7 +1,8 @@
 import { GeneralError } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 import { generateHashFromString } from 'freedom-crypto';
-import { type SyncableSaltedId, syncableSaltedIdInfo } from 'freedom-sync-types';
+import type { SyncableId, SyncableIdSettings } from 'freedom-sync-types';
+import { makeSyncableId, unmarkedSyncableSaltedIdInfo } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 
@@ -9,8 +10,8 @@ const trace = makeTrace(import.meta.filename);
 
 // Not using makeAsyncResultFunc here because we want this to be easily inlined for readability
 export const saltedId =
-  (plainId: string) =>
-  async (salt: SyncableStore | string | undefined): Promise<SyncableSaltedId> => {
+  (settings: SyncableIdSettings, plainId: string) =>
+  async (salt: SyncableStore | string | undefined): Promise<SyncableId> => {
     if (salt === undefined) {
       throw new GeneralError(trace, 'Salt is required');
     }
@@ -27,5 +28,5 @@ export const saltedId =
       throw new GeneralError(trace, hash.value);
     }
 
-    return syncableSaltedIdInfo.make(Buffer.from(hash.value).toString('base64'));
+    return makeSyncableId(settings, unmarkedSyncableSaltedIdInfo.make(Buffer.from(hash.value).toString('base64')));
   };

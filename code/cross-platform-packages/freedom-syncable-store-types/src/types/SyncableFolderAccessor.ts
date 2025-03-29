@@ -1,6 +1,6 @@
 import type { PRFunc } from 'freedom-async';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { SyncableFolderMetadata } from 'freedom-sync-types';
+import type { SyncableItemMetadata } from 'freedom-sync-types';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 
 import type { FileStore } from './FileStore.ts';
@@ -21,7 +21,7 @@ export interface SyncableFolderAccessor extends FileStore, FolderStore {
   >;
 
   /** Gets the metadata */
-  readonly getMetadata: PRFunc<SyncableFolderMetadata>;
+  readonly getMetadata: PRFunc<SyncableItemMetadata>;
 
   /** Gets the roles, if any, currently associated with the specified crypto key set IDs */
   readonly getRolesByCryptoKeySetId: PRFunc<

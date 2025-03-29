@@ -5,8 +5,8 @@ import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'fre
 import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { JsonValue } from 'yaschema';
 
-import { anyMetadataSchema } from '../types/AnyMetadata.ts';
 import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
+import { storedMetadataSchema } from '../types/StoredMetadata.ts';
 
 export const readLocalMetadata = makeAsyncResultFunc(
   [import.meta.filename],
@@ -14,7 +14,7 @@ export const readLocalMetadata = makeAsyncResultFunc(
     const metadataJsonString = await fs.readFile(path, 'utf-8');
     try {
       const metadataJson = JSON.parse(metadataJsonString) as JsonValue;
-      const deserialization = await anyMetadataSchema.deserializeAsync(metadataJson, { validation: 'hard' });
+      const deserialization = await storedMetadataSchema.deserializeAsync(metadataJson, { validation: 'hard' });
       if (deserialization.error !== undefined) {
         return makeFailure(new InternalSchemaValidationError(trace, { message: deserialization.error }));
       }
