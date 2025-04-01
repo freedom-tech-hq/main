@@ -5,6 +5,7 @@ import type { SyncableId } from 'freedom-sync-types';
 import { prefixedUuidId } from 'freedom-sync-types';
 import { createJsonFileAtPath, getMutableConflictFreeDocumentFromBundleAtPath } from 'freedom-syncable-store-types';
 
+import type { MailId } from '../../../../modules/mail-types/MailId.ts';
 import { mailIdInfo } from '../../../../modules/mail-types/MailId.ts';
 import type { EmailUserId } from '../../../../types/EmailUserId.ts';
 import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID } from '../../../consts/user-syncable-paths.js';
@@ -29,29 +30,32 @@ export const createInitialMockContentForUser = makeAsyncResultFunc(
     const mailCollectionsBundleId = await MAIL_COLLECTIONS_BUNDLE_ID(userFs.value);
 
     const mailStoragePath = userFs.value.path.append(mailFolderId, mailStorageBundleId);
-    const id = mailIdInfo.make();
-    const createdEmailFile = await createJsonFileAtPath(trace, userFs.value, mailStoragePath.append(prefixedUuidId('file', id)), {
-      value: {
-        id,
-        from: 'test@freedomtechhq.com',
-        to: 'test@freedomtechhq.com',
-        subject: 'Test Email',
-        body: 'This is a test email',
-        timeMSec: Date.now()
-      },
-      schema: storedMailSchema
-    });
-    if (!createdEmailFile.ok) {
-      return generalizeFailureResult(trace, createdEmailFile, [
-        'not-found',
-        'deleted',
-        'wrong-type',
-        'conflict',
-        'untrusted',
-        'format-error'
-      ]);
+    const mailIds: MailId[] = [];
+    for (const _ of Array.from({ length: 3 })) {
+      const mailId = mailIdInfo.make();
+      mailIds.push(mailId);
+      const createdEmailFile = await createJsonFileAtPath(trace, userFs.value, mailStoragePath.append(prefixedUuidId('file', mailId)), {
+        value: {
+          id: mailId,
+          from: 'test@freedomtechhq.com',
+          to: 'test@freedomtechhq.com',
+          subject: `Test Email (${mailId})`,
+          body: 'This is a test email',
+          timeMSec: Date.now()
+        },
+        schema: storedMailSchema
+      });
+      if (!createdEmailFile.ok) {
+        return generalizeFailureResult(trace, createdEmailFile, [
+          'not-found',
+          'deleted',
+          'wrong-type',
+          'conflict',
+          'untrusted',
+          'format-error'
+        ]);
+      }
     }
-    const syncableId = createdEmailFile.value.path.lastId!;
 
     const inboxPath = userFs.value.path.append(mailFolderId, mailCollectionsBundleId, mailCollectionsInboxDocumentId);
     const inboxDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs.value, inboxPath, {
@@ -65,7 +69,7 @@ export const createInitialMockContentForUser = makeAsyncResultFunc(
       return generalizeFailureResult(trace, inboxDoc, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
 
-    inboxDoc.value.document.syncableMailIds.append([syncableId]);
+    inboxDoc.value.document.mailIds.append(mailIds);
     const savedInboxDoc = await inboxDoc.value.save(trace);
     if (!savedInboxDoc.ok) {
       return generalizeFailureResult(trace, savedInboxDoc, 'conflict');

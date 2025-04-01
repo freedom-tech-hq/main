@@ -1,7 +1,8 @@
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
-import type { SyncableId } from 'freedom-sync-types';
-import { syncableIdSchema } from 'freedom-sync-types';
+
+import type { MailId } from '../../modules/mail-types/MailId.ts';
+import { mailIdInfo } from '../../modules/mail-types/MailId.ts';
 
 export const MAIL_COLLECTION_DOCUMENT_PREFIX = 'MAILCOLLECTION';
 export type MailCollectionDocumentPrefix = typeof MAIL_COLLECTION_DOCUMENT_PREFIX;
@@ -23,8 +24,8 @@ export class MailCollectionDocument extends ConflictFreeDocument<MailCollectionD
     return this.generic.getRestrictedTextField('name', '');
   }
 
-  public get syncableMailIds() {
-    return this.generic.getArrayField<SyncableId>('syncableMailIds', syncableIdSchema);
+  public get mailIds() {
+    return this.generic.getArrayField<MailId>('mailIds', mailIdInfo.schema);
   }
 }
 

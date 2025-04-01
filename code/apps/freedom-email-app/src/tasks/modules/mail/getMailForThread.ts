@@ -54,11 +54,11 @@ export const getMailForThread = makeAsyncResultFunc(
       return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
 
-    const syncableMailId = prefixedUuidId('file', threadId);
+    const mailId = mailIdInfo.make(mailThreadIdInfo.removePrefix(threadId));
     const storedMail = await getJsonFromFileAtPath(
       trace,
       userFs.value,
-      mailStorageBundle.value.path.append(syncableMailId),
+      mailStorageBundle.value.path.append(prefixedUuidId('file', mailId)),
       storedMailSchema
     );
     if (!storedMail.ok) {
@@ -67,7 +67,7 @@ export const getMailForThread = makeAsyncResultFunc(
 
     const mail: Mail[] = [
       {
-        id: mailIdInfo.make(mailThreadIdInfo.removePrefix(threadId)),
+        id: mailId,
         from: storedMail.value.from,
         to: storedMail.value.to,
         subject: storedMail.value.subject,
