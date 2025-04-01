@@ -1,0 +1,6 @@
+- TS import needs .ts extension and cannot include dirs
+- Use `exports.ts` instead of `index.ts` in lib packages. Use none of them in apps and backends
+- Use `import type` for types
+- Do not change tsconfig, do not install new ts runners or builders. TS toolkit is frozen
+- Do not create d.ts files
+- If user asks to capture knowledge, add it to '## AI Knowledge' of the relevant doc. Append the section if absent
