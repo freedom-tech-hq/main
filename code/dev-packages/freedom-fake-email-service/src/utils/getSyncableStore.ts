@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
@@ -10,8 +8,8 @@ import { SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore, SyncableStore } from 'freedom-syncable-store-types';
 import { DefaultSyncableStore, getFolderPath, getSyncableHashAtPath } from 'freedom-syncable-store-types';
 
-import { getAllStorageRootPath } from './getAllStorageRootPath.ts';
 import { getCryptoService } from './getCryptoService.ts';
+import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
 import { getSaltsStore } from './getSaltsStore.ts';
 
 export const getSyncableStore = makeAsyncResultFunc(
@@ -19,7 +17,7 @@ export const getSyncableStore = makeAsyncResultFunc(
   async (trace, { storageRootId }: { storageRootId: StorageRootId }): PR<{ store: MutableSyncableStore; disconnect: () => void }> => {
     const cryptoService = await uncheckedResult(getCryptoService(trace));
     const saltsStore = await uncheckedResult(getSaltsStore(trace));
-    const allStorageRootPath = await uncheckedResult(getAllStorageRootPath(trace));
+    const rootPath = await uncheckedResult(getFsRootPathForStorageRootId(trace, storageRootId));
 
     const saltsById = await saltsStore.object(storageRootId).get(trace);
     if (!saltsById.ok) {
@@ -31,7 +29,6 @@ export const getSyncableStore = makeAsyncResultFunc(
       return hashedStorageRootId;
     }
 
-    const rootPath = path.join(allStorageRootPath, hashedStorageRootId.value);
     const storeBacking = new FileSystemSyncableStoreBacking(rootPath);
     const rootMetadata = await storeBacking.getMetadataAtPath(trace, new SyncablePath(storageRootId));
     if (!rootMetadata.ok) {

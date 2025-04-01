@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
@@ -9,7 +8,7 @@ import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import type { SaltId, StorageRootId, SyncableItemMetadata } from 'freedom-sync-types';
 
-import { getAllStorageRootPath } from './getAllStorageRootPath.ts';
+import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
 import { getFsStatsAtPath } from './getFsStatsAtPath.ts';
 import { getPublicKeyStore } from './getPublicKeyStore.ts';
 import { getSaltsStore } from './getSaltsStore.ts';
@@ -32,7 +31,7 @@ export const createSyncableStore = makeAsyncResultFunc(
   ): PR<undefined, 'conflict'> => {
     const publicKeyStore = await uncheckedResult(getPublicKeyStore(trace));
     const saltsStore = await uncheckedResult(getSaltsStore(trace));
-    const allStorageRootPath = await uncheckedResult(getAllStorageRootPath(trace));
+    const rootPath = await uncheckedResult(getFsRootPathForStorageRootId(trace, storageRootId));
 
     const storedPublicKey = await publicKeyStore.mutableObject(creatorPublicKeys.id).create(trace, creatorPublicKeys);
     if (!storedPublicKey.ok && storedPublicKey.value.errorCode !== 'conflict') {
@@ -51,7 +50,6 @@ export const createSyncableStore = makeAsyncResultFunc(
       return hashedStorageRootId;
     }
 
-    const rootPath = path.join(allStorageRootPath, hashedStorageRootId.value);
     const fsStats = await getFsStatsAtPath(trace, rootPath);
     if (!fsStats.ok) {
       return fsStats;

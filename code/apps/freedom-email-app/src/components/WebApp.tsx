@@ -8,6 +8,7 @@ import { useSelectedMailThreadId } from '../contexts/selected-mail-thread.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { TasksProvider, useTasks } from '../contexts/tasks.tsx';
 import { MailThread } from '../modules/mail-thread/components/MailThread.tsx';
+import { SIXTY_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
 import type { EmailUserId } from '../types/EmailUserId.ts';
 import { AppGlobalStyles } from './AppGlobalStyles.tsx';
 import { AppNavbar } from './AppNavbar.tsx';
@@ -38,14 +39,18 @@ const BootstrappedWebApp = () => {
     id: 'hasSelectedMailThreadId'
   });
 
-  useBindingEffect(sideMenuWidth, (sideMenuWidth) => {
-    const elem = document.getElementById(`${uuid}-main-content-offset`);
-    if (elem === null) {
-      return;
-    }
+  useBindingEffect(
+    sideMenuWidth,
+    (sideMenuWidth) => {
+      const elem = document.getElementById(`${uuid}-main-content-offset`);
+      if (elem === null) {
+        return;
+      }
 
-    elem.style.paddingLeft = `${sideMenuWidth}px`;
-  });
+      elem.style.paddingLeft = `${sideMenuWidth}px`;
+    },
+    { limitMSec: SIXTY_FPS_MSEC }
+  );
 
   useEffect(() => {
     if (tasks === undefined) {
