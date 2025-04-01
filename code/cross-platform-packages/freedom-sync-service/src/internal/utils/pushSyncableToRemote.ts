@@ -1,14 +1,13 @@
 import type { PR } from 'freedom-async';
-import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
-import { generalizeFailureResult } from 'freedom-common-errors';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
 import { ACCESS_CONTROL_BUNDLE_ID, getSyncableAtPath, STORE_CHANGES_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncService } from '../../types/SyncService.ts';
-import type { InternalSyncService } from '../types/InternalSyncService.ts';
 
 export const pushSyncableToRemote = makeAsyncResultFunc(
   [import.meta.filename],
@@ -21,7 +20,10 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
       hash: Sha256Hash;
     }
   ): PR<undefined> => {
-    const pullFromRemote = (syncService as InternalSyncService).puller;
+    const pullFromRemote = syncService.getRemotesAccessors()[args.remoteId]?.puller;
+    if (pullFromRemote === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${args.remoteId}` }));
+    }
 
     // Not logging this pull since we're really just using this as a status check
     const pulled = await disableLam(trace, 'not-found', (trace) => pullFromRemote(trace, { ...args, sendData: false }));
@@ -86,7 +88,10 @@ const pushEverything = makeAsyncResultFunc(
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
     { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
-    const pushToRemote = (syncService as InternalSyncService).pusher;
+    const pushToRemote = syncService.getRemotesAccessors()[remoteId]?.pusher;
+    if (pushToRemote === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
+    }
 
     const localItemAccessor = await getSyncableAtPath(trace, store, path);
     if (!localItemAccessor.ok) {
@@ -100,7 +105,7 @@ const pushEverything = makeAsyncResultFunc(
           return metadata;
         }
 
-        const pushed = await pushToRemote(trace, { remoteId, type: 'folder', path, metadata: metadata.value });
+        const pushed = await pushToRemote(trace, { type: 'folder', path, metadata: metadata.value });
         if (!pushed.ok) {
           return pushed;
         }
@@ -118,7 +123,7 @@ const pushEverything = makeAsyncResultFunc(
           return metadata;
         }
 
-        const pushed = await pushToRemote(trace, { remoteId, type: 'bundle', path, metadata: metadata.value });
+        const pushed = await pushToRemote(trace, { type: 'bundle', path, metadata: metadata.value });
         if (!pushed.ok) {
           return pushed;
         }
@@ -233,7 +238,10 @@ const pushFile = makeAsyncResultFunc(
     trace,
     { remoteId, store, syncService, path }: { remoteId: RemoteId; store: SyncableStore; syncService: SyncService; path: SyncablePath }
   ): PR<undefined> => {
-    const pushToRemote = (syncService as InternalSyncService).pusher;
+    const pushToRemote = syncService.getRemotesAccessors()[remoteId]?.pusher;
+    if (pushToRemote === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
+    }
 
     const localFile = await getSyncableAtPath(trace, store, path, 'file');
     if (!localFile.ok) {
@@ -250,7 +258,7 @@ const pushFile = makeAsyncResultFunc(
       return metadata;
     }
 
-    const pushed = await pushToRemote(trace, { remoteId, type: 'file', path, metadata: metadata.value, data: data.value });
+    const pushed = await pushToRemote(trace, { type: 'file', path, metadata: metadata.value, data: data.value });
     if (!pushed.ok) {
       return pushed;
     }

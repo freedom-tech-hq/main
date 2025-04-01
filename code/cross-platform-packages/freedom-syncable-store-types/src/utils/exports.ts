@@ -25,6 +25,8 @@ export * from './guards/exports.ts';
 export * from './initializeRoot.ts';
 export * from './logLs.ts';
 export * from './markSyncableNeedsRecomputeHashAtPath.ts';
+export * from './pull/exports.ts';
+export * from './push/exports.ts';
 export * from './saltedId.ts';
 export * from './shouldUseTrustedTimeIdsInPath.ts';
 export * from './validation/exports.ts';

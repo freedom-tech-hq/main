@@ -1,7 +1,7 @@
 import type { PR, Result } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { plainId } from 'freedom-sync-types';
+import { extractUnmarkedSyncableId, prefixedUuidId } from 'freedom-sync-types';
 import { getBundleAtPath, getConflictFreeDocumentFromBundleAtPath, getJsonFromFileAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
@@ -47,7 +47,11 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       return userFs;
     }
 
-    const mailStorageBundle = await getBundleAtPath(trace, userFs.value, userFs.value.path.append(MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID));
+    const mailFolderId = await MAIL_FOLDER_ID(userFs.value);
+    const mailStorageBundleId = await MAIL_STORAGE_BUNDLE_ID(userFs.value);
+    const mailCollectionsBundleId = await MAIL_COLLECTIONS_BUNDLE_ID(userFs.value);
+
+    const mailStorageBundle = await getBundleAtPath(trace, userFs.value, userFs.value.path.append(mailFolderId, mailStorageBundleId));
     if (!mailStorageBundle.ok) {
       return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
@@ -55,13 +59,13 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     const mailCollectionsBundle = await getBundleAtPath(
       trace,
       userFs.value,
-      userFs.value.path.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID)
+      userFs.value.path.append(mailFolderId, mailCollectionsBundleId)
     );
     if (!mailCollectionsBundle.ok) {
       return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
 
-    const inboxPath = userFs.value.path.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID, plainId(collectionId));
+    const inboxPath = userFs.value.path.append(mailFolderId, mailCollectionsBundleId, prefixedUuidId('bundle', collectionId));
     const inboxDoc = await getConflictFreeDocumentFromBundleAtPath(trace, userFs.value, inboxPath, {
       newDocument: makeMailCollectionDocumentFromSnapshot,
       // TODO: TEMP
@@ -89,16 +93,19 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     let index = 0;
     for (const storedMail of storedMails.value) {
-      threads.push({
-        id: mailThreadIdInfo.make(syncableMailIds[index]),
-        from: storedMail.from,
-        to: storedMail.to,
-        subject: storedMail.subject,
-        body: storedMail.body,
-        timeMSec: storedMail.timeMSec,
-        numMessages: 1,
-        numUnread: 1
-      });
+      const id = extractUnmarkedSyncableId(syncableMailIds[index]);
+      if (mailThreadIdInfo.is(id)) {
+        threads.push({
+          id,
+          from: storedMail.from,
+          to: storedMail.to,
+          subject: storedMail.subject,
+          body: storedMail.body,
+          timeMSec: storedMail.timeMSec,
+          numMessages: 1,
+          numUnread: 1
+        });
+      }
 
       index += 1;
     }

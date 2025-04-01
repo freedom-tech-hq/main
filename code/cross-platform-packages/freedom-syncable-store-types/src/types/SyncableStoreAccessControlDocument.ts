@@ -6,7 +6,7 @@ import { extractTimeMSecFromTimeId, timeIdInfo } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import { extractSyncableIdParts, type SyncablePath } from 'freedom-sync-types';
+import { extractUnmarkedSyncableId, type SyncablePath } from 'freedom-sync-types';
 import { isEqual } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
@@ -122,8 +122,7 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         }
       });
 
-      const idParts = extractSyncableIdParts(path.lastId!);
-      const timeId = idParts.unmarkedId;
+      const timeId = extractUnmarkedSyncableId(path.lastId!);
       if (!timeIdInfo.is(timeId)) {
         // The file ID should be a timeId
         return makeSuccess(false);

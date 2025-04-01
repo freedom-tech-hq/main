@@ -1,4 +1,5 @@
 import './tasks/polyfills.ts';
+import './utils/fwd-env.ts';
 
 import { expose } from 'comlink';
 import { makeTrace } from 'freedom-contexts';

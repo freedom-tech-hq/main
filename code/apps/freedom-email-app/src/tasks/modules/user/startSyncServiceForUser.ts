@@ -1,18 +1,16 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
+import { remoteIdInfo } from 'freedom-sync-types';
 
 import type { EmailUserId } from '../../../types/EmailUserId.ts';
-import { useUserSyncableRemotes } from '../../contexts/user-syncable-remotes.ts';
 import { useMockRemotes } from '../../mock-remote/mock-remotes-context.ts';
-import { startMockRemotes } from '../../mock-remote/startMockRemotes.ts';
+import { startMockRemote } from '../../mock-remote/startMockRemote.ts';
 import { makeSyncServiceForUserSyncables } from '../internal/storage/makeSyncServiceForUserSyncables.ts';
 import { getRequiredCryptoKeysForUser } from '../internal/user/getRequiredCryptoKeysForUser.ts';
 
 export const startSyncServiceForUser = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
-    const userSyncableRemotes = useUserSyncableRemotes(trace);
-
     const cryptoKeys = await getRequiredCryptoKeysForUser(trace, { userId });
     if (!cryptoKeys.ok) {
       return cryptoKeys;
@@ -21,7 +19,7 @@ export const startSyncServiceForUser = makeAsyncResultFunc(
     // TODO: REMOVE ONCE SERVICES ARE READY
     const mockRemotes = useMockRemotes(trace);
     if (mockRemotes.mockRemotes === undefined) {
-      const startedMockRemotes = await startMockRemotes(trace, { creatorPublicCryptoKeysSet: cryptoKeys.value.publicOnly() });
+      const startedMockRemotes = await startMockRemote(trace, { creatorPublicCryptoKeysSet: cryptoKeys.value.publicOnly() });
       if (!startedMockRemotes.ok) {
         return startedMockRemotes;
       }
@@ -32,10 +30,8 @@ export const startSyncServiceForUser = makeAsyncResultFunc(
     const syncService = await makeSyncServiceForUserSyncables(trace, {
       userId,
       shouldRecordLogs: false,
-      deviceNotificationClients: mockRemotes.mockRemotes.deviceNotificationClients,
-      puller: mockRemotes.mockRemotes.puller,
-      pusher: mockRemotes.mockRemotes.pusher,
-      getRemotes: () => userSyncableRemotes
+      deviceNotificationClients: () => [mockRemotes.mockRemotes!.deviceNotificationClient],
+      getRemotesAccessors: () => ({ [remoteIdInfo.make('default')]: mockRemotes.mockRemotes!.remoteAccessors })
     });
     if (!syncService.ok) {
       return syncService;

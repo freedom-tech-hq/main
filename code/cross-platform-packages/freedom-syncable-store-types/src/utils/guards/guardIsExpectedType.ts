@@ -11,17 +11,19 @@ export const guardIsExpectedType = makeSyncResultFunc(
   <ErrorCodeT extends string>(
     trace: Trace,
     path: SyncablePath,
-    item: { type: SyncableItemType },
+    itemOrType: SyncableItemType | { type: SyncableItemType },
     expectedType: SyncableItemType | Array<SyncableItemType> | undefined,
     errorCode: ErrorCodeT
   ): Result<undefined, ErrorCodeT> => {
-    const isExpected = isExpectedType(trace, item, expectedType);
+    const isExpected = isExpectedType(trace, itemOrType, expectedType);
     if (!isExpected.ok) {
       return isExpected;
     } else if (!isExpected.value) {
+      const type = typeof itemOrType === 'string' ? itemOrType : itemOrType.type;
+
       return makeFailure(
         new NotFoundError(trace, {
-          message: `Expected ${Array.isArray(expectedType) ? expectedType.join(' or ') : expectedType} for ${path.toString()}, found: ${item.type}`,
+          message: `Expected ${Array.isArray(expectedType) ? expectedType.join(' or ') : expectedType} for ${path.toString()}, found: ${type}`,
           errorCode
         })
       );

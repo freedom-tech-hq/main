@@ -8,12 +8,7 @@ import type { Tasks } from '../tasks.ts';
 const TasksContext = createContext<Tasks | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
-  const tasks = useWaitableFunction(
-    async () => {
-      return { ok: true, value: await getTasks() };
-    },
-    { id: 'tasks' }
-  );
+  const tasks = useWaitableFunction(async () => ({ ok: true, value: await getTasks() }), { id: 'tasks' });
 
   return (
     <WaitablesConsumer dependencies={tasks}>

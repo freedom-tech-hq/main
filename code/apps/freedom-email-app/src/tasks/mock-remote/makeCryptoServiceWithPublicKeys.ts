@@ -34,15 +34,10 @@ export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: Co
     }
   );
 
-  const getMostRecentCryptoKeys = makeAsyncResultFunc(
-    [import.meta.filename, 'getMostRecentCryptoKeys'],
-    async (_trace): PR<CombinationCryptoKeySet> => makeSuccess(publicKeys)
-  );
-
   return {
-    getCryptoKeySetIds: makeAsyncResultFunc(
-      [import.meta.filename, 'getCryptoKeySetIds'],
-      async (_trace): PR<CryptoKeySetId[]> => makeSuccess([publicKeys.id])
+    getPrivateCryptoKeySetIds: makeAsyncResultFunc(
+      [import.meta.filename, 'getPrivateCryptoKeySetIds'],
+      async (_trace): PR<CryptoKeySetId[]> => makeSuccess([])
     ),
 
     decryptEncryptedValue: makeAsyncResultFunc(
@@ -62,7 +57,11 @@ export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: Co
           ...options
         }: { cryptoKeySetId?: CryptoKeySetId; value: T; valueSchema: Schema<T>; mode?: EncryptionMode; includeKeyId?: boolean }
       ): PR<EncryptedValue<T>> => {
-        const cryptoKeys = await (cryptoKeySetId === undefined ? getMostRecentCryptoKeys(trace) : getCryptoKeysById(trace, cryptoKeySetId));
+        if (cryptoKeySetId === undefined) {
+          return makeFailure(new UnauthorizedError(trace, { message: 'No default encryption key available' }));
+        }
+
+        const cryptoKeys = await getCryptoKeysById(trace, cryptoKeySetId);
         if (!cryptoKeys.ok) {
           return generalizeFailureResult(trace, cryptoKeys, 'not-found');
         }

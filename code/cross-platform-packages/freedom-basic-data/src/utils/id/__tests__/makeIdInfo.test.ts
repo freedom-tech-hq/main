@@ -6,7 +6,7 @@ import { makeIdInfo } from '../makeIdInfo.ts';
 describe('makeIdInfo', () => {
   const testIdInfo = makeIdInfo('TST_');
 
-  describe('id', () => {
+  describe('is', () => {
     it('should check prefixes', (t: TestContext) => {
       t.assert.strictEqual(testIdInfo.is('TST_one'), true);
       t.assert.strictEqual(testIdInfo.is('TST_'), false);

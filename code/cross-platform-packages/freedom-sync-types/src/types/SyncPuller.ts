@@ -3,11 +3,9 @@ import { sha256HashInfo } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
 import type { SyncPullResponse } from './pull-responses/SyncPullResponse.ts';
-import { remoteIdInfo } from './RemoteId.ts';
 import { syncablePathSchema } from './SyncablePath.ts';
 
 export const syncPullArgsSchema = schema.object({
-  remoteId: remoteIdInfo.schema,
   path: syncablePathSchema,
   hash: sha256HashInfo.schema.optional(),
   /** `false` by default */

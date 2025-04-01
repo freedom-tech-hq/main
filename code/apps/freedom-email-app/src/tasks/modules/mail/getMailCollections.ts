@@ -1,6 +1,7 @@
 import type { PR, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getBundleAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
@@ -58,10 +59,13 @@ export const getMailCollections = makeAsyncResultFunc(
       return userFs;
     }
 
+    const mailFolderId = await MAIL_FOLDER_ID(userFs.value);
+    const mailCollectionsBundleId = await MAIL_COLLECTIONS_BUNDLE_ID(userFs.value);
+
     const mailCollectionsBundle = await getBundleAtPath(
       trace,
       userFs.value,
-      userFs.value.path.append(MAIL_FOLDER_ID, MAIL_COLLECTIONS_BUNDLE_ID)
+      userFs.value.path.append(mailFolderId, mailCollectionsBundleId)
     );
     if (!mailCollectionsBundle.ok) {
       return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
@@ -75,16 +79,19 @@ export const getMailCollections = makeAsyncResultFunc(
     const groups: MailCollectionGroup[] = [];
 
     groups.push({
-      id: mailCollectionGroupIdInfo.make('primary'),
-      collections: mailCollectionIds.value.map(
-        (id): MailCollection => ({
-          // TODO: TEMP
-          id: mailCollectionIdInfo.make(id),
-          collectionType: 'inbox',
-          title: 'Inbox',
-          unreadCount: 0
-        })
-      )
+      id: mailCollectionGroupIdInfo.make(),
+      collections: mailCollectionIds.value
+        .map(extractUnmarkedSyncableId)
+        .filter(mailCollectionIdInfo.is)
+        .map(
+          (id): MailCollection => ({
+            // TODO: TEMP
+            id,
+            collectionType: 'inbox',
+            title: 'Inbox',
+            unreadCount: 0
+          })
+        )
     });
 
     // const groups: MailCollectionGroup[] = [];

@@ -7,6 +7,7 @@ import type { EmailUserId } from '../../../../types/EmailUserId.ts';
 import { useDataSources } from '../../../contexts/data-sources.ts';
 import { makeCryptoServiceForUser } from '../../../utils/makeCryptoServiceForUser.ts';
 import { getRequiredCryptoKeysForUser } from '../user/getRequiredCryptoKeysForUser.ts';
+import { getOrCreateEmailAppSaltsForUser } from './getOrCreateEmailAppSaltsForUser.ts';
 
 export const getUserFs = makeAsyncResultFunc(
   [import.meta.filename],
@@ -18,8 +19,13 @@ export const getUserFs = makeAsyncResultFunc(
       return cryptoKeys;
     }
 
+    const saltsById = await getOrCreateEmailAppSaltsForUser(trace, { userId });
+    if (!saltsById.ok) {
+      return saltsById;
+    }
+
     const storageRootId = storageRootIdInfo.make(userId);
     const cryptoService = makeCryptoServiceForUser({ userId });
-    return await dataSources.getOrCreateSyncableStore(trace, { storageRootId, cryptoService });
+    return await dataSources.getOrCreateSyncableStore(trace, { storageRootId, cryptoService, saltsById: saltsById.value });
   }
 );

@@ -2,7 +2,7 @@ import { makeFailure, makeSuccess, makeSyncResultFunc, type Result } from 'freed
 import { NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableId, SyncableItemType } from 'freedom-sync-types';
-import { extractSyncableIdParts, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, SyncablePath } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import { guardIsExpectedType } from '../../../../utils/guards/guardIsExpectedType.ts';
@@ -59,9 +59,8 @@ export const traversePath = makeSyncResultFunc(
       }
     }
 
-    const idParts =
-      path.lastId === undefined ? { encrypted: true, type: 'folder' as const, unmarkedId: '' } : extractSyncableIdParts(path.lastId!);
-    const guards = guardIsExpectedType(trace, path, idParts, expectedType, 'wrong-type');
+    const itemType = path.lastId === undefined ? 'folder' : extractSyncableItemTypeFromId(path.lastId!);
+    const guards = guardIsExpectedType(trace, path, itemType, expectedType, 'wrong-type');
     if (!guards.ok) {
       return guards;
     }

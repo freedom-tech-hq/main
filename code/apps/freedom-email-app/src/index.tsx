@@ -1,3 +1,5 @@
+import './utils/fwd-env.ts';
+
 import { init } from 'freedom-react-localization';
 import ReactDOM from 'react-dom/client';
 

@@ -11,6 +11,5 @@ export interface SyncableStore extends SyncableFolderAccessor {
   readonly creatorCryptoKeySetId: CryptoKeySetId;
   readonly cryptoService: CryptoService;
 
-  readonly defaultSalt: string | undefined;
   readonly saltsById: Partial<Record<SaltId, string>>;
 }

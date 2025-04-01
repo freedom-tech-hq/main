@@ -4,7 +4,7 @@ import type { CryptoKeySetId } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { NotificationManager } from 'freedom-notification-types';
 import type { SaltId, StorageRootId, SyncableProvenance } from 'freedom-sync-types';
-import { defaultSaltId, SyncablePath } from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 
 import { DefaultMutableSyncableFolderAccessor } from '../internal/types/DefaultMutableSyncableFolderAccessor.ts';
 import { DefaultMutableSyncableFolderAccessorBase } from '../internal/types/DefaultMutableSyncableFolderAccessorBase.ts';
@@ -24,7 +24,6 @@ export interface DefaultSyncableStoreConstructorArgs {
 export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
   public readonly creatorCryptoKeySetId: CryptoKeySetId;
   public readonly cryptoService: CryptoService;
-  public readonly defaultSalt: string | undefined;
   public readonly saltsById: Partial<Record<SaltId, string>>;
 
   public readonly localTrustMarks = new InMemoryTrustMarkStore();
@@ -37,7 +36,6 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
 
     this.cryptoService = cryptoService;
     this.saltsById = saltsById;
-    this.defaultSalt = saltsById[defaultSaltId];
 
     const creatorCryptoKeySetId = extractKeyIdFromSignedValue(makeTrace(import.meta.filename, 'new'), { signedValue: provenance.origin });
     if (!creatorCryptoKeySetId.ok) {

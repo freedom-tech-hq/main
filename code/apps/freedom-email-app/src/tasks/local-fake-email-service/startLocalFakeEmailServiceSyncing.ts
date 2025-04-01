@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { api } from 'freedom-fake-email-service-api';
 import { makeApiFetchTask } from 'freedom-fetching';
-import type { SyncPuller, SyncPullResponse, SyncPusher } from 'freedom-sync-types';
+import type { RemoteAccessor, SyncPuller, SyncPullResponse, SyncPusher } from 'freedom-sync-types';
 import type { InferHttpRequestBodyType } from 'yaschema-api';
 import { getDefaultApiRoutingContext, setDefaultUrlBase } from 'yaschema-api';
 
@@ -10,8 +10,7 @@ const pullFromRemote = makeApiFetchTask([import.meta.filename], api.pull.POST);
 const pushToRemote = makeApiFetchTask([import.meta.filename], api.push.POST);
 
 export interface RemoteConnection {
-  readonly puller: SyncPuller;
-  readonly pusher: SyncPusher;
+  readonly remoteAccessor: RemoteAccessor;
   readonly stop: () => void;
 }
 
@@ -21,8 +20,8 @@ export const startLocalFakeEmailServiceSyncing = makeAsyncResultFunc([import.met
 
   const puller: SyncPuller = makeAsyncResultFunc(
     [import.meta.filename, 'puller'],
-    async (trace, { remoteId, path, hash, sendData = false }): PR<SyncPullResponse, 'not-found'> => {
-      const pulled = await pullFromRemote(trace, { body: { remoteId, path, hash, sendData }, context: getDefaultApiRoutingContext() });
+    async (trace, { path, hash, sendData = false }): PR<SyncPullResponse, 'not-found'> => {
+      const pulled = await pullFromRemote(trace, { body: { path, hash, sendData }, context: getDefaultApiRoutingContext() });
       if (!pulled.ok) {
         return pulled;
       }
@@ -33,8 +32,8 @@ export const startLocalFakeEmailServiceSyncing = makeAsyncResultFunc([import.met
 
   const pusher: SyncPusher = makeAsyncResultFunc(
     [import.meta.filename, 'pusher'],
-    async (trace, { remoteId, type, path, data, metadata }): PR<undefined> => {
-      const body = { remoteId, type, path, data, metadata } as InferHttpRequestBodyType<typeof api.push.POST>;
+    async (trace, { type, path, data, metadata }): PR<undefined> => {
+      const body = { type, path, data, metadata } as InferHttpRequestBodyType<typeof api.push.POST>;
 
       const pushed = await pushToRemote(trace, { body, context: getDefaultApiRoutingContext() });
       if (!pushed.ok) {
@@ -45,9 +44,11 @@ export const startLocalFakeEmailServiceSyncing = makeAsyncResultFunc([import.met
     }
   );
 
+  // TODO: hook up a way to listen for changes
+
   const stop = () => {
     // TODO: hook this up to something
   };
 
-  return makeSuccess({ puller, pusher, stop });
+  return makeSuccess({ remoteAccessor: { puller, pusher }, stop });
 });

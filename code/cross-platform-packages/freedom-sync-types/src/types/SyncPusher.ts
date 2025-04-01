@@ -2,12 +2,11 @@ import type { PRFunc } from 'freedom-async';
 import { uint8ArraySchema } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
-import { remoteIdInfo } from './RemoteId.ts';
-import { syncablePathSchema } from './SyncablePath.ts';
 import { syncableItemMetadataSchema } from './exports.ts';
+import { syncablePathSchema } from './SyncablePath.ts';
 
 export const syncPushArgsSchema = schema.allOf(
-  schema.object({ remoteId: remoteIdInfo.schema, path: syncablePathSchema }),
+  schema.object({ path: syncablePathSchema }),
   schema.oneOf3(
     schema.object({
       type: schema.string('folder'),

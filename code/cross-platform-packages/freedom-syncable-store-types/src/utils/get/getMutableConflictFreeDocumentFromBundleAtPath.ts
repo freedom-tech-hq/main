@@ -4,7 +4,7 @@ import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import { type Trace } from 'freedom-contexts';
 import type { SyncablePath } from 'freedom-sync-types';
-import { extractSyncableIdParts, timeId } from 'freedom-sync-types';
+import { isSyncableItemEncrypted, timeId } from 'freedom-sync-types';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 
 import { makeDeltasBundleId } from '../../consts/special-file-ids.ts';
@@ -47,8 +47,8 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
           }
 
           // Deltas are encrypted if their parent bundle is encrypted
-          const areDeltaEncrypted = extractSyncableIdParts(path.lastId!).encrypted;
-          const deltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltaEncrypted }, document.value.snapshotId));
+          const areDeltasEncrypted = isSyncableItemEncrypted(path.lastId!);
+          const deltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.value.snapshotId));
           const deltas = await getBundleAtPath(trace, store, deltasPath);
           if (!deltas.ok) {
             return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
@@ -56,7 +56,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
 
           const encodedDelta = document.value.encodeDelta();
 
-          const deltaId = timeId({ encrypted: areDeltaEncrypted, type: 'file' }, trustedTime?.timeId);
+          const deltaId = timeId({ encrypted: areDeltasEncrypted, type: 'file' }, trustedTime?.timeId);
 
           const savedDelta = await createStringFileAtPath(trace, store, deltasPath.append(deltaId), {
             name: deltaId,

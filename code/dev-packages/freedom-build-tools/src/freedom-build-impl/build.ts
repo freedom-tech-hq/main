@@ -18,11 +18,24 @@ export const build = async (args: BuildArgs) => {
     const outDir = tsConfig.compilerOptions.outDir;
     const getDefaultEntryPoints = async () => await findTsFiles({ includes: tsConfig.include ?? [], excludes: tsConfig.exclude ?? [] });
 
+    const dropLabels: string[] = process.env.FREEDOM_BUILD_MODE !== 'DEV' ? ['DEV'] : ['PROD'];
+    const platform = args.platform ?? 'any';
+    switch (platform) {
+      case 'any':
+        break;
+      case 'node':
+        dropLabels.push('WEB');
+        break;
+      case 'web':
+        dropLabels.push('NODE');
+        break;
+    }
+
     await esbuild.build({
       entryPoints: args.entryPoints?.map(String) ?? (await getDefaultEntryPoints()),
       outdir: outDir,
       define: FORWARDED_ENV(),
-      dropLabels: process.env.FREEDOM_BUILD_MODE !== 'DEV' ? ['DEV'] : ['PROD'],
+      dropLabels,
       sourcemap: true,
       bundle: args.bundle ?? false,
       tsconfig: args.tsconfig,

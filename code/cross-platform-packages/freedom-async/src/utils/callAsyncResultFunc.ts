@@ -11,7 +11,7 @@ import { trackMetrics } from '../config/metrics.ts';
 import { ONE_SEC_MSEC } from '../internal/consts/time.ts';
 import { argsToStrings, shouldLogFuncArgs } from '../internal/debugging/args.ts';
 import { getCallCount } from '../internal/debugging/callCounter.ts';
-import { shouldLogFunc } from '../internal/debugging/funcs.ts';
+import { shouldLogFailures, shouldLogFunc } from '../internal/debugging/funcs.ts';
 import { resultToString, shouldLogFuncResult } from '../internal/debugging/results.ts';
 import type { AsyncResultFuncOptions } from '../types/AsyncResultFuncOptions.ts';
 import { GeneralError } from '../types/GeneralError.ts';
@@ -56,6 +56,7 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
     let logLevel: keyof Logger = 'debug';
     const stackTop = once(() => getTraceStackTop(trace));
     let shouldLogForDev = false;
+    let shouldLogFailuresForDev = false;
     try {
       DEV: {
         /* node:coverage disable */
@@ -69,6 +70,8 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
             ...(attemptCount > 0 ? [`(retry ${attemptCount})`] : []),
             ...(shouldLogFuncArgs(trace) ? argsToStrings(args) : [])
           );
+        } else if (shouldLogFailures(trace)) {
+          shouldLogFailuresForDev = true;
         }
         /* node:coverage enable */
       }
@@ -138,7 +141,7 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
             jsonLogArgs.push(new LogJson('errorCode', errorCode));
           }
 
-          if (shouldLogForDev) {
+          if (shouldLogForDev || (errorCode !== undefined && shouldLogFailuresForDev)) {
             logger(
               trace,
               `Completed (call#${callCount})`,

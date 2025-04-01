@@ -2,7 +2,7 @@ export * from './DynamicSyncableItemName.ts';
 export * from './metadata/exports.ts';
 export * from './pull-responses/exports.ts';
 export * from './RemoteId.ts';
-export * from './RemoteInfo.ts';
+export * from './RemoteAccessor.ts';
 export * from './StorageRootId.ts';
 export * from './SyncableAcceptance.ts';
 export * from './SyncableId.ts';

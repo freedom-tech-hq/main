@@ -8,7 +8,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { defaultSaltId, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import {
   createBinaryFileAtPath,
   createBundleAtPath,
@@ -72,7 +72,7 @@ describe('FileSystemSyncableStore', () => {
       backing: storeBacking,
       cryptoService,
       provenance: provenance.value,
-      saltsById: { [defaultSaltId]: makeUuid() }
+      saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 
     expectOk(await initializeRoot(trace, store));

@@ -7,4 +7,6 @@ export interface BuildArgs {
   entryPoints?: Array<string | number>;
   /** @defaultValue `false` */
   splitting?: boolean;
+  /** @defaultValue `any` */
+  platform?: 'any' | 'web' | 'node';
 }

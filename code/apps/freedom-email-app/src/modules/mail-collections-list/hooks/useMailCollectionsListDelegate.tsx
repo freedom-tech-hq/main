@@ -63,7 +63,7 @@ export const useMailCollectionsListDelegate = (
 };
 
 const prototypeCollection: MailCollection = {
-  id: mailCollectionIdInfo.make('prototype'),
+  id: mailCollectionIdInfo.make(),
   collectionType: 'inbox',
   title: 'Prototype',
   unreadCount: 0
@@ -82,6 +82,6 @@ const itemPrototypes = {
   'group-title': {
     defaultEstimatedSizePx: 20,
     isSizeDynamic: false,
-    Component: () => <MailCollectionGroupTitleListItem id={mailCollectionGroupIdInfo.make('prototype')} title="Prototype" />
+    Component: () => <MailCollectionGroupTitleListItem id={mailCollectionGroupIdInfo.make()} title="Prototype" />
   }
 };

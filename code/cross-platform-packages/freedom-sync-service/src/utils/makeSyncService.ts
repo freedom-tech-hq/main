@@ -1,14 +1,13 @@
 import type { PR } from 'freedom-async';
 import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
-import type { RemoteInfo, SyncPuller, SyncPusher } from 'freedom-sync-types';
+import type { RemoteAccessor, RemoteId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { noop } from 'lodash-es';
 
 import { DEFAULT_MAX_PULL_CONCURRENCY, DEFAULT_MAX_PUSH_CONCURRENCY } from '../consts/concurrency.ts';
-import type { InternalSyncService } from '../internal/types/InternalSyncService.ts';
 import { attachSyncServiceToSyncableStore } from '../internal/utils/attachSyncServiceToSyncableStore.ts';
 import { pullSyncableFromRemotes } from '../internal/utils/pullSyncableFromRemotes.ts';
 import { pushSyncableToRemotes } from '../internal/utils/pushSyncableToRemotes.ts';
@@ -18,10 +17,8 @@ import type { SyncServiceLogEntry } from '../types/SyncServiceLogEntry.ts';
 
 export interface MakeSyncServiceArgs {
   store: MutableSyncableStore;
-  puller: SyncPuller;
-  pusher: SyncPusher;
   deviceNotificationClients: () => DeviceNotificationClient[];
-  getRemotes: () => RemoteInfo[];
+  getRemotesAccessors: () => Partial<Record<RemoteId, RemoteAccessor>>;
   shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
   shouldRecordLogs?: boolean;
 }
@@ -30,15 +27,7 @@ export const makeSyncService = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    {
-      store,
-      puller,
-      pusher,
-      deviceNotificationClients,
-      getRemotes,
-      shouldSyncWithAllRemotes,
-      shouldRecordLogs = false
-    }: MakeSyncServiceArgs
+    { store, deviceNotificationClients, getRemotesAccessors, shouldSyncWithAllRemotes, shouldRecordLogs = false }: MakeSyncServiceArgs
   ): PR<SyncService> => {
     const pullQueue = new TaskQueue(trace);
     const pushQueue = new TaskQueue(trace);
@@ -52,15 +41,10 @@ export const makeSyncService = makeAsyncResultFunc(
       logEntries.push(logEntry);
     };
 
-    const service: InternalSyncService = {
-      // Internal
-
-      puller,
-      pusher,
-
+    const service = {
       // External
 
-      getRemotes,
+      getRemotesAccessors,
 
       shouldSyncWithAllRemotes,
 
@@ -146,7 +130,7 @@ export const makeSyncService = makeAsyncResultFunc(
       clearLogEntries: () => {
         logEntries.length = 0;
       }
-    };
+    } satisfies SyncService;
 
     return makeSuccess(service);
   }
