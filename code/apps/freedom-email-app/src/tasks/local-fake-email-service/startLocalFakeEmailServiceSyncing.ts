@@ -32,7 +32,7 @@ interface RegisterArgs {
 }
 
 export interface RemoteConnection {
-  readonly register: PRFunc<undefined, 'conflict', [RegisterArgs]>;
+  readonly register: PRFunc<CombinationCryptoKeySet, 'conflict', [RegisterArgs]>;
   readonly remoteAccessor: RemoteAccessor;
   readonly deviceNotificationClient: DeviceNotificationClient;
   readonly stop: () => void;
@@ -43,16 +43,19 @@ export const startLocalFakeEmailServiceSyncing = makeAsyncResultFunc([import.met
   setDefaultUrlBase('https://mail.local.dev.freedommail.me:8443');
 
   let storageRootId: StorageRootId | undefined = undefined;
-  const register = makeAsyncResultFunc([import.meta.filename, 'register'], async (trace, args: RegisterArgs): PR<undefined, 'conflict'> => {
-    storageRootId = args.storageRootId;
+  const register = makeAsyncResultFunc(
+    [import.meta.filename, 'register'],
+    async (trace, args: RegisterArgs): PR<CombinationCryptoKeySet, 'conflict'> => {
+      storageRootId = args.storageRootId;
 
-    const registered = await registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() });
-    if (!registered.ok) {
-      return registered;
+      const registered = await registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() });
+      if (!registered.ok) {
+        return registered;
+      }
+
+      return makeSuccess(registered.value.body.serverPublicKeys);
     }
-
-    return makeSuccess(undefined);
-  });
+  );
 
   const puller: SyncPuller = makeAsyncResultFunc(
     [import.meta.filename, 'puller'],

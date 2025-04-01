@@ -4,9 +4,13 @@ import { generalizeFailureResult, InternalStateError, UnauthorizedError } from '
 import type { Trace } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import {
+  decryptEncryptedValue,
+  extractKeyIdFromEncryptedValue,
   extractKeyIdFromSignedBuffer,
   extractKeyIdFromSignedValue,
   generateEncryptedValue,
+  generateSignedBuffer,
+  generateSignedValue,
   isSignatureValidForSignedBuffer,
   isSignedValueValid
 } from 'freedom-crypto';
@@ -22,6 +26,7 @@ import type {
 import { type CryptoService } from 'freedom-crypto-service';
 import type { Schema } from 'yaschema';
 
+import { getPrivateKeyStore } from './getPrivateKeyStore.ts';
 import { getPublicKeyStore } from './getPublicKeyStore.ts';
 
 const secretKey = makeUuid();
@@ -31,17 +36,33 @@ export const getCryptoService = makeAsyncResultFunc(
   async (_trace) =>
     await computeAsyncOnce([import.meta.filename], secretKey, async (trace): PR<CryptoService> => {
       const publicKeyStore = await uncheckedResult(getPublicKeyStore(trace));
+      const privateKeyStore = await uncheckedResult(getPrivateKeyStore(trace));
+
+      const serverPrivateKeys = await privateKeyStore.object('server-keys').get(trace);
+      if (!serverPrivateKeys.ok) {
+        return generalizeFailureResult(trace, serverPrivateKeys, 'not-found');
+      }
 
       return makeSuccess({
         getPrivateCryptoKeySetIds: makeAsyncResultFunc(
           [import.meta.filename, 'getPrivateCryptoKeySetIds'],
-          async (_trace): PR<CryptoKeySetId[]> => makeSuccess([])
+          async (_trace): PR<CryptoKeySetId[]> => makeSuccess([serverPrivateKeys.value.id])
         ),
 
         decryptEncryptedValue: makeAsyncResultFunc(
           [import.meta.filename, 'decryptEncryptedValue'],
-          async <T>(trace: Trace, _encryptedValue: EncryptedValue<T>): PR<T> =>
-            makeFailure(new UnauthorizedError(trace, { message: 'No decryption key available' }))
+          async <T>(trace: Trace, encryptedValue: EncryptedValue<T>): PR<T> => {
+            const decryptingKeyId = await extractKeyIdFromEncryptedValue(trace, { encryptedValue });
+            if (!decryptingKeyId.ok) {
+              return generalizeFailureResult(trace, decryptingKeyId, 'not-found');
+            }
+
+            if (decryptingKeyId.value === serverPrivateKeys.value.id) {
+              return await decryptEncryptedValue(trace, encryptedValue, { decryptingKeys: serverPrivateKeys.value });
+            }
+
+            return makeFailure(new UnauthorizedError(trace, { message: `Key not found with ID: ${decryptingKeyId.value}` }));
+          }
         ),
 
         generateEncryptedValue: makeAsyncResultFunc(
@@ -70,15 +91,26 @@ export const getCryptoService = makeAsyncResultFunc(
 
         generateSignedBuffer: makeAsyncResultFunc(
           [import.meta.filename, 'generateSignedBuffer'],
-          async (trace, _args: { cryptoKeySetId?: CryptoKeySetId; value: Uint8Array; mode?: SigningMode }): PR<Uint8Array> =>
-            makeFailure(new UnauthorizedError(trace, { message: 'No signing key available' }))
+          async (
+            trace,
+            { cryptoKeySetId, ...options }: { cryptoKeySetId?: CryptoKeySetId; value: Uint8Array; mode?: SigningMode }
+          ): PR<Uint8Array> => {
+            if (cryptoKeySetId !== undefined && cryptoKeySetId !== serverPrivateKeys.value.id) {
+              makeFailure(new UnauthorizedError(trace, { message: `No signing key found with ID: ${cryptoKeySetId}` }));
+            }
+
+            return await generateSignedBuffer(trace, { ...options, signingKeys: serverPrivateKeys.value });
+          }
         ),
 
         generateSignedValue: makeAsyncResultFunc(
           [import.meta.filename, 'generateSignedValue'],
           async <T, SignatureExtrasT = never>(
             trace: Trace,
-            _args: {
+            {
+              cryptoKeySetId,
+              ...options
+            }: {
               cryptoKeySetId?: CryptoKeySetId;
               value: T;
               valueSchema: Schema<T>;
@@ -86,7 +118,13 @@ export const getCryptoService = makeAsyncResultFunc(
               signatureExtrasSchema: [SignatureExtrasT] extends [never] ? undefined : Schema<SignatureExtrasT>;
               mode?: SigningMode;
             }
-          ): PR<SignedValue<T, SignatureExtrasT>> => makeFailure(new UnauthorizedError(trace, { message: 'No signing key available' }))
+          ): PR<SignedValue<T, SignatureExtrasT>> => {
+            if (cryptoKeySetId !== undefined && cryptoKeySetId !== serverPrivateKeys.value.id) {
+              makeFailure(new UnauthorizedError(trace, { message: `No signing key found with ID: ${cryptoKeySetId}` }));
+            }
+
+            return await generateSignedValue(trace, { ...options, signingKeys: serverPrivateKeys.value });
+          }
         ),
 
         getEncryptingKeySetForId: makeAsyncResultFunc(

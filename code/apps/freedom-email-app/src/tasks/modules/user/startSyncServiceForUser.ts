@@ -1,8 +1,9 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc } from 'freedom-async';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import type { RemoteAccessor } from 'freedom-sync-types';
-import { remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
 
 import type { EmailUserId } from '../../../types/EmailUserId.ts';
 import { startLocalFakeEmailServiceSyncing } from '../../local-fake-email-service/startLocalFakeEmailServiceSyncing.ts';
@@ -17,7 +18,6 @@ const version: 1 | 2 = 2 as 1 | 2;
 export const startSyncServiceForUser = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
-    console.log('startSyncServiceForUser');
     const cryptoKeys = await getRequiredCryptoKeysForUser(trace, { userId });
     if (!cryptoKeys.ok) {
       return cryptoKeys;
@@ -62,12 +62,25 @@ export const startSyncServiceForUser = makeAsyncResultFunc(
           creatorPublicKeys: cryptoKeys.value.publicOnly(),
           storageRootId: storageRootIdInfo.make(userId),
           metadata: { provenance: rootMetadata.value.provenance },
-          saltsById: saltsById.value
+          saltsById: { [DEFAULT_SALT_ID]: saltsById.value[DEFAULT_SALT_ID] }
         });
         if (!registered.ok) {
           if (registered.value.errorCode !== 'conflict') {
             // Ignoring conflicts
             return excludeFailureResult(registered, 'conflict');
+          }
+        } else {
+          // TODO: if registered fails with conflict, there's a chance that the client previously didn't add the servers public key yet.
+          // we should separate these things
+
+          const addedServerAppenderAccess = await userFs.value.updateAccess(trace, {
+            type: 'add-access',
+            publicKeyId: registered.value.id,
+            role: 'appender'
+          });
+          console.log('FOOBARBLA addedServerAppenderAccess', addedServerAppenderAccess);
+          if (!addedServerAppenderAccess.ok) {
+            return generalizeFailureResult(trace, addedServerAppenderAccess, 'conflict');
           }
         }
 

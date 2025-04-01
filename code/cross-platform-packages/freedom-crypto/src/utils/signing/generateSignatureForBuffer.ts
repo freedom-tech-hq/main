@@ -5,6 +5,7 @@ import type { SigningKeySet, SigningMode } from 'freedom-crypto-data';
 import { algorithmBySigningMode, preferredSigningMode } from 'freedom-crypto-data';
 
 import { intValuesBySigningMode } from '../../internal/consts/signing-mode-integers.ts';
+import { sign } from '../../internal/utils/sign.ts';
 
 export const generateSignatureForBuffer = makeAsyncResultFunc(
   [import.meta.filename],
@@ -23,7 +24,7 @@ export const generateSignatureForBuffer = makeAsyncResultFunc(
       switch (mode) {
         case 'RSASSA-PKCS1-v1_5/4096/SHA-256': {
           const signature = Buffer.from(
-            await crypto.subtle.sign(algorithmBySigningMode[mode], signingKeys.forSigning.rsaPrivateKey, value)
+            await sign(signingKeys.id, algorithmBySigningMode[mode], signingKeys.forSigning.rsaPrivateKey, value)
           );
 
           /**

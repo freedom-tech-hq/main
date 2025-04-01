@@ -1,6 +1,6 @@
 /* node:coverage disable */
 
-import { onEnvChange } from 'freedom-contexts';
+import { devOnEnvChange } from 'freedom-contexts';
 
 import { makeShouldIncludeTraceForDebuggingFunc } from '../internal/debugging/makeShouldIncludeTraceForDebuggingFunc.ts';
 import type { MetricsTracker } from '../types/MetricsTracker.ts';
@@ -26,7 +26,7 @@ export const resetMetricsTracker = () => {
 DEV: {
   let lastMetricsTracker: MetricsTracker | undefined = globalMetricsTracker;
 
-  onEnvChange('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE, async (envValue) => {
+  devOnEnvChange('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE, async (envValue) => {
     if (globalMetricsTracker !== lastMetricsTracker) {
       return;
     }

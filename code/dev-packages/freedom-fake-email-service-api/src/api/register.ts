@@ -20,7 +20,10 @@ export const POST = makeHttpApi({
       })
     },
     successResponse: {
-      status: schema.number(StatusCodes.OK)
+      status: schema.number(StatusCodes.OK),
+      body: schema.object({
+        serverPublicKeys: combinationCryptoKeySetSchema
+      })
     },
     failureResponse: makeFailureWithCodeSchemas('conflict')
   }

@@ -1,6 +1,6 @@
 /* node:coverage disable */
 
-import { onEnvChange, wrapLogger } from 'freedom-contexts';
+import { devOnEnvChange, wrapLogger } from 'freedom-contexts';
 import type { Logger } from 'yaschema';
 
 let globalLogger: Logger = {};
@@ -23,7 +23,7 @@ export const resetLogger = () => {
 DEV: {
   let lastLogger: Logger = globalLogger;
 
-  onEnvChange('FREEDOM_VERBOSE_LOGGING', process.env.FREEDOM_VERBOSE_LOGGING, async (envValue) => {
+  devOnEnvChange('FREEDOM_VERBOSE_LOGGING', process.env.FREEDOM_VERBOSE_LOGGING, async (envValue) => {
     if (globalLogger !== lastLogger) {
       return;
     }

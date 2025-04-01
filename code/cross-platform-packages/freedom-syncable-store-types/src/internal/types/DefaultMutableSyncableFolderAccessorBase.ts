@@ -236,6 +236,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         return accessControlState;
       }
 
+      console.log('FOOBARBLA accessControlState', accessControlState);
+
       return makeSuccess(pick(accessControlState.value, cryptoKeySetIds));
     }
   );

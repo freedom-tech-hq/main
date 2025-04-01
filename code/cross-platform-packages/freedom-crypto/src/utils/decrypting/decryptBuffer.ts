@@ -7,6 +7,7 @@ import type { DecryptingKeySet } from 'freedom-crypto-data';
 import { asymmetricalAlgorithmByEncryptionMode, symmetricalAlgorithmByEncryptionMode } from 'freedom-crypto-data';
 
 import { encryptionModesByIntValue } from '../../internal/consts/encryption-mode-integers.ts';
+import { decrypt } from '../../internal/utils/decrypt.ts';
 
 export const decryptBuffer = makeAsyncResultFunc(
   [import.meta.filename],
@@ -59,7 +60,7 @@ export const decryptBuffer = makeAsyncResultFunc(
 
             const encryptedString = encryptedValue.slice(offset);
 
-            const decryptedString = await crypto.subtle.decrypt(
+            const decryptedString = await decrypt(
               asymmetricalAlgorithmByEncryptionMode['RSA-OAEP/4096/SHA-256'],
               decryptingKeys.forDecrypting.rsaPrivateKey,
               encryptedString
@@ -98,13 +99,13 @@ export const decryptBuffer = makeAsyncResultFunc(
 
             const encryptedString = encryptedValue.slice(offset);
 
-            const decryptedIv = await crypto.subtle.decrypt(
+            const decryptedIv = await decrypt(
               asymmetricalAlgorithmByEncryptionMode['RSA-OAEP/4096/SHA-256'],
               decryptingKeys.forDecrypting.rsaPrivateKey,
               encryptedIv
             );
 
-            const decryptedAesKey = await crypto.subtle.decrypt(
+            const decryptedAesKey = await decrypt(
               asymmetricalAlgorithmByEncryptionMode['RSA-OAEP/4096/SHA-256'],
               decryptingKeys.forDecrypting.rsaPrivateKey,
               encryptedAesKey
@@ -118,7 +119,7 @@ export const decryptBuffer = makeAsyncResultFunc(
               ['decrypt']
             );
 
-            const decryptedString = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: decryptedIv }, aesKey, encryptedString);
+            const decryptedString = await decrypt({ name: 'AES-GCM', iv: decryptedIv }, aesKey, encryptedString);
 
             return makeSuccess(Buffer.from(decryptedString));
           } else {

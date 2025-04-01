@@ -1,5 +1,13 @@
 import type { AnyPrefixedUuid, TimeId, Uuid } from 'freedom-basic-data';
-import { anyPrefixedUuidSchema, makeIdInfo, makeIsoDateTime, nonAnchoredUuidRegex, timeIdInfo, uuidSchema } from 'freedom-basic-data';
+import {
+  anyPrefixedUuidSchema,
+  makeIdInfo,
+  makeIsoDateTime,
+  nonAnchoredAnyPrefixUuidRegex,
+  nonAnchoredUuidRegex,
+  timeIdInfo,
+  uuidSchema
+} from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
 import { schema } from 'yaschema';
 
@@ -54,13 +62,13 @@ export const unmarkedSyncableIdSchema = schema.oneOf5(
   unmarkedSyncablePlainIdInfo.schema,
   unmarkedSyncableSaltedIdInfo.schema,
   unmarkedSyncableUuidSchema,
-  unmarkedTimeIdInfo.schema,
-  unmarkedPrefixedSyncableUuidSchema
+  unmarkedPrefixedSyncableUuidSchema,
+  unmarkedTimeIdInfo.schema
 );
 export type UnmarkedSyncableId = typeof unmarkedSyncableIdSchema.valueType;
 
 export const nonAnchoredSyncableIdRegex = new RegExp(
-  `E[yn]T[Fbf](?:${unmarkedSyncablePlainIdInfo.nonAnchoredRegex.source}|${unmarkedSyncableSaltedIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source}|${unmarkedTimeIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source})`
+  `E[yn]T[Fbf](?:${unmarkedSyncablePlainIdInfo.nonAnchoredRegex.source}|${unmarkedSyncableSaltedIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source}|${nonAnchoredAnyPrefixUuidRegex.source}|${unmarkedTimeIdInfo.nonAnchoredRegex.source})`
 );
 export const syncableIdSchema = schema.regex<SyncableId>(new RegExp(`^${nonAnchoredSyncableIdRegex.source}$`));
 export type SyncableId = `E${'y' | 'n'}T${'F' | 'b' | 'f'}${UnmarkedSyncableId}`;

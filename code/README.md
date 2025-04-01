@@ -17,10 +17,11 @@ yarn test
 | --- | --- |
 | FREEDOM_BUILD_MODE | Set to `DEV` to enable compile-time development features, guarded with DEV labels.  `yarn prep:dev` implies this.  Use `yarn clean` when switching build modes |
 | FREEDOM_BUILD_UUID | A string value that will be replaced at build time. |
-| FREEDOM_LOG_FUNCS | (DEV build mode only)  Functions to log start and completion marker lines for.  Default = `all`.  See Log Rules below. |
+| FREEDOM_LOG_FUNCS | (DEV build mode only) Functions to log start and completion marker lines for.  Default = `all`.  See Log Rules below. |
 | FREEDOM_LOG_ARGS | For any functions logged due to `FREEDOM_LOG_FUNCS`, determines if argument values should be logged as well. See Log Rules below. |
-| FREEDOM_LOG_FAILURES | (DEV build mode only)  For any functions not logged due to `FREEDOM_LOG_FUNCS`, determine if failures should be logged.  Default = `all`.  See Log Rules below. |
+| FREEDOM_LOG_FAILURES | (DEV build mode only) For any functions not logged due to `FREEDOM_LOG_FUNCS`, determine if failures should be logged.  Default = `all`.  See Log Rules below. |
 | FREEDOM_LOG_RESULTS | For any functions logged due to `FREEDOM_LOG_FUNCS`, determines if results should be logged as well. See Log Rules below. |
+| FREEDOM_MOCK_CRYPTO | (DEB build mode only) Set to `true` to cause crypto and hashing related functions to leave content as readable as possible. |
 | FREEDOM_DEBUG_TOPICS | (DEV build mode only) A comma / newline set of topics to log.  See `debugTopic` function in `freedom-async` package.  A logger must be setup for this to work, ex. using `FREEDOM_VERBOSE_LOGGING=true`. |
 | FREEDOM_VERBOSE_LOGGING | (DEV build mode only) Set to `true` to enable default logging automatically -- intended to be used for debugging tests.  In production, logging is normally configured using code instead. |
 | FREEDOM_PROFILE | (DEV build mode only) Set to enable profiling.  Follows the same rules as Log Rules. |

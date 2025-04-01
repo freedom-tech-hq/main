@@ -1,8 +1,8 @@
 import { sha256HashInfo } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
-import { syncableIdSchema } from '../SyncableId.ts';
 import { syncableItemMetadataSchema } from '../exports.ts';
+import { syncableIdSchema } from '../SyncableId.ts';
 
 export const outOfSyncFolderSchema = schema.object({
   type: schema.string('folder'),

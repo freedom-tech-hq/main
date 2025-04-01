@@ -1,4 +1,4 @@
-import { makeEnvDerivative } from 'freedom-contexts';
+import { devMakeEnvDerivative } from 'freedom-contexts';
 import type { LoggingFunc } from 'freedom-logging-types';
 import isPromise from 'is-promise';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -14,7 +14,7 @@ export let debugTopic: <R extends TypeOrPromisedType<any>>(
 ) => void | (R extends Promise<any> ? Promise<void> : void) = () => {};
 
 DEV: {
-  shouldDebugTopic = makeEnvDerivative('FREEDOM_DEBUG_TOPICS', process.env.FREEDOM_DEBUG_TOPICS, (envValue) => {
+  shouldDebugTopic = devMakeEnvDerivative('FREEDOM_DEBUG_TOPICS', process.env.FREEDOM_DEBUG_TOPICS, (envValue) => {
     const topicsString = envValue?.trim() ?? '';
 
     if (topicsString.length === 0) {

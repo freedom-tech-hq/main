@@ -6,6 +6,7 @@ import { asymmetricalAlgorithmByEncryptionMode, preferredEncryptionMode } from '
 
 import { intValuesByEncryptionMode } from '../../internal/consts/encryption-mode-integers.ts';
 import { MAX_RSA_OAEP_4096_PAYLOAD_LENGTH_BYTES } from '../../internal/consts/limits.ts';
+import { encrypt } from '../../internal/utils/encrypt.ts';
 
 export const encryptBuffer = makeAsyncResultFunc(
   [import.meta.filename],
@@ -28,7 +29,7 @@ export const encryptBuffer = makeAsyncResultFunc(
           if (singleStageMode) {
             // Single stage mode is used for encrypting short messages, using RSA encryption directly
 
-            const encryptedString = await crypto.subtle.encrypt(
+            const encryptedString = await encrypt(
               asymmetricalAlgorithmByEncryptionMode['RSA-OAEP/4096/SHA-256'],
               encryptingKeys.forEncrypting.rsaPublicKey,
               value
@@ -76,7 +77,7 @@ export const encryptBuffer = makeAsyncResultFunc(
             // Two-stage mode is used for longer messages where the actual message body is encrypted with AES
 
             const iv = await encryptingKeys.forEncrypting.getNextIv();
-            const encryptedIv = await crypto.subtle.encrypt(
+            const encryptedIv = await encrypt(
               asymmetricalAlgorithmByEncryptionMode['RSA-OAEP/4096/SHA-256'],
               encryptingKeys.forEncrypting.rsaPublicKey,
               iv
@@ -84,13 +85,13 @@ export const encryptBuffer = makeAsyncResultFunc(
 
             const { raw: rawAesKey, native: aesKey } = await encryptingKeys.forEncrypting.getRawAesKey();
 
-            const encryptedAesKey = await crypto.subtle.encrypt(
+            const encryptedAesKey = await encrypt(
               asymmetricalAlgorithmByEncryptionMode['RSA-OAEP/4096/SHA-256'],
               encryptingKeys.forEncrypting.rsaPublicKey,
               rawAesKey
             );
 
-            const encryptedString = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, value);
+            const encryptedString = await encrypt({ name: 'AES-GCM', iv }, aesKey, value);
 
             /**
              * Format:

@@ -9,6 +9,8 @@ import { hasMoreToDoSoon, waitForDoSoons } from 'freedom-do-soon';
 import { defaultServiceContext } from 'freedom-trace-service-context';
 import { once } from 'lodash-es';
 
+import { createServerPrivateKeysIfNeeded } from './utils/createServerPrivateKeysIfNeeded.ts';
+
 export const startServer = makeAsyncFunc(
   [import.meta.filename],
   async (trace, server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>) => {
@@ -17,6 +19,12 @@ export const startServer = makeAsyncFunc(
     // eslint-disable-next-line no-async-promise-executor
     return await new Promise<() => Promise<void>>(async (resolveServerStartUp, rejectServerStartUp) => {
       try {
+        const createdPrivateKeys = await createServerPrivateKeysIfNeeded(trace);
+        if (!createdPrivateKeys.ok) {
+          rejectServerStartUp(createdPrivateKeys.value);
+          return;
+        }
+
         const startedServer = server.listen(PORT, () => {
           log().info?.(trace, `Server now listening on port ${PORT}`);
 

@@ -14,6 +14,7 @@ import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import { isSyncableItemEncrypted } from 'freedom-sync-types';
 import { once } from 'lodash-es';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';

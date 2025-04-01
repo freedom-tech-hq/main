@@ -1,7 +1,7 @@
 import type { LoggingMode } from 'freedom-logging-types';
 import { loggingModes } from 'freedom-logging-types';
 
-import { getEnv, onEnvChange } from '../utils/getEnv.ts';
+import { devOnEnvChange, getEnv } from '../utils/getEnv.ts';
 
 const computeDefaultLoggingModeFromEnv = (envValue: string | undefined) => loggingModes.checked(envValue ?? '') ?? 'structured';
 
@@ -10,7 +10,7 @@ export let defaultLoggingMode: LoggingMode = computeDefaultLoggingModeFromEnv(
 );
 
 DEV: {
-  onEnvChange('FREEDOM_LOGGING_MODE_DEFAULT', process.env.FREEDOM_LOGGING_MODE_DEFAULT, (envValue) => {
+  devOnEnvChange('FREEDOM_LOGGING_MODE_DEFAULT', process.env.FREEDOM_LOGGING_MODE_DEFAULT, (envValue) => {
     defaultLoggingMode = computeDefaultLoggingModeFromEnv(envValue);
   });
 }

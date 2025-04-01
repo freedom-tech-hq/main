@@ -38,6 +38,7 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
     }
 
     const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: privateKeyIds.value });
+    console.log('FOOBARBLA rolesByCryptoKeySetId', rolesByCryptoKeySetId);
     if (!rolesByCryptoKeySetId.ok) {
       return rolesByCryptoKeySetId;
     }

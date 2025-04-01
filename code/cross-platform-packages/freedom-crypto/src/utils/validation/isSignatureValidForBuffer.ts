@@ -5,6 +5,7 @@ import type { SigningMode, VerifyingKeySet } from 'freedom-crypto-data';
 import { algorithmBySigningMode } from 'freedom-crypto-data';
 
 import { signingModesByIntValue } from '../../internal/consts/signing-mode-integers.ts';
+import { verify } from '../../internal/utils/verify.ts';
 
 export const isSignatureValidForBuffer = makeAsyncResultFunc(
   [import.meta.filename],
@@ -35,7 +36,8 @@ export const isSignatureValidForBuffer = makeAsyncResultFunc(
       switch (mode) {
         case 'RSASSA-PKCS1-v1_5/4096/SHA-256': {
           const rawSignature = signature.slice(offset);
-          const isValid = await crypto.subtle.verify(
+          const isValid = await verify(
+            verifyingKeys.id,
             algorithmBySigningMode[mode],
             verifyingKeys.forVerifying.rsaPublicKey,
             rawSignature,

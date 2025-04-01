@@ -1,8 +1,10 @@
-import { makeSuccess } from 'freedom-async';
+import { bestEffort, makeSuccess, uncheckedResult } from 'freedom-async';
 import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 
 import { createSyncableStore } from '../utils/createSyncableStore.ts';
+import { getServerPrivateKeys } from '../utils/getServerPrivateKeys.ts';
+import { setupKeyHandlers } from '../utils/setupKeyHandlers.ts';
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -15,6 +17,12 @@ export default makeHttpApiHandler(
       }
     }
   ) => {
+    const serverPrivateKeys = await uncheckedResult(getServerPrivateKeys(trace));
+    const serverPublicKeys = serverPrivateKeys.publicOnly();
+
+    // Uses the most recently attempted registration of storageRootId
+    await bestEffort(trace, setupKeyHandlers(trace, { storageRootId }));
+
     const created = await createSyncableStore(trace, {
       storageRootId,
       metadata,
@@ -25,6 +33,6 @@ export default makeHttpApiHandler(
       return created;
     }
 
-    return makeSuccess({});
+    return makeSuccess({ body: { serverPublicKeys } });
   }
 );
