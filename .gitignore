@@ -17,7 +17,10 @@ coverage
 .DS_Store
 
 # IDEs
+# Root idea dir contains useful run configurations and style settings
+# If a nested dir is opened in IDE, those settings are excluded
 .idea
+!/.idea
 
 # dotenv environment variables file
 *.env*

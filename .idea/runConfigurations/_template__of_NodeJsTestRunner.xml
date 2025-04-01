@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="NodeJsTestRunner">
+    <node-interpreter value="project" />
+    <node-options value="--experimental-transform-types --experimental-test-module-mocks --disable-warning=ExperimentalWarning" />
+    <language value="JAVA_SCRIPT" />
+    <typescript-loader value="MANUAL_SETUP_IN_NODE_OPTION" />
+    <envs />
+    <scope-kind value="ALL" />
+    <method v="2" />
+  </configuration>
+</component>

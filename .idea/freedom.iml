@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/temp" />
+      <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/code/.nx" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-access-control/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-crypto-data/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-crypto-service/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-crypto/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-sync-service/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-syncable-store-types/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-fs-store/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-object-store-types/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/backends/freedom-mail-host/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/deploy/workspace" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
