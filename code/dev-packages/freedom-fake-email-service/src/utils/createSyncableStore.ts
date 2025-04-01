@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
+import { generateSha256HashFromString } from 'freedom-crypto';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import type { SaltId, StorageRootId, SyncableItemMetadata } from 'freedom-sync-types';
@@ -45,7 +46,12 @@ export const createSyncableStore = makeAsyncResultFunc(
       return storedSalts;
     }
 
-    const rootPath = path.join(allStorageRootPath, storageRootId);
+    const hashedStorageRootId = await generateSha256HashFromString(trace, storageRootId);
+    if (!hashedStorageRootId.ok) {
+      return hashedStorageRootId;
+    }
+
+    const rootPath = path.join(allStorageRootPath, hashedStorageRootId.value);
     const fsStats = await getFsStatsAtPath(trace, rootPath);
     if (!fsStats.ok) {
       return fsStats;

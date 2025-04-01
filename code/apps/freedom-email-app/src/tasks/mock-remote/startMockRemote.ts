@@ -23,7 +23,7 @@ import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { makeCryptoServiceWithPublicKeys } from './makeCryptoServiceWithPublicKeys.ts';
 
 export interface MockRemote {
-  readonly remoteAccessors: RemoteAccessor;
+  readonly remoteAccessor: RemoteAccessor;
   readonly deviceNotificationClient: DeviceNotificationClient;
   readonly getMockRemoteStore: PRFunc<DefaultSyncableStore, 'not-found', [storageRootId: StorageRootId]>;
   readonly createMockRemoteStore: PRFunc<DefaultSyncableStore, 'conflict', [storageRootId: StorageRootId, metadata: SyncableItemMetadata]>;
@@ -189,7 +189,7 @@ export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSe
   });
 
   return makeSuccess({
-    remoteAccessors: { puller, pusher },
+    remoteAccessor: { puller, pusher },
     deviceNotificationClient,
     getMockRemoteStore,
     createMockRemoteStore,

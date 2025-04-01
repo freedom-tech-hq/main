@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { generateSha256HashFromString } from 'freedom-crypto';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import type { StorageRootId } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
@@ -25,7 +26,12 @@ export const getSyncableStore = makeAsyncResultFunc(
       return generalizeFailureResult(trace, saltsById, 'not-found', `Salts not found for storage root: ${storageRootId}`);
     }
 
-    const rootPath = path.join(allStorageRootPath, storageRootId);
+    const hashedStorageRootId = await generateSha256HashFromString(trace, storageRootId);
+    if (!hashedStorageRootId.ok) {
+      return hashedStorageRootId;
+    }
+
+    const rootPath = path.join(allStorageRootPath, hashedStorageRootId.value);
     const storeBacking = new FileSystemSyncableStoreBacking(rootPath);
     const rootMetadata = await storeBacking.getMetadataAtPath(trace, new SyncablePath(storageRootId));
     if (!rootMetadata.ok) {
