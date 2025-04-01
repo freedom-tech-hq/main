@@ -11,7 +11,7 @@ import { ResizingObservingDiv } from '../../../components/ResizingObservingDiv.t
 import { ListHasFocusProvider } from '../../../contexts/list-has-focus.tsx';
 import type { DataSource, IsDataSourceLoading } from '../../../types/DataSource.ts';
 import { doRangesIntersect } from '../../../utils/doRangesIntersect.ts';
-import { ANIMATION_DURATION_MSEC, SIXTY_FPS_MSEC } from '../consts/animation.ts';
+import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from '../consts/animation.ts';
 import { DEFAULT_MIN_OVERSCAN_AMOUNT_PX, DEFAULT_OVERSCAN_NUM_ITEMS } from '../consts/overscan.ts';
 import type { VirtualListControls } from '../types/VirtualListControls.ts';
 import type { VirtualListDelegate } from '../types/VirtualListDelegate.ts';
@@ -605,7 +605,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
       elem.style.height = `${totalSize}px`;
     },
-    { triggerOnMount: true, deps: [dataSource], limitMSec: SIXTY_FPS_MSEC }
+    { triggerOnMount: true, deps: [dataSource], limitMSec: TARGET_FPS_MSEC }
   );
 
   const hasFocus = useBinding(() => isFocusable && document.activeElement?.id === uuid, { id: 'hasFocus', detectChanges: true });

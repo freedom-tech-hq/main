@@ -8,7 +8,7 @@ import { useSelectedMailThreadId } from '../contexts/selected-mail-thread.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { TasksProvider, useTasks } from '../contexts/tasks.tsx';
 import { MailThread } from '../modules/mail-thread/components/MailThread.tsx';
-import { SIXTY_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
+import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
 import type { EmailUserId } from '../types/EmailUserId.ts';
 import { AppGlobalStyles } from './AppGlobalStyles.tsx';
 import { AppNavbar } from './AppNavbar.tsx';
@@ -49,7 +49,7 @@ const BootstrappedWebApp = () => {
 
       elem.style.paddingLeft = `${sideMenuWidth}px`;
     },
-    { limitMSec: SIXTY_FPS_MSEC }
+    { limitMSec: TARGET_FPS_MSEC }
   );
 
   useEffect(() => {

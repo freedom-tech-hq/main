@@ -6,7 +6,7 @@ import { BC, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-b
 import { useSelectedMailCollectionId } from '../contexts/selected-mail-collection.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { useAppBarHeight } from '../hooks/useAppBarHeight.ts';
-import { SIXTY_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
+import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
 import type { FocusControls } from '../types/FocusControls.ts';
 import { MailMenuContent } from './MailMenuContent.tsx';
 import { MainMenuContent } from './MainMenuContent.tsx';
@@ -35,7 +35,7 @@ export const SideMenu = () => {
 
       elem.style.paddingTop = `${appBarHeight}px`;
     },
-    { limitMSec: SIXTY_FPS_MSEC }
+    { limitMSec: TARGET_FPS_MSEC }
   );
 
   const computedSideMenuWidth = useDerivedBinding(

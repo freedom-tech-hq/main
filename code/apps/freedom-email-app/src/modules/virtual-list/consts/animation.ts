@@ -1,2 +1,2 @@
 export const ANIMATION_DURATION_MSEC = 300;
-export const SIXTY_FPS_MSEC = 1000 / 60;
+export const TARGET_FPS_MSEC = 1000 / 60;
