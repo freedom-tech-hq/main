@@ -1,30 +1,23 @@
 import type { PR } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import type { Sha256Hash, Uuid } from 'freedom-basic-data';
+import { makeIsoDateTime, type Sha256Hash, timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import { generateSha256HashFromString } from 'freedom-crypto';
-import type { TrustedTimeName } from 'freedom-crypto-data';
-import { SyncablePath } from 'freedom-sync-types';
+import { makeUuid } from 'freedom-contexts';
+import type { SyncablePath } from 'freedom-sync-types';
+import type { TrustedTime } from 'freedom-trusted-time-source';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
-import { generateSelfSignedTrustedTimeName } from './generateSelfSignedTrustedTimeName.ts';
+import { generateSelfSignedTrustedTime } from './generateSelfSignedTrustedTime.ts';
 import { getCryptoKeyIdForHighestCurrentUserRoleAtPath } from './getCryptoKeyIdForHighestCurrentUserRoleAtPath.ts';
 import { getTrustedTimeSourcesForPath } from './getTrustedTimeSourcesForPath.ts';
 
-export const generateTrustedTimeName = makeAsyncResultFunc(
+export const generateTrustedTime = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     store: SyncableStore,
-    { path, uuid, contentHash }: { path: SyncablePath; uuid: Uuid; contentHash: Sha256Hash }
-  ): PR<TrustedTimeName> => {
-    const pathHash = await generateSha256HashFromString(trace, path.toString());
-    if (!pathHash.ok) {
-      return pathHash;
-    }
-
-    const parentPath = path.parentPath ?? new SyncablePath(path.storageRootId);
-
+    { parentPath, contentHash }: { parentPath: SyncablePath; contentHash: Sha256Hash }
+  ): PR<TrustedTime> => {
     const roleAndCryptoKeySetId = await getCryptoKeyIdForHighestCurrentUserRoleAtPath(trace, store, {
       // Acceptance is relative to the permissions of the parent folder since the item is being added to it
       path: parentPath
@@ -35,11 +28,7 @@ export const generateTrustedTimeName = makeAsyncResultFunc(
 
     // If the user is a creator, they can sign their own trusted time names
     if (roleAndCryptoKeySetId.value.role === 'creator') {
-      return await generateSelfSignedTrustedTimeName(trace, store, {
-        pathHash: pathHash.value,
-        uuid,
-        contentHash
-      });
+      return await generateSelfSignedTrustedTime(trace, store, { parentPath, contentHash });
     }
 
     const trustedTimeSources = await getTrustedTimeSourcesForPath(trace, store, parentPath);
@@ -47,22 +36,24 @@ export const generateTrustedTimeName = makeAsyncResultFunc(
       return generalizeFailureResult(trace, trustedTimeSources, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    const trustedTimeNames = await allResultsMappedSkipFailures(
+    const timeId = timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`);
+
+    const trustedTimeSignatures = await allResultsMappedSkipFailures(
       trace,
       trustedTimeSources.value,
       { onSuccess: 'stop', skipErrorCodes: ['generic'] },
       async (trace, trustedTimeSource) =>
-        await trustedTimeSource.generateTrustedTimeName(trace, { pathHash: pathHash.value, uuid, contentHash })
+        await trustedTimeSource.generateTrustedTimeSignature(trace, { timeId, parentPath: parentPath.toString(), contentHash })
     );
-    if (!trustedTimeNames.ok) {
-      return trustedTimeNames;
+    if (!trustedTimeSignatures.ok) {
+      return trustedTimeSignatures;
     }
 
-    const trustedTimeName = trustedTimeNames.value.find((id) => id !== undefined);
-    if (trustedTimeName === undefined) {
+    const trustedTimeSignature = trustedTimeSignatures.value.find((id) => id !== undefined);
+    if (trustedTimeSignature === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'Failed to generate a trusted time name' }));
     }
 
-    return makeSuccess(trustedTimeName);
+    return makeSuccess({ timeId, trustedTimeSignature });
   }
 );

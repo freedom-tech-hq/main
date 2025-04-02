@@ -1,18 +1,15 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import * as openpgp from 'openpgp';
-import { encryptEmail } from '../encryptEmail.ts';
-import { getJsFixture, getStringFixture } from 'freedom-testing-tools';
-import type { User } from '../../../../types/User.ts';
+import { describe, it } from 'node:test';
 
-const publicKey = getStringFixture(
-  import.meta.dirname,
-  '../../../../__tests__/fixtures/crypto-stub/user1_public.asc'
-);
-const privateKeyArmored = getStringFixture(
-  import.meta.dirname,
-  '../../../../__tests__/fixtures/crypto-stub/user1_private.asc'
-);
+import { getJsFixture, getStringFixture } from 'freedom-testing-tools';
+import * as openpgp from 'openpgp';
+
+import type { ParsedEmail } from '../../../../types/ParsedEmail.ts';
+import type { User } from '../../../../types/User.ts';
+import { encryptEmail } from '../encryptEmail.ts';
+
+const publicKey = getStringFixture(import.meta.dirname, '../../../../__tests__/fixtures/crypto-stub/user1_public.asc');
+const privateKeyArmored = getStringFixture(import.meta.dirname, '../../../../__tests__/fixtures/crypto-stub/user1_private.asc');
 const user: User = {
   email: 'user1@my-test.com',
   publicKey
@@ -21,10 +18,7 @@ const user: User = {
 describe('encryptEmail', () => {
   it('handles a typical case', async () => {
     // Arrange
-    const parsedEmail = await getJsFixture(
-      import.meta.dirname,
-      '../../../../__tests__/fixtures/sample-parsed.mjs'
-    );
+    const parsedEmail = await getJsFixture<ParsedEmail>(import.meta.dirname, '../../../../__tests__/fixtures/sample-parsed.mjs');
 
     // Act
     const encryptedEmail = await encryptEmail(user, parsedEmail);

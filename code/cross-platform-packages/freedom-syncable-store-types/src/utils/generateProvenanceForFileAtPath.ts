@@ -1,7 +1,7 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { bestEffort, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import type { SyncableItemName, SyncableItemType, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { SyncableItemName, SyncableItemType, SyncableOriginOptions, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import { generateAcceptanceForPathIfPossible } from './generateAcceptanceForPathIfPossible.ts';
@@ -16,10 +16,16 @@ export const generateProvenanceForFileAtPath = makeAsyncResultFunc(
       path,
       type,
       name,
-      getSha256ForItemProvenance
-    }: { path: SyncablePath; type: SyncableItemType; name: SyncableItemName; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
+      getSha256ForItemProvenance,
+      trustedTimeSignature
+    }: SyncableOriginOptions & {
+      path: SyncablePath;
+      type: SyncableItemType;
+      name: SyncableItemName;
+      getSha256ForItemProvenance: PRFunc<Sha256Hash>;
+    }
   ): PR<SyncableProvenance> => {
-    const origin = await generateOriginForFileAtPath(trace, store, { path, type, name, getSha256ForItemProvenance });
+    const origin = await generateOriginForFileAtPath(trace, store, { path, type, name, getSha256ForItemProvenance, trustedTimeSignature });
     if (!origin.ok) {
       return origin;
     }

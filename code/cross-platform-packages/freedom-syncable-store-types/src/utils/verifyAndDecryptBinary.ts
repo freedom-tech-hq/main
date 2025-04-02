@@ -1,8 +1,14 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { InternalStateError } from 'freedom-common-errors';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import { decryptBuffer, extractKeyIdFromEncryptedBuffer, extractValueFromSignedBuffer } from 'freedom-crypto';
+import {
+  decryptBuffer,
+  extractKeyIdFromEncryptedBuffer,
+  extractKeyIdFromSignedBuffer,
+  extractValueFromSignedBuffer,
+  isSignatureValidForSignedBuffer
+} from 'freedom-crypto';
 import type { CryptoService } from 'freedom-crypto-service';
 import { decryptOneEncryptedValue } from 'freedom-crypto-service';
 
@@ -22,7 +28,20 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const isSignatureValid = await cryptoService.isSignatureValidForSignedBuffer(trace, { signedBuffer: signedEncryptedValue });
+    const signedByKeyId = extractKeyIdFromSignedBuffer(trace, { signedBuffer: signedEncryptedValue });
+    if (!signedByKeyId.ok) {
+      return generalizeFailureResult(trace, signedByKeyId, 'not-found');
+    }
+
+    const verifyingKeys = await cryptoService.getVerifyingKeySetForId(trace, signedByKeyId.value);
+    if (!verifyingKeys.ok) {
+      return generalizeFailureResult(trace, verifyingKeys, 'not-found');
+    }
+
+    const isSignatureValid = await isSignatureValidForSignedBuffer(trace, {
+      signedBuffer: signedEncryptedValue,
+      verifyingKeys: verifyingKeys.value
+    });
     /* node:coverage disable */
     if (!isSignatureValid.ok) {
       return isSignatureValid;

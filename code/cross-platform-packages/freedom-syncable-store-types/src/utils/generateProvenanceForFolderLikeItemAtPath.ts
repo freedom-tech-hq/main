@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { bestEffort, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generateSha256HashForEmptyString } from 'freedom-crypto';
-import type { SyncableItemName, SyncableItemType, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import type { SyncableItemName, SyncableItemType, SyncableOriginOptions, SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import { generateAcceptanceForPathIfPossible } from './generateAcceptanceForPathIfPossible.ts';
@@ -12,9 +12,14 @@ export const generateProvenanceForFolderLikeItemAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    { path, type, name }: { path: SyncablePath; type: SyncableItemType; name: SyncableItemName }
+    {
+      path,
+      type,
+      name,
+      trustedTimeSignature
+    }: SyncableOriginOptions & { path: SyncablePath; type: SyncableItemType; name: SyncableItemName }
   ): PR<SyncableProvenance> => {
-    const origin = await generateOriginForFolderLikeItemAtPath(trace, store, { path, type, name });
+    const origin = await generateOriginForFolderLikeItemAtPath(trace, store, { path, type, name, trustedTimeSignature });
     if (!origin.ok) {
       return origin;
     }

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import type { TestContext } from 'node:test';
-import { before, beforeEach, describe, it, skip } from 'node:test';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
@@ -52,10 +52,14 @@ describe('FileSystemSyncableStore', () => {
   beforeEach(async () => {
     trace = makeTrace('test');
 
-    primaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys });
+    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys });
     cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
 
-    const provenance = await generateProvenanceForNewSyncableStore(trace, { storageRootId, cryptoService });
+    const provenance = await generateProvenanceForNewSyncableStore(trace, {
+      storageRootId,
+      cryptoService,
+      trustedTimeSignature: undefined
+    });
     expectOk(provenance);
 
     const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), 'testing-'));
@@ -143,7 +147,7 @@ describe('FileSystemSyncableStore', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
@@ -171,7 +175,7 @@ describe('FileSystemSyncableStore', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'appender' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);

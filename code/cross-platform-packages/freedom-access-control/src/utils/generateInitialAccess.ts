@@ -3,7 +3,9 @@ import { makeAccessControlStateSchema } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { objectKeys } from 'freedom-cast';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
+import { generateSignedValue } from 'freedom-crypto';
 import type { CryptoService } from 'freedom-crypto-service';
 import type { Schema } from 'yaschema';
 
@@ -23,11 +25,19 @@ export const generateInitialAccess = makeAsyncResultFunc(
       roleSchema: Schema<RoleT>;
     }
   ): PR<InitialAccess<RoleT>> => {
-    const signedState = await cryptoService.generateSignedValue<AccessControlState<RoleT>>(trace, {
+    const signingKeys = await cryptoService.getSigningKeySet(trace);
+    /* node:coverage disable */
+    if (!signingKeys.ok) {
+      return generalizeFailureResult(trace, signingKeys, 'not-found');
+    }
+    /* node:coverage enable */
+
+    const signedState = await generateSignedValue(trace, {
       value: initialState,
       valueSchema: makeAccessControlStateSchema({ roleSchema }),
       signatureExtras: undefined,
-      signatureExtrasSchema: undefined
+      signatureExtrasSchema: undefined,
+      signingKeys: signingKeys.value
     });
     /* node:coverage disable */
     if (!signedState.ok) {

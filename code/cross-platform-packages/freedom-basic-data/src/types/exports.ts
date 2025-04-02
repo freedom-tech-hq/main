@@ -13,6 +13,7 @@ export * from './PrefixedStringInfo.ts';
 export * from './SerializedValue.ts';
 export * from './SessionTokenDetails.ts';
 export * from './Sha256Hash.ts';
+export * from './TimeId.ts';
 export * from './Uint8Array.ts';
 export * from './uploadable/exports.ts';
 export * from './Uuid.ts';

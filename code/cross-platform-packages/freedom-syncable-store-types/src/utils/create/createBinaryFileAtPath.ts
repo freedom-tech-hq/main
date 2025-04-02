@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { DynamicSyncableItemName, SyncablePath } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
 import type { MutableSyncableFileAccessor } from '../../types/MutableSyncableFileAccessor.ts';
@@ -14,13 +14,13 @@ export const createBinaryFileAtPath = makeAsyncResultFunc(
     trace: Trace,
     store: MutableSyncableStore,
     path: SyncablePath,
-    { name, value }: { name?: DynamicSyncableItemName; value: Uint8Array }
+    { name, value, trustedTimeSignature }: Partial<SyncableOriginOptions> & { name?: DynamicSyncableItemName; value: Uint8Array }
   ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parent = await getMutableSyncableAtPath(trace, store, path.parentPath!, syncableItemTypes.exclude('file'));
     if (!parent.ok) {
       return parent;
     }
 
-    return await parent.value.createBinaryFile(trace, { id: path.lastId!, name, value });
+    return await parent.value.createBinaryFile(trace, { id: path.lastId!, name, value, trustedTimeSignature });
   }
 );

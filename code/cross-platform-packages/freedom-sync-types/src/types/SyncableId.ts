@@ -1,5 +1,5 @@
-import type { Uuid } from 'freedom-basic-data';
-import { makeIdInfo, nonAnchoredUuidRegex, uuidSchema } from 'freedom-basic-data';
+import type { TimeId, Uuid } from 'freedom-basic-data';
+import { makeIdInfo, makeIsoDateTime, nonAnchoredUuidRegex, timeIdInfo, uuidSchema } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
 import { schema } from 'yaschema';
 
@@ -36,16 +36,24 @@ export const unmarkedSyncableUuidSchema = uuidSchema;
 export type UnmarkedSyncableUuidId = Uuid;
 export const uuidId = (settings: SyncableIdSettings, uuid?: Uuid) => makeSyncableId(settings, uuid ?? makeUuid());
 
-export const unmarkedSyncableIdSchema = schema.oneOf3(
+export const unmarkedTimeIdInfo = timeIdInfo;
+export const unmarkedTimeIdSchema = unmarkedTimeIdInfo.schema;
+export type UnmarkedTimeId = TimeId;
+
+export const timeId = (settings: SyncableIdSettings, timeId?: TimeId) =>
+  makeSyncableId(settings, timeId ?? timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`));
+
+export const unmarkedSyncableIdSchema = schema.oneOf4(
   unmarkedSyncablePlainIdInfo.schema,
   unmarkedSyncableSaltedIdInfo.schema,
-  unmarkedSyncableUuidSchema
+  unmarkedSyncableUuidSchema,
+  unmarkedTimeIdInfo.schema
 );
 export type UnmarkedSyncableId = typeof unmarkedSyncableIdSchema.valueType;
 
 export const syncableIdSchema = schema.regex<SyncableId>(
   new RegExp(
-    `E[yn]T[Fbf](?:${unmarkedSyncablePlainIdInfo.nonAnchoredRegex.source}|${unmarkedSyncableSaltedIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source})`
+    `E[yn]T[Fbf](?:${unmarkedSyncablePlainIdInfo.nonAnchoredRegex.source}|${unmarkedSyncableSaltedIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source}|${unmarkedTimeIdInfo.nonAnchoredRegex.source})`
   )
 );
 export type SyncableId = `E${'y' | 'n'}T${'F' | 'b' | 'f'}${UnmarkedSyncableId}`;

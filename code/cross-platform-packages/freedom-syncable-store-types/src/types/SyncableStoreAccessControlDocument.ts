@@ -2,15 +2,15 @@ import type { AccessControlDocumentPrefix, InitialAccess } from 'freedom-access-
 import { AccessControlDocument } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { inline, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { extractTimeMSecFromTimeId, timeIdInfo } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { SyncablePath } from 'freedom-sync-types';
+import { extractSyncableIdParts, type SyncablePath } from 'freedom-sync-types';
 import { isEqual } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
 import { generateContentHashForSyncableStoreAccessChange } from '../utils/generateContentHashForSyncableStoreAccessChange.ts';
-import { isTrustedTimeNameValidForPath } from '../utils/validation/isTrustedTimeNameValidForPath.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
 import { editorAndBelowRoles, ownerAndBelowRoles, syncableStoreRoleSchema } from './SyncableStoreRole.ts';
@@ -44,7 +44,6 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
     async (
       trace,
       {
-        store,
         path,
         role,
         encodedDelta
@@ -123,18 +122,21 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         }
       });
 
+      const idParts = extractSyncableIdParts(path.lastId!);
+      const timeId = idParts.unmarkedId;
+      if (!timeIdInfo.is(timeId)) {
+        // The file ID should be a timeId
+        return makeSuccess(false);
+      }
+      const deltaFileTimeMSec = extractTimeMSecFromTimeId(timeId);
       for (const addedChange of addedChanges) {
         const contentHash = await generateContentHashForSyncableStoreAccessChange(trace, addedChange.value);
         if (!contentHash.ok) {
           return contentHash;
         }
 
-        const trustedTimeNameValid = await isTrustedTimeNameValidForPath(trace, store, {
-          path,
-          trustedTimeName: addedChange.value.trustedTimeName,
-          contentHash: contentHash.value
-        });
-        if (!trustedTimeNameValid.ok) {
+        if (addedChange.value.timeMSec !== deltaFileTimeMSec) {
+          // The time in the delta doesn't match the file time
           return makeSuccess(false);
         }
 

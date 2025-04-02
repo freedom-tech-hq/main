@@ -3,11 +3,11 @@ import type { TestContext } from 'node:test';
 import { beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
+import { base64String, makeIsoDateTime, timeIdInfo } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
-import { makeTrace } from 'freedom-contexts';
+import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { trustedTimeNameInfo } from 'freedom-crypto-data';
 import { expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -31,7 +31,7 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(internalCryptoKeys1);
     cryptoKeys1 = internalCryptoKeys1.value;
 
-    cryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys1 });
+    cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys1 });
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
@@ -56,8 +56,12 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.id,
         role: 'editor'
@@ -66,15 +70,19 @@ describe('generateSignedModifyAccessChange', () => {
     });
     expectOk(signedAddAccessChange);
 
-    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value);
+    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value.signedAccessChange);
     expectOk(accessAdded);
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.id,
         oldRole: 'editor',
@@ -84,7 +92,7 @@ describe('generateSignedModifyAccessChange', () => {
     });
     expectOk(signedModifyAccessChange);
 
-    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value);
+    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
     t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
@@ -98,8 +106,12 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.id,
         role: 'editor'
@@ -108,15 +120,19 @@ describe('generateSignedModifyAccessChange', () => {
     });
     expectOk(signedAddAccessChange);
 
-    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value);
+    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value.signedAccessChange);
     expectOk(accessAdded);
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.id,
         oldRole: 'editor',
@@ -125,12 +141,12 @@ describe('generateSignedModifyAccessChange', () => {
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedModifyAccessChange);
-    t.assert.strictEqual(signedModifyAccessChange.value.value.type, 'modify-access');
-    if (signedModifyAccessChange.value.value.type === 'modify-access') {
-      t.assert.notStrictEqual(signedModifyAccessChange.value.value.newSharedKeys, undefined);
+    t.assert.strictEqual(signedModifyAccessChange.value.signedAccessChange.value.type, 'modify-access');
+    if (signedModifyAccessChange.value.signedAccessChange.value.type === 'modify-access') {
+      t.assert.notStrictEqual(signedModifyAccessChange.value.signedAccessChange.value.newSharedKeys, undefined);
     }
 
-    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value);
+    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
     t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
@@ -144,8 +160,12 @@ describe('generateSignedModifyAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.id,
         role: 'appender'
@@ -154,15 +174,19 @@ describe('generateSignedModifyAccessChange', () => {
     });
     expectOk(signedAddAccessChange);
 
-    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value);
+    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value.signedAccessChange);
     expectOk(accessAdded);
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.id,
         oldRole: 'appender',
@@ -171,12 +195,15 @@ describe('generateSignedModifyAccessChange', () => {
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedModifyAccessChange);
-    t.assert.strictEqual(signedModifyAccessChange.value.value.type, 'modify-access');
-    if (signedModifyAccessChange.value.value.type === 'modify-access') {
-      t.assert.notStrictEqual(signedModifyAccessChange.value.value.encryptedSecretKeysForModifiedUserBySharedKeysId, undefined);
+    t.assert.strictEqual(signedModifyAccessChange.value.signedAccessChange.value.type, 'modify-access');
+    if (signedModifyAccessChange.value.signedAccessChange.value.type === 'modify-access') {
+      t.assert.notStrictEqual(
+        signedModifyAccessChange.value.signedAccessChange.value.encryptedSecretKeysForModifiedUserBySharedKeysId,
+        undefined
+      );
     }
 
-    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value);
+    const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
     t.assert.deepStrictEqual(accessControlDoc.accessControlState, {

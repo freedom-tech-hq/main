@@ -5,9 +5,7 @@
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-crypto": "0.0.0",
-    "freedom-crypto-data": "0.0.0",
-    "freedom-trace-logging-and-metrics": "0.0.0",
-    "yaschema": "4.4.2"
+    "freedom-crypto-data": "0.0.0"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

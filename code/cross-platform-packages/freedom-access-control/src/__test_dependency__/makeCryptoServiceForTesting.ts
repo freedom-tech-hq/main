@@ -11,20 +11,22 @@ export interface TestingCryptoService extends CryptoService {
   addPublicKeys: (args: { publicKeys: CombinationCryptoKeySet }) => void;
 }
 
-export const makeCryptoServiceForTesting = ({ cryptoKeys }: { cryptoKeys: PrivateCombinationCryptoKeySet }): TestingCryptoService => {
-  const allPublicKeys: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> = {};
+export const makeCryptoServiceForTesting = ({ privateKeys }: { privateKeys: PrivateCombinationCryptoKeySet }): TestingCryptoService => {
+  const allPublicKeys: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> = {
+    [privateKeys.id]: privateKeys.publicOnly()
+  };
 
   const cryptoService = makeCryptoService({
-    getCryptoKeySetIds: makeAsyncResultFunc(
-      [import.meta.filename, 'getCryptoKeySetIds'],
-      async (_trace): PR<CryptoKeySetId[]> => makeSuccess([cryptoKeys.id])
+    getPrivateCryptoKeySetIds: makeAsyncResultFunc(
+      [import.meta.filename, 'getPrivateCryptoKeySetIds'],
+      async (_trace): PR<CryptoKeySetId[]> => makeSuccess([privateKeys.id])
     ),
 
-    getCryptoKeysById: makeAsyncResultFunc(
-      [import.meta.filename, 'getCryptoKeysById'],
+    getPrivateCryptoKeysById: makeAsyncResultFunc(
+      [import.meta.filename, 'getPrivateCryptoKeysById'],
       async (trace, id): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
-        if (id === cryptoKeys.id) {
-          return makeSuccess(cryptoKeys);
+        if (id === privateKeys.id) {
+          return makeSuccess(privateKeys);
         }
 
         return makeFailure(new InternalStateError(trace, { message: `Key not found with ID: ${id}`, errorCode: 'not-found' }));
@@ -34,8 +36,8 @@ export const makeCryptoServiceForTesting = ({ cryptoKeys }: { cryptoKeys: Privat
     getPublicCryptoKeysById: makeAsyncResultFunc(
       [import.meta.filename, 'getPublicCryptoKeysById'],
       async (trace, id): PR<CombinationCryptoKeySet, 'not-found'> => {
-        if (id === cryptoKeys.id) {
-          return makeSuccess(cryptoKeys);
+        if (id === privateKeys.id) {
+          return makeSuccess(privateKeys);
         }
 
         const found = allPublicKeys[id];
@@ -47,9 +49,9 @@ export const makeCryptoServiceForTesting = ({ cryptoKeys }: { cryptoKeys: Privat
       }
     ),
 
-    getMostRecentCryptoKeys: makeAsyncResultFunc(
-      [import.meta.filename, 'getMostRecentCryptoKeys'],
-      async (_trace): PR<PrivateCombinationCryptoKeySet> => makeSuccess(cryptoKeys)
+    getMostRecentPrivateCryptoKeys: makeAsyncResultFunc(
+      [import.meta.filename, 'getMostRecentPrivateCryptoKeys'],
+      async (_trace): PR<PrivateCombinationCryptoKeySet> => makeSuccess(privateKeys)
     )
   });
 

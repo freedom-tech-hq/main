@@ -16,7 +16,7 @@ describe('generateInitialAccess', () => {
     const cryptoKeys = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys);
 
-    const cryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys.value });
+    const cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys.value });
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,

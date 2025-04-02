@@ -1,12 +1,9 @@
 import type { PRFunc } from 'freedom-async';
-import type { Sha256Hash, Uuid } from 'freedom-basic-data';
-import type { TrustedTimeName } from 'freedom-crypto-data';
+import type { Base64String } from 'freedom-basic-data';
+
+import type { TrustedTimeSignatureParams } from './TrustedTimeSignatureParams.ts';
 
 export interface TrustedTimeSource {
-  readonly generateTrustedTimeName: PRFunc<TrustedTimeName, never, [{ pathHash: Sha256Hash; uuid: Uuid; contentHash: Sha256Hash }]>;
-  readonly isTrustedTimeNameValid: PRFunc<
-    boolean,
-    never,
-    [trustedTimeName: TrustedTimeName, { pathHash: Sha256Hash; contentHash: Sha256Hash }]
-  >;
+  readonly generateTrustedTimeSignature: PRFunc<Base64String, never, [TrustedTimeSignatureParams]>;
+  readonly isTrustedTimeSignatureValid: PRFunc<boolean, never, [trustedTimeSignature: Base64String, TrustedTimeSignatureParams]>;
 }

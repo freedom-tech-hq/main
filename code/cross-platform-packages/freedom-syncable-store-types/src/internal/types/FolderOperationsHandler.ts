@@ -1,12 +1,12 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { base64String, makeIsoDateTime } from 'freedom-basic-data';
+import { base64String } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalSchemaValidationError, InternalStateError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
-import { extractPartsFromTimeName, extractPartsFromTrustedTimeName, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
+import { generateSignedValue } from 'freedom-crypto';
 import type { DynamicSyncableItemName, SyncableItemName, SyncablePath } from 'freedom-sync-types';
-import { encName, syncableEncryptedItemNameInfo, timeName } from 'freedom-sync-types';
+import { encName, syncableEncryptedItemNameInfo } from 'freedom-sync-types';
 
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
@@ -15,8 +15,6 @@ import type { SyncableStoreChange } from '../../types/SyncableStoreChange.ts';
 import { syncableStoreChangeSchema } from '../../types/SyncableStoreChange.ts';
 import type { SyncableStoreChangesDocument } from '../../types/SyncableStoreChangesDocument.ts';
 import { encryptAndSignBinary } from '../../utils/encryptAndSignBinary.ts';
-import { generateTrustedTimeNameForSyncable } from '../../utils/generateTrustedTimeNameForSyncable.ts';
-import { shouldUseTrustedTimeNamesInPath } from '../../utils/shouldUseTrustedTimeNamesInPath.ts';
 import { verifyAndDecryptBinary } from '../../utils/verifyAndDecryptBinary.ts';
 
 export class FolderOperationsHandler {
@@ -45,11 +43,7 @@ export class FolderOperationsHandler {
     [import.meta.filename, 'generateNewSyncableItemName'],
     async (
       trace: Trace,
-      {
-        path,
-        name,
-        getSha256ForItemProvenance
-      }: { path: SyncablePath; name: DynamicSyncableItemName; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
+      { name }: { path: SyncablePath; name: DynamicSyncableItemName; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
     ): PR<SyncableItemName> => {
       if (typeof name === 'string') {
         // Already a SyncableItemName
@@ -65,32 +59,6 @@ export class FolderOperationsHandler {
 
           return makeSuccess(syncableEncryptedItemNameInfo.make(encryptedAndSignedName.value));
         }
-
-        case 'time': {
-          const store = this.weakStore_.deref();
-          if (store === undefined) {
-            return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-          }
-
-          const shouldUseTrustedTime = await shouldUseTrustedTimeNamesInPath(trace, store, path.parentPath!);
-          if (!shouldUseTrustedTime.ok) {
-            return shouldUseTrustedTime;
-          }
-
-          if (shouldUseTrustedTime.value) {
-            const trustedTimeName = await generateTrustedTimeNameForSyncable(trace, store, {
-              path,
-              uuid: name.uuid,
-              getSha256ForItemProvenance
-            });
-            if (!trustedTimeName.ok) {
-              return trustedTimeName;
-            }
-            return makeSuccess(trustedTimeName.value);
-          } else {
-            return makeSuccess(timeNameInfo.make(`${makeIsoDateTime()}-${name.uuid}`));
-          }
-        }
       }
     }
   );
@@ -105,20 +73,6 @@ export class FolderOperationsHandler {
         }
 
         return makeSuccess(encName(decryptedName.value));
-      } else if (trustedTimeNameInfo.is(name)) {
-        const timeNameParts = await extractPartsFromTrustedTimeName(trace, name);
-        if (!timeNameParts.ok) {
-          return timeNameParts;
-        }
-
-        return makeSuccess(timeName(timeNameParts.value.uuid));
-      } else if (timeNameInfo.is(name)) {
-        const timeNameParts = await extractPartsFromTimeName(trace, name);
-        if (!timeNameParts.ok) {
-          return timeNameParts;
-        }
-
-        return makeSuccess(timeName(timeNameParts.value.uuid));
       } else {
         return makeSuccess(name);
       }
@@ -150,11 +104,17 @@ export class FolderOperationsHandler {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      const signedStoreChange = await store.cryptoService.generateSignedValue<SyncableStoreChange>(trace, {
+      const signingKeys = await store.cryptoService.getSigningKeySet(trace);
+      if (!signingKeys.ok) {
+        return generalizeFailureResult(trace, signingKeys, 'not-found');
+      }
+
+      const signedStoreChange = await generateSignedValue<SyncableStoreChange>(trace, {
         value: { type: 'delete', paths: [path] },
         valueSchema: syncableStoreChangeSchema,
         signatureExtras: undefined,
-        signatureExtrasSchema: undefined
+        signatureExtrasSchema: undefined,
+        signingKeys: signingKeys.value
       });
       if (!signedStoreChange.ok) {
         return signedStoreChange;

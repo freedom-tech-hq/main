@@ -37,9 +37,13 @@ describe('createJsonFileAtPath', () => {
     expectOk(internalCryptoKeys);
     cryptoKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ cryptoKeys });
+    cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys });
 
-    const provenance = await generateProvenanceForNewSyncableStore(trace, { storageRootId, cryptoService });
+    const provenance = await generateProvenanceForNewSyncableStore(trace, {
+      storageRootId,
+      cryptoService,
+      trustedTimeSignature: undefined
+    });
     expectOk(provenance);
 
     storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });

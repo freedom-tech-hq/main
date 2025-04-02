@@ -1,5 +1,5 @@
-import { describe, it, mock, beforeEach } from 'node:test';
 import assert from 'node:assert';
+import { beforeEach, describe, it, mock } from 'node:test';
 
 describe('demoMockingSubject', async () => {
   // Mock dependencies and load the subject
@@ -16,7 +16,7 @@ describe('demoMockingSubject', async () => {
   });
 
   it('should create a magic string and use demoHelper', async () => {
-     // Act
+    // Act
     const result = demoMockingSubject('the-a', 'the-b');
 
     // Assert

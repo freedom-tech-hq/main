@@ -42,10 +42,14 @@ describe('folders', () => {
     expectOk(internalCryptoKeys);
     cryptoKeys = internalCryptoKeys.value;
 
-    primaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys });
+    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys });
     cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
 
-    const provenance = await generateProvenanceForNewSyncableStore(trace, { storageRootId, cryptoService });
+    const provenance = await generateProvenanceForNewSyncableStore(trace, {
+      storageRootId,
+      cryptoService,
+      trustedTimeSignature: undefined
+    });
     expectOk(provenance);
 
     storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
@@ -72,7 +76,7 @@ describe('folders', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
@@ -100,7 +104,7 @@ describe('folders', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'appender' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);

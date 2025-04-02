@@ -1,7 +1,9 @@
 import path from 'node:path';
 
-export async function getJsFixture(dirname: string, filePath: string): Promise<any> {
+export async function getJsFixture<T>(dirname: string, filePath: string): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const object = await import(path.resolve(dirname, filePath));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const [singleValue] = Object.values(object);
-  return singleValue;
+  return singleValue as T;
 }

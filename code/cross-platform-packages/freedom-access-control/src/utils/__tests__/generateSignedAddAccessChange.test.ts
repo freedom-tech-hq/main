@@ -2,9 +2,9 @@ import type { TestContext } from 'node:test';
 import { describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
-import { makeTrace } from 'freedom-contexts';
+import { base64String, makeIsoDateTime, timeIdInfo } from 'freedom-basic-data';
+import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
-import { trustedTimeNameInfo } from 'freedom-crypto-data';
 import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -19,7 +19,7 @@ describe('generateSignedAddAccessChange', () => {
     const cryptoKeys1 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys1);
 
-    const cryptoService = makeCryptoServiceForTesting({ cryptoKeys: cryptoKeys1.value });
+    const cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys1.value });
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
@@ -41,8 +41,12 @@ describe('generateSignedAddAccessChange', () => {
       cryptoService,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
-      // Not validating trusted time names here
-      generateTrustedTimeNameForAccessChange: async () => makeSuccess(trustedTimeNameInfo.make('test')),
+      // Not validating trusted times here
+      generateTrustedTimeForAccessChange: async () =>
+        makeSuccess({
+          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          trustedTimeSignature: base64String.makeWithUtf8String('test')
+        }),
       params: {
         publicKeyId: cryptoKeys2.value.id,
         role: 'editor'
@@ -51,7 +55,7 @@ describe('generateSignedAddAccessChange', () => {
     });
     expectOk(signedAddAccessChange);
 
-    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value);
+    const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value.signedAccessChange);
     expectOk(accessAdded);
 
     t.assert.deepStrictEqual(accessControlDoc.accessControlState, {

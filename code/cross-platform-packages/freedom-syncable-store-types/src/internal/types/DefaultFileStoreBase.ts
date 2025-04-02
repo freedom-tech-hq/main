@@ -120,7 +120,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
             path: newPath,
             type: 'file',
             name: name.value,
-            getSha256ForItemProvenance
+            getSha256ForItemProvenance,
+            trustedTimeSignature: args.trustedTimeSignature
           });
           if (!provenance.ok) {
             return provenance;
@@ -162,7 +163,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
           const provenance = await generateProvenanceForFolderLikeItemAtPath(trace, store, {
             path: newPath,
             type: 'bundle',
-            name: name.value
+            name: name.value,
+            trustedTimeSignature: args.trustedTimeSignature
           });
           if (!provenance.ok) {
             return provenance;

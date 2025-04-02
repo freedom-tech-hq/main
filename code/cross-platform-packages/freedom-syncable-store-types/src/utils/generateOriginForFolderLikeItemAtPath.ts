@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { SignedSyncableOrigin, SyncableItemName, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { SignedSyncableOrigin, SyncableItemName, SyncableItemType, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import { generateOrigin } from './generateOrigin.ts';
@@ -10,7 +10,12 @@ export const generateOriginForFolderLikeItemAtPath = makeAsyncResultFunc(
   async (
     trace,
     store: SyncableStore,
-    { path, type, name }: { path: SyncablePath; type: SyncableItemType; name: SyncableItemName }
+    {
+      path,
+      type,
+      name,
+      trustedTimeSignature
+    }: SyncableOriginOptions & { path: SyncablePath; type: SyncableItemType; name: SyncableItemName }
   ): PR<SignedSyncableOrigin> =>
-    await generateOrigin(trace, { path, type, name, contentHash: undefined, cryptoService: store.cryptoService })
+    await generateOrigin(trace, { path, type, name, contentHash: undefined, trustedTimeSignature, cryptoService: store.cryptoService })
 );

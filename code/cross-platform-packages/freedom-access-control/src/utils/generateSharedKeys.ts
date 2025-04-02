@@ -2,8 +2,8 @@ import { type SharedKeys, sharedPublicKeysSchema, type SharedSecretKeys, sharedS
 import type { PR } from 'freedom-async';
 import { allResultsReduced, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { makeSerializedValue } from 'freedom-basic-data';
-import { InternalSchemaValidationError } from 'freedom-common-errors';
-import { generateCryptoEncryptDecryptKeySet } from 'freedom-crypto';
+import { generalizeFailureResult, InternalSchemaValidationError } from 'freedom-common-errors';
+import { generateCryptoEncryptDecryptKeySet, generateEncryptedValue } from 'freedom-crypto';
 import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 
@@ -25,12 +25,18 @@ export const generateSharedKeys = makeAsyncResultFunc(
       trace,
       cryptoKeySetIds,
       {},
-      async (trace, cryptoKeySetId) =>
-        await cryptoService.generateEncryptedValue(trace, {
+      async (trace, cryptoKeySetId) => {
+        const encryptingKeys = await cryptoService.getEncryptingKeySetForId(trace, cryptoKeySetId);
+        if (!encryptingKeys.ok) {
+          return generalizeFailureResult(trace, encryptingKeys, 'not-found');
+        }
+
+        return await generateEncryptedValue(trace, {
           value: sharedEncryptDecryptKeys.value,
           valueSchema: sharedSecretKeysSchema,
-          cryptoKeySetId: cryptoKeySetId
-        }),
+          encryptingKeys: encryptingKeys.value
+        });
+      },
       async (_trace, out, encryptedSharedSecretKeys, cryptoKeySetId) => {
         out[cryptoKeySetId] = encryptedSharedSecretKeys;
         return makeSuccess(out);

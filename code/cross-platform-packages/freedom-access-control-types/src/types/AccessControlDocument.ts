@@ -5,7 +5,7 @@ import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
 import type { CryptoKeySetId, EncryptedValue, SignedValue } from 'freedom-crypto-data';
-import { extractPartsFromTrustedTimeName, makeSignedValueSchema } from 'freedom-crypto-data';
+import { makeSignedValueSchema } from 'freedom-crypto-data';
 import type { Schema } from 'yaschema';
 
 import type { AccessControlState } from './AccessControlState.ts';
@@ -72,7 +72,7 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   public readonly didHaveRoleAtTimeMSec = makeAsyncResultFunc(
     [import.meta.filename, 'didHaveRoleAtTimeMSec'],
     async (
-      trace,
+      _trace,
       {
         cryptoKeySetId,
         oneOfRoles,
@@ -86,11 +86,7 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
       const state = this.initialState_.get()!.value;
 
       for (const change of this.changes_.values()) {
-        const trustedTimeNameParts = await extractPartsFromTrustedTimeName(trace, change.value.trustedTimeName);
-        if (!trustedTimeNameParts.ok) {
-          continue; // Skipping invalid time
-        }
-        if (trustedTimeNameParts.value.timeMSec <= timeMSec) {
+        if (change.value.timeMSec <= timeMSec) {
           applyChangeToState(state, change.value);
         }
       }

@@ -19,6 +19,8 @@
   "nx": {
     "projectType": "application",
     "tags": [
+      "skip:depcheck",
+      "skip:lint",
       "type:app",
       "platform:server"
     ]

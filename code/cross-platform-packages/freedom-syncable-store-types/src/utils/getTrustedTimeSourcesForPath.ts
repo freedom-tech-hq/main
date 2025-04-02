@@ -14,12 +14,12 @@ export const getTrustedTimeSourcesForPath = makeAsyncResultFunc(
     store: SyncableStore,
     path: SyncablePath
   ): PR<TrustedTimeSource[], 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const parentFolderPath = await getFolderPath(trace, store, path);
-    if (!parentFolderPath.ok) {
-      return parentFolderPath;
+    const nearestFolderPath = await getFolderPath(trace, store, path);
+    if (!nearestFolderPath.ok) {
+      return nearestFolderPath;
     }
 
-    const itemAccessor = await getSyncableAtPath(trace, store, parentFolderPath.value, 'folder');
+    const itemAccessor = await getSyncableAtPath(trace, store, nearestFolderPath.value, 'folder');
     if (!itemAccessor.ok) {
       return itemAccessor;
     }

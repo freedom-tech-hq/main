@@ -66,7 +66,11 @@ export class InMemoryDataSources implements DataSources {
       return makeSuccess(found as MutableSyncableStore);
     }
 
-    const provenance = await generateProvenanceForNewSyncableStore(trace, { storageRootId, cryptoService });
+    const provenance = await generateProvenanceForNewSyncableStore(trace, {
+      storageRootId,
+      cryptoService,
+      trustedTimeSignature: undefined
+    });
     if (!provenance.ok) {
       return provenance;
     }

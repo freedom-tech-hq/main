@@ -1,5 +1,5 @@
 import type { PRFunc } from 'freedom-async';
-import type { DynamicSyncableItemName, SyncableItemMetadata, SyncableId } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncableId, SyncableItemMetadata, SyncableOriginOptions } from 'freedom-sync-types';
 
 import type { FolderStore } from './FolderStore.ts';
 import type { MutableStoreBase } from './MutableStoreBase.ts';
@@ -15,13 +15,13 @@ export interface MutableFolderStore extends MutableStoreBase, FolderStore {
     MutableSyncableFolderAccessor,
     'conflict' | 'deleted',
     [
-      | {
+      | (SyncableOriginOptions & {
           mode?: 'local';
           /** @defaultValue generated using `makeUuid()` */
           id?: SyncableId;
           /** @defaultValue `id` */
           name?: DynamicSyncableItemName;
-        }
+        })
       | {
           mode: 'via-sync';
           id: SyncableId;

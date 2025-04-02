@@ -1,14 +1,15 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
+import { generalizeFailureResult } from 'freedom-common-errors';
+import { generateSignedValue } from 'freedom-crypto';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
 import type { SignedSyncableAcceptance } from 'freedom-sync-types';
-import { syncableAcceptanceSchema, syncableAcceptanceSignatureExtrasSchema, SyncablePath } from 'freedom-sync-types';
+import { syncableAcceptanceSchema, SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import { ownerAndAboveRoles } from '../types/SyncableStoreRole.ts';
-import { generateTrustedTimeNameForSyncable } from './generateTrustedTimeNameForSyncable.ts';
+import { generateTrustedTimeForSyncableAcceptance } from './generateTrustedTimeForSyncableAcceptance.ts';
 import { getCryptoKeyIdForHighestCurrentUserRoleAtPath } from './getCryptoKeyIdForHighestCurrentUserRoleAtPath.ts';
 
 export const generateAcceptanceForPathIfPossible = makeAsyncResultFunc(
@@ -60,21 +61,22 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       return contentHash;
     }
 
-    const trustedTimeName = await generateTrustedTimeNameForSyncable(trace, store, {
-      path,
-      uuid: makeUuid(),
-      getSha256ForItemProvenance
-    });
-    if (!trustedTimeName.ok) {
-      return trustedTimeName;
+    const trustedTime = await generateTrustedTimeForSyncableAcceptance(trace, store, { path, getSha256ForItemProvenance });
+    if (!trustedTime.ok) {
+      return trustedTime;
     }
 
-    return await store.cryptoService.generateSignedValue(trace, {
-      cryptoKeySetId,
-      value: { trustedTimeName: trustedTimeName.value },
+    const signingKeys = await store.cryptoService.getSigningKeySet(trace, cryptoKeySetId);
+    if (!signingKeys.ok) {
+      return generalizeFailureResult(trace, signingKeys, 'not-found');
+    }
+
+    return await generateSignedValue(trace, {
+      value: trustedTime.value,
       valueSchema: syncableAcceptanceSchema,
-      signatureExtras: { path, contentHash: contentHash.value },
-      signatureExtrasSchema: syncableAcceptanceSignatureExtrasSchema
+      signatureExtras: undefined,
+      signatureExtrasSchema: undefined,
+      signingKeys: signingKeys.value
     });
   }
 );

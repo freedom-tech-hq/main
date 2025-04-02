@@ -7,10 +7,14 @@ import { makePrefixedStringInfo } from '../prefixed-string/makePrefixedStringInf
 
 export const makeIdInfo = <PrefixT extends `${string}_`, NonPrefixedT extends string = string>(
   prefix: PrefixT,
-  options?: { schemaOverride?: schema.RegexSchema<`${PrefixT}${NonPrefixedT}`> }
+  options?: {
+    schemaOverride?: schema.RegexSchema<`${PrefixT}${NonPrefixedT}`>;
+    nonAnchoredRegexOverride?: RegExp;
+  }
 ): PrefixedStringInfo<PrefixT, NonPrefixedT> =>
   makePrefixedStringInfo<PrefixT, NonPrefixedT>(prefix, {
     schemaOverride: options?.schemaOverride ?? (makeIdSchema(prefix) as schema.RegexSchema<`${PrefixT}${NonPrefixedT}`>),
+    nonAnchoredRegexOverride: options?.nonAnchoredRegexOverride,
     allowEmpty: false,
     isNonPrefixedValueValid: (nonPrefixedValue) => nonPrefixedValue.length >= MIN_ID_LENGTH && nonPrefixedValue.length <= MAX_ID_LENGTH
   });

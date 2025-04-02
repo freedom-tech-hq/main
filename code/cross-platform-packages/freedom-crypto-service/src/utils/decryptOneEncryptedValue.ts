@@ -1,8 +1,9 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure } from 'freedom-async';
 import { objectKeys } from 'freedom-cast';
-import { ForbiddenError } from 'freedom-common-errors';
+import { ForbiddenError, generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
+import { decryptEncryptedValue } from 'freedom-crypto';
 import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
 
 import type { CryptoService } from '../types/CryptoService.ts';
@@ -15,12 +16,12 @@ import type { CryptoService } from '../types/CryptoService.ts';
 export const decryptOneEncryptedValue = makeAsyncResultFunc(
   [import.meta.filename],
   async <T>(trace: Trace, cryptoService: CryptoService, encryptedValues: Partial<Record<CryptoKeySetId, EncryptedValue<T>>>): PR<T> => {
-    const keyIds = await cryptoService.getCryptoKeySetIds(trace);
-    if (!keyIds.ok) {
-      return keyIds;
+    const privateKeyIds = await cryptoService.getPrivateCryptoKeySetIds(trace);
+    if (!privateKeyIds.ok) {
+      return privateKeyIds;
     }
 
-    const keyIdsSet = new Set(keyIds.value);
+    const keyIdsSet = new Set(privateKeyIds.value);
 
     const keyId = objectKeys(encryptedValues).find((keyId) => keyIdsSet.has(keyId) && encryptedValues[keyId] !== undefined);
     if (keyId === undefined) {
@@ -28,6 +29,12 @@ export const decryptOneEncryptedValue = makeAsyncResultFunc(
     }
 
     const encryptedValue = encryptedValues[keyId]!;
-    return await cryptoService.decryptEncryptedValue(trace, encryptedValue);
+
+    const decryptingKeys = await cryptoService.getDecryptingKeySet(trace, keyId);
+    if (!decryptingKeys.ok) {
+      return generalizeFailureResult(trace, decryptingKeys, 'not-found');
+    }
+
+    return await decryptEncryptedValue(trace, encryptedValue, { decryptingKeys: decryptingKeys.value });
   }
 );

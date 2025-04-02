@@ -112,7 +112,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
           const provenance = await generateProvenanceForFolderLikeItemAtPath(trace, store, {
             path: newPath,
             type: 'folder',
-            name: name.value
+            name: name.value,
+            trustedTimeSignature: args.trustedTimeSignature
           });
           if (!provenance.ok) {
             return provenance;

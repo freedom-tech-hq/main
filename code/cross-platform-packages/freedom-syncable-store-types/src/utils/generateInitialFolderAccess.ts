@@ -11,19 +11,19 @@ import { syncableStoreRoleSchema } from '../types/SyncableStoreRole.ts';
 export const generateInitialFolderAccess = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore): PR<InitialAccess<SyncableStoreRole>> => {
-    const cryptoKeySetIds = await store.cryptoService.getCryptoKeySetIds(trace);
-    if (!cryptoKeySetIds.ok) {
-      return cryptoKeySetIds;
+    const privateKeyIds = await store.cryptoService.getPrivateCryptoKeySetIds(trace);
+    if (!privateKeyIds.ok) {
+      return privateKeyIds;
     }
 
     // If this folder is being created by a non-root-creator user, then we need to ensure that the creator's encrypting key is added to the
     // shared keys.  Otherwise, this folder will be rejected
-    const isRootCreator = cryptoKeySetIds.value.includes(store.creatorCryptoKeySetId);
+    const isRootCreator = privateKeyIds.value.includes(store.creatorCryptoKeySetId);
 
     // Only root creators can have the creator role.  Other folder creators are initialized with an owner role
     const folderCreatorRole = isRootCreator ? 'creator' : 'owner';
 
-    const initialState: AccessControlState<SyncableStoreRole> = { [cryptoKeySetIds.value[0]]: folderCreatorRole };
+    const initialState: AccessControlState<SyncableStoreRole> = { [privateKeyIds.value[0]]: folderCreatorRole };
 
     if (!isRootCreator) {
       const creatorEncryptingKeySet = await store.cryptoService.getEncryptingKeySetForId(trace, store.creatorCryptoKeySetId);

@@ -17,13 +17,13 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
     store: SyncableStore,
     { path }: { path: SyncablePath }
   ): PR<{ role: SyncableStoreRole; cryptoKeySetId: CryptoKeySetId }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const cryptoKeySetIds = await store.cryptoService.getCryptoKeySetIds(trace);
-    if (!cryptoKeySetIds.ok) {
-      return cryptoKeySetIds;
+    const privateKeyIds = await store.cryptoService.getPrivateCryptoKeySetIds(trace);
+    if (!privateKeyIds.ok) {
+      return privateKeyIds;
     }
 
     // If the crypto service is the creator, return the creator's key ID
-    if (cryptoKeySetIds.value.includes(store.creatorCryptoKeySetId)) {
+    if (privateKeyIds.value.includes(store.creatorCryptoKeySetId)) {
       return makeSuccess({ role: 'creator' as const, cryptoKeySetId: store.creatorCryptoKeySetId });
     }
 
@@ -37,14 +37,14 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
       return folder;
     }
 
-    const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: cryptoKeySetIds.value });
+    const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: privateKeyIds.value });
     if (!rolesByCryptoKeySetId.ok) {
       return rolesByCryptoKeySetId;
     }
 
     let bestRole: SyncableStoreRole | undefined;
     let bestCryptoKeySetId: CryptoKeySetId | undefined;
-    for (const cryptoKeySetId of cryptoKeySetIds.value) {
+    for (const cryptoKeySetId of privateKeyIds.value) {
       const role = rolesByCryptoKeySetId.value[cryptoKeySetId];
       if (role !== undefined && (bestRole === undefined || roleComparator(role, bestRole) > 0)) {
         bestRole = role;

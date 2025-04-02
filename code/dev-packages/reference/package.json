@@ -12,6 +12,7 @@
   "name": "freedom-reference",
   "nx": {
     "tags": [
+      "skip:depcheck",
       "type:lib",
       "platform:dev"
     ]

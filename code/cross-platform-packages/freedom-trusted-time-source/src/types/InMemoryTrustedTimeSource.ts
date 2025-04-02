@@ -1,14 +1,12 @@
 import type { ChainableResult, PR, Result } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess, resolveChain } from 'freedom-async';
-import { makeIsoDateTime, type Sha256Hash } from 'freedom-basic-data';
-import { InternalSchemaValidationError } from 'freedom-common-errors';
+import { makeAsyncResultFunc, resolveChain } from 'freedom-async';
+import type { Base64String } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
-import { makeUuid } from 'freedom-contexts';
-import { generateCryptoSignVerifyKeySet, generateSignedValue, isSignedValueValid } from 'freedom-crypto';
-import type { PureSigningKeySet, PureVerifyingKeySet, TrustedTimeName } from 'freedom-crypto-data';
-import { signedTimeNameSchema, signedTimeNameSignatureExtrasSchema, timeNameInfo, trustedTimeNameInfo } from 'freedom-crypto-data';
+import { generateCryptoSignVerifyKeySet, generateSignatureForValue, isSignatureValidForValue } from 'freedom-crypto';
+import type { PureSigningKeySet, PureVerifyingKeySet } from 'freedom-crypto-data';
 import { once } from 'lodash-es';
 
+import { type TrustedTimeSignatureParams, trustedTimeSignatureParamsSchema } from './TrustedTimeSignatureParams.ts';
 import type { TrustedTimeSource } from './TrustedTimeSource.ts';
 
 export class InMemoryTrustedTimeSource implements TrustedTimeSource {
@@ -18,59 +16,40 @@ export class InMemoryTrustedTimeSource implements TrustedTimeSource {
     this.signingAndVerifyingKeys_ = signingAndVerifyingKeys;
   }
 
-  public readonly generateTrustedTimeName = makeAsyncResultFunc(
-    [import.meta.filename, 'generateTrustedTimeName'],
-    async (trace, { pathHash, contentHash }: { pathHash: Sha256Hash; contentHash: Sha256Hash }): PR<TrustedTimeName> => {
+  public readonly generateTrustedTimeSignature = makeAsyncResultFunc(
+    [import.meta.filename, 'generateTrustedTimeSignature'],
+    async (trace, params: TrustedTimeSignatureParams): PR<Base64String> => {
       const signingAndVerifyingKeys = await resolveChain(this.getSigningAndVerifyingKeys_(trace));
       if (!signingAndVerifyingKeys.ok) {
         return signingAndVerifyingKeys;
       }
 
-      const signedTimeName = await generateSignedValue(trace, {
-        value: timeNameInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
-        valueSchema: timeNameInfo.schema,
-        signatureExtras: { pathHash, contentHash },
-        signatureExtrasSchema: signedTimeNameSignatureExtrasSchema,
+      return await generateSignatureForValue(trace, {
+        value: params,
+        valueSchema: trustedTimeSignatureParamsSchema,
+        signatureExtras: undefined,
+        signatureExtrasSchema: undefined,
         signingKeys: signingAndVerifyingKeys.value
       });
-      if (!signedTimeName.ok) {
-        return signedTimeName;
-      }
-
-      const serialization = await signedTimeNameSchema.serializeAsync(signedTimeName.value, { validation: 'hard' });
-      if (serialization.error !== undefined) {
-        return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));
-      }
-
-      return makeSuccess(trustedTimeNameInfo.make(serialization.serialized as string));
     }
   );
 
-  public readonly isTrustedTimeNameValid = makeAsyncResultFunc(
-    [import.meta.filename, 'isTrustedTimeNameValid'],
-    async (
-      trace,
-      trustedTimeName: TrustedTimeName,
-      { pathHash, contentHash }: { pathHash: Sha256Hash; contentHash: Sha256Hash }
-    ): PR<boolean> => {
+  public readonly isTrustedTimeSignatureValid = makeAsyncResultFunc(
+    [import.meta.filename, 'isTrustedTimeSignatureValid'],
+    async (trace, trustedTimeSignature: Base64String, params: TrustedTimeSignatureParams): PR<boolean> => {
       const signingAndVerifyingKeys = await resolveChain(this.getSigningAndVerifyingKeys_(trace));
       if (!signingAndVerifyingKeys.ok) {
         return signingAndVerifyingKeys;
       }
 
-      const serializedSignedTimeName = trustedTimeNameInfo.removePrefix(trustedTimeName);
-
-      const deserialization = await signedTimeNameSchema.deserializeAsync(serializedSignedTimeName, { validation: 'hard' });
-      if (deserialization.error !== undefined) {
-        return makeSuccess(false);
-      }
-
-      return await isSignedValueValid(
-        trace,
-        deserialization.deserialized,
-        { pathHash, contentHash },
-        { verifyingKeys: signingAndVerifyingKeys.value }
-      );
+      return await isSignatureValidForValue(trace, {
+        signature: trustedTimeSignature,
+        value: params,
+        valueSchema: trustedTimeSignatureParamsSchema,
+        signatureExtras: undefined,
+        signatureExtrasSchema: undefined,
+        verifyingKeys: signingAndVerifyingKeys.value
+      });
     }
   );
 

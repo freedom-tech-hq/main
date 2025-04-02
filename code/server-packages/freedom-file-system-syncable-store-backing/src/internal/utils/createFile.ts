@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { SyncableItemMetadata, SyncableId } from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
 
 import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { createMetadataFile } from './createMetadataFile.ts';

@@ -1,11 +1,5 @@
 import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 'freedom-access-control';
-import type {
-  AccessChange,
-  AccessChangeParams,
-  AccessControlDocumentPrefix,
-  AccessControlState,
-  TimedAccessChange
-} from 'freedom-access-control-types';
+import type { AccessChangeParams, AccessControlDocumentPrefix, AccessControlState, TimedAccessChange } from 'freedom-access-control-types';
 import type { FailureResult, PR, Result } from 'freedom-async';
 import {
   allResults,
@@ -22,10 +16,10 @@ import { generalizeFailureResult, InternalStateError, NotFoundError } from 'free
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { CryptoKeySetId, SignedValue, TrustedTimeName } from 'freedom-crypto-data';
+import type { CryptoKeySetId, SignedValue } from 'freedom-crypto-data';
 import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
-import type { TrustedTimeSource } from 'freedom-trusted-time-source';
+import type { TrustedTime, TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
 import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -52,7 +46,7 @@ import type { SyncTracker, SyncTrackerNotifications } from '../../types/SyncTrac
 import { createConflictFreeDocumentBundleAtPath } from '../../utils/create/createConflictFreeDocumentBundleAtPath.ts';
 import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableStoreRoleHaveReadAccess.ts';
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
-import { generateTrustedTimeNameForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeNameForSyncableStoreAccessChange.ts';
+import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import type {
   IsConflictFreeDocumentSnapshotValidArgs,
   IsDeltaValidForConflictFreeDocumentArgs
@@ -160,17 +154,14 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      let signedTimedChange: Result<SignedValue<TimedAccessChange<SyncableStoreRole>>>;
+      let signedTimedChange: Result<{ trustedTime: TrustedTime; signedAccessChange: SignedValue<TimedAccessChange<SyncableStoreRole>> }>;
       switch (change.type) {
         case 'add-access':
           signedTimedChange = await generateSignedAddAccessChange(trace, {
             cryptoService: store.cryptoService,
             accessControlDoc: accessControlDoc.value.document,
-            generateTrustedTimeNameForAccessChange: async (
-              trace: Trace,
-              accessChange: AccessChange<SyncableStoreRole>
-            ): PR<TrustedTimeName> =>
-              await generateTrustedTimeNameForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
+            generateTrustedTimeForAccessChange: async (trace, accessChange) =>
+              await generateTrustedTimeForSyncableStoreAccessChange(trace, store, { parentPath: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
             params: change,
             doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
@@ -181,11 +172,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
           signedTimedChange = await generateSignedModifyAccessChange(trace, {
             cryptoService: store.cryptoService,
             accessControlDoc: accessControlDoc.value.document,
-            generateTrustedTimeNameForAccessChange: async (
-              trace: Trace,
-              accessChange: AccessChange<SyncableStoreRole>
-            ): PR<TrustedTimeName> =>
-              await generateTrustedTimeNameForSyncableStoreAccessChange(trace, store, { path: this.path, accessChange }),
+            generateTrustedTimeForAccessChange: async (trace, accessChange) =>
+              await generateTrustedTimeForSyncableStoreAccessChange(trace, store, { parentPath: this.path, accessChange }),
             roleSchema: syncableStoreRoleSchema,
             params: change,
             doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
@@ -201,14 +189,14 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         return signedTimedChange;
       }
 
-      const added = await accessControlDoc.value.document.addChange(trace, signedTimedChange.value);
+      const added = await accessControlDoc.value.document.addChange(trace, signedTimedChange.value.signedAccessChange);
       /* node:coverage disable */
       if (!added.ok) {
         return added;
       }
       /* node:coverage enable */
 
-      const saved = await accessControlDoc.value.save(trace);
+      const saved = await accessControlDoc.value.save(trace, { trustedTime: signedTimedChange.value.trustedTime });
       /* node:coverage disable */
       if (!saved.ok) {
         return generalizeFailureResult(trace, saved, ['conflict']);
