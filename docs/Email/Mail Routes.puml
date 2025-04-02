@@ -1,0 +1,80 @@
+@startuml Mail Routes
+
+' Style definitions
+!define INCOMING_EMAIL_STYLE #Silver;line:DarkGray
+!define USER_EMAIL_STYLE #LightPink;line:f66
+!define REPORT_STYLE #Yellow;line:aa0
+
+' Node is a machine
+skinparam node {
+  backgroundColor PaleGreen
+  borderColor Green
+  fontColor Black
+}
+
+' Rectangle is a container
+skinparam component {
+  backgroundColor LightBlue
+  borderColor Blue
+  fontColor Black
+}
+
+' External Sender
+node "Gmail Compose" as gmailCompose
+artifact "Incoming Email" as rawIncomingEmail INCOMING_EMAIL_STYLE
+
+' Our User
+actor "User" as user
+artifact "User Email" as userEmail USER_EMAIL_STYLE
+artifact "Incoming Email" as incomingUserEmail INCOMING_EMAIL_STYLE
+
+' Define server
+node "Physical Server" as server {
+  ' Define all containers inside the server
+
+  ' Inbound Spam Filtering container (dashed)
+  component "**Inbound Spam Filtering**\nDocker Mailserver" as spamFiltering #line.dashed
+
+  artifact "Incoming Email" as goodIncomingEmail INCOMING_EMAIL_STYLE
+
+  ' Mail Server container
+  component "**Mail Server**\nNode.js" as mailServer
+
+  artifact "User Email" as relayedUserEmail USER_EMAIL_STYLE
+  artifact "Bounce Report" as bounceEmail REPORT_STYLE
+
+  ' Delivery componentr container
+  component "**Delivery Server**\nDocker Mailserver" as deliveryServer
+}
+
+' Receiver
+artifact "User Email" as deliveredEmail USER_EMAIL_STYLE
+artifact "DMARC Report" as dmarcReport REPORT_STYLE
+node "Gmail Inbox" as gmailInbox
+
+' Define email relationships
+gmailCompose -down- rawIncomingEmail INCOMING_EMAIL_STYLE
+rawIncomingEmail -down-> spamFiltering INCOMING_EMAIL_STYLE
+
+spamFiltering -down- goodIncomingEmail INCOMING_EMAIL_STYLE
+goodIncomingEmail -down-> mailServer INCOMING_EMAIL_STYLE
+
+mailServer -up- incomingUserEmail INCOMING_EMAIL_STYLE
+incomingUserEmail --> user INCOMING_EMAIL_STYLE
+
+user -left- userEmail USER_EMAIL_STYLE
+userEmail -left-> mailServer USER_EMAIL_STYLE
+
+mailServer -down- relayedUserEmail USER_EMAIL_STYLE
+relayedUserEmail -down-> deliveryServer USER_EMAIL_STYLE
+
+deliveryServer -up- bounceEmail #line:cc0
+bounceEmail -up-> mailServer #line:cc0
+
+deliveryServer -down- deliveredEmail USER_EMAIL_STYLE
+deliveredEmail -down-> gmailInbox USER_EMAIL_STYLE
+
+gmailInbox -up- dmarcReport #line:cc0
+dmarcReport -up-> mailServer #line:cc0
+
+@enduml

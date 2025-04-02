@@ -72,7 +72,7 @@ swaks --to pavel.koryagin@freedomtechhq.com \
       --auth PLAIN \
       --auth-user user1@mail-host.dev.linefeedr.com \
       --auth-password password123 \
-      --body "This is a test email from DO"
+      --body "This is a test email from Dev Server"
 ```
 
 ## Caveats
@@ -101,6 +101,8 @@ rosetta error: mmap_anonymous_rw mmap failed, size=1000
 Remote:
 
 ```bash
+apt install certbot
+
 certbot certonly --standalone --non-interactive --agree-tos \
   -d smtp1.dev.linefeedr.com \
   --email pavel.koryagin@freedomtechhq.com
@@ -149,10 +151,10 @@ Local:
 
 ```bash
 # Test
-COMPOSE_BAKE=true docker --context do-dev compose -f compose.deploy.yaml up --build
+COMPOSE_BAKE=true docker --context dev-server compose -f compose.deploy.yaml up --build
 
 # Daemon
-COMPOSE_BAKE=true docker --context do-dev compose -f compose.deploy.yaml up --build -d
+COMPOSE_BAKE=true docker --context dev-server compose -f compose.deploy.yaml up --build -d
 ```
 
 ## Evaluation

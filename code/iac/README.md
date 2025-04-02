@@ -24,11 +24,11 @@ work in the following combination.
 
 ```
 .
-├── configurations/                 # An account configuration
-│   ├── account/                 # An account configuration
-│   ├── deployment/              # A deployment configuration
-├── shared/                 # Reusable Terraform modules
-└── scripts/                 # Helper shell scripts
+├── configurations/         # An account configuration
+│   ├── account/            # An account configuration
+│   ├── deployment/         # A deployment configuration
+├── shared/                 # Reusable Terraform/Bash/other modules
+└── scripts/                # Helper shell scripts
 ```
 
 ## Usage
