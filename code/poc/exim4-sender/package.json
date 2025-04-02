@@ -1,0 +1,13 @@
+{
+  "name": "freedom-smtp-relay",
+  "version": "1.0.0",
+  "description": "SMTP relay service for Freedom Network with authentication",
+  "main": "auth_check.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

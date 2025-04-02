@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  smtp-relay:
+    build:
+      context: .
+      args:
+        - RELAY_DOMAIN=${RELAY_DOMAIN:-mail-relay.freedom.test}
+    ports:
+      - "587:587"  # SMTP with STARTTLS
+    environment:
+      - RELAY_DOMAIN=${RELAY_DOMAIN:-mail-relay.freedom.test}
+    restart: unless-stopped

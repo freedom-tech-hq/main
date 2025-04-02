@@ -1,0 +1,5 @@
+!mailserver.env
+/docker-data/dms/config/opendkim/
+/docker-data/dms/mail-logs/
+/docker-data/dms/mail-state/
+/docker-data/letsencrypt/

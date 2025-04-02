@@ -1,0 +1,7 @@
+my_external_script_auth:
+  driver = plaintext
+  public_name = PLAIN
+  # server_condition = ${if eq{${run{/app/auth_check.sh "$1" "$2" "$3"}}}{1\n}{yes}{no}}
+  server_condition = ${if eq{${run{/app/auth_check.js "$1" "$2" "$3"}}}{ALLOW}{yes}{no}}
+  server_advertise_condition = yes
+  server_set_id = $1

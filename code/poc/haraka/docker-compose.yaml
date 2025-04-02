@@ -1,0 +1,13 @@
+services:
+  haraka:
+    build:
+      context: .
+      args:
+        SENDER_HOST: smtp1.dev.linefeedr.com
+        MAIL_DOMAIN: mail-host.dev.linefeedr.com
+    restart: unless-stopped
+    ports:
+      - "587:587"
+    environment:
+      - SENDER_HOST=smtp1.dev.linefeedr.com
+      - MAIL_DOMAIN=mail-host.dev.linefeedr.com

@@ -1,0 +1,21 @@
+FROM ghcr.io/docker-mailserver/docker-mailserver:latest
+
+ENV LOG_LEVEL=info
+
+# ENV ENABLE_FAIL2BAN=0
+# # Using letsencrypt for SSL/TLS certificates:
+# ENV SSL_TYPE=letsencrypt
+# # Allow sending emails from other docker containers:
+# # Beware creating an Open Relay: https://docker-mailserver.github.io/docker-mailserver/latest/config/environment/#permit_docker
+# ENV PERMIT_DOCKER=none
+# # You may want to enable this: https://docker-mailserver.github.io/docker-mailserver/latest/config/environment/#spoof_protection
+# # See step 6 below, which demonstrates setup with enabled/disabled SPOOF_PROTECTION:
+# ENV SPOOF_PROTECTION=0
+
+# Copy any local configuration files if needed
+# COPY ./config/ /tmp/docker-mailserver/
+
+# Expose ports
+EXPOSE 587 465
+
+# RUN setup email add user1@mail-host.dev.linefeedr.com password123

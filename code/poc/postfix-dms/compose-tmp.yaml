@@ -1,0 +1,17 @@
+services:
+  mailserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mailserver
+    hostname: smtp1.dev.linefeedr.com
+    ports:
+      - "587:587"
+      - "465:465"
+    volumes:
+      - ./docker-data/dms/mail-data/:/var/mail/
+      - ./docker-data/dms/mail-state/:/var/mail-state/
+      - ./docker-data/dms/mail-logs/:/var/log/mail/
+      - ./docker-data/dms/config/:/tmp/docker-mailserver/
+      - /etc/localtime:/etc/localtime:ro
+    # restart: always
