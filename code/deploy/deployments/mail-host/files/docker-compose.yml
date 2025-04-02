@@ -1,6 +1,9 @@
 services:
   smtp-server:
-    build: ./code/backends/freedom-mta-bridge
+    build:
+      context: ./code/backends/freedom-mta-bridge
+      args:
+        - MAIL_DOMAIN=${MAIL_DOMAIN:-my-test.com}
     ports:
       - "25:25"  # SMTP
     environment:

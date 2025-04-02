@@ -33,7 +33,7 @@ Generic:
 
 ```bash
 export DOCKER_VM_IP=999.999.999.999
-export TEST_MAIL_TO=user1@my-test.com
+export TEST_MAIL_TO=user1@mail-host.dev.linefeedr.com
 
 swaks --to "$TEST_MAIL_TO" --from sender@my-test.com --server "$DOCKER_VM_IP" --body "This is a test email"
 ```
