@@ -12,11 +12,11 @@ freedom-build:
 
 - looks for `import.meta.filename` and replaces that, at build time, with a simplified version of the relative file path
 - updates the suffixes of local imports (those starting with './' or '../') ending with '.js' so they end with '.mjs'
-- strips code statements labeled either `DEV:` or `PROD:`, depending on the `FREEDOM_BUILD_MODE` environment variable
+- strips code statements labeled either `DEV:`, depending on the `FREEDOM_BUILD_MODE` environment variable
 
 ### FREEDOM_BUILD_MODE
 
-If `FREEDOM_BUILD_MODE` is `DEV`, `PROD:` labeled statements are removed at compile time.  Otherwise, `DEV:` labeled statements are removed.
+If `FREEDOM_BUILD_MODE` is `DEV`, `DEV:` labeled statements are NOT removed at compile time.  Otherwise, `DEV:` labeled statements ARE removed.
 
 ## Usage
 

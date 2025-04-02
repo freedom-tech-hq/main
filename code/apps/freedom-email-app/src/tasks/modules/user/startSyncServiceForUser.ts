@@ -78,7 +78,6 @@ export const startSyncServiceForUser = makeAsyncResultFunc(
             publicKeyId: registered.value.id,
             role: 'appender'
           });
-          console.log('FOOBARBLA addedServerAppenderAccess', addedServerAppenderAccess);
           if (!addedServerAppenderAccess.ok) {
             return generalizeFailureResult(trace, addedServerAppenderAccess, 'conflict');
           }

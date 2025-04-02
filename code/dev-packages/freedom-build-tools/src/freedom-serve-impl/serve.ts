@@ -14,7 +14,7 @@ export const serve = async (args: ServeArgs) => {
 
     const packageName = packageJson.name;
 
-    const dropLabels: string[] = process.env.FREEDOM_BUILD_MODE !== 'DEV' ? ['DEV'] : ['PROD'];
+    const dropLabels: string[] = process.env.FREEDOM_BUILD_MODE !== 'DEV' ? ['DEV'] : [];
     const platform = args.platform ?? 'web';
     switch (platform) {
       case 'any':

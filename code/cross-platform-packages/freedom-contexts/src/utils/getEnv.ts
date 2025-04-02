@@ -42,12 +42,19 @@ export const devSetEnv = (name: string, value: string | undefined) => {
  *
  * In PROD build mode, the resulting functions always uses the initial environment value.
  */
-export const devMakeEnvDerivative = <ArgsT extends any[], ReturnT>(
+export let devMakeEnvDerivative = <ArgsT extends any[], ReturnT>(
   name: string,
   defaultValue: string | undefined,
   func: (value: string | undefined) => (...args: ArgsT) => ReturnT
-): ((...args: ArgsT) => ReturnT) => {
-  DEV: {
+): ((...args: ArgsT) => ReturnT) => func(getEnv(name, defaultValue));
+
+// Replacing devMakeEnvDerivative in DEV build mode
+DEV: {
+  devMakeEnvDerivative = <ArgsT extends any[], ReturnT>(
+    name: string,
+    defaultValue: string | undefined,
+    func: (value: string | undefined) => (...args: ArgsT) => ReturnT
+  ): ((...args: ArgsT) => ReturnT) => {
     let lastVersion = globalEnvVersions[name] ?? 0;
     let cached = func(getEnv(name, defaultValue));
 
@@ -61,31 +68,28 @@ export const devMakeEnvDerivative = <ArgsT extends any[], ReturnT>(
       cached = func(getEnv(name, defaultValue));
       return cached(...args);
     };
-  }
-  PROD: {
-    return func(getEnv(name, defaultValue));
-  }
-};
+  };
+}
 
 /**
  * In DEV build mode, registers a global callback that is run any time the environment is changed using `devSetEnv`
  *
  * In PROD build mode, the callback is run once with the initial environment value.
  */
-export const devOnEnvChange = (
+export let devOnEnvChange = (
   name: string,
   defaultValue: string | undefined,
   func: (value: string | undefined) => TypeOrPromisedType<void>
-): TypeOrPromisedType<void> => {
-  DEV: {
+): TypeOrPromisedType<void> => func(getEnv(name, defaultValue));
+
+// Replacing devOnEnvChange in DEV build mode
+DEV: {
+  devOnEnvChange = (name, defaultValue, func) => {
     const update = () => func(getEnv(name, defaultValue));
 
     globalOnEnvChange[name] = globalOnEnvChange[name] ?? [];
     globalOnEnvChange[name].push(update);
 
     update();
-  }
-  PROD: {
-    func(getEnv(name, defaultValue));
-  }
-};
+  };
+}

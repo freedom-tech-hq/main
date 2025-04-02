@@ -18,7 +18,7 @@ export const build = async (args: BuildArgs) => {
     const outDir = tsConfig.compilerOptions.outDir;
     const getDefaultEntryPoints = async () => await findTsFiles({ includes: tsConfig.include ?? [], excludes: tsConfig.exclude ?? [] });
 
-    const dropLabels: string[] = process.env.FREEDOM_BUILD_MODE !== 'DEV' ? ['DEV'] : ['PROD'];
+    const dropLabels: string[] = process.env.FREEDOM_BUILD_MODE !== 'DEV' ? ['DEV'] : [];
     const platform = args.platform ?? 'any';
     switch (platform) {
       case 'any':

@@ -2,13 +2,15 @@ import { getEnv } from 'freedom-contexts';
 
 import { bufferFromBufferSource } from './bufferFromBufferSource.ts';
 
-export const encrypt = async (
+export let encrypt = async (
   algorithm: AlgorithmIdentifier | RsaOaepParams | AesCtrParams | AesCbcParams | AesGcmParams,
   key: CryptoKey,
   data: BufferSource
-): Promise<ArrayBuffer> => {
-  DEV: {
-    console.log('FOOBARBLA DEV MODE', getEnv('FREEDOM_MOCK_CRYPTO', process.env.FREEDOM_MOCK_CRYPTO) === 'true');
+): Promise<ArrayBuffer> => await crypto.subtle.encrypt(algorithm, key, data);
+
+// Replacing encrypt in DEV build mode
+DEV: {
+  encrypt = async (algorithm, key, data) => {
     if (getEnv('FREEDOM_MOCK_CRYPTO', process.env.FREEDOM_MOCK_CRYPTO) === 'true') {
       const dataBuffer = bufferFromBufferSource(data);
 
@@ -26,9 +28,5 @@ export const encrypt = async (
     } else {
       return await crypto.subtle.encrypt(algorithm, key, data);
     }
-  }
-  PROD: {
-    console.log('FOOBARBLA PROD MODE');
-    return await crypto.subtle.encrypt(algorithm, key, data);
-  }
-};
+  };
+}

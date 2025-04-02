@@ -2,8 +2,12 @@ import { getEnv } from 'freedom-contexts';
 
 import { bufferFromBufferSource } from './bufferFromBufferSource.ts';
 
-export const digest = async (algorithm: AlgorithmIdentifier, data: BufferSource): Promise<ArrayBuffer> => {
-  DEV: {
+export let digest = async (algorithm: AlgorithmIdentifier, data: BufferSource): Promise<ArrayBuffer> =>
+  await crypto.subtle.digest(algorithm, data);
+
+// Replacing digest in DEV build mode
+DEV: {
+  digest = async (algorithm, data) => {
     if (getEnv('FREEDOM_MOCK_CRYPTO', process.env.FREEDOM_MOCK_CRYPTO) === 'true') {
       const dataBuffer = bufferFromBufferSource(data).subarray(0, 16);
 
@@ -22,8 +26,5 @@ export const digest = async (algorithm: AlgorithmIdentifier, data: BufferSource)
     } else {
       return await crypto.subtle.digest(algorithm, data);
     }
-  }
-  PROD: {
-    return await crypto.subtle.digest(algorithm, data);
-  }
-};
+  };
+}

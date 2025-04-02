@@ -13,17 +13,18 @@ describe('getEnv', () => {
 
     let calledOnEnvChange = 0;
     devOnEnvChange('SOME_ENV_VALUE', 'my-testing-value', () => {
+      console.trace('CALLED');
       calledOnEnvChange += 1;
     });
 
     t.assert.strictEqual(calledOnEnvChange, 1);
-    t.assert.strictEqual(derived(1), 'hello:nothing:2');
+    t.assert.strictEqual(derived(1), 'hello:my-testing-value:2');
 
-    devSetEnv('SOME_ENV_VALUE', 'my-testing-value');
+    devSetEnv('SOME_ENV_VALUE', 'my-other-testing-value');
 
     t.assert.strictEqual(calledOnEnvChange, 2);
-    t.assert.strictEqual(getEnv('SOME_ENV_VALUE', process.env.SOME_ENV_VALUE), 'my-testing-value');
+    t.assert.strictEqual(getEnv('SOME_ENV_VALUE', process.env.SOME_ENV_VALUE), 'my-other-testing-value');
 
-    t.assert.strictEqual(derived(2), 'hello:my-testing-value:3');
+    t.assert.strictEqual(derived(2), 'hello:my-other-testing-value:3');
   });
 });

@@ -3,14 +3,17 @@ import type { CryptoKeySetId } from 'freedom-crypto-data';
 
 import { bufferFromBufferSource } from './bufferFromBufferSource.ts';
 
-export const verify = async (
-  cryptoKeySetId: CryptoKeySetId,
+export let verify = async (
+  _cryptoKeySetId: CryptoKeySetId,
   algorithm: AlgorithmIdentifier | RsaPssParams | EcdsaParams,
   key: CryptoKey,
   signature: BufferSource,
   data: BufferSource
-): Promise<boolean> => {
-  DEV: {
+): Promise<boolean> => await crypto.subtle.verify(algorithm, key, signature, data);
+
+// Replacing verify in DEV build mode
+DEV: {
+  verify = async (cryptoKeySetId, algorithm, key, signature, data) => {
     if (getEnv('FREEDOM_MOCK_CRYPTO', process.env.FREEDOM_MOCK_CRYPTO) === 'true') {
       const signatureBuffer = bufferFromBufferSource(signature);
 
@@ -19,8 +22,5 @@ export const verify = async (
     } else {
       return await crypto.subtle.verify(algorithm, key, signature, data);
     }
-  }
-  PROD: {
-    return await crypto.subtle.verify(algorithm, key, signature, data);
-  }
-};
+  };
+}

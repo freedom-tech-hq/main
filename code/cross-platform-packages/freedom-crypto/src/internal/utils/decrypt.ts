@@ -2,12 +2,15 @@ import { getEnv } from 'freedom-contexts';
 
 import { bufferFromBufferSource } from './bufferFromBufferSource.ts';
 
-export const decrypt = async (
+export let decrypt = async (
   algorithm: AlgorithmIdentifier | RsaOaepParams | AesCtrParams | AesCbcParams | AesGcmParams,
   key: CryptoKey,
   data: BufferSource
-): Promise<ArrayBuffer> => {
-  DEV: {
+): Promise<ArrayBuffer> => await crypto.subtle.decrypt(algorithm, key, data);
+
+// Replacing decrypt in DEV build mode
+DEV: {
+  decrypt = async (algorithm, key, data) => {
     if (getEnv('FREEDOM_MOCK_CRYPTO', process.env.FREEDOM_MOCK_CRYPTO) === 'true') {
       const dataBuffer = bufferFromBufferSource(data);
 
@@ -20,8 +23,5 @@ export const decrypt = async (
     } else {
       return await crypto.subtle.decrypt(algorithm, key, data);
     }
-  }
-  PROD: {
-    return await crypto.subtle.decrypt(algorithm, key, data);
-  }
-};
+  };
+}
