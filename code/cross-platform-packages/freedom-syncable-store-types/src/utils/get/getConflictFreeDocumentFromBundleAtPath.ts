@@ -8,18 +8,12 @@ import {
   makeFailure,
   makeSuccess
 } from 'freedom-async';
-import { Cast, objectEntries } from 'freedom-cast';
+import { Cast } from 'freedom-cast';
 import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
-import {
-  extractSyncableIdParts,
-  type SyncableId,
-  type SyncableItemName,
-  type SyncablePath,
-  type SyncableProvenance
-} from 'freedom-sync-types';
+import { extractSyncableIdParts, type SyncablePath, type SyncableProvenance } from 'freedom-sync-types';
 import { once } from 'lodash-es';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
@@ -96,27 +90,9 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       return makeFailure(new NotFoundError(trace, { message: `No snapshots found for: ${path.toString()}`, errorCode: 'not-found' }));
     }
 
-    const metadataById = await snapshots.value.getMetadataById(trace);
-    if (!metadataById.ok) {
-      return metadataById;
-    }
-
-    const namesById = objectEntries(metadataById.value).reduce(
-      (out, [id, metadata]) => {
-        if (metadata === undefined) {
-          return out;
-        }
-
-        out[id] = metadata.name;
-
-        return out;
-      },
-      {} as Partial<Record<SyncableId, SyncableItemName>>
-    );
-
     // TODO: should really try to load approved snapshots first and then not-yet-approved ones
     // Snapshot names are prefixed by ISO timestamps, so sorting them will give us the most recent one last
-    snapshotIds.value.sort((a, b) => (namesById[a] ?? '').localeCompare(namesById[b] ?? ''));
+    snapshotIds.value.sort();
 
     let snapshotIndex = snapshotIds.value.length - 1;
     while (snapshotIndex >= 0) {
@@ -183,27 +159,9 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       }
       /* node:coverage enable */
 
-      const metadataById = await deltas.value.getMetadataById(trace);
-      if (!metadataById.ok) {
-        return metadataById;
-      }
-
-      const namesById = objectEntries(metadataById.value).reduce(
-        (out, [id, metadata]) => {
-          if (metadata === undefined) {
-            return out;
-          }
-
-          out[id] = metadata.name;
-
-          return out;
-        },
-        {} as Partial<Record<SyncableId, SyncableItemName>>
-      );
-
       // TODO: should really try to load approved deltas first and then not-yet-approved ones
       // Delta names are prefixed by ISO timestamps, so sorting them will give us the most recent one last
-      deltaIds.value.sort((a, b) => (namesById[a] ?? '').localeCompare(namesById[b] ?? ''));
+      deltaIds.value.sort();
 
       const encodedDeltasAndProvenances = await allResultsMappedSkipFailures(
         trace,

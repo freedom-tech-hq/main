@@ -465,7 +465,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
     const recursiveLs = await allResultsMapped(
       trace,
-      objectEntries(metadataById.value).sort((a, b) => a[0].localeCompare(b[0])),
+      objectEntries(metadataById.value).sort(),
       {},
       async (trace, [itemId, metadata]): PR<string[]> => {
         if (metadata === undefined) {

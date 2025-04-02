@@ -400,7 +400,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
     const recursiveLs = await allResultsMapped(
       trace,
-      objectEntries(metadataById.value).sort((a, b) => a[0].localeCompare(b[0])),
+      objectEntries(metadataById.value).sort(),
       {},
       async (trace, [itemId, metadata]): PR<string[]> => {
         if (metadata === undefined) {
