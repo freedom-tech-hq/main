@@ -11,7 +11,7 @@ import { trackMetrics } from '../config/metrics.ts';
 import { ONE_SEC_MSEC } from '../internal/consts/time.ts';
 import { argsToStrings, shouldLogFuncArgs } from '../internal/debugging/args.ts';
 import { getCallCount } from '../internal/debugging/callCounter.ts';
-import { shouldLogFunc } from '../internal/debugging/funcs.ts';
+import { shouldLogFailures, shouldLogFunc } from '../internal/debugging/funcs.ts';
 import { resultToString, shouldLogFuncResult } from '../internal/debugging/results.ts';
 import { GeneralError } from '../types/GeneralError.ts';
 import type { Result } from '../types/Result.ts';
@@ -53,12 +53,15 @@ export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT ext
   let logLevel: keyof Logger = 'debug';
   const stackTop = once(() => getTraceStackTop(trace));
   let shouldLogForDev = false;
+  let shouldLogFailuresForDev = false;
   try {
     DEV: {
       /* node:coverage disable */
       if (shouldLogFunc(trace)) {
         shouldLogForDev = true;
         log().debug?.(trace, 'Starting', stackTop(), `(call#${callCount})`, ...(shouldLogFuncArgs(trace) ? argsToStrings(args) : []));
+      } else if (shouldLogFailures(trace)) {
+        shouldLogFailuresForDev = true;
       }
       /* node:coverage enable */
     }
@@ -128,7 +131,7 @@ export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT ext
           jsonLogArgs.push(new LogJson('errorCode', errorCode));
         }
 
-        if (shouldLogForDev) {
+        if (shouldLogForDev || (errorCode !== undefined && shouldLogFailuresForDev)) {
           logger(
             trace,
             `Completed (call#${callCount})`,
