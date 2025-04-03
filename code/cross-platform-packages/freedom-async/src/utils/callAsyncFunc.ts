@@ -10,7 +10,7 @@ import { trackMetrics } from '../config/metrics.ts';
 import { ONE_SEC_MSEC } from '../internal/consts/time.ts';
 import { argsToStrings, shouldLogFuncArgs } from '../internal/debugging/args.ts';
 import { getCallCount } from '../internal/debugging/callCounter.ts';
-import { shouldLogFunc } from '../internal/debugging/funcs.ts';
+import { shouldLogFailures, shouldLogFunc } from '../internal/debugging/funcs.ts';
 import { resultToString, shouldLogFuncResult } from '../internal/debugging/results.ts';
 import type { FuncOptions } from '../types/FuncOptions.ts';
 
@@ -46,12 +46,15 @@ export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
   let errorCode: 'generic' | undefined;
   const stackTop = once(() => getTraceStackTop(trace));
   let shouldLogForDev = false;
+  let shouldLogFailuresForDev = false;
   try {
     DEV: {
       /* node:coverage disable */
       if (shouldLogFunc(trace)) {
         shouldLogForDev = true;
         log().debug?.(trace, 'Starting', stackTop(), `(call#${callCount})`, ...(shouldLogFuncArgs(trace) ? argsToStrings(args) : []));
+      } else if (shouldLogFailures(trace)) {
+        shouldLogFailuresForDev = true;
       }
       /* node:coverage enable */
     }
@@ -95,7 +98,7 @@ export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
 
     DEV: {
       /* node:coverage disable */
-      if (shouldLogForDev) {
+      if (shouldLogForDev || (errorCode !== undefined && shouldLogFailuresForDev)) {
         log().debug?.(
           trace,
           `Completed (call#${callCount})`,
