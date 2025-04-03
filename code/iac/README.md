@@ -14,6 +14,7 @@ work in the following combination.
   - An account configuration includes a few global shared settings.
     - Domain zone to share between the deployments.
     - Custom roles.
+    - Manually deployed machines should be bound to either Dev account, or Production account, or a certain deployment.
 - Deployment Infrastructure
   - A deployment infrastructure is a set of hardware and cloud services, required to host one instance of
     a particular app deployment. App deployments are in [deploy/deployments/](../deploy/deployments).

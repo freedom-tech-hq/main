@@ -4,7 +4,9 @@
     <node-options value="--experimental-transform-types --experimental-test-module-mocks --disable-warning=ExperimentalWarning" />
     <language value="JAVA_SCRIPT" />
     <typescript-loader value="MANUAL_SETUP_IN_NODE_OPTION" />
-    <envs />
+    <envs>
+      <env name="NODE_ENV" value="test" />
+    </envs>
     <scope-kind value="ALL" />
     <method v="2" />
   </configuration>
