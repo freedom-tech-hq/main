@@ -1,6 +1,6 @@
 /* node:coverage disable */
 
-import { getEnv } from 'freedom-contexts';
+import { devOnEnvChange } from 'freedom-contexts';
 
 import { makeShouldIncludeTraceForDebuggingFunc } from '../internal/debugging/makeShouldIncludeTraceForDebuggingFunc.ts';
 import type { MetricsTracker } from '../types/MetricsTracker.ts';
@@ -11,19 +11,36 @@ let globalIsDefaultMetricsTracker = true;
 
 export const trackMetrics = () => globalMetricsTracker;
 
-export const setMetricsTracker = (tracker: MetricsTracker) => {
+export const setMetricsTracker = (tracker: MetricsTracker | undefined) => {
   globalIsDefaultMetricsTracker = false;
   globalMetricsTracker = tracker;
 };
 
 export const isDefaultMetricsTracker = () => globalIsDefaultMetricsTracker;
 
-DEV: if ((getEnv('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE) ?? '') !== '') {
-  (async () => {
-    const freedomProfiler = await import('freedom-profiler');
-    if (isDefaultMetricsTracker()) {
-      const shouldTrackFunc = makeShouldIncludeTraceForDebuggingFunc(getEnv('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE));
-      setMetricsTracker(freedomProfiler.makeDebugProfiler(log, shouldTrackFunc));
+export const resetMetricsTracker = () => {
+  globalMetricsTracker = undefined;
+  globalIsDefaultMetricsTracker = true;
+};
+
+DEV: {
+  let lastMetricsTracker: MetricsTracker | undefined = globalMetricsTracker;
+
+  devOnEnvChange('FREEDOM_PROFILE', process.env.FREEDOM_PROFILE, async (envValue) => {
+    if (globalMetricsTracker !== lastMetricsTracker) {
+      return;
     }
-  })();
+
+    if (envValue !== '') {
+      const freedomProfiler = await import('freedom-profiler');
+      const shouldTrackFunc = makeShouldIncludeTraceForDebuggingFunc(envValue);
+      const newMetricsTracker = freedomProfiler.makeDebugProfiler(log, shouldTrackFunc);
+
+      setMetricsTracker(newMetricsTracker);
+    } else {
+      resetMetricsTracker();
+    }
+
+    lastMetricsTracker = globalMetricsTracker;
+  });
 }
