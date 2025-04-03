@@ -28,10 +28,5 @@ DEV: (async () => {
     if (isDefaultLogger()) {
       setLogger(wrappedLogger);
     }
-
-    const testingTools = await import('freedom-testing-tools');
-    if (testingTools.isDefaultFailureResultLogger()) {
-      testingTools.setFailureResultLogger(wrappedLogger);
-    }
   }
 })();
