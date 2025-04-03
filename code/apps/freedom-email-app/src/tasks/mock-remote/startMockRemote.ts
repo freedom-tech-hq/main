@@ -1,13 +1,21 @@
-import type { PR, PRFunc, Result } from 'freedom-async';
+import type { PR, PRFunc } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import { makeSubTrace, makeTrace, makeUuid } from 'freedom-contexts';
+import { makeSubTrace, makeTrace } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { DeviceNotificationClient, DeviceNotifications } from 'freedom-device-notification-types';
 import { NotificationManager } from 'freedom-notification-types';
-import type { RemoteAccessor, StorageRootId, SyncableItemMetadata, SyncPuller, SyncPullResponse, SyncPusher } from 'freedom-sync-types';
-import { DEFAULT_SALT_ID, SyncablePath } from 'freedom-sync-types';
+import type {
+  RemoteAccessor,
+  SaltsById,
+  StorageRootId,
+  SyncableItemMetadata,
+  SyncPuller,
+  SyncPullResponse,
+  SyncPusher
+} from 'freedom-sync-types';
+import { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 import {
   DefaultSyncableStore,
@@ -20,21 +28,32 @@ import {
 import { TaskQueue } from 'freedom-task-queue';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
-import { makeCryptoServiceWithPublicKeys } from './makeCryptoServiceWithPublicKeys.ts';
+import { makeCryptoServiceForMockRemote } from './makeCryptoServiceWithPublicKeys.ts';
+
+interface RegisterArgs {
+  storageRootId: StorageRootId;
+  metadata: Omit<SyncableItemMetadata, 'name'>;
+  creatorPublicKeys: CombinationCryptoKeySet;
+  saltsById: SaltsById;
+}
 
 export interface MockRemote {
+  readonly register: PRFunc<undefined, 'conflict', [RegisterArgs]>;
   readonly remoteAccessor: RemoteAccessor;
   readonly deviceNotificationClient: DeviceNotificationClient;
   readonly getMockRemoteStore: PRFunc<DefaultSyncableStore, 'not-found', [storageRootId: StorageRootId]>;
-  readonly createMockRemoteStore: PRFunc<DefaultSyncableStore, 'conflict', [storageRootId: StorageRootId, metadata: SyncableItemMetadata]>;
+  readonly createMockRemoteStore: PRFunc<
+    DefaultSyncableStore,
+    'conflict',
+    [
+      storageRootId: StorageRootId,
+      args: { creatorPublicKeys: CombinationCryptoKeySet; metadata: SyncableItemMetadata; saltsById: SaltsById }
+    ]
+  >;
   readonly stop: () => void;
 }
 
-export interface WithMockRemoteArgs {
-  creatorPublicCryptoKeysSet: CombinationCryptoKeySet;
-}
-
-export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSet }: WithMockRemoteArgs): PR<MockRemote> => {
+export const startMockRemote = async (_trace: Trace): PR<MockRemote> => {
   const userStores: Partial<Record<StorageRootId, DefaultSyncableStore>> = {};
 
   const removeListeners: Array<() => void> = [];
@@ -56,8 +75,8 @@ export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSe
     }
   );
 
-  const onNeedsSync = makeAsyncResultFunc(
-    [import.meta.filename, 'onNeedsSync'],
+  const onItemAdded = makeAsyncResultFunc(
+    [import.meta.filename, 'onItemAdded'],
     async (trace, args: { store: SyncableStore; path: SyncablePath }) => {
       const folderPath = await getFolderPath(trace, args.store, args.path);
       if (!folderPath.ok) {
@@ -104,22 +123,31 @@ export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSe
 
   const createMockRemoteStore = makeAsyncResultFunc(
     [import.meta.filename, 'createMockRemoteStore'],
-    async (trace: Trace, storageRootId: StorageRootId, metadata: SyncableItemMetadata): PR<DefaultSyncableStore, 'conflict'> => {
+    async (
+      trace: Trace,
+      storageRootId: StorageRootId,
+      {
+        creatorPublicKeys,
+        metadata,
+        saltsById
+      }: { creatorPublicKeys: CombinationCryptoKeySet; metadata: Omit<SyncableItemMetadata, 'name'>; saltsById: SaltsById }
+    ): PR<DefaultSyncableStore, 'conflict'> => {
       let store = userStores[storageRootId];
       if (store !== undefined) {
         return makeFailure(new ConflictError(trace, { errorCode: 'conflict' }));
       }
 
-      const cryptoService = makeCryptoServiceWithPublicKeys({ publicKeys: creatorPublicCryptoKeysSet });
+      const cryptoService = makeCryptoServiceForMockRemote();
+      cryptoService.addPublicKeys({ publicKeys: creatorPublicKeys });
 
       const storeBacking = new InMemorySyncableStoreBacking(metadata);
 
       const newStore = new DefaultSyncableStore({
         storageRootId,
         backing: storeBacking,
-        provenance: metadata.provenance,
+        creatorPublicKeys,
         cryptoService,
-        saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
+        saltsById
       });
       store = newStore;
 
@@ -141,11 +169,11 @@ export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSe
         })
       );
 
-      DEV: debugTopic('SYNC', (log) => log(`REMOTE: Added needsSync listener for ${newStore.path.toString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`REMOTE: Added itemAdded listener for ${newStore.path.toString()}`));
       DEV: removeListeners.push(
-        newStore.addListener('needsSync', ({ path, hash }) => {
-          DEV: debugTopic('SYNC', (log) => log(`REMOTE: Received needsSync for ${path.toString()}: ${hash}`));
-          onNeedsSync(trace, { store: newStore, path });
+        newStore.addListener('itemAdded', ({ path, hash }) => {
+          DEV: debugTopic('SYNC', (log) => log(`REMOTE: Received itemAdded for ${path.toString()}: ${hash}`));
+          onItemAdded(trace, { store: newStore, path });
         })
       );
 
@@ -170,25 +198,28 @@ export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSe
   const pusher: SyncPusher = makeAsyncResultFunc([import.meta.filename, 'pusher'], async (localTrace, args): PR<undefined> => {
     const trace = makeSubTrace(localTrace, ['REMOTE']);
 
-    let store: Result<DefaultSyncableStore, 'conflict' | 'not-found'> = await disableLam(trace, 'not-found', (trace) =>
-      getMockRemoteStore(trace, args.path.storageRootId)
-    );
+    const store = await getMockRemoteStore(trace, args.path.storageRootId);
     if (!store.ok) {
-      // Creating the storage on the first push of root if it doesn't exist
-      if (store.value.errorCode === 'not-found' && args.path.ids.length === 0) {
-        store = await createMockRemoteStore(trace, args.path.storageRootId, args.metadata);
-        if (!store.ok) {
-          return generalizeFailureResult(trace, store, ['conflict', 'not-found']);
-        }
-      } else {
-        return generalizeFailureResult(trace, store, ['conflict', 'not-found']);
-      }
+      return generalizeFailureResult(trace, store, 'not-found');
     }
 
     return await pushPath(trace, store.value, args);
   });
 
+  const register = makeAsyncResultFunc(
+    [import.meta.filename, 'register'],
+    async (trace, { storageRootId, metadata, creatorPublicKeys, saltsById }: RegisterArgs): PR<undefined> => {
+      const created = await createMockRemoteStore(trace, storageRootId, { metadata, creatorPublicKeys, saltsById });
+      if (!created.ok) {
+        return generalizeFailureResult(trace, created, 'conflict');
+      }
+
+      return makeSuccess(undefined);
+    }
+  );
+
   return makeSuccess({
+    register,
     remoteAccessor: { puller, pusher },
     deviceNotificationClient,
     getMockRemoteStore,
@@ -203,5 +234,5 @@ export const startMockRemote = async (_trace: Trace, { creatorPublicCryptoKeysSe
         removeListener();
       }
     }
-  });
+  } satisfies MockRemote);
 };

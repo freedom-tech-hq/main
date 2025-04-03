@@ -1,6 +1,7 @@
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 
+import type { MailCollectionType } from '../../modules/mail-types/MailCollectionType.ts';
 import type { MailId } from '../../modules/mail-types/MailId.ts';
 import { mailIdInfo } from '../../modules/mail-types/MailId.ts';
 
@@ -27,11 +28,16 @@ export class MailCollectionDocument extends ConflictFreeDocument<MailCollectionD
   public get mailIds() {
     return this.generic.getArrayField<MailId>('mailIds', mailIdInfo.schema);
   }
+
+  public get collectionType() {
+    return this.generic.getRestrictedTextField<MailCollectionType>('collectionType', 'inbox');
+  }
 }
 
-export const makeNewMailCollectionDocument = ({ name }: { name: string }) => {
+export const makeNewMailCollectionDocument = ({ name, collectionType }: { name: string; collectionType: MailCollectionType }) => {
   const doc = new MailCollectionDocument();
   doc.name.set(name);
+  doc.collectionType.set(collectionType);
   return doc;
 };
 

@@ -104,9 +104,9 @@ export class FolderOperationsHandler {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      const signingKeys = await store.cryptoService.getSigningKeySet(trace);
-      if (!signingKeys.ok) {
-        return generalizeFailureResult(trace, signingKeys, 'not-found');
+      const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace);
+      if (!privateKeys.ok) {
+        return generalizeFailureResult(trace, privateKeys, 'not-found');
       }
 
       const signedStoreChange = await generateSignedValue<SyncableStoreChange>(trace, {
@@ -114,7 +114,7 @@ export class FolderOperationsHandler {
         valueSchema: syncableStoreChangeSchema,
         signatureExtras: undefined,
         signatureExtrasSchema: undefined,
-        signingKeys: signingKeys.value
+        signingKeys: privateKeys.value
       });
       if (!signedStoreChange.ok) {
         return signedStoreChange;

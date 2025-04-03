@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { computeAsyncOnce, makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
-import type { CryptoKeySetId, DecryptingKeySet, EncryptingKeySet, SigningKeySet, VerifyingKeySet } from 'freedom-crypto-data';
+import type { CombinationCryptoKeySet, CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { type CryptoService } from 'freedom-crypto-service';
 
 import { getPrivateKeyStore } from './getPrivateKeyStore.ts';
@@ -28,49 +28,26 @@ export const getCryptoService = makeAsyncResultFunc(
           async (_trace): PR<CryptoKeySetId[]> => makeSuccess([serverPrivateKeys.value.id])
         ),
 
-        getEncryptingKeySetForId: makeAsyncResultFunc(
-          [import.meta.filename, 'getEncryptingKeySetForId'],
-          async (trace, id: CryptoKeySetId): PR<EncryptingKeySet, 'not-found'> => {
-            const cryptoKeys = await publicKeyStore.object(id).get(trace);
-            if (!cryptoKeys.ok) {
-              return cryptoKeys;
-            }
-
-            return makeSuccess(cryptoKeys.value.forEncrypting);
-          }
-        ),
-
-        getVerifyingKeySetForId: makeAsyncResultFunc(
-          [import.meta.filename, 'getVerifyingKeySetForId'],
-          async (trace, id: CryptoKeySetId): PR<VerifyingKeySet, 'not-found'> => {
-            const cryptoKeys = await publicKeyStore.object(id).get(trace);
-            if (!cryptoKeys.ok) {
-              return cryptoKeys;
-            }
-
-            return makeSuccess(cryptoKeys.value.forVerifying);
-          }
-        ),
-
-        getSigningKeySet: makeAsyncResultFunc(
-          [import.meta.filename, 'getSigningKeySet'],
-          async (trace, id?: CryptoKeySetId): PR<SigningKeySet, 'not-found'> => {
+        getPrivateCryptoKeySet: makeAsyncResultFunc(
+          [import.meta.filename, 'getPrivateCryptoKeySet'],
+          async (trace, id?: CryptoKeySetId): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
             if (id === undefined || id === serverPrivateKeys.value.id) {
-              return makeSuccess(serverPrivateKeys.value.forSigning);
+              return makeSuccess(serverPrivateKeys.value);
             }
 
             return makeFailure(new NotFoundError(trace, { message: `No signing key found with ID: ${id}`, errorCode: 'not-found' }));
           }
         ),
 
-        getDecryptingKeySet: makeAsyncResultFunc(
-          [import.meta.filename, 'getDecryptingKeySet'],
-          async (trace, id?: CryptoKeySetId): PR<DecryptingKeySet, 'not-found'> => {
-            if (id === undefined || id === serverPrivateKeys.value.id) {
-              return makeSuccess(serverPrivateKeys.value.forDecrypting);
+        getPublicCryptoKeySetForId: makeAsyncResultFunc(
+          [import.meta.filename, 'getPublicCryptoKeySetForId'],
+          async (trace, id: CryptoKeySetId): PR<CombinationCryptoKeySet, 'not-found'> => {
+            const cryptoKeys = await publicKeyStore.object(id).get(trace);
+            if (!cryptoKeys.ok) {
+              return cryptoKeys;
             }
 
-            return makeFailure(new NotFoundError(trace, { message: `No decrypting key found with ID: ${id}`, errorCode: 'not-found' }));
+            return makeSuccess(cryptoKeys.value);
           }
         )
       } satisfies CryptoService);

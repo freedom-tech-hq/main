@@ -549,8 +549,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       DEV: debugTopic('SYNC', (log) => log(`Notifying folderAdded for folder ${newPath.toString()}`));
       this.syncTracker_.notify('folderAdded', { path: newPath });
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for folder ${newPath.toString()}`));
-      this.syncTracker_.notify('needsSync', {
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for folder ${newPath.toString()}`));
+      this.syncTracker_.notify('itemAdded', {
         type: 'folder',
         path: newPath,
         hash: hash.value

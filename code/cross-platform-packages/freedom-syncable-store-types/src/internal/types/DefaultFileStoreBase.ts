@@ -611,8 +611,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for file ${newPath.toString()}`));
-      this.syncTracker_.notify('needsSync', {
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for file ${newPath.toString()}`));
+      this.syncTracker_.notify('itemAdded', {
         type: 'file',
         path: newPath,
         hash: hash.value
@@ -672,8 +672,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for bundle ${newPath.toString()}`));
-      this.syncTracker_.notify('needsSync', {
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for bundle ${newPath.toString()}`));
+      this.syncTracker_.notify('itemAdded', {
         type: 'bundle',
         path: newPath,
         hash: hash.value

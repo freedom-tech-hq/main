@@ -3,17 +3,19 @@ import type {
   AccessControlDocument,
   AddAccessChange,
   AddAccessChangeParams,
-  TimedAccessChange
+  TimedAccessChange,
+  TrustedTimeSignedAccessChange
 } from 'freedom-access-control-types';
 import { makeTimedAccessChangeSchema } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { extractTimeMSecFromTimeId } from 'freedom-basic-data';
+import type { SerializedValue } from 'freedom-basic-data';
+import { extractTimeMSecFromTimeId, makeSerializedValueSchema } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
-import type { SignedValue } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
+import { serialize } from 'freedom-serialization';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 import type { Schema } from 'yaschema';
 
@@ -38,7 +40,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
       roleSchema: Schema<RoleT>;
       doesRoleHaveReadAccess: (role: RoleT) => boolean;
     }
-  ): PR<{ trustedTime: TrustedTime; signedAccessChange: SignedValue<TimedAccessChange<RoleT>> }> => {
+  ): PR<TrustedTimeSignedAccessChange<RoleT>> => {
     /**
      * If the new user has read access, we need to encrypt the shared secret keys for them.
      *
@@ -49,7 +51,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
       ? await encryptAccessControlDocumentSecretKeysForUser(trace, {
           cryptoService,
           accessControlDoc,
-          userPublicKeyId: params.publicKeyId
+          userPublicKeys: params.publicKeys
         })
       : makeSuccess({});
 
@@ -74,17 +76,24 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
 
     const timeMSec = extractTimeMSecFromTimeId(trustedTime.value.timeId);
 
-    const signingKeys = await cryptoService.getSigningKeySet(trace);
-    if (!signingKeys.ok) {
-      return generalizeFailureResult(trace, signingKeys, 'not-found');
+    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
 
-    const signedAccessChange = await generateSignedValue<TimedAccessChange<RoleT>>(trace, {
-      value: { ...addAccessChange, timeMSec },
-      valueSchema: makeTimedAccessChangeSchema({ roleSchema }),
+    const timedAccessChangeSchema = makeTimedAccessChangeSchema({ roleSchema });
+    const serializedTimedAccessChangeSchema = makeSerializedValueSchema(timedAccessChangeSchema);
+    const serializedAccessChange = await serialize(trace, { ...addAccessChange, timeMSec }, timedAccessChangeSchema);
+    if (!serializedAccessChange.ok) {
+      return serializedAccessChange;
+    }
+
+    const signedAccessChange = await generateSignedValue<SerializedValue<TimedAccessChange<RoleT>>>(trace, {
+      value: serializedAccessChange.value,
+      valueSchema: serializedTimedAccessChangeSchema,
       signatureExtras: undefined,
       signatureExtrasSchema: undefined,
-      signingKeys: signingKeys.value
+      signingKeys: privateKeys.value
     });
     if (!signedAccessChange.ok) {
       return signedAccessChange;

@@ -51,7 +51,7 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      provenance: provenance.value,
+      creatorPublicKeys: cryptoKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 

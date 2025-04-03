@@ -1,5 +1,5 @@
-import type { CryptoKeySetId } from 'freedom-crypto-data';
-import { cryptoKeySetIdInfo, makeEncryptedValueSchema } from 'freedom-crypto-data';
+import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
+import { combinationCryptoKeySetSchema, cryptoKeySetIdInfo, makeEncryptedValueSchema } from 'freedom-crypto-data';
 import type { Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
@@ -8,12 +8,12 @@ import { sharedSecretKeysSchema } from './SharedSecretKeys.ts';
 export const makeAddAccessChangeParamsSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
   schema.object<AddAccessChangeParams<RoleT>, 'no-infer'>({
     type: schema.string('add-access'),
-    publicKeyId: cryptoKeySetIdInfo.schema,
+    publicKeys: combinationCryptoKeySetSchema,
     role: roleSchema
   });
 export interface AddAccessChangeParams<RoleT extends string> {
   type: 'add-access';
-  publicKeyId: CryptoKeySetId;
+  publicKeys: CombinationCryptoKeySet;
   role: RoleT;
 }
 

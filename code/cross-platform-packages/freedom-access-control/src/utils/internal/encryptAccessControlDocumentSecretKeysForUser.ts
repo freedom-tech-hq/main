@@ -3,10 +3,9 @@ import { sharedSecretKeysSchema } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { allResultsReduced, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
-import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateEncryptedValue } from 'freedom-crypto';
-import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
+import type { CombinationCryptoKeySet, CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 
 import { getDecryptedSharedSecretKeysFromAccessControlDocument } from '../getDecryptedSharedSecretKeysFromAccessControlDocument.ts';
@@ -18,8 +17,8 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
     {
       cryptoService,
       accessControlDoc,
-      userPublicKeyId
-    }: { cryptoService: CryptoService; accessControlDoc: AccessControlDocument<RoleT>; userPublicKeyId: CryptoKeySetId }
+      userPublicKeys
+    }: { cryptoService: CryptoService; accessControlDoc: AccessControlDocument<RoleT>; userPublicKeys: CombinationCryptoKeySet }
   ): PR<Partial<Record<CryptoKeySetId, EncryptedValue<SharedSecretKeys>>>> => {
     const decryptedSharedSecretKeys = await getDecryptedSharedSecretKeysFromAccessControlDocument(trace, {
       cryptoService,
@@ -28,13 +27,6 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
     /* node:coverage disable */
     if (!decryptedSharedSecretKeys.ok) {
       return decryptedSharedSecretKeys;
-    }
-    /* node:coverage enable */
-
-    const userEncryptingKeys = await cryptoService.getEncryptingKeySetForId(trace, userPublicKeyId);
-    /* node:coverage disable */
-    if (!userEncryptingKeys.ok) {
-      return generalizeFailureResult(trace, userEncryptingKeys, 'not-found');
     }
     /* node:coverage enable */
 
@@ -52,7 +44,7 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
         return await generateEncryptedValue(trace, {
           value: decryptedSharedSecretKeys,
           valueSchema: sharedSecretKeysSchema,
-          encryptingKeys: userEncryptingKeys.value
+          encryptingKeys: userPublicKeys
         });
       },
       async (_trace, out, encryptedSharedSecretKeys, [sharedKeysId, _decryptedSharedSecretKeys]) => {

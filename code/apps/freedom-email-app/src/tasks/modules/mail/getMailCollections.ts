@@ -1,8 +1,8 @@
 import type { PR, Result } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { log, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
-import { getBundleAtPath } from 'freedom-syncable-store-types';
+import { getBundleAtPath, getConflictFreeDocumentFromBundleAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import type { MailCollection } from '../../../modules/mail-types/MailCollection.ts';
@@ -13,6 +13,7 @@ import type { MailCollectionId } from '../../../modules/mail-types/MailCollectio
 import { mailCollectionIdInfo } from '../../../modules/mail-types/MailCollectionId.ts';
 import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID } from '../../consts/user-syncable-paths.ts';
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { makeMailCollectionDocumentFromSnapshot } from '../../types/MailCollectionDocument.ts';
 import { getUserFs } from '../internal/storage/getUserFs.ts';
 
 export interface GetMailCollection_GroupsAddedPacket {
@@ -71,28 +72,43 @@ export const getMailCollections = makeAsyncResultFunc(
       return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
 
-    const mailCollectionIds = await mailCollectionsBundle.value.getIds(trace, { type: 'bundle' });
-    if (!mailCollectionIds.ok) {
-      return mailCollectionIds;
+    const collectionIds = await mailCollectionsBundle.value.getIds(trace, { type: 'bundle' });
+    if (!collectionIds.ok) {
+      return collectionIds;
     }
 
     const groups: MailCollectionGroup[] = [];
 
-    groups.push({
-      id: mailCollectionGroupIdInfo.make(),
-      collections: mailCollectionIds.value
-        .map(extractUnmarkedSyncableId)
-        .filter(mailCollectionIdInfo.is)
-        .map(
-          (id): MailCollection => ({
-            // TODO: TEMP
-            id,
-            collectionType: 'inbox',
-            title: 'Inbox',
-            unreadCount: 0
-          })
-        )
-    });
+    for (const collectionId of collectionIds.value) {
+      const collectionPath = mailCollectionsBundle.value.path.append(collectionId);
+      const collectionDoc = await getConflictFreeDocumentFromBundleAtPath(trace, userFs.value, collectionPath, {
+        newDocument: makeMailCollectionDocumentFromSnapshot,
+        //   // TODO: TEMP
+        isSnapshotValid: async () => makeSuccess(true),
+        //   // TODO: TEMP
+        isDeltaValidForDocument: async () => makeSuccess(true)
+      });
+      if (!collectionDoc.ok) {
+        log().debug?.(trace, `Failed to read collection ${collectionId}:`, collectionDoc.value);
+        continue;
+      }
+
+      groups.push({
+        id: mailCollectionGroupIdInfo.make(),
+        collections: collectionIds.value
+          .map(extractUnmarkedSyncableId)
+          .filter(mailCollectionIdInfo.is)
+          .map(
+            (id): MailCollection => ({
+              // TODO: TEMP
+              id,
+              collectionType: collectionDoc.value.collectionType.get(),
+              title: collectionDoc.value.name.get(),
+              unreadCount: 0
+            })
+          )
+      });
+    }
 
     // const groups: MailCollectionGroup[] = [];
 

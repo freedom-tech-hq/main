@@ -71,7 +71,7 @@ describe('FileSystemSyncableStore', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      provenance: provenance.value,
+      creatorPublicKeys: cryptoKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 
@@ -137,6 +137,31 @@ describe('FileSystemSyncableStore', () => {
     expectOk(folder);
   });
 
+  it('giving root folder access to a second user should work', async (t: TestContext) => {
+    const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
+    expectOk(cryptoKeys2);
+    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
+
+    expectOk(await store.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' }));
+
+    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
+    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
+
+    cryptoService.hotSwap(secondaryUserCryptoService);
+
+    // Should be able to write new file
+    const createdTestTxtFile = await createStringFileAtPath(trace, store, store.path.append(uuidId('file')), {
+      name: encName('test.txt'),
+      value: 'hello world'
+    });
+    expectOk(createdTestTxtFile);
+
+    // Should be able to read back that file
+    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    expectOk(textContent);
+    t.assert.strictEqual(textContent.value, 'hello world');
+  });
+
   it('giving access to a second user should work', async (t: TestContext) => {
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
@@ -145,7 +170,9 @@ describe('FileSystemSyncableStore', () => {
     expectOk(cryptoKeys2);
     primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
-    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
+    expectOk(
+      await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' })
+    );
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
@@ -173,7 +200,9 @@ describe('FileSystemSyncableStore', () => {
     expectOk(cryptoKeys2);
     primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
-    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'appender' }));
+    expectOk(
+      await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'appender' })
+    );
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });

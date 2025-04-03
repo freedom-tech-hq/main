@@ -1,39 +1,43 @@
 import { generateInitialAccess } from 'freedom-access-control';
-import type { AccessControlState, InitialAccess } from 'freedom-access-control-types';
+import type { InitialAccess } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import type { SyncableStoreRole } from '../types/SyncableStoreRole.ts';
 import { syncableStoreRoleSchema } from '../types/SyncableStoreRole.ts';
+import { doesSyncableStoreRoleHaveReadAccess } from './doesSyncableStoreRoleHaveReadAccess.ts';
 
 export const generateInitialFolderAccess = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore): PR<InitialAccess<SyncableStoreRole>> => {
-    const privateKeyIds = await store.cryptoService.getPrivateCryptoKeySetIds(trace);
-    if (!privateKeyIds.ok) {
-      return privateKeyIds;
+    const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
 
     // If this folder is being created by a non-root-creator user, then we need to ensure that the creator's encrypting key is added to the
     // shared keys.  Otherwise, this folder will be rejected
-    const isRootCreator = privateKeyIds.value.includes(store.creatorCryptoKeySetId);
+    const isRootCreator = privateKeys.value.id === store.creatorPublicKeys.id;
 
     // Only root creators can have the creator role.  Other folder creators are initialized with an owner role
     const folderCreatorRole = isRootCreator ? 'creator' : 'owner';
 
-    const initialState: AccessControlState<SyncableStoreRole> = { [privateKeyIds.value[0]]: folderCreatorRole };
+    const initialAccess: Array<{ role: SyncableStoreRole; publicKeys: CombinationCryptoKeySet }> = [
+      { role: folderCreatorRole, publicKeys: privateKeys.value.publicOnly() }
+    ];
 
     if (!isRootCreator) {
-      const creatorEncryptingKeySet = await store.cryptoService.getEncryptingKeySetForId(trace, store.creatorCryptoKeySetId);
-      if (!creatorEncryptingKeySet.ok) {
-        return generalizeFailureResult(trace, creatorEncryptingKeySet, 'not-found');
-      }
-
-      initialState[creatorEncryptingKeySet.value.id] = 'creator';
+      initialAccess.push({ role: 'creator', publicKeys: store.creatorPublicKeys });
     }
 
-    return await generateInitialAccess(trace, { cryptoService: store.cryptoService, initialState, roleSchema: syncableStoreRoleSchema });
+    return await generateInitialAccess(trace, {
+      cryptoService: store.cryptoService,
+      initialAccess,
+      roleSchema: syncableStoreRoleSchema,
+      doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess
+    });
   }
 );

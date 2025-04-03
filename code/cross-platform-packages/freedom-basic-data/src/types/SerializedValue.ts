@@ -6,25 +6,25 @@ export interface SerializedValue<T> {
   isSerializedValue: true;
   isStringSerializable: true;
   serializedValue: JsonValue;
-  deserializedValueSchema: Schema<T>;
+  valueSchema: Schema<T>;
 }
 
 export const makeSerializedValue = <T>({
-  deserializedValueSchema,
+  valueSchema,
   serializedValue
 }: {
-  deserializedValueSchema: Schema<T>;
+  valueSchema: Schema<T>;
   serializedValue: JsonValue;
 }): SerializedValue<T> => ({
   isSerializedValue: true,
   isStringSerializable: true,
   serializedValue,
-  deserializedValueSchema
+  valueSchema
 });
 
 export const makeSerializedValueSchema = <T>(
-  deserializedValueSchema: Schema<T>
-): schema.CustomSchema<SerializedValue<T>, `SER_${string}`> & { deserializedValueSchema: Schema<T> } => {
+  valueSchema: Schema<T>
+): schema.CustomSchema<SerializedValue<T>, `SER_${string}`> & { valueSchema: Schema<T> } => {
   const modifiedCustomSchema = schema.custom<SerializedValue<T>, `SER_${string}`>({
     typeName: 'SerializedValue',
     isContainerType: true,
@@ -47,7 +47,7 @@ export const makeSerializedValueSchema = <T>(
 
           return {
             deserialized: makeSerializedValue<T>({
-              deserializedValueSchema,
+              valueSchema,
               serializedValue
             })
           };
@@ -62,9 +62,9 @@ export const makeSerializedValueSchema = <T>(
         }
       }
     }
-  }) as schema.CustomSchema<SerializedValue<T>, `SER_${string}`> & { deserializedValueSchema: Schema<T> };
+  }) as schema.CustomSchema<SerializedValue<T>, `SER_${string}`> & { valueSchema: Schema<T> };
 
-  modifiedCustomSchema.deserializedValueSchema = deserializedValueSchema;
+  modifiedCustomSchema.valueSchema = valueSchema;
 
   return modifiedCustomSchema;
 };

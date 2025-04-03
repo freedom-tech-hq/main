@@ -1,8 +1,14 @@
 import type { PR, Result } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { allResultsMapped, log, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { prefixedUuidId } from 'freedom-sync-types';
-import { getBundleAtPath, getConflictFreeDocumentFromBundleAtPath, getJsonFromFileAtPath } from 'freedom-syncable-store-types';
+import { extractUnmarkedSyncableId, prefixedUuidId } from 'freedom-sync-types';
+import {
+  getBundleAtPath,
+  getConflictFreeDocumentFromBundleAtPath,
+  getJsonFromFileAtPath,
+  getMutableConflictFreeDocumentFromBundleAtPath
+} from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { type MailCollectionId } from '../../../modules/mail-types/MailCollectionId.ts';
@@ -34,8 +40,8 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
   async (
     trace,
     collectionId: MailCollectionId,
-    _isConnected: () => TypeOrPromisedType<boolean>,
-    _onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
+    isConnected: () => TypeOrPromisedType<boolean>,
+    onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
     const activeUserId = useActiveUserId(trace);
 
@@ -65,6 +71,99 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     if (!mailCollectionsBundle.ok) {
       return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
+
+    const mailStorageBundlePathString = mailStorageBundle.value.path.toString();
+    const removeItemAddedListener = userFs.value.addListener('itemAdded', async ({ type, path, hash }) => {
+      if (path.toString().startsWith(mailStorageBundlePathString)) {
+        const mailId = extractUnmarkedSyncableId(path.lastId!);
+        if (!mailIdInfo.is(mailId)) {
+          return;
+        }
+
+        // TODO: This isnt really the right place for adding to collections
+        const collectionIds = await mailCollectionsBundle.value.getIds(trace, { type: 'bundle' });
+        if (!collectionIds.ok) {
+          log().debug?.(trace, 'Failed to get collection IDs:', collectionIds.value);
+          return;
+        }
+
+        for (const collectionId of collectionIds.value) {
+          const collectionPath = mailCollectionsBundle.value.path.append(collectionId);
+          const collectionDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs.value, collectionPath, {
+            newDocument: makeMailCollectionDocumentFromSnapshot,
+            //   // TODO: TEMP
+            isSnapshotValid: async () => makeSuccess(true),
+            //   // TODO: TEMP
+            isDeltaValidForDocument: async () => makeSuccess(true)
+          });
+          if (!collectionDoc.ok) {
+            log().debug?.(trace, `Failed to read collection ${collectionId}:`, collectionDoc.value);
+            continue;
+          }
+
+          if (collectionDoc.value.document.collectionType.get() === 'inbox') {
+            collectionDoc.value.document.mailIds.append([mailId]);
+            const saved = await collectionDoc.value.save(trace);
+            if (!saved.ok) {
+              log().debug?.(trace, `Failed to save collection ${collectionId}:`, saved.value);
+              continue;
+            }
+
+            const mailJson = await getJsonFromFileAtPath(trace, userFs.value, path, storedMailSchema);
+            if (!mailJson.ok) {
+              log().debug?.(trace, `Failed to read mail ${mailId}:`, mailJson.value);
+              continue;
+            }
+
+            const storedMail = mailJson.value;
+
+            await onData(
+              makeSuccess({
+                type: 'mail-added' as const,
+                threads: [
+                  {
+                    id: mailThreadIdInfo.make(mailIdInfo.removePrefix(mailId)),
+                    from: storedMail.from,
+                    to: storedMail.to,
+                    subject: storedMail.subject,
+                    body: storedMail.body,
+                    timeMSec: storedMail.timeMSec,
+                    numMessages: 1,
+                    numUnread: 1
+                  }
+                ]
+              })
+            );
+          }
+        }
+
+        // const inboxPath = userFs.value.path.append(mailFolderId, mailCollectionsBundleId, mailCollectionsInboxDocumentId);
+        // const inboxDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs.value, inboxPath, {
+        //   newDocument: makeMailCollectionDocumentFromSnapshot,
+        //   // TODO: TEMP
+        //   isSnapshotValid: async () => makeSuccess(true),
+        //   // TODO: TEMP
+        //   isDeltaValidForDocument: async () => makeSuccess(true)
+        // });
+        // if (!inboxDoc.ok) {
+        //   return generalizeFailureResult(trace, inboxDoc, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
+        // }
+
+        // inboxDoc.value.document.mailIds.append(mailIds);
+        // const savedInboxDoc = await inboxDoc.value.save(trace);
+        // if (!savedInboxDoc.ok) {
+        //   return generalizeFailureResult(trace, savedInboxDoc, 'conflict');
+        // }
+      }
+    });
+
+    // Periodically checking if the connection is still active
+    const checkConnectionInterval = setInterval(async () => {
+      if (!(await isConnected())) {
+        clearInterval(checkConnectionInterval);
+        removeItemAddedListener();
+      }
+    }, ONE_SEC_MSEC);
 
     const collectionPath = userFs.value.path.append(mailFolderId, mailCollectionsBundleId, prefixedUuidId('bundle', collectionId));
     const collectionDoc = await getConflictFreeDocumentFromBundleAtPath(trace, userFs.value, collectionPath, {

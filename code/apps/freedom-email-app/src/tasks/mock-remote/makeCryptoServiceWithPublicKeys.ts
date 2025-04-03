@@ -1,56 +1,52 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { InternalStateError } from 'freedom-common-errors';
-import type {
-  CombinationCryptoKeySet,
-  CryptoKeySetId,
-  DecryptingKeySet,
-  EncryptingKeySet,
-  SigningKeySet,
-  VerifyingKeySet
-} from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import { InternalStateError, NotFoundError } from 'freedom-common-errors';
+import type { CombinationCryptoKeySet, CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
+import { type CryptoService, makeCryptoService } from 'freedom-crypto-service';
 
-export const makeCryptoServiceWithPublicKeys = ({ publicKeys }: { publicKeys: CombinationCryptoKeySet }): CryptoService => {
-  const getCryptoKeysById = makeAsyncResultFunc(
-    [import.meta.filename, 'getCryptoKeysById'],
-    async (trace, id): PR<CombinationCryptoKeySet, 'not-found'> => {
-      if (id === publicKeys.id) {
-        return makeSuccess(publicKeys);
-      }
+export interface MockRemoteCryptoService extends CryptoService {
+  addPublicKeys: (args: { publicKeys: CombinationCryptoKeySet }) => void;
+}
 
-      return makeFailure(new InternalStateError(trace, { message: `Key not found with ID: ${id}`, errorCode: 'not-found' }));
-    }
-  );
+export const makeCryptoServiceForMockRemote = (): MockRemoteCryptoService => {
+  const allPublicKeys: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> = {};
 
-  return {
+  const cryptoService = makeCryptoService({
     getPrivateCryptoKeySetIds: makeAsyncResultFunc(
       [import.meta.filename, 'getPrivateCryptoKeySetIds'],
       async (_trace): PR<CryptoKeySetId[]> => makeSuccess([])
     ),
 
-    getEncryptingKeySetForId: makeAsyncResultFunc(
-      [import.meta.filename, 'getEncryptingKeySetForId'],
-      // TODO: should be able to look up keys for other users
-      async (trace, id: CryptoKeySetId): PR<EncryptingKeySet, 'not-found'> => await getCryptoKeysById(trace, id)
+    getPrivateCryptoKeysById: makeAsyncResultFunc(
+      [import.meta.filename, 'getPrivateCryptoKeysById'],
+      async (trace, id): PR<PrivateCombinationCryptoKeySet, 'not-found'> =>
+        makeFailure(new InternalStateError(trace, { message: `Key not found with ID: ${id}`, errorCode: 'not-found' }))
     ),
 
-    getVerifyingKeySetForId: makeAsyncResultFunc(
-      [import.meta.filename, 'getVerifyingKeySetForId'],
-      // TODO: should be able to look up keys for other users
-      async (trace, id: CryptoKeySetId): PR<VerifyingKeySet, 'not-found'> => await getCryptoKeysById(trace, id)
+    getPublicCryptoKeysById: makeAsyncResultFunc(
+      [import.meta.filename, 'getPublicCryptoKeysById'],
+      async (trace, id): PR<CombinationCryptoKeySet, 'not-found'> => {
+        const found = allPublicKeys[id];
+        if (found !== undefined) {
+          return makeSuccess(found);
+        }
+
+        return makeFailure(new InternalStateError(trace, { message: `Key not found with ID: ${id}`, errorCode: 'not-found' }));
+      }
     ),
 
-    getSigningKeySet: makeAsyncResultFunc(
-      [import.meta.filename, 'getSigningKeySet'],
-      async (_trace): PR<SigningKeySet, 'not-found'> =>
-        makeFailure(new InternalStateError(_trace, { message: 'No signing key found', errorCode: 'not-found' }))
-    ),
-
-    getDecryptingKeySet: makeAsyncResultFunc(
-      [import.meta.filename, 'getDecryptingKeySet'],
-      async (_trace): PR<DecryptingKeySet, 'not-found'> =>
-        makeFailure(new InternalStateError(_trace, { message: 'No decrypting key found', errorCode: 'not-found' }))
+    getMostRecentPrivateCryptoKeys: makeAsyncResultFunc(
+      [import.meta.filename, 'getMostRecentPrivateCryptoKeys'],
+      async (trace): PR<PrivateCombinationCryptoKeySet> =>
+        makeFailure(new NotFoundError(trace, { message: "Private keys aren't available in the mock remote" }))
     )
+  });
+
+  const modifiedCryptoService = cryptoService as Partial<MockRemoteCryptoService>;
+
+  modifiedCryptoService.addPublicKeys = ({ publicKeys }) => {
+    allPublicKeys[publicKeys.id] = publicKeys;
   };
+
+  return modifiedCryptoService as MockRemoteCryptoService;
 };

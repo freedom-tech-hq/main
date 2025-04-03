@@ -22,9 +22,9 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
       return privateKeyIds;
     }
 
-    // If the crypto service is the creator, return the creator's key ID
-    if (privateKeyIds.value.includes(store.creatorCryptoKeySetId)) {
-      return makeSuccess({ role: 'creator' as const, cryptoKeySetId: store.creatorCryptoKeySetId });
+    // If the current user is the creator, return the creator's key ID
+    if (privateKeyIds.value.includes(store.creatorPublicKeys.id)) {
+      return makeSuccess({ role: 'creator' as const, cryptoKeySetId: store.creatorPublicKeys.id });
     }
 
     const folderPath = await getFolderPath(trace, store, path);

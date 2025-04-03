@@ -15,9 +15,9 @@ export const encryptAndSignBinary = makeAsyncResultFunc(
     value: Uint8Array,
     { accessControlDoc, cryptoService }: { accessControlDoc: SyncableStoreAccessControlDocument; cryptoService: CryptoService }
   ): PR<Uint8Array> => {
-    const signingKeys = await cryptoService.getSigningKeySet(trace);
-    if (!signingKeys.ok) {
-      return generalizeFailureResult(trace, signingKeys, 'not-found');
+    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
 
     const sharedKeys = await accessControlDoc.getSharedKeys(trace);
@@ -48,7 +48,7 @@ export const encryptAndSignBinary = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const signedEncryptedValue = await generateSignedBuffer(trace, { value: encryptedValue.value, signingKeys: signingKeys.value });
+    const signedEncryptedValue = await generateSignedBuffer(trace, { value: encryptedValue.value, signingKeys: privateKeys.value });
     /* node:coverage disable */
     if (!signedEncryptedValue.ok) {
       return signedEncryptedValue;

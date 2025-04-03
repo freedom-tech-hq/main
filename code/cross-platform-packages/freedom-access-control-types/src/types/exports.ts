@@ -9,3 +9,4 @@ export * from './SharedKeys.ts';
 export * from './SharedPublicKeys.ts';
 export * from './SharedSecretKeys.ts';
 export * from './TimedAccessChange.ts';
+export * from './TrustedTimeSignedAccessChange.ts';

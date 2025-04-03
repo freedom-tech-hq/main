@@ -8,7 +8,8 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { expectOk } from 'freedom-testing-tools';
+import { deserialize } from 'freedom-serialization';
+import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -35,12 +36,16 @@ describe('generateSignedModifyAccessChange', () => {
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
-      initialState: { [cryptoKeys1.id]: 'creator' },
-      roleSchema: testStoreRoleSchema
+      initialAccess: [{ role: 'creator', publicKeys: cryptoKeys1.publicOnly() }],
+      roleSchema: testStoreRoleSchema,
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(initialAccess);
 
-    assert.deepStrictEqual(initialAccess.value.state.value, { [cryptoKeys1.id]: 'creator' });
+    const deserializedInitialAccessState = await deserialize(trace, initialAccess.value.state.value);
+    expectOk(deserializedInitialAccessState);
+
+    assert.deepStrictEqual(deserializedInitialAccessState.value, { [cryptoKeys1.id]: 'creator' });
 
     accessControlDoc = new TestAccessControlDocument({ initialAccess: initialAccess.value });
 
@@ -51,7 +56,7 @@ describe('generateSignedModifyAccessChange', () => {
     cryptoService.addPublicKeys({ publicKeys: cryptoKeys2 });
   });
 
-  it('should work maintaining read access', async (t: TestContext) => {
+  it('should work maintaining read access', async () => {
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
       cryptoService,
       accessControlDoc,
@@ -62,10 +67,7 @@ describe('generateSignedModifyAccessChange', () => {
           timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
-      params: {
-        publicKeyId: cryptoKeys2.id,
-        role: 'editor'
-      },
+      params: { publicKeys: cryptoKeys2.publicOnly(), role: 'editor' },
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedAddAccessChange);
@@ -95,7 +97,7 @@ describe('generateSignedModifyAccessChange', () => {
     const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
-    t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
+    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
       [cryptoKeys1.id]: 'creator',
       [cryptoKeys2.id]: 'viewer'
     });
@@ -112,10 +114,7 @@ describe('generateSignedModifyAccessChange', () => {
           timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
-      params: {
-        publicKeyId: cryptoKeys2.id,
-        role: 'editor'
-      },
+      params: { publicKeys: cryptoKeys2.publicOnly(), role: 'editor' },
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedAddAccessChange);
@@ -141,15 +140,19 @@ describe('generateSignedModifyAccessChange', () => {
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedModifyAccessChange);
-    t.assert.strictEqual(signedModifyAccessChange.value.signedAccessChange.value.type, 'modify-access');
-    if (signedModifyAccessChange.value.signedAccessChange.value.type === 'modify-access') {
-      t.assert.notStrictEqual(signedModifyAccessChange.value.signedAccessChange.value.newSharedKeys, undefined);
+
+    const deserializedSignedModifyAccessChange = await deserialize(trace, signedModifyAccessChange.value.signedAccessChange.value);
+    expectOk(deserializedSignedModifyAccessChange);
+
+    expectStrictEqual(deserializedSignedModifyAccessChange.value.type, 'modify-access');
+    if (deserializedSignedModifyAccessChange.value.type === 'modify-access') {
+      t.assert.notStrictEqual(deserializedSignedModifyAccessChange.value.newSharedKeys, undefined);
     }
 
     const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
-    t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
+    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
       [cryptoKeys1.id]: 'creator',
       [cryptoKeys2.id]: 'appender'
     });
@@ -166,10 +169,7 @@ describe('generateSignedModifyAccessChange', () => {
           timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
-      params: {
-        publicKeyId: cryptoKeys2.id,
-        role: 'appender'
-      },
+      params: { publicKeys: cryptoKeys2.publicOnly(), role: 'appender' },
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedAddAccessChange);
@@ -195,18 +195,19 @@ describe('generateSignedModifyAccessChange', () => {
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedModifyAccessChange);
-    t.assert.strictEqual(signedModifyAccessChange.value.signedAccessChange.value.type, 'modify-access');
-    if (signedModifyAccessChange.value.signedAccessChange.value.type === 'modify-access') {
-      t.assert.notStrictEqual(
-        signedModifyAccessChange.value.signedAccessChange.value.encryptedSecretKeysForModifiedUserBySharedKeysId,
-        undefined
-      );
+
+    const deserializedSignedModifyAccessChange = await deserialize(trace, signedModifyAccessChange.value.signedAccessChange.value);
+    expectOk(deserializedSignedModifyAccessChange);
+
+    expectStrictEqual(deserializedSignedModifyAccessChange.value.type, 'modify-access');
+    if (deserializedSignedModifyAccessChange.value.type === 'modify-access') {
+      t.assert.notStrictEqual(deserializedSignedModifyAccessChange.value.encryptedSecretKeysForModifiedUserBySharedKeysId, undefined);
     }
 
     const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
-    t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
+    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
       [cryptoKeys1.id]: 'creator',
       [cryptoKeys2.id]: 'viewer'
     });

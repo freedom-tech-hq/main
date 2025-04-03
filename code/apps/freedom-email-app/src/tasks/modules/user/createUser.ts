@@ -74,7 +74,7 @@ export const createUser = makeAsyncResultFunc([import.meta.filename], async (tra
     trace,
     userFs.value,
     mailCollectionsBundle.value.path.append(mailCollectionsInboxDocumentId),
-    { newDocument: () => makeNewMailCollectionDocument({ name: '[loc:inbox]' }) }
+    { newDocument: () => makeNewMailCollectionDocument({ name: 'loc:inbox', collectionType: 'inbox' }) }
   );
   if (!inboxBundle.ok) {
     return generalizeFailureResult(trace, inboxBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);

@@ -66,9 +66,9 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       return trustedTime;
     }
 
-    const signingKeys = await store.cryptoService.getSigningKeySet(trace, cryptoKeySetId);
-    if (!signingKeys.ok) {
-      return generalizeFailureResult(trace, signingKeys, 'not-found');
+    const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace, cryptoKeySetId);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
 
     return await generateSignedValue(trace, {
@@ -76,7 +76,7 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       valueSchema: syncableAcceptanceSchema,
       signatureExtras: undefined,
       signatureExtrasSchema: undefined,
-      signingKeys: signingKeys.value
+      signingKeys: privateKeys.value
     });
   }
 );

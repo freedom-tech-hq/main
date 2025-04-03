@@ -30,11 +30,11 @@ export const decryptOneEncryptedValue = makeAsyncResultFunc(
 
     const encryptedValue = encryptedValues[keyId]!;
 
-    const decryptingKeys = await cryptoService.getDecryptingKeySet(trace, keyId);
-    if (!decryptingKeys.ok) {
-      return generalizeFailureResult(trace, decryptingKeys, 'not-found');
+    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace, keyId);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
 
-    return await decryptEncryptedValue(trace, encryptedValue, { decryptingKeys: decryptingKeys.value });
+    return await decryptEncryptedValue(trace, encryptedValue, { decryptingKeys: privateKeys.value });
   }
 );

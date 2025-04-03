@@ -1,5 +1,10 @@
 import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 'freedom-access-control';
-import type { AccessChangeParams, AccessControlDocumentPrefix, AccessControlState, TimedAccessChange } from 'freedom-access-control-types';
+import type {
+  AccessChangeParams,
+  AccessControlDocumentPrefix,
+  AccessControlState,
+  TrustedTimeSignedAccessChange
+} from 'freedom-access-control-types';
 import type { PR, Result } from 'freedom-async';
 import { allResults, allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
@@ -8,7 +13,7 @@ import { generalizeFailureResult, InternalStateError } from 'freedom-common-erro
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { CryptoKeySetId, SignedValue } from 'freedom-crypto-data';
+import type { CryptoKeySetId } from 'freedom-crypto-data';
 import {
   extractSyncableIdParts,
   isSyncableItemEncrypted,
@@ -18,7 +23,7 @@ import {
   type SyncablePath
 } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
-import type { TrustedTime, TrustedTimeSource } from 'freedom-trusted-time-source';
+import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
 import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -153,7 +158,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      let signedTimedChange: Result<{ trustedTime: TrustedTime; signedAccessChange: SignedValue<TimedAccessChange<SyncableStoreRole>> }>;
+      let signedTimedChange: Result<TrustedTimeSignedAccessChange<SyncableStoreRole>>;
       switch (change.type) {
         case 'add-access':
           signedTimedChange = await generateSignedAddAccessChange(trace, {
@@ -555,7 +560,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       }
       /* node:coverage enable */
 
-      return makeSuccess(accessControlDoc.value.accessControlState);
+      return makeSuccess(await accessControlDoc.value.accessControlState);
     }
   );
 

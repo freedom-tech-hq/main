@@ -1,7 +1,8 @@
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { base64String } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { generateSha256HashFromString } from 'freedom-crypto';
+import { extractKeyIdFromSignature, generateSha256HashFromString } from 'freedom-crypto';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import type { StorageRootId } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
@@ -10,12 +11,14 @@ import { DefaultSyncableStore, getFolderPath, getSyncableHashAtPath } from 'free
 
 import { getCryptoService } from './getCryptoService.ts';
 import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
+import { getPublicKeyStore } from './getPublicKeyStore.ts';
 import { getSaltsStore } from './getSaltsStore.ts';
 
 export const getSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { storageRootId }: { storageRootId: StorageRootId }): PR<{ store: MutableSyncableStore; disconnect: () => void }> => {
     const cryptoService = await uncheckedResult(getCryptoService(trace));
+    const publicKeyStore = await uncheckedResult(getPublicKeyStore(trace));
     const saltsStore = await uncheckedResult(getSaltsStore(trace));
     const rootPath = await uncheckedResult(getFsRootPathForStorageRootId(trace, storageRootId));
 
@@ -35,10 +38,22 @@ export const getSyncableStore = makeAsyncResultFunc(
       return generalizeFailureResult(trace, rootMetadata, ['not-found', 'wrong-type']);
     }
 
+    const creatorPublicKeysId = extractKeyIdFromSignature(trace, {
+      signature: base64String.toBuffer(rootMetadata.value.provenance.origin.signature)
+    });
+    if (!creatorPublicKeysId.ok) {
+      return generalizeFailureResult(trace, creatorPublicKeysId, 'not-found');
+    }
+
+    const creatorPublicKeys = await publicKeyStore.object(creatorPublicKeysId.value).get(trace);
+    if (!creatorPublicKeys.ok) {
+      return generalizeFailureResult(trace, creatorPublicKeys, 'not-found');
+    }
+
     const store = new DefaultSyncableStore({
       storageRootId,
       backing: storeBacking,
-      provenance: rootMetadata.value.provenance,
+      creatorPublicKeys: creatorPublicKeys.value,
       cryptoService,
       saltsById: saltsById.value
     });
@@ -55,8 +70,8 @@ export const getSyncableStore = makeAsyncResultFunc(
       }
     );
 
-    const onNeedsSync = makeAsyncResultFunc(
-      [import.meta.filename, 'onNeedsSync'],
+    const onItemAdded = makeAsyncResultFunc(
+      [import.meta.filename, 'onItemAdded'],
       async (trace, args: { store: SyncableStore; path: SyncablePath }) => {
         const folderPath = await getFolderPath(trace, args.store, args.path);
         if (!folderPath.ok) {
@@ -111,11 +126,11 @@ export const getSyncableStore = makeAsyncResultFunc(
       })
     );
 
-    DEV: debugTopic('SYNC', (log) => log(`REMOTE: Added needsSync listener for ${store.path.toString()}`));
+    DEV: debugTopic('SYNC', (log) => log(`REMOTE: Added itemAdded listener for ${store.path.toString()}`));
     removeListeners.push(
-      store.addListener('needsSync', ({ path, hash }) => {
-        DEV: debugTopic('SYNC', (log) => log(`REMOTE: Received needsSync for ${path.toString()}: ${hash}`));
-        onNeedsSync(trace, { store: store, path });
+      store.addListener('itemAdded', ({ path, hash }) => {
+        DEV: debugTopic('SYNC', (log) => log(`REMOTE: Received itemAdded for ${path.toString()}: ${hash}`));
+        onItemAdded(trace, { store: store, path });
       })
     );
 

@@ -20,7 +20,7 @@ describe('SerializedValue', () => {
 
     const serializedValueSerialization = await serializedValueSchema.serializeAsync(
       makeSerializedValue({
-        deserializedValueSchema: valueSchema,
+        valueSchema: valueSchema,
         serializedValue: valueSerialization.serialized
       })
     );
@@ -35,7 +35,7 @@ describe('SerializedValue', () => {
     t.assert.deepStrictEqual(
       serializedValueDeserialization.deserialized,
       makeSerializedValue({
-        deserializedValueSchema: valueSchema,
+        valueSchema: valueSchema,
         serializedValue: valueSerialization.serialized
       })
     );

@@ -15,12 +15,12 @@ export const getRoleForOriginWithPath = makeAsyncResultFunc(
     store: SyncableStore,
     { path, origin }: { path: SyncablePath; origin: SignedSyncableOrigin }
   ): PR<SyncableStoreRole | undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const signingCryptoKeySetId = extractKeyIdFromSignedValue(trace, { signedValue: origin });
-    if (!signingCryptoKeySetId.ok) {
-      return signingCryptoKeySetId;
+    const signedByKeyId = extractKeyIdFromSignedValue(trace, { signedValue: origin });
+    if (!signedByKeyId.ok) {
+      return signedByKeyId;
     }
 
-    if (signingCryptoKeySetId.value === store.creatorCryptoKeySetId) {
+    if (signedByKeyId.value === store.creatorPublicKeys.id) {
       return makeSuccess('creator' as const);
     }
 
@@ -34,11 +34,11 @@ export const getRoleForOriginWithPath = makeAsyncResultFunc(
       return folder;
     }
 
-    const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: [signingCryptoKeySetId.value] });
+    const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: [signedByKeyId.value] });
     if (!rolesByCryptoKeySetId.ok) {
       return rolesByCryptoKeySetId;
     }
 
-    return makeSuccess(rolesByCryptoKeySetId.value[signingCryptoKeySetId.value]);
+    return makeSuccess(rolesByCryptoKeySetId.value[signedByKeyId.value]);
   }
 );
