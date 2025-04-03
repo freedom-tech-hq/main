@@ -23,7 +23,13 @@ coverage
 !/.idea
 
 # dotenv environment variables file
-*.env*
+*.env
+!*.env.sample
+.env.*
+# These env files are not samples, they contain useful values loaded by freedom-config/loadEnv.ts:
+!.env.defaults
+!.env.*.defaults
+!.env.test
 
 # Node
 node_modules/
