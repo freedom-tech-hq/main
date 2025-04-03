@@ -3,12 +3,18 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
+import type { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import { isAcceptanceValid } from './internal/isAcceptanceValid.ts';
 import { isOriginValid } from './internal/isOriginValid.ts';
 
 export const isProvenanceValid = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, item: SyncableItemAccessor): PR<boolean> => {
+  async (
+    trace,
+    store: SyncableStore,
+    item: SyncableItemAccessor,
+    { accessControlDoc }: { accessControlDoc: SyncableStoreAccessControlDocument }
+  ): PR<boolean> => {
     if (store.localTrustMarks.isTrusted(item.path, 'provenance')) {
       return makeSuccess(true);
     }
@@ -22,7 +28,7 @@ export const isProvenanceValid = makeAsyncResultFunc(
 
     // If the acceptance is set, that's all we'll consider
     if (provenance.acceptance !== undefined) {
-      const acceptanceValid = await isAcceptanceValid(trace, store, item, { acceptance: provenance.acceptance });
+      const acceptanceValid = await isAcceptanceValid(trace, store, item, { acceptance: provenance.acceptance, accessControlDoc });
       if (!acceptanceValid.ok) {
         return acceptanceValid;
       } else if (!acceptanceValid.value) {
@@ -33,7 +39,7 @@ export const isProvenanceValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const originValid = await isOriginValid(trace, store, item, { origin: provenance.origin });
+    const originValid = await isOriginValid(trace, store, item, { origin: provenance.origin, accessControlDoc });
     if (!originValid.ok) {
       return originValid;
     } else if (!originValid.value) {

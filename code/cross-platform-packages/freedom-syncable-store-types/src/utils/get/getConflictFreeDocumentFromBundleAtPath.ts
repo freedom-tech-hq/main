@@ -1,3 +1,4 @@
+import type { AccessControlDocumentPrefix } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
 import {
   allResultsMappedSkipFailures,
@@ -15,13 +16,15 @@ import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnaps
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 import { isSyncableItemEncrypted } from 'freedom-sync-types';
-import { once } from 'lodash-es';
 
-import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
+import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
+import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import type { SyncableStoreRole } from '../../types/SyncableStoreRole.ts';
-import { getRoleForOriginWithPath } from '../validation/getRoleForOriginWithPath.ts';
+import { getRoleForOrigin } from '../validation/getRoleForOrigin.ts';
+import { isAccessControlSnapshotProvenanceValid } from '../validation/isAccessControlSnapshotProvenanceValid.ts';
 import { getBundleAtPath } from './getBundleAtPath.ts';
+import { getNearestAccessControlDocument } from './getNearestAccessControlDocument.ts';
 import { getProvenanceOfSyncableAtPath } from './getProvenanceOfSyncableAtPath.ts';
 import { getStringFromFileAtPath } from './getStringFromFileAtPath.ts';
 
@@ -113,10 +116,37 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         return snapshotProvenance;
       }
 
-      const getOriginRole = once(() => getRoleForOriginWithPath(trace, store, { path, origin: snapshotProvenance.value.origin }));
+      const isAccessControlBundle = path.lastId === ACCESS_CONTROL_BUNDLE_ID;
+      let accessControlDoc!: SyncableStoreAccessControlDocument;
+      if (isAccessControlBundle) {
+        const snapshotFile = await snapshots.value.get(trace, snapshotId, 'file');
+        if (!snapshotFile.ok) {
+          return snapshotFile;
+        }
+
+        const isValid = await isAccessControlSnapshotProvenanceValid(trace, store, snapshotFile.value);
+        if (!isValid.ok) {
+          return isValid;
+        } else if (!isValid.value) {
+          DEV: debugTopic('VALIDATION', (log) => log(`Access control snapshot invalid for ${snapshotPath.toString()}`));
+          continue;
+        }
+
+        accessControlDoc = new SyncableStoreAccessControlDocument({
+          snapshot: { id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> }
+        });
+      } else {
+        const foundAccessControlDoc = await getNearestAccessControlDocument(trace, store, path);
+        if (!foundAccessControlDoc.ok) {
+          return foundAccessControlDoc;
+        }
+
+        accessControlDoc = foundAccessControlDoc.value;
+      }
+      const getOriginRole = () => getRoleForOrigin(trace, store, { origin: snapshotProvenance.value.origin, accessControlDoc });
 
       // For not-yet-accepted values, performing additional checks
-      if (snapshotProvenance.value.acceptance === undefined) {
+      if (!isAccessControlBundle && snapshotProvenance.value.acceptance === undefined) {
         const originRole = await getOriginRole();
         if (!originRole.ok) {
           return generalizeFailureResult(trace, originRole, 'not-found');

@@ -138,7 +138,6 @@ export const startMockRemote = async (_trace: Trace): PR<MockRemote> => {
       }
 
       const cryptoService = makeCryptoServiceForMockRemote();
-      cryptoService.addPublicKeys({ publicKeys: creatorPublicKeys });
 
       const storeBacking = new InMemorySyncableStoreBacking(metadata);
 

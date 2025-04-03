@@ -7,6 +7,7 @@ import type { SignedSyncableAcceptance } from 'freedom-sync-types';
 
 import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../../types/SyncableStore.ts';
+import type { SyncableStoreAccessControlDocument } from '../../../types/SyncableStoreAccessControlDocument.ts';
 import { ownerAndAboveRoles } from '../../../types/SyncableStoreRole.ts';
 import { getFolderPath } from '../../get/getFolderPath.ts';
 import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
@@ -19,25 +20,14 @@ export const isAcceptanceValid = makeAsyncResultFunc(
     trace,
     store: SyncableStore,
     item: SyncableItemAccessor,
-    { acceptance }: { acceptance: SignedSyncableAcceptance }
+    { acceptance, accessControlDoc }: { acceptance: SignedSyncableAcceptance; accessControlDoc: SyncableStoreAccessControlDocument }
   ): PR<boolean> => {
-    const contentHash = await getSha256HashForItemProvenance(trace, item);
-    if (!contentHash.ok) {
-      return contentHash;
-    }
-
     const signedByKeyId = extractKeyIdFromSignedValue(trace, { signedValue: acceptance });
     if (!signedByKeyId.ok) {
       return generalizeFailureResult(trace, signedByKeyId, 'not-found');
     }
 
-    // TODO: TEMP
-    if (Math.random() < 1) {
-      return makeSuccess(true);
-    }
-
-    // TODO: this should look up from document
-    const signedByPublicKeys = await store.cryptoService.getPublicCryptoKeySetForId(trace, signedByKeyId.value);
+    const signedByPublicKeys = await accessControlDoc.getPublicKeysById(trace, signedByKeyId.value);
     if (!signedByPublicKeys.ok) {
       return generalizeFailureResult(trace, signedByPublicKeys, 'not-found');
     }
@@ -63,6 +53,11 @@ export const isAcceptanceValid = makeAsyncResultFunc(
     // If the origin was signed by the current user, then the current user assumes it's valid.  Otherwise, we'll do additional checks
     if (privateKeyIds.value.includes(signedByKeyId.value)) {
       return makeSuccess(true);
+    }
+
+    const contentHash = await getSha256HashForItemProvenance(trace, item);
+    if (!contentHash.ok) {
+      return contentHash;
     }
 
     const trustedTimeValid = await isTrustedTimeValid(trace, store, {

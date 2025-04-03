@@ -43,8 +43,6 @@ describe('generateSignedAddAccessChange', () => {
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
 
-    cryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
-
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
       cryptoService,
       accessControlDoc,

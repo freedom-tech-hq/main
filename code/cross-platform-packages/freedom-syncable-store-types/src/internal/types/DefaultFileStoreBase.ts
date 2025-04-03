@@ -34,6 +34,8 @@ import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
+import { guardIsProvenanceValid } from '../../utils/guards/guardIsProvenanceValid.ts';
+import { guardIsSyncableItemAcceptedOrWasWriteLegit } from '../../utils/guards/guardIsSyncableItemAcceptedOrWasWriteLegit.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
@@ -256,7 +258,12 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
       const getPath = this.path.append(id);
 
       const itemType = extractSyncableItemTypeFromId(id);
@@ -282,7 +289,17 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return makeFailure(new NotFoundError(trace, { message: `${getPath.toString()} not found`, errorCode: 'not-found' }));
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, itemType as T));
+      const item = this.makeMutableItemAccessor_<T>(getPath, itemType as T);
+
+      const finalGuards = await allResults(trace, [
+        guardIsProvenanceValid(trace, store, item),
+        guardIsSyncableItemAcceptedOrWasWriteLegit(trace, store, item)
+      ]);
+      if (!finalGuards.ok) {
+        return finalGuards;
+      }
+
+      return makeSuccess(item);
     }
   );
 
@@ -425,7 +442,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+      await this.getMutable(trace, id, expectedType)
   );
 
   public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {

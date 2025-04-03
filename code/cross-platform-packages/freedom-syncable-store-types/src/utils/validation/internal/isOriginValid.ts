@@ -7,15 +7,20 @@ import { extractUnmarkedSyncableId, type SignedSyncableOrigin } from 'freedom-sy
 
 import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../../types/SyncableStore.ts';
+import type { SyncableStoreAccessControlDocument } from '../../../types/SyncableStoreAccessControlDocument.ts';
 import { rolesWithWriteAccess } from '../../../types/SyncableStoreRole.ts';
-import { getFolderPath } from '../../get/getFolderPath.ts';
-import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
+import { getRoleForOrigin } from '../getRoleForOrigin.ts';
 import { isTrustedTimeValid } from '../isTrustedTimeValid.ts';
 
 export const isOriginValid = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, item: SyncableItemAccessor, { origin }: { origin: SignedSyncableOrigin }): PR<boolean> => {
+  async (
+    trace,
+    store: SyncableStore,
+    item: SyncableItemAccessor,
+    { origin, accessControlDoc }: { origin: SignedSyncableOrigin; accessControlDoc: SyncableStoreAccessControlDocument }
+  ): PR<boolean> => {
     const contentHash = await getSha256HashForItemProvenance(trace, item);
     if (!contentHash.ok) {
       return contentHash;
@@ -36,13 +41,7 @@ export const isOriginValid = makeAsyncResultFunc(
       return generalizeFailureResult(trace, signedByKeyId, 'not-found');
     }
 
-    // TODO: TEMP
-    if (Math.random() < 1) {
-      return makeSuccess(true);
-    }
-
-    // TODO: this should look up from document
-    const signedByPublicKeys = await store.cryptoService.getPublicCryptoKeySetForId(trace, signedByKeyId.value);
+    const signedByPublicKeys = await accessControlDoc.getPublicKeysById(trace, signedByKeyId.value);
     if (!signedByPublicKeys.ok) {
       return generalizeFailureResult(trace, signedByPublicKeys, 'not-found');
     }
@@ -79,24 +78,13 @@ export const isOriginValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const folderPath = await getFolderPath(trace, store, item.path);
-    if (!folderPath.ok) {
-      return generalizeFailureResult(trace, folderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const folder = await getSyncableAtPath(trace, store, folderPath.value, 'folder');
-    if (!folder.ok) {
-      return generalizeFailureResult(trace, folder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: [signedByKeyId.value] });
-    if (!rolesByCryptoKeySetId.ok) {
-      return rolesByCryptoKeySetId;
+    const role = await getRoleForOrigin(trace, store, { origin, accessControlDoc });
+    if (!role.ok) {
+      return generalizeFailureResult(trace, role, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     // Making sure the origin user had write access
-    const role = rolesByCryptoKeySetId.value[signedByKeyId.value];
-    if (role === undefined || !rolesWithWriteAccess.has(role)) {
+    if (role.value === undefined || !rolesWithWriteAccess.has(role.value)) {
       DEV: debugTopic('VALIDATION', (log) => log(`Origin signer doesn't have write access for ${item.path.toString()}:`, role));
       return makeSuccess(false);
     }

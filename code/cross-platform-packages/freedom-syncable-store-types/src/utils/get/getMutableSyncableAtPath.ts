@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { allResults, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableItemType } from 'freedom-sync-types';
@@ -11,8 +11,7 @@ import type { MutableSyncableFolderAccessor } from '../../types/MutableSyncableF
 import type { MutableSyncableItemAccessor } from '../../types/MutableSyncableItemAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { guardIsExpectedType } from '../guards/guardIsExpectedType.ts';
-import { guardIsProvenanceValid } from '../guards/guardIsProvenanceValid.ts';
-import { guardIsSyncableItemAcceptedOrWasWriteLegit } from '../guards/guardIsSyncableItemAcceptedOrWasWriteLegit.ts';
+import { guardIsRootProvenanceValid } from '../guards/guardIsRootProvenanceValid.ts';
 
 export const getMutableSyncableAtPath = makeAsyncResultFunc(
   [import.meta.filename],
@@ -26,7 +25,7 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
       return makeFailure(new NotFoundError(trace, { message: 'Wrong storage root ID', errorCode: 'not-found' }));
     }
 
-    const rootGuards = await guardIsProvenanceValid(trace, store, store);
+    const rootGuards = await guardIsRootProvenanceValid(trace, store);
     if (!rootGuards.ok) {
       return rootGuards;
     }
@@ -45,14 +44,6 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
       return cursor;
     }
 
-    const firstCursorGuards = await allResults(trace, [
-      guardIsProvenanceValid(trace, store, cursor.value),
-      guardIsSyncableItemAcceptedOrWasWriteLegit(trace, store, cursor.value)
-    ]);
-    if (!firstCursorGuards.ok) {
-      return firstCursorGuards;
-    }
-
     for (const id of path.ids.slice(1)) {
       switch (cursor.value.type) {
         case 'folder':
@@ -66,14 +57,6 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
 
           cursor = nextCursor;
 
-          const cursorGuards = await allResults(trace, [
-            guardIsProvenanceValid(trace, store, cursor.value),
-            guardIsSyncableItemAcceptedOrWasWriteLegit(trace, store, cursor.value)
-          ]);
-          if (!cursorGuards.ok) {
-            return cursorGuards;
-          }
-
           break;
         }
         case 'file':
@@ -86,11 +69,7 @@ export const getMutableSyncableAtPath = makeAsyncResultFunc(
       }
     }
 
-    const finalGuards = await allResults(trace, [
-      guardIsProvenanceValid(trace, store, cursor.value),
-      guardIsSyncableItemAcceptedOrWasWriteLegit(trace, store, cursor.value),
-      guardIsExpectedType(trace, path, cursor.value, expectedType, 'wrong-type')
-    ]);
+    const finalGuards = guardIsExpectedType(trace, path, cursor.value, expectedType, 'wrong-type');
     if (!finalGuards.ok) {
       return generalizeFailureResult(trace, finalGuards, 'wrong-type');
     }

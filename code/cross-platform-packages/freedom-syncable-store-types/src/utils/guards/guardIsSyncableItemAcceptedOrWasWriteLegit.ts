@@ -4,12 +4,18 @@ import { ForbiddenError } from 'freedom-common-errors';
 
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
+import type { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import { isSyncableItemAcceptedOrWasWriteLegit } from '../validation/isSyncableItemAcceptedOrWasWriteLegit.ts';
 
 export const guardIsSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, item: SyncableItemAccessor): PR<undefined, 'untrusted'> => {
-    const acceptedOrLegitWrite = await isSyncableItemAcceptedOrWasWriteLegit(trace, store, item);
+  async (
+    trace,
+    store: SyncableStore,
+    item: SyncableItemAccessor,
+    { accessControlDoc }: { accessControlDoc: SyncableStoreAccessControlDocument }
+  ): PR<undefined, 'untrusted'> => {
+    const acceptedOrLegitWrite = await isSyncableItemAcceptedOrWasWriteLegit(trace, store, item, { accessControlDoc });
     if (!acceptedOrLegitWrite.ok) {
       return acceptedOrLegitWrite;
     } else if (!acceptedOrLegitWrite.value) {

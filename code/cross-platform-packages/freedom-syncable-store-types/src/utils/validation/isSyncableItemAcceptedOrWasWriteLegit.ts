@@ -4,12 +4,18 @@ import { ForbiddenError, generalizeFailureResult } from 'freedom-common-errors';
 
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
+import type { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import { rolesWithWriteAccess } from '../../types/SyncableStoreRole.ts';
-import { getRoleForOriginWithPath } from './getRoleForOriginWithPath.ts';
+import { getRoleForOrigin } from './getRoleForOrigin.ts';
 
 export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, item: SyncableItemAccessor): PR<boolean, 'untrusted'> => {
+  async (
+    trace,
+    store: SyncableStore,
+    item: SyncableItemAccessor,
+    { accessControlDoc }: { accessControlDoc: SyncableStoreAccessControlDocument }
+  ): PR<boolean, 'untrusted'> => {
     if (store.localTrustMarks.isTrusted(item.path, 'accepted-or-legit-write')) {
       return makeSuccess(true);
     }
@@ -28,7 +34,7 @@ export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const originRole = await getRoleForOriginWithPath(trace, store, { path: item.path, origin: provenance.origin });
+    const originRole = await getRoleForOrigin(trace, store, { origin: provenance.origin, accessControlDoc });
     if (!originRole.ok) {
       return generalizeFailureResult(trace, originRole, ['deleted', 'not-found', 'wrong-type']);
     } else if (originRole.value === undefined) {

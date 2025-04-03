@@ -73,7 +73,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     }
 
     const mailStorageBundlePathString = mailStorageBundle.value.path.toString();
-    const removeItemAddedListener = userFs.value.addListener('itemAdded', async ({ type, path, hash }) => {
+    const removeItemAddedListener = userFs.value.addListener('itemAdded', async ({ path }) => {
       if (path.toString().startsWith(mailStorageBundlePathString)) {
         const mailId = extractUnmarkedSyncableId(path.lastId!);
         if (!mailIdInfo.is(mailId)) {

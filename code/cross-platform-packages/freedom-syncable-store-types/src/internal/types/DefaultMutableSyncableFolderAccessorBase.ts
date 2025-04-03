@@ -13,7 +13,7 @@ import { generalizeFailureResult, InternalStateError } from 'freedom-common-erro
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { CryptoKeySetId } from 'freedom-crypto-data';
+import type { CombinationCryptoKeySet, CryptoKeySetId } from 'freedom-crypto-data';
 import {
   extractSyncableIdParts,
   isSyncableItemEncrypted,
@@ -230,6 +230,20 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       }
 
       return await accessControlDoc.value.didHaveRoleAtTimeMSec(trace, { cryptoKeySetId, oneOfRoles, timeMSec });
+    }
+  );
+
+  public readonly getPublicKeysById = makeAsyncResultFunc(
+    [import.meta.filename, 'getPublicKeysById'],
+    async (trace, id: CryptoKeySetId): PR<CombinationCryptoKeySet, 'not-found'> => {
+      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
+      /* node:coverage disable */
+      if (!accessControlDoc.ok) {
+        return accessControlDoc;
+      }
+      /* node:coverage enable */
+
+      return await accessControlDoc.value.getPublicKeysById(trace, id);
     }
   );
 
@@ -475,7 +489,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
       const store = this.selectStoreForId_(id);
       return await store.getMutable(trace, id, expectedType);
     }
@@ -508,7 +522,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+      await this.getMutable(trace, id, expectedType)
   );
 
   // BundleManagement Methods
