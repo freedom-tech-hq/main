@@ -1,3 +1,5 @@
+import './utils/fwd-env.ts';
+
 import { init } from 'freedom-react-localization';
 import ReactDOM from 'react-dom/client';
 
@@ -15,3 +17,5 @@ const startWebApp = async (rootElem: HTMLElement | null) => {
 };
 
 startWebApp(document.getElementById('root'));
+
+console.log('Loaded index', process.env.FREEDOM_BUILD_UUID);

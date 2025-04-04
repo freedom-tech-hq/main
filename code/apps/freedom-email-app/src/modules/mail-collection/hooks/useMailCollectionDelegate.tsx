@@ -51,7 +51,7 @@ export const useMailCollectionDelegate = (
 };
 
 const prototypeMail: MailThread = {
-  id: mailThreadIdInfo.make('prototype'),
+  id: mailThreadIdInfo.make(),
   from: 'hello@freedomtechhq.com',
   to: 'hello@freedomtechhq.com',
   subject: 'Prototype',

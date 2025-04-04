@@ -11,7 +11,7 @@ import { ResizingObservingDiv } from '../../../components/ResizingObservingDiv.t
 import { ListHasFocusProvider } from '../../../contexts/list-has-focus.tsx';
 import type { DataSource, IsDataSourceLoading } from '../../../types/DataSource.ts';
 import { doRangesIntersect } from '../../../utils/doRangesIntersect.ts';
-import { ANIMATION_DURATION_MSEC } from '../consts/animation.ts';
+import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from '../consts/animation.ts';
 import { DEFAULT_MIN_OVERSCAN_AMOUNT_PX, DEFAULT_OVERSCAN_NUM_ITEMS } from '../consts/overscan.ts';
 import type { VirtualListControls } from '../types/VirtualListControls.ts';
 import type { VirtualListDelegate } from '../types/VirtualListDelegate.ts';
@@ -57,6 +57,10 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     id: 'showLoadingIndicator',
     detectChanges: true,
     deps: [dataSource]
+  });
+  const delayedShowLoadingIndicator = useDerivedBinding(showLoadingIndicator, (show) => show, {
+    id: 'delayedShowLoadingIndicator',
+    limitMSec: ANIMATION_DURATION_MSEC
   });
 
   const prototypeSizes = useBinding<Record<TemplateIdT, number>>(
@@ -601,7 +605,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
       elem.style.height = `${totalSize}px`;
     },
-    { triggerOnMount: true, deps: [dataSource] }
+    { triggerOnMount: true, deps: [dataSource], limitMSec: TARGET_FPS_MSEC }
   );
 
   const hasFocus = useBinding(() => isFocusable && document.activeElement?.id === uuid, { id: 'hasFocus', detectChanges: true });
@@ -705,12 +709,8 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
           </div>
         ))}
         {delegate.renderLoadingIndicator !== undefined
-          ? BC(showLoadingIndicator, (showLoadingIndicator) => (
-              <Collapse
-                key="top-loading-indicator"
-                in={showLoadingIndicator[0] && showLoadingIndicator[1] === 'start'}
-                unmountOnExit={true}
-              >
+          ? BC(delayedShowLoadingIndicator, (show) => (
+              <Collapse key="top-loading-indicator" in={show[0] && show[1] === 'start'} unmountOnExit={true}>
                 {delegate.renderLoadingIndicator?.() ?? null}
               </Collapse>
             ))
@@ -727,12 +727,8 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
             ))
           : null}
         {delegate.renderLoadingIndicator !== undefined
-          ? BC(showLoadingIndicator, (showLoadingIndicator) => (
-              <Collapse
-                key="bottom-loading-indicator"
-                in={showLoadingIndicator[0] && showLoadingIndicator[1] === 'end'}
-                unmountOnExit={true}
-              >
+          ? BC(delayedShowLoadingIndicator, (show) => (
+              <Collapse key="bottom-loading-indicator" in={show[0] && show[1] === 'end'} unmountOnExit={true}>
                 {delegate.renderLoadingIndicator?.() ?? null}
               </Collapse>
             ))

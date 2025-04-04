@@ -3,11 +3,11 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { Uuid } from 'freedom-contexts';
-import { makeTrace, makeUuid } from 'freedom-contexts';
+import { makeUuid } from 'freedom-contexts';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailCollectionPacket } from '../../../tasks/mail/getMailCollectionsTask.ts';
+import type { GetMailCollectionPacket } from '../../../tasks/modules/mail/getMailCollections.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailCollectionGroup } from '../../mail-types/MailCollectionGroup.ts';
@@ -148,7 +148,7 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
 
       setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
       try {
-        const data = await tasks.getMailCollectionsTask(makeTrace(import.meta.filename), isConnected, onData);
+        const data = await tasks.getMailCollections(isConnected, onData);
         clearOldData();
         onData(data);
       } finally {
