@@ -109,6 +109,12 @@
             "path": "dev-packages/freedom-build-tools"
         },
         {
+            "path": "dev-packages/freedom-fake-email-service"
+        },
+        {
+            "path": "dev-packages/freedom-fake-email-service-api"
+        },
+        {
             "path": "dev-packages/freedom-localization-tools"
         },
         {

@@ -32,6 +32,7 @@
   "repository": "git@github.com:Line-Feedr/the-freedom-network.git",
   "scripts": {
     "build": "nx run-many --parallel=10 -t build --exclude=tag:skip:build",
+    "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
     "build-libs": "nx run-many --parallel=10 -t build --projects=tag:type:lib --exclude=tag:skip:build",
     "build:tests": "nx run-many --parallel=10 -t build:tests --exclude=tag:skip:test",
     "clean": "if [ $LF_SKIP_CLEAN ]; then exit 0; fi; rimraf ./**/deployable-lib && nx run-many --parallel=10 -t clean && nx reset",
@@ -43,6 +44,7 @@
     "prep": "yarn install --check-files --ignore-engines && yarn build-libs",
     "prep:dev": "FREEDOM_BUILD_MODE=DEV yarn prep",
     "test": "nx run-many --parallel=10 -t test --exclude=tag:skip:test",
+    "test:dev": "FREEDOM_BUILD_MODE=DEV yarn test",
     "test:debug": "nx run-many --parallel=10 -t test:debug --exclude=tag:skip:test",
     "test-libs": "nx run-many --parallel=10 -t test --projects=tag:type:lib --exclude=tag:skip:test",
     "upgrade-latest": "yarn upgrade-interactive --latest --check-files --ignore-engines && yarn build-libs"
