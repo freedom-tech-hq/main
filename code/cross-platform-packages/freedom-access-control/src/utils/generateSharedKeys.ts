@@ -57,7 +57,7 @@ export const generateSharedKeys = makeAsyncResultFunc(
     return makeSuccess({
       id: sharedEncryptDecryptKeys.value.id,
       publicKeys: makeSerializedValue({
-        deserializedValueSchema: sharedPublicKeysSchema,
+        valueSchema: sharedPublicKeysSchema,
         serializedValue: publicKeysSerialization.serialized
       }),
       secretKeysEncryptedPerMember: secretKeysEncryptedPerMember.value
