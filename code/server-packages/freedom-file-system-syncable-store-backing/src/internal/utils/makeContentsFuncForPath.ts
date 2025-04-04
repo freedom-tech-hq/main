@@ -11,7 +11,6 @@ import { getFsPath } from './getFsPath.ts';
 import { makeDataFuncForPath } from './makeDataFuncForPath.ts';
 import { makeFileMetaFuncForPath } from './makeFileMetaFuncForPath.ts';
 import { makeFolderMetaFuncForPath } from './makeFolderMetaFuncForPath.ts';
-import { desanitizeFileSystemComponent } from './sanitizeFileSystemComponent.ts';
 
 export const makeContentsFuncForPath = (rootPath: string, ids: readonly SyncableId[]) =>
   makeAsyncResultFunc(
@@ -29,7 +28,7 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
             continue; // Skip local-only files
           }
 
-          const id = desanitizeFileSystemComponent(entry.name) as SyncableId;
+          const id = decodeURIComponent(entry.name) as SyncableId;
 
           if (entry.isFile()) {
             result[id] = {

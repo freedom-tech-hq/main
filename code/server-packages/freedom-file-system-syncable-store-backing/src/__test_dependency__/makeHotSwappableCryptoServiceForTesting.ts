@@ -9,10 +9,8 @@ export const makeHotSwappableCryptoServiceForTesting = (initialCryptoService: Cr
 
   return {
     getPrivateCryptoKeySetIds: (...args) => activeCryptoService.getPrivateCryptoKeySetIds(...args),
-    getEncryptingKeySetForId: (...args) => activeCryptoService.getEncryptingKeySetForId(...args),
-    getVerifyingKeySetForId: (...args) => activeCryptoService.getVerifyingKeySetForId(...args),
-    getSigningKeySet: (...args) => activeCryptoService.getSigningKeySet(...args),
-    getDecryptingKeySet: (...args) => activeCryptoService.getDecryptingKeySet(...args),
+    getPrivateCryptoKeySet: (...args) => activeCryptoService.getPrivateCryptoKeySet(...args),
+    getPublicCryptoKeySetForId: (...args) => activeCryptoService.getPublicCryptoKeySetForId(...args),
     hotSwap: (newCryptoService) => {
       activeCryptoService = newCryptoService;
     }

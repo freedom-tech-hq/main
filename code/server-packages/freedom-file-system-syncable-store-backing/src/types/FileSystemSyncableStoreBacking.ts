@@ -3,7 +3,7 @@ import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import {
-  extractSyncableIdParts,
+  extractSyncableItemTypeFromId,
   type SyncableId,
   type SyncableItemMetadata,
   type SyncableItemType,
@@ -17,6 +17,7 @@ import type {
   SyncableStoreBackingItemAccessor
 } from 'freedom-syncable-store-types';
 import { isExpectedType } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { SingleOrArray } from 'yaschema';
 
 import { ROOT_FOLDER_ID } from '../internal/consts/special-ids.ts';
@@ -49,7 +50,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
   /** Initializes the backing for use.  This must be done exactly once for newly-created backings. */
   public readonly initialize = makeAsyncResultFunc(
     [import.meta.filename, 'initialize'],
-    async (trace, metadata: Omit<SyncableItemMetadata, 'type' | 'name' | 'encrypted'> & Omit<FileSystemLocalItemMetadata, 'id'>) => {
+    async (trace, metadata: Omit<SyncableItemMetadata, 'name'> & FileSystemLocalItemMetadata) => {
       const savedMetadata = await createMetadataFile(trace, this.rootPath_, [], { ...metadata, name: ROOT_FOLDER_ID });
       if (!savedMetadata.ok) {
         return savedMetadata;
@@ -62,7 +63,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
   public readonly existsAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'existsAtPath'],
     async (trace, path: SyncablePath): PR<boolean> => {
-      const found = await traversePath(trace, this.root_, path);
+      const found = await disableLam(trace, 'not-found', (trace) => traversePath(trace, this.root_, path));
       if (!found.ok) {
         if (found.value.errorCode === 'not-found') {
           return makeSuccess(false);
@@ -115,8 +116,8 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
       }
 
       const ids: SyncableId[] = objectKeys(contents.value).filter((id) => {
-        const idParts = extractSyncableIdParts(id);
-        const isExpected = isExpectedType(trace, idParts, options?.type);
+        const itemType = extractSyncableItemTypeFromId(id);
+        const isExpected = isExpectedType(trace, itemType, options?.type);
         return isExpected.ok && isExpected.value;
       });
 
@@ -191,7 +192,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { data, metadata }: { data: Uint8Array; metadata: SyncableItemMetadata & Omit<FileSystemLocalItemMetadata, 'id'> }
+      { data, metadata }: { data: Uint8Array; metadata: SyncableItemMetadata & FileSystemLocalItemMetadata }
     ): PR<SyncableStoreBackingFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
@@ -226,7 +227,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { metadata }: { metadata: SyncableItemMetadata & Omit<FileSystemLocalItemMetadata, 'id'> }
+      { metadata }: { metadata: SyncableItemMetadata & FileSystemLocalItemMetadata }
     ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {

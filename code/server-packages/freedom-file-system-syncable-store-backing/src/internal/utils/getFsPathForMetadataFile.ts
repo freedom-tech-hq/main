@@ -1,7 +1,6 @@
 import type { SyncableId } from 'freedom-sync-types';
 
 import { getFsPath } from './getFsPath.ts';
-import { sanitizeFileSystemComponent } from './sanitizeFileSystemComponent.ts';
 
 export const getFsPathForMetadataFile = (rootPath: string, ids: readonly SyncableId[]): string => {
   if (ids.length === 0) {
@@ -10,7 +9,7 @@ export const getFsPathForMetadataFile = (rootPath: string, ids: readonly Syncabl
 
   const lastId = ids[ids.length - 1];
   return getFsPath(rootPath, ids.slice(0, ids.length - 1), {
-    suffixPaths: [`metadata.${sanitizeFileSystemComponent(lastId)}`],
+    suffixPaths: [`metadata.${encodeURIComponent(lastId)}`],
     extension: 'json'
   });
 };
