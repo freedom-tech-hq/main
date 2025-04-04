@@ -1,5 +1,6 @@
 import { GeneralError } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
+import { generateHashFromString } from 'freedom-crypto';
 import type { SaltId, SyncableId, SyncableIdConfig, SyncableItemType } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, makeSyncableId, unmarkedSyncableSaltedIdInfo } from 'freedom-sync-types';
 
@@ -28,15 +29,12 @@ export const saltedId =
       throw new GeneralError(trace, 'Salt is required');
     }
 
-    // TODO: TEMP
-    return makeSyncableId(settings, unmarkedSyncableSaltedIdInfo.make(plainId));
-
     // TODO: could probably cache these
-    // const hash = await generateHashFromString(trace, { value: `${saltString}:${plainId}` });
-    // if (!hash.ok) {
-    //   // This shouldn't really ever happen
-    //   throw new GeneralError(trace, hash.value);
-    // }
+    const hash = await generateHashFromString(trace, { value: `${saltString}:${plainId}` });
+    if (!hash.ok) {
+      // This shouldn't really ever happen
+      throw new GeneralError(trace, hash.value);
+    }
 
-    // return makeSyncableId(settings, unmarkedSyncableSaltedIdInfo.make(Buffer.from(hash.value).toString('base64')));
+    return makeSyncableId(settings, unmarkedSyncableSaltedIdInfo.make(Buffer.from(hash.value).toString('base64')));
   };
