@@ -1,25 +1,30 @@
 import type { PRFunc } from 'freedom-async';
+import { uint8ArraySchema } from 'freedom-basic-data';
+import { schema } from 'yaschema';
 
-import type { SyncableItemMetadata } from './metadata/SyncableItemMetadata.ts';
-import type { RemoteId } from './RemoteId.ts';
-import type { SyncablePath } from './SyncablePath.ts';
+import { syncableItemMetadataSchema } from './exports.ts';
+import { syncablePathSchema } from './SyncablePath.ts';
 
-type SyncPushArgs = { remoteId: RemoteId; path: SyncablePath } & (
-  | {
-      type: 'folder';
-      data?: undefined;
-      metadata: SyncableItemMetadata;
-    }
-  | {
-      type: 'bundle';
-      data?: undefined;
-      metadata: SyncableItemMetadata;
-    }
-  | {
-      type: 'file';
-      data: Uint8Array;
-      metadata: SyncableItemMetadata;
-    }
+export const syncPushArgsSchema = schema.allOf(
+  schema.object({ path: syncablePathSchema }),
+  schema.oneOf3(
+    schema.object({
+      type: schema.string('folder'),
+      data: schema.undefinedValue().optional(),
+      metadata: syncableItemMetadataSchema
+    }),
+    schema.object({
+      type: schema.string('bundle'),
+      data: schema.undefinedValue().optional(),
+      metadata: syncableItemMetadataSchema
+    }),
+    schema.object({
+      type: schema.string('file'),
+      data: uint8ArraySchema,
+      metadata: syncableItemMetadataSchema
+    })
+  )
 );
+export type SyncPushArgs = typeof syncPushArgsSchema.valueType;
 
 export type SyncPusher = PRFunc<undefined, never, [SyncPushArgs]>;

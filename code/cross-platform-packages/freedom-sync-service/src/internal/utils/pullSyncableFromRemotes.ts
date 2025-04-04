@@ -1,7 +1,7 @@
 import type { PR, TraceableError } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { Cast } from 'freedom-cast';
+import { Cast, objectKeys } from 'freedom-cast';
 import { InternalStateError } from 'freedom-common-errors';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
@@ -19,9 +19,9 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
       hash?: Sha256Hash;
     }
   ): PR<undefined, 'not-found'> => {
-    const remotes = syncService.getRemotes();
+    const remoteIds = objectKeys(syncService.getRemotesAccessors());
 
-    if (remotes.length === 0) {
+    if (remoteIds.length === 0) {
       // If there are no remotes setup, there's nothing to do, which is ok
       return makeSuccess(undefined);
     }
@@ -31,15 +31,15 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
     let lastNotFoundError: TraceableError<'not-found'> | undefined;
     const pulled = await allResultsMappedSkipFailures(
       trace,
-      remotes,
+      remoteIds,
       {
         _errorCodeType: Cast<'not-found'>(),
         maxConcurrency: 1,
         onSuccess: 'stop',
         skipErrorCodes: ['generic', 'not-found']
       },
-      async (trace, remote): PR<'ok', 'not-found'> => {
-        const pulled = await pullSyncableFromRemote(trace, { store, syncService }, { remoteId: remote.id, ...args });
+      async (trace, remoteId): PR<'ok', 'not-found'> => {
+        const pulled = await pullSyncableFromRemote(trace, { store, syncService }, { remoteId, ...args });
         if (!pulled.ok) {
           if (pulled.value.errorCode === 'not-found') {
             lastNotFoundError = pulled.value;

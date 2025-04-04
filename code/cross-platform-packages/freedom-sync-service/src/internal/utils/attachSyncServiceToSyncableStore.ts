@@ -12,7 +12,6 @@ import { getRecursiveFolderPaths, getSyncableHashAtPath } from 'freedom-syncable
 
 import { MANUAL_SYNC_INTERVAL_MSEC } from '../../consts/syncing.ts';
 import type { SyncService } from '../../types/SyncService.ts';
-import { generateStreamIdForPath } from '../../utils/generateStreamIdForPath.ts';
 import { makeManualSyncFunc } from './makeManualSyncFunc.ts';
 
 /** @returns a function to detach */
@@ -60,10 +59,8 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     );
 
     const onFolderAdded = makeAsyncResultFunc([import.meta.filename, 'onFolderAdded'], async (trace, path: SyncablePath): PR<undefined> => {
-      const streamId = await generateStreamIdForPath(trace, { path });
-      if (!streamId.ok) {
-        return streamId;
-      }
+      // TODO: TEMP
+      const streamId = path.toString();
       // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
 
       const pathString = path.toString();
@@ -72,7 +69,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       for (const deviceNotificationClient of deviceNotificationClients) {
         removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
         removeListenersByFolderPath[pathString].push(
-          deviceNotificationClient.addListener(`contentChange:${streamId.value}`, ({ hash }) => {
+          deviceNotificationClient.addListener(`contentChange:${streamId}`, ({ hash }) => {
             onRemoteContentChange(trace, { path, hash });
           })
         );
@@ -155,7 +152,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
 
     DEV: debugTopic('SYNC', (log) => log(`Added needsSync listener for ${store.path.toString()}`));
     const removeLocalNeedsSyncListener = store.addListener('needsSync', ({ path, hash }) => {
-      DEV: debugTopic('SYNC', (log) => log(`Received needsSync for ${path.toString()}: ${hash}`));
+      DEV: debugTopic('SYNC', (log) => log(`Received itemAdded for ${path.toString()}: ${hash}`));
       syncService.pushToRemotes({ path, hash });
     });
 

@@ -1,11 +1,13 @@
-import type { Sha256Hash } from 'freedom-basic-data';
+import { sha256HashInfo } from 'freedom-basic-data';
+import { schema } from 'yaschema';
 
-import type { SyncableItemMetadata } from '../metadata/SyncableItemMetadata.ts';
-import type { SyncableId } from '../SyncableId.ts';
+import { syncableItemMetadataSchema } from '../exports.ts';
+import { syncableIdSchema } from '../SyncableId.ts';
 
-export interface OutOfSyncFolder {
-  type: 'folder';
-  outOfSync: true;
-  hashesById: Partial<Record<SyncableId, Sha256Hash>>;
-  metadata: SyncableItemMetadata;
-}
+export const outOfSyncFolderSchema = schema.object({
+  type: schema.string('folder'),
+  outOfSync: schema.boolean(true),
+  hashesById: schema.record(syncableIdSchema, sha256HashInfo.schema),
+  metadata: syncableItemMetadataSchema
+});
+export type OutOfSyncFolder = typeof outOfSyncFolderSchema.valueType;

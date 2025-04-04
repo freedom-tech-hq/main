@@ -13,7 +13,6 @@ import {
 } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
-import type { InternalSyncService } from '../types/InternalSyncService.ts';
 import { pushMissingSyncableContentToRemote } from './pushSyncableToRemote.ts';
 
 export const pullSyncableFromRemote = makeAsyncResultFunc(
@@ -23,7 +22,10 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
     { store, syncService }: { store: MutableSyncableStore; syncService: SyncService },
     args: { remoteId: RemoteId; path: SyncablePath; hash?: Sha256Hash }
   ): PR<undefined, 'not-found'> => {
-    const pullFromRemote = (syncService as InternalSyncService).puller;
+    const pullFromRemote = syncService.getRemotesAccessors()[args.remoteId]?.puller;
+    if (pullFromRemote === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${args.remoteId}` }));
+    }
 
     const { remoteId, path } = args;
 
