@@ -79,6 +79,9 @@
             "path": "cross-platform-packages/freedom-periodic"
         },
         {
+            "path": "cross-platform-packages/freedom-serialization"
+        },
+        {
             "path": "cross-platform-packages/freedom-sync-service"
         },
         {
