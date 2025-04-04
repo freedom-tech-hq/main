@@ -36,9 +36,9 @@ export const generateOrigin = makeAsyncResultFunc(
       contentHash = folderContentHash.value;
     }
 
-    const signingKeys = await cryptoService.getSigningKeySet(trace);
-    if (!signingKeys.ok) {
-      return generalizeFailureResult(trace, signingKeys, 'not-found');
+    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
 
     return await generateSignedValue(trace, {
@@ -46,7 +46,7 @@ export const generateOrigin = makeAsyncResultFunc(
       valueSchema: syncableOriginSchema,
       signatureExtras: { path, type, name },
       signatureExtrasSchema: syncableOriginSignatureExtrasSchema,
-      signingKeys: signingKeys.value
+      signingKeys: privateKeys.value
     });
   }
 );

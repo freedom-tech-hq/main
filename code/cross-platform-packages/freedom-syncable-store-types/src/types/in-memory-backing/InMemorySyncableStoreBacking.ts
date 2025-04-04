@@ -3,7 +3,8 @@ import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableIdParts, syncableItemTypes } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, syncableItemTypes } from 'freedom-sync-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { SingleOrArray } from 'yaschema';
 
 import { isExpectedType } from '../../utils/validation/isExpectedType.ts';
@@ -21,13 +22,13 @@ import { makeItemAccessor } from './internal/utils/makeItemAccessor.ts';
 import { traversePath } from './internal/utils/traversePath.ts';
 
 export interface InMemorySyncableStoreBackingConstructorArgs {
-  metadata: Omit<SyncableItemMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>;
+  metadata: Omit<SyncableItemMetadata, 'name'> & LocalItemMetadata;
 }
 
 export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   private readonly root_: InMemorySyncableStoreBackingFolderItem;
 
-  constructor(metadata: Omit<SyncableItemMetadata & LocalItemMetadata, 'name' | 'type' | 'encrypted'>) {
+  constructor(metadata: Omit<SyncableItemMetadata, 'name'> & LocalItemMetadata) {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
@@ -39,7 +40,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   public readonly existsAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'existsAtPath'],
     async (trace, path: SyncablePath): PR<boolean> => {
-      const found = traversePath(trace, this.root_, path);
+      const found = disableLam(trace, 'not-found', (trace) => traversePath(trace, this.root_, path));
       if (!found.ok) {
         if (found.value.errorCode === 'not-found') {
           return makeSuccess(false);
@@ -82,9 +83,8 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       }
 
       const ids = objectKeys(found.value.contents).filter((id) => {
-        const idParts = extractSyncableIdParts(id);
-
-        const isExpected = isExpectedType(trace, idParts, options?.type);
+        const itemType = extractSyncableItemTypeFromId(id);
+        const isExpected = isExpectedType(trace, itemType, options?.type);
         return isExpected.ok && isExpected.value;
       });
       return makeSuccess(ids);

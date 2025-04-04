@@ -13,7 +13,8 @@ import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
-import { extractSyncableIdParts, type SyncablePath, type SyncableProvenance } from 'freedom-sync-types';
+import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
+import { isSyncableItemEncrypted } from 'freedom-sync-types';
 import { once } from 'lodash-es';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
@@ -72,7 +73,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     /* node:coverage enable */
 
     // Snapshots are encrypted if their parent bundle is encrypted
-    const isSnapshotEncrypted = extractSyncableIdParts(path.lastId!).encrypted;
+    const isSnapshotEncrypted = isSyncableItemEncrypted(path.lastId!);
     const snapshotsPath = path.append(SNAPSHOTS_BUNDLE_ID({ encrypted: isSnapshotEncrypted }));
     const snapshots = await getBundleAtPath(trace, store, snapshotsPath);
     /* node:coverage disable */
@@ -142,7 +143,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       const document = newDocument({ id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> });
 
       // Deltas are encrypted if their parent bundle is encrypted
-      const areDeltaEncrypted = extractSyncableIdParts(path.lastId!).encrypted;
+      const areDeltaEncrypted = isSyncableItemEncrypted(path.lastId!);
       const dynamicDeltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltaEncrypted }, snapshotId));
       const deltas = await getBundleAtPath(trace, store, dynamicDeltasPath);
       /* node:coverage disable */

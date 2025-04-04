@@ -1,6 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeSuccess } from 'freedom-async';
 import { Cast } from 'freedom-cast';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
 import type { MutableIndexStore } from 'freedom-indexing-types';
 import { InMemoryIndexStore } from 'freedom-indexing-types';
@@ -66,6 +67,11 @@ export class InMemoryDataSources implements DataSources {
       return makeSuccess(found as MutableSyncableStore);
     }
 
+    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    if (!privateKeys.ok) {
+      return generalizeFailureResult(trace, privateKeys, 'not-found');
+    }
+
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
       cryptoService,
@@ -81,7 +87,7 @@ export class InMemoryDataSources implements DataSources {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      provenance: provenance.value,
+      creatorPublicKeys: privateKeys.value.publicOnly(),
       saltsById
     });
 

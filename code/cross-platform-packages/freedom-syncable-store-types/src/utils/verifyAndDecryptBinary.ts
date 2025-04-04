@@ -33,14 +33,14 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
       return generalizeFailureResult(trace, signedByKeyId, 'not-found');
     }
 
-    const verifyingKeys = await cryptoService.getVerifyingKeySetForId(trace, signedByKeyId.value);
-    if (!verifyingKeys.ok) {
-      return generalizeFailureResult(trace, verifyingKeys, 'not-found');
+    const signedByPublicKeys = await accessControlDoc.getPublicKeysById(trace, signedByKeyId.value);
+    if (!signedByPublicKeys.ok) {
+      return generalizeFailureResult(trace, signedByPublicKeys, 'not-found');
     }
 
     const isSignatureValid = await isSignatureValidForSignedBuffer(trace, {
       signedBuffer: signedEncryptedValue,
-      verifyingKeys: verifyingKeys.value
+      verifyingKeys: signedByPublicKeys.value
     });
     /* node:coverage disable */
     if (!isSignatureValid.ok) {

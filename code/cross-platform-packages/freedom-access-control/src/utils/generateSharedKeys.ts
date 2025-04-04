@@ -2,17 +2,13 @@ import { type SharedKeys, sharedPublicKeysSchema, type SharedSecretKeys, sharedS
 import type { PR } from 'freedom-async';
 import { allResultsReduced, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { makeSerializedValue } from 'freedom-basic-data';
-import { generalizeFailureResult, InternalSchemaValidationError } from 'freedom-common-errors';
+import { InternalSchemaValidationError } from 'freedom-common-errors';
 import { generateCryptoEncryptDecryptKeySet, generateEncryptedValue } from 'freedom-crypto';
-import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { CryptoKeySetId, EncryptedValue, EncryptingKeySet } from 'freedom-crypto-data';
 
 export const generateSharedKeys = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    { cryptoService, cryptoKeySetIds }: { cryptoService: CryptoService; cryptoKeySetIds: CryptoKeySetId[] }
-  ): PR<SharedKeys> => {
+  async (trace, { encryptingKeySets }: { encryptingKeySets: EncryptingKeySet[] }): PR<SharedKeys> => {
     // TODO: this is a pretty large piece of data and we need to share – so there's probably a much better way to do this
     const sharedEncryptDecryptKeys = await generateCryptoEncryptDecryptKeySet(trace);
     /* node:coverage disable */
@@ -23,22 +19,17 @@ export const generateSharedKeys = makeAsyncResultFunc(
 
     const secretKeysEncryptedPerMember = await allResultsReduced(
       trace,
-      cryptoKeySetIds,
+      encryptingKeySets,
       {},
-      async (trace, cryptoKeySetId) => {
-        const encryptingKeys = await cryptoService.getEncryptingKeySetForId(trace, cryptoKeySetId);
-        if (!encryptingKeys.ok) {
-          return generalizeFailureResult(trace, encryptingKeys, 'not-found');
-        }
-
+      async (trace, encryptingKeys) => {
         return await generateEncryptedValue(trace, {
           value: sharedEncryptDecryptKeys.value,
           valueSchema: sharedSecretKeysSchema,
-          encryptingKeys: encryptingKeys.value
+          encryptingKeys
         });
       },
-      async (_trace, out, encryptedSharedSecretKeys, cryptoKeySetId) => {
-        out[cryptoKeySetId] = encryptedSharedSecretKeys;
+      async (_trace, out, encryptedSharedSecretKeys, encryptingKeys) => {
+        out[encryptingKeys.id] = encryptedSharedSecretKeys;
         return makeSuccess(out);
       },
       {} as Partial<Record<CryptoKeySetId, EncryptedValue<SharedSecretKeys>>>

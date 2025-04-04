@@ -5,7 +5,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import { defaultSaltId, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { TestingCryptoService } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
@@ -57,8 +57,8 @@ describe('folders', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      provenance: provenance.value,
-      saltsById: { [defaultSaltId]: makeUuid() }
+      creatorPublicKeys: cryptoKeys.publicOnly(),
+      saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 
     expectOk(await initializeRoot(trace, store));
@@ -74,7 +74,7 @@ describe('folders', () => {
     expectOk(cryptoKeys2);
     primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
-    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
+    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'editor' }));
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
@@ -102,7 +102,7 @@ describe('folders', () => {
     expectOk(cryptoKeys2);
     primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
-    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'appender' }));
+    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'appender' }));
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
     secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
@@ -137,7 +137,7 @@ describe('folders', () => {
 
     primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
-    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeyId: cryptoKeys2.value.id, role: 'editor' }));
+    expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'editor' }));
 
     expectOk(
       await testingFolder.value.updateAccess(trace, {

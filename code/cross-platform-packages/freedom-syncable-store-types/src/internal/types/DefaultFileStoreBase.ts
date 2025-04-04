@@ -15,7 +15,7 @@ import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundErr
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableIdParts, syncableItemTypes, uuidId } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, isSyncableItemEncrypted, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -259,13 +259,13 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
-      const idParts = extractSyncableIdParts(id);
+      const itemType = extractSyncableItemTypeFromId(id);
       const guards = await allResults(trace, [
         this.guardNotDeleted_(trace, getPath, 'deleted'),
         guardIsExpectedType(
           trace,
           getPath,
-          idParts,
+          itemType,
           intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
           'wrong-type'
         )
@@ -274,7 +274,15 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return guards;
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, idParts.type as T));
+      // Checking existence after deletion check because we want to return a 'deleted' errorCode explicitly if deleted
+      const exists = await this.exists(trace, id);
+      if (!exists.ok) {
+        return exists;
+      } else if (!exists.value) {
+        return makeFailure(new NotFoundError(trace, { message: `${getPath.toString()} not found`, errorCode: 'not-found' }));
+      }
+
+      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, itemType as T));
     }
   );
 
@@ -367,8 +375,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const getPath = this.path.append(itemId);
 
-          const idParts = extractSyncableIdParts(itemId);
-          const itemAccessor = this.makeItemAccessor_(getPath, idParts.type);
+          const itemType = extractSyncableItemTypeFromId(itemId);
+          const itemAccessor = this.makeItemAccessor_(getPath, itemType);
 
           const hash = await itemAccessor.getHash(trace);
           if (!hash.ok) {
@@ -399,18 +407,15 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return generalizeFailureResult(trace, ids, ['not-found', 'wrong-type']);
       }
 
-      const nonDeletedIds = await this.filterOutDeletedIds_(trace, ids.value);
+      const isEncrypted = this.isEncrypted_();
+      const idsWithMatchingEncryptionMode = ids.value.filter((id) => isSyncableItemEncrypted(id) === isEncrypted);
+
+      const nonDeletedIds = await this.filterOutDeletedIds_(trace, idsWithMatchingEncryptionMode);
       if (!nonDeletedIds.ok) {
         return nonDeletedIds;
       }
 
-      const isEncrypted = this.isEncrypted_();
-      const idsWithMatchingEncryptionMode = nonDeletedIds.value.filter((id) => {
-        const idParts = extractSyncableIdParts(id);
-        return idParts.encrypted === isEncrypted;
-      });
-
-      return makeSuccess(idsWithMatchingEncryptionMode);
+      return makeSuccess(nonDeletedIds.value);
     }
   );
 
@@ -477,12 +482,12 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
 
         const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
-        const idParts = extractSyncableIdParts(itemId);
-        switch (idParts.type) {
+        const itemType = extractSyncableItemTypeFromId(itemId);
+        switch (itemType) {
           case 'folder':
             break; // This won't happen
           case 'bundle': {
-            const itemAccessor = this.makeItemAccessor_(itemPath, idParts.type);
+            const itemAccessor = this.makeItemAccessor_(itemPath, itemType);
             const fileLs = await itemAccessor.ls(trace);
             if (!fileLs.ok) {
               return fileLs;
@@ -606,8 +611,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for file ${newPath.toString()}`));
-      this.syncTracker_.notify('needsSync', {
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for file ${newPath.toString()}`));
+      this.syncTracker_.notify('itemAdded', {
         type: 'file',
         path: newPath,
         hash: hash.value
@@ -667,8 +672,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for bundle ${newPath.toString()}`));
-      this.syncTracker_.notify('needsSync', {
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for bundle ${newPath.toString()}`));
+      this.syncTracker_.notify('itemAdded', {
         type: 'bundle',
         path: newPath,
         hash: hash.value

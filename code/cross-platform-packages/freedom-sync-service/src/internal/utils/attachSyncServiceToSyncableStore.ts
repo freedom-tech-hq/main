@@ -150,8 +150,8 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       onFolderRemoved(path);
     });
 
-    DEV: debugTopic('SYNC', (log) => log(`Added needsSync listener for ${store.path.toString()}`));
-    const removeLocalNeedsSyncListener = store.addListener('needsSync', ({ path, hash }) => {
+    DEV: debugTopic('SYNC', (log) => log(`Added itemAdded listener for ${store.path.toString()}`));
+    const removeLocalItemAddedListener = store.addListener('itemAdded', ({ path, hash }) => {
       DEV: debugTopic('SYNC', (log) => log(`Received itemAdded for ${path.toString()}: ${hash}`));
       syncService.pushToRemotes({ path, hash });
     });
@@ -174,7 +174,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
         removeListenersByFolderPath = {};
         removeLocalFolderAddedListener();
         removeLocalFolderRemovedListener();
-        removeLocalNeedsSyncListener();
+        removeLocalItemAddedListener();
         cancelSchedule();
       }
     });

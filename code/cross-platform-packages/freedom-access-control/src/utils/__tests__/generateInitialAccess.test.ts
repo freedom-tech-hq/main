@@ -1,16 +1,18 @@
-import type { TestContext } from 'node:test';
 import { describe, it } from 'node:test';
 
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
-import { expectOk } from 'freedom-testing-tools';
+import { deserialize } from 'freedom-serialization';
+import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 
+const roleSchema = schema.string();
+
 describe('generateInitialAccess', () => {
-  it('should work', async (t: TestContext) => {
+  it('should work', async () => {
     const trace = makeTrace('test');
 
     const cryptoKeys = await generateCryptoCombinationKeySet(trace);
@@ -20,11 +22,15 @@ describe('generateInitialAccess', () => {
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
-      initialState: { [cryptoKeys.value.id]: 'creator' },
-      roleSchema: schema.string()
+      initialAccess: [{ role: 'creator', publicKeys: cryptoKeys.value.publicOnly() }],
+      roleSchema,
+      doesRoleHaveReadAccess: () => true
     });
     expectOk(initialAccess);
 
-    t.assert.deepStrictEqual(initialAccess.value.state.value, { [cryptoKeys.value.id]: 'creator' });
+    const deserializedInitialAccessState = await deserialize(trace, initialAccess.value.state.value);
+    expectOk(deserializedInitialAccessState);
+
+    expectDeepStrictEqual(deserializedInitialAccessState.value, { [cryptoKeys.value.id]: 'creator' });
   });
 });

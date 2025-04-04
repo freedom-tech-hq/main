@@ -25,9 +25,9 @@ export const isTrustedTimeValid = makeAsyncResultFunc(
       contentHash: Sha256Hash;
     }
   ): PR<boolean> => {
-    const signingCryptoKeySetId = extractKeyIdFromSignature(trace, { signature: base64String.toBuffer(trustedTimeSignature) });
-    if (!signingCryptoKeySetId.ok) {
-      return generalizeFailureResult(trace, signingCryptoKeySetId, 'not-found');
+    const signedByKeyId = extractKeyIdFromSignature(trace, { signature: base64String.toBuffer(trustedTimeSignature) });
+    if (!signedByKeyId.ok) {
+      return generalizeFailureResult(trace, signedByKeyId, 'not-found');
     }
 
     const params: TrustedTimeSignatureParams = {
@@ -38,19 +38,14 @@ export const isTrustedTimeValid = makeAsyncResultFunc(
 
     // If the trusted time was signed by the creator, we just need to check that the signature is valid since creators can sign their own
     // trusted times
-    if (signingCryptoKeySetId.value === store.creatorCryptoKeySetId) {
-      const verifyingKeys = await store.cryptoService.getVerifyingKeySetForId(trace, signingCryptoKeySetId.value);
-      if (!verifyingKeys.ok) {
-        return generalizeFailureResult(trace, verifyingKeys, 'not-found');
-      }
-
+    if (signedByKeyId.value === store.creatorPublicKeys.id) {
       return await isSignatureValidForValue(trace, {
         signature: trustedTimeSignature,
         value: params,
         valueSchema: trustedTimeSignatureParamsSchema,
         signatureExtras: undefined,
         signatureExtrasSchema: undefined,
-        verifyingKeys: verifyingKeys.value
+        verifyingKeys: store.creatorPublicKeys
       });
     }
 
