@@ -49,6 +49,9 @@
             "path": "cross-platform-packages/freedom-do-soon"
         },
         {
+            "path": "cross-platform-packages/freedom-fetching"
+        },
+        {
             "path": "cross-platform-packages/freedom-indexing-types"
         },
         {
