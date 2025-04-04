@@ -1,12 +1,9 @@
 import type { PRFunc } from 'freedom-async';
-import type { CryptoKeySetId, DecryptingKeySet, EncryptingKeySet, SigningKeySet, VerifyingKeySet } from 'freedom-crypto-data';
+import type { CombinationCryptoKeySet, CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 
 export interface CryptoService {
+  readonly getPrivateCryptoKeySet: PRFunc<PrivateCombinationCryptoKeySet, 'not-found', [id?: CryptoKeySetId]>;
   readonly getPrivateCryptoKeySetIds: PRFunc<CryptoKeySetId[]>;
-
-  readonly getEncryptingKeySetForId: PRFunc<EncryptingKeySet, 'not-found', [id: CryptoKeySetId]>;
-  readonly getVerifyingKeySetForId: PRFunc<VerifyingKeySet, 'not-found', [id: CryptoKeySetId]>;
-
-  readonly getSigningKeySet: PRFunc<SigningKeySet, 'not-found', [id?: CryptoKeySetId]>;
-  readonly getDecryptingKeySet: PRFunc<DecryptingKeySet, 'not-found', [id?: CryptoKeySetId]>;
+  // TODO: see if we can remove this
+  readonly getPublicCryptoKeySetForId: PRFunc<CombinationCryptoKeySet, 'not-found', [id: CryptoKeySetId]>;
 }

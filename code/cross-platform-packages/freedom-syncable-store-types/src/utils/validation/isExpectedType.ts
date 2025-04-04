@@ -7,15 +7,17 @@ export const isExpectedType = makeSyncResultFunc(
   [import.meta.filename],
   (
     _trace: Trace,
-    item: { type: SyncableItemType },
+    itemOrType: SyncableItemType | { type: SyncableItemType },
     expectedType: SyncableItemType | Array<SyncableItemType> | undefined
   ): Result<boolean> => {
+    const type = typeof itemOrType === 'string' ? itemOrType : itemOrType.type;
+
     if (expectedType === undefined) {
       return makeSuccess(true);
     } else if (Array.isArray(expectedType)) {
-      return makeSuccess((expectedType as string[]).includes(item.type));
+      return makeSuccess((expectedType as string[]).includes(type));
     } else {
-      return makeSuccess(expectedType === item.type);
+      return makeSuccess(expectedType === type);
     }
   }
 );

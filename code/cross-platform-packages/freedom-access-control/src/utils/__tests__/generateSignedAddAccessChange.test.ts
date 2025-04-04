@@ -1,11 +1,11 @@
-import type { TestContext } from 'node:test';
 import { describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
 import { base64String, makeIsoDateTime, timeIdInfo } from 'freedom-basic-data';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
-import { expectOk } from 'freedom-testing-tools';
+import { deserialize } from 'freedom-serialization';
+import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
@@ -13,7 +13,7 @@ import { generateInitialAccess } from '../generateInitialAccess.ts';
 import { generateSignedAddAccessChange } from '../generateSignedAddAccessChange.ts';
 
 describe('generateSignedAddAccessChange', () => {
-  it('should work', async (t: TestContext) => {
+  it('should work', async () => {
     const trace = makeTrace('test');
 
     const cryptoKeys1 = await generateCryptoCombinationKeySet(trace);
@@ -23,14 +23,22 @@ describe('generateSignedAddAccessChange', () => {
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
-      initialState: { [cryptoKeys1.value.id]: 'creator' },
-      roleSchema: testStoreRoleSchema
+      initialAccess: [{ role: 'creator', publicKeys: cryptoKeys1.value.publicOnly() }],
+      roleSchema: testStoreRoleSchema,
+      doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(initialAccess);
 
-    t.assert.deepStrictEqual(initialAccess.value.state.value, { [cryptoKeys1.value.id]: 'creator' });
+    const deserializedInitialAccessState = await deserialize(trace, initialAccess.value.state.value);
+    expectOk(deserializedInitialAccessState);
+
+    expectDeepStrictEqual(deserializedInitialAccessState.value, { [cryptoKeys1.value.id]: 'creator' });
 
     const accessControlDoc = new TestAccessControlDocument({ initialAccess: initialAccess.value });
+
+    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
+      [cryptoKeys1.value.id]: 'creator'
+    });
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
@@ -47,10 +55,7 @@ describe('generateSignedAddAccessChange', () => {
           timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
-      params: {
-        publicKeyId: cryptoKeys2.value.id,
-        role: 'editor'
-      },
+      params: { publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' },
       doesRoleHaveReadAccess: (role) => role !== 'appender'
     });
     expectOk(signedAddAccessChange);
@@ -58,7 +63,7 @@ describe('generateSignedAddAccessChange', () => {
     const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value.signedAccessChange);
     expectOk(accessAdded);
 
-    t.assert.deepStrictEqual(accessControlDoc.accessControlState, {
+    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
       [cryptoKeys1.value.id]: 'creator',
       [cryptoKeys2.value.id]: 'editor'
     });

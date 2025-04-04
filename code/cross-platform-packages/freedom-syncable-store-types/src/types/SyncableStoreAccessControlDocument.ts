@@ -6,11 +6,11 @@ import { extractTimeMSecFromTimeId, timeIdInfo } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import { extractSyncableIdParts, type SyncablePath } from 'freedom-sync-types';
+import { deserialize } from 'freedom-serialization';
+import { extractUnmarkedSyncableId, type SyncablePath } from 'freedom-sync-types';
 import { isEqual } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
-import { generateContentHashForSyncableStoreAccessChange } from '../utils/generateContentHashForSyncableStoreAccessChange.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
 import { editorAndBelowRoles, ownerAndBelowRoles, syncableStoreRoleSchema } from './SyncableStoreRole.ts';
@@ -122,39 +122,38 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         }
       });
 
-      const idParts = extractSyncableIdParts(path.lastId!);
-      const timeId = idParts.unmarkedId;
+      const timeId = extractUnmarkedSyncableId(path.lastId!);
       if (!timeIdInfo.is(timeId)) {
         // The file ID should be a timeId
         return makeSuccess(false);
       }
       const deltaFileTimeMSec = extractTimeMSecFromTimeId(timeId);
       for (const addedChange of addedChanges) {
-        const contentHash = await generateContentHashForSyncableStoreAccessChange(trace, addedChange.value);
-        if (!contentHash.ok) {
-          return contentHash;
+        const deserializedChange = await deserialize(trace, addedChange.value);
+        if (!deserializedChange.ok) {
+          return makeSuccess(false);
         }
 
-        if (addedChange.value.timeMSec !== deltaFileTimeMSec) {
+        if (deserializedChange.value.timeMSec !== deltaFileTimeMSec) {
           // The time in the delta doesn't match the file time
           return makeSuccess(false);
         }
 
-        switch (addedChange.value.type) {
+        switch (deserializedChange.value.type) {
           case 'add-access':
-            if (!allowedTargetRoles.has(addedChange.value.role)) {
+            if (!allowedTargetRoles.has(deserializedChange.value.role)) {
               return makeSuccess(false);
             }
             break;
 
           case 'modify-access':
-            if (!allowedTargetRoles.has(addedChange.value.oldRole) || !allowedTargetRoles.has(addedChange.value.newRole)) {
+            if (!allowedTargetRoles.has(deserializedChange.value.oldRole) || !allowedTargetRoles.has(deserializedChange.value.newRole)) {
               return makeSuccess(false);
             }
             break;
 
           case 'remove-access':
-            if (!allowedTargetRoles.has(addedChange.value.oldRole)) {
+            if (!allowedTargetRoles.has(deserializedChange.value.oldRole)) {
               return makeSuccess(false);
             }
             break;

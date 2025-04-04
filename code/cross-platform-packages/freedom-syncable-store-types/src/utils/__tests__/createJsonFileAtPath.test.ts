@@ -6,7 +6,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
-import { defaultSaltId, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
@@ -51,8 +51,8 @@ describe('createJsonFileAtPath', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      provenance: provenance.value,
-      saltsById: { [defaultSaltId]: makeUuid() }
+      creatorPublicKeys: cryptoKeys.publicOnly(),
+      saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 
     expectOk(await initializeRoot(trace, store));

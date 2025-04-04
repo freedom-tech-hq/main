@@ -1,25 +1,29 @@
 import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 'freedom-access-control';
-import type { AccessChangeParams, AccessControlDocumentPrefix, AccessControlState, TimedAccessChange } from 'freedom-access-control-types';
-import type { FailureResult, PR, Result } from 'freedom-async';
-import {
-  allResults,
-  allResultsNamed,
-  excludeFailureResult,
-  firstSuccessResult,
-  makeAsyncResultFunc,
-  makeFailure,
-  makeSuccess
-} from 'freedom-async';
+import type {
+  AccessChangeParams,
+  AccessControlDocumentPrefix,
+  AccessControlState,
+  TrustedTimeSignedAccessChange
+} from 'freedom-access-control-types';
+import type { PR, Result } from 'freedom-async';
+import { allResults, allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
-import { generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { CryptoKeySetId, SignedValue } from 'freedom-crypto-data';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { CryptoKeySetId } from 'freedom-crypto-data';
+import {
+  extractSyncableIdParts,
+  isSyncableItemEncrypted,
+  type SyncableId,
+  type SyncableItemMetadata,
+  type SyncableItemType,
+  type SyncablePath
+} from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
-import type { TrustedTime, TrustedTimeSource } from 'freedom-trusted-time-source';
+import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
 import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
@@ -154,7 +158,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      let signedTimedChange: Result<{ trustedTime: TrustedTime; signedAccessChange: SignedValue<TimedAccessChange<SyncableStoreRole>> }>;
+      let signedTimedChange: Result<TrustedTimeSignedAccessChange<SyncableStoreRole>>;
       switch (change.type) {
         case 'add-access':
           signedTimedChange = await generateSignedAddAccessChange(trace, {
@@ -300,76 +304,37 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   public readonly createBundle: MutableFileStore['createBundle'] = (trace, args) => {
     switch (args.mode) {
-      case 'via-sync':
-        if (args.id === ACCESS_CONTROL_BUNDLE_ID || args.id === STORE_CHANGES_BUNDLE_ID) {
+      case 'via-sync': {
+        if (isSyncableItemEncrypted(args.id)) {
+          return this.encryptedFileStore_.createBundle(trace, args);
+        } else {
           return this.plainFileStore_.createBundle(trace, args);
         }
-        break;
+      }
 
       case undefined:
-      case 'local':
-        if (args.id === ACCESS_CONTROL_BUNDLE_ID || args.id === STORE_CHANGES_BUNDLE_ID) {
+      case 'local': {
+        const isItemEncrypted = (args.id !== undefined ? isSyncableItemEncrypted(args.id) : undefined) ?? true;
+        if (isItemEncrypted) {
+          return this.encryptedFileStore_.createBundle(trace, args);
+        } else {
           return this.plainFileStore_.createBundle(trace, args);
         }
-        break;
+      }
     }
-
-    return this.encryptedFileStore_.createBundle(trace, args);
   };
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
     async (trace: Trace, id: SyncableId): PR<undefined, 'not-found'> => {
-      if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
-        return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported for ${this.path.append(id).toString()}` }));
-      }
-
-      const results = await disableLam(trace, 'not-found', (trace) =>
-        Promise.all([this.folderStore_.delete(trace, id), this.encryptedFileStore_.delete(trace, id)])
-      );
-
-      let failure: FailureResult<'not-found'> | undefined;
-      for (const result of results) {
-        if (result.ok) {
-          return makeSuccess(undefined);
-        } else if (result.value.errorCode !== 'not-found') {
-          failure = result;
-        }
-      }
-
-      if (failure !== undefined) {
-        return failure;
-      }
-
-      return makeFailure(
-        new NotFoundError(trace, {
-          message: `No file or folder found for ID: ${JSON.stringify(id)} in ${this.path.toString()}`,
-          errorCode: 'not-found'
-        })
-      );
+      const store = this.selectStoreForId_(id);
+      return await store.delete(trace, id);
     }
   );
 
   public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: SyncableId) => {
-    if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
-      return await this.plainFileStore_.exists(trace, id);
-    }
-
-    const results = await allResultsNamed(
-      trace,
-      {},
-      {
-        existsInFolder: this.folderStore_.exists(trace, id),
-        existsInEncryptedBundle: this.encryptedFileStore_.exists(trace, id)
-      }
-    );
-    if (!results.ok) {
-      return results;
-    }
-
-    const { existsInFolder, existsInEncryptedBundle } = results.value;
-
-    return makeSuccess(existsInFolder || existsInEncryptedBundle);
+    const store = this.selectStoreForId_(id);
+    return await store.exists(trace, id);
   });
 
   public readonly generateNewSyncableItemName: GenerateNewSyncableItemNameFunc = async (trace: Trace, args) =>
@@ -511,21 +476,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
-      if (id === ACCESS_CONTROL_BUNDLE_ID || id === STORE_CHANGES_BUNDLE_ID) {
-        return await this.plainFileStore_.getMutable(trace, id, expectedType);
-      }
-
-      const got = await disableLam(trace, 'not-found', (trace) =>
-        firstSuccessResult(trace, [
-          this.folderStore_.getMutable(trace, id, expectedType),
-          this.encryptedFileStore_.getMutable(trace, id, expectedType)
-        ])
-      );
-      if (!got.ok) {
-        return excludeFailureResult(got, 'empty-data-set');
-      }
-
-      return makeSuccess(got.value as MutableSyncableItemAccessor & { type: T });
+      const store = this.selectStoreForId_(id);
+      return await store.getMutable(trace, id, expectedType);
     }
   );
 
@@ -608,9 +560,22 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       }
       /* node:coverage enable */
 
-      return makeSuccess(accessControlDoc.value.accessControlState);
+      return makeSuccess(await accessControlDoc.value.accessControlState);
     }
   );
+
+  private readonly selectStoreForId_ = (id: SyncableId) => {
+    const idParts = extractSyncableIdParts(id);
+    if (idParts.type === 'folder') {
+      return this.folderStore_;
+    }
+
+    if (idParts.encrypted) {
+      return this.encryptedFileStore_;
+    } else {
+      return this.plainFileStore_;
+    }
+  };
 }
 
 // Helpers

@@ -15,7 +15,7 @@ import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundErr
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
 import {
-  extractSyncableIdParts,
+  extractSyncableItemTypeFromId,
   type SyncableId,
   type SyncableItemMetadata,
   type SyncableItemType,
@@ -219,17 +219,24 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
-      const idParts = extractSyncableIdParts(id);
-
+      const itemType = extractSyncableItemTypeFromId(id);
       const guards = await allResults(trace, [
         this.guardNotDeleted_(trace, getPath, 'deleted'),
-        guardIsExpectedType(trace, getPath, idParts, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type')
+        guardIsExpectedType(trace, getPath, itemType, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type')
       ]);
       if (!guards.ok) {
         return guards;
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, idParts.type as T));
+      // Checking existence after deletion check because we want to return a 'deleted' errorCode explicitly if deleted
+      const exists = await this.exists(trace, id);
+      if (!exists.ok) {
+        return exists;
+      } else if (!exists.value) {
+        return makeFailure(new NotFoundError(trace, { message: `${getPath.toString()} not found`, errorCode: 'not-found' }));
+      }
+
+      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, itemType as T));
     }
   );
 
@@ -322,8 +329,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
           const getPath = this.path.append(itemId);
 
-          const idParts = extractSyncableIdParts(itemId);
-          const itemAccessor = this.makeItemAccessor_(getPath, idParts.type);
+          const itemType = extractSyncableItemTypeFromId(itemId);
+          const itemAccessor = this.makeItemAccessor_(getPath, itemType);
 
           const hash = await itemAccessor.getHash(trace);
           if (!hash.ok) {
@@ -412,10 +419,10 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
 
         const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
-        const idParts = extractSyncableIdParts(itemId);
-        switch (idParts.type) {
+        const itemType = extractSyncableItemTypeFromId(itemId);
+        switch (itemType) {
           case 'folder': {
-            const itemAccessor = this.makeItemAccessor_(itemPath, idParts.type);
+            const itemAccessor = this.makeItemAccessor_(itemPath, itemType);
             const fileLs = await itemAccessor.ls(trace);
             if (!fileLs.ok) {
               return fileLs;
@@ -542,8 +549,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       DEV: debugTopic('SYNC', (log) => log(`Notifying folderAdded for folder ${newPath.toString()}`));
       this.syncTracker_.notify('folderAdded', { path: newPath });
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying needsSync for folder ${newPath.toString()}`));
-      this.syncTracker_.notify('needsSync', {
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for folder ${newPath.toString()}`));
+      this.syncTracker_.notify('itemAdded', {
         type: 'folder',
         path: newPath,
         hash: hash.value

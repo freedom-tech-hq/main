@@ -1,12 +1,14 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { ConflictError } from 'freedom-common-errors';
+import { inline, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeSerializedValueSchema, type SerializedValue } from 'freedom-basic-data';
+import { ConflictError, NotFoundError } from 'freedom-common-errors';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
-import type { Trace } from 'freedom-contexts';
-import type { CryptoKeySetId, EncryptedValue, SignedValue } from 'freedom-crypto-data';
-import { makeSignedValueSchema } from 'freedom-crypto-data';
-import type { Schema } from 'yaschema';
+import { makeTrace, type Trace } from 'freedom-contexts';
+import type { CombinationCryptoKeySet, CryptoKeySetId, EncryptedValue, SignedValue } from 'freedom-crypto-data';
+import { makeSignedValueSchema, publicKeysByIdSchema } from 'freedom-crypto-data';
+import { deserialize } from 'freedom-serialization';
+import type { Schema, TypeOrPromisedType } from 'yaschema';
 
 import type { AccessControlState } from './AccessControlState.ts';
 import { makeAccessControlStateSchema } from './AccessControlState.ts';
@@ -21,10 +23,13 @@ export const ACCESS_CONTROL_DOCUMENT_PREFIX = 'ACCESS-CONTROL';
 export type AccessControlDocumentPrefix = typeof ACCESS_CONTROL_DOCUMENT_PREFIX;
 
 export abstract class AccessControlDocument<RoleT extends string> extends ConflictFreeDocument<AccessControlDocumentPrefix> {
-  private readonly stateSchema_: Schema<SignedValue<AccessControlState<RoleT>>>;
-  private readonly changeSchema_: Schema<SignedValue<TimedAccessChange<RoleT>>>;
+  private readonly stateSchema_: Schema<SignedValue<SerializedValue<AccessControlState<RoleT>>>>;
+  private readonly publicKeysByIdSchema_: Schema<SignedValue<SerializedValue<Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>>>>>;
+  private readonly changeSchema_: Schema<SignedValue<SerializedValue<TimedAccessChange<RoleT>>>>;
 
+  private needsRebuildTransients_: boolean;
   private state_: AccessControlState<RoleT> = {};
+  private publicKeysById_: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> = {};
 
   constructor({
     roleSchema,
@@ -36,19 +41,25 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   )) {
     super(ACCESS_CONTROL_DOCUMENT_PREFIX, snapshot);
 
-    this.stateSchema_ = makeSignedValueSchema(makeAccessControlStateSchema({ roleSchema }), undefined);
-    this.changeSchema_ = makeSignedValueSchema(makeTimedAccessChangeSchema({ roleSchema }), undefined);
+    this.stateSchema_ = makeSignedValueSchema(makeSerializedValueSchema(makeAccessControlStateSchema({ roleSchema })), undefined);
+    this.publicKeysByIdSchema_ = makeSignedValueSchema(makeSerializedValueSchema(publicKeysByIdSchema), undefined);
+    this.changeSchema_ = makeSignedValueSchema(makeSerializedValueSchema(makeTimedAccessChangeSchema({ roleSchema })), undefined);
 
     if (snapshot === undefined) {
       this.initialState_.set(initialAccess.state);
+      this.initialPublicKeysById_.set(initialAccess.publicKeysById);
       this.sharedKeys_.append(initialAccess.sharedKeys);
     }
 
-    this.state_ = this.rebuildState_();
+    this.needsRebuildTransients_ = true;
   }
 
   protected get initialAccess_(): InitialAccess<RoleT> {
-    return { state: this.initialState_.get()!, sharedKeys: Array.from(this.sharedKeys_.values()) };
+    return {
+      state: this.initialState_.get()!,
+      publicKeysById: this.initialPublicKeysById_.get()!,
+      sharedKeys: Array.from(this.sharedKeys_.values())
+    };
   }
 
   // Overridden Public Methods
@@ -59,12 +70,21 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   ): void {
     super.applyDeltas(deltas, options);
 
-    this.state_ = this.rebuildState_();
+    this.needsRebuildTransients_ = true;
   }
 
   // Field Helpers
 
-  public get accessControlState(): AccessControlState<RoleT> {
+  public get accessControlState(): TypeOrPromisedType<AccessControlState<RoleT>> {
+    if (this.needsRebuildTransients_) {
+      return inline(async () => {
+        const trace = makeTrace(import.meta.filename, 'accessControlState');
+        await this.rebuildTransientValues_(trace);
+
+        return { ...this.state_ };
+      });
+    }
+
     return { ...this.state_ };
   }
 
@@ -72,7 +92,7 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   public readonly didHaveRoleAtTimeMSec = makeAsyncResultFunc(
     [import.meta.filename, 'didHaveRoleAtTimeMSec'],
     async (
-      _trace,
+      trace,
       {
         cryptoKeySetId,
         oneOfRoles,
@@ -83,11 +103,21 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
         timeMSec: number;
       }
     ): PR<boolean> => {
-      const state = this.initialState_.get()!.value;
+      const initialTransients = await this.getInitialTransients_(trace);
+      if (!initialTransients.ok) {
+        return initialTransients;
+      }
+      const { state, publicKeysById } = initialTransients.value;
 
+      const transients = { state, publicKeysById };
       for (const change of this.changes_.values()) {
-        if (change.value.timeMSec <= timeMSec) {
-          applyChangeToState(state, change.value);
+        const deserializedChange = await deserialize(trace, change.value);
+        if (!deserializedChange.ok) {
+          return deserializedChange;
+        }
+
+        if (deserializedChange.value.timeMSec <= timeMSec) {
+          applyChangeToTransients(transients, deserializedChange.value);
         }
       }
 
@@ -96,34 +126,67 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
     }
   );
 
+  public readonly getPublicKeysById = makeAsyncResultFunc(
+    [import.meta.filename, 'getKeysById'],
+    async (trace, publicKeyId: CryptoKeySetId): PR<CombinationCryptoKeySet, 'not-found'> => {
+      if (this.needsRebuildTransients_) {
+        await this.rebuildTransientValues_(trace);
+      }
+
+      const found = this.publicKeysById_[publicKeyId];
+      if (found === undefined) {
+        return makeFailure(new NotFoundError(trace, { message: `No public keys found for ID: ${publicKeyId}`, errorCode: 'not-found' }));
+      }
+
+      return makeSuccess(found);
+    }
+  );
+
   public readonly addChange = makeAsyncResultFunc(
     [import.meta.filename, 'addChange'],
-    async (trace: Trace, change: SignedValue<TimedAccessChange<RoleT>>): PR<undefined, 'conflict'> => {
+    async (trace: Trace, change: SignedValue<SerializedValue<TimedAccessChange<RoleT>>>): PR<undefined, 'conflict'> => {
+      const deserializedChange = await deserialize(trace, change.value);
+      if (!deserializedChange.ok) {
+        return deserializedChange;
+      }
+
       if (this.initialState_.get() === undefined) {
         return makeFailure(new ConflictError(trace, { message: "Initial state isn't set" }));
       }
 
-      if (!applyChangeToState(this.state_, change.value)) {
+      if (this.needsRebuildTransients_) {
+        await this.rebuildTransientValues_(trace);
+      }
+
+      const transients = { state: this.state_, publicKeysById: this.publicKeysById_ };
+      if (!applyChangeToTransients(transients, deserializedChange.value)) {
         return makeFailure(new ConflictError(trace, { message: 'Change is invalid', errorCode: 'conflict' }));
       }
 
       // TODO: if an add and remove happen at about the same time, its likely that the new user might not get access to the new secret.  this should be mitigated during the merge of the remove, to make sure that it really includes all users and access control changes should be done synchronously
-      switch (change.value.type) {
-        case 'add-access':
-          this.insertEncryptedSecretKeysForUser_(change.value.publicKeyId, change.value.encryptedSecretKeysForNewUserBySharedKeysId);
+      switch (deserializedChange.value.type) {
+        case 'add-access': {
+          this.insertEncryptedSecretKeysForUser_(
+            deserializedChange.value.publicKeys.id,
+            deserializedChange.value.encryptedSecretKeysForNewUserBySharedKeysId
+          );
           break;
+        }
 
         case 'modify-access':
-          if (change.value.encryptedSecretKeysForModifiedUserBySharedKeysId !== undefined) {
-            this.insertEncryptedSecretKeysForUser_(change.value.publicKeyId, change.value.encryptedSecretKeysForModifiedUserBySharedKeysId);
+          if (deserializedChange.value.encryptedSecretKeysForModifiedUserBySharedKeysId !== undefined) {
+            this.insertEncryptedSecretKeysForUser_(
+              deserializedChange.value.publicKeyId,
+              deserializedChange.value.encryptedSecretKeysForModifiedUserBySharedKeysId
+            );
           }
-          if (change.value.newSharedKeys !== undefined) {
-            this.sharedKeys_.append([change.value.newSharedKeys]);
+          if (deserializedChange.value.newSharedKeys !== undefined) {
+            this.sharedKeys_.append([deserializedChange.value.newSharedKeys]);
           }
           break;
 
         case 'remove-access':
-          this.sharedKeys_.append([change.value.newSharedKeys]);
+          this.sharedKeys_.append([deserializedChange.value.newSharedKeys]);
           break;
       }
 
@@ -141,11 +204,18 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   // Protected Field Access Methods
 
   protected get initialState_() {
-    return this.generic.getObjectField<SignedValue<AccessControlState<RoleT>>>('initialState', this.stateSchema_);
+    return this.generic.getObjectField<SignedValue<SerializedValue<AccessControlState<RoleT>>>>('initialState', this.stateSchema_);
+  }
+
+  protected get initialPublicKeysById_() {
+    return this.generic.getObjectField<SignedValue<SerializedValue<Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>>>>>(
+      'initialPublicKeysById',
+      this.publicKeysByIdSchema_
+    );
   }
 
   protected get changes_() {
-    return this.generic.getArrayField<SignedValue<TimedAccessChange<RoleT>>>('changes', this.changeSchema_);
+    return this.generic.getArrayField<SignedValue<SerializedValue<TimedAccessChange<RoleT>>>>('changes', this.changeSchema_);
   }
 
   protected get sharedKeys_() {
@@ -153,6 +223,30 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   }
 
   // Private Methods
+
+  private getInitialTransients_ = makeAsyncResultFunc(
+    [import.meta.filename, 'getInitialTransients_'],
+    async (
+      trace: Trace
+    ): PR<{ state: AccessControlState<RoleT>; publicKeysById: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> }> => {
+      const serializedState = this.initialState_.get()!.value;
+      const serializedPublicKeysById = this.initialPublicKeysById_.get()!.value;
+
+      const deserializedState = await deserialize(trace, serializedState);
+      if (!deserializedState.ok) {
+        return deserializedState;
+      }
+      const state = deserializedState.value;
+
+      const deserializedPublicKeysById = await deserialize(trace, serializedPublicKeysById);
+      if (!deserializedPublicKeysById.ok) {
+        return deserializedPublicKeysById;
+      }
+      const publicKeysById = deserializedPublicKeysById.value;
+
+      return makeSuccess({ state, publicKeysById });
+    }
+  );
 
   private insertEncryptedSecretKeysForUser_(
     userPublicKeyId: CryptoKeySetId,
@@ -168,24 +262,49 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
     }
   }
 
-  private rebuildState_() {
-    const newState = this.initialState_.get()!.value;
+  // TODO: should have some coordination locking
+  private readonly rebuildTransientValues_ = makeAsyncResultFunc(
+    [import.meta.filename, 'rebuildTransientValues_'],
+    async (trace): PR<undefined> => {
+      this.needsRebuildTransients_ = false;
 
-    for (const change of this.changes_.values()) {
-      applyChangeToState(newState, change.value);
+      const initialTransients = await this.getInitialTransients_(trace);
+      if (!initialTransients.ok) {
+        return initialTransients;
+      }
+      const { state, publicKeysById } = initialTransients.value;
+
+      const transients = { state, publicKeysById };
+      for (const change of this.changes_.values()) {
+        const deserializedChange = await deserialize(trace, change.value);
+        if (!deserializedChange.ok) {
+          return deserializedChange;
+        }
+
+        applyChangeToTransients(transients, deserializedChange.value);
+      }
+
+      this.state_ = transients.state;
+      this.publicKeysById_ = transients.publicKeysById;
+
+      return makeSuccess(undefined);
     }
-
-    return newState;
-  }
+  );
 }
 
 // Helpers
 
-const applyChangeToState = <RoleT extends string>(state: AccessControlState<RoleT>, change: TimedAccessChange<RoleT>): boolean => {
+const applyChangeToTransients = <RoleT extends string>(
+  { state, publicKeysById }: { state: AccessControlState<RoleT>; publicKeysById: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> },
+  change: TimedAccessChange<RoleT>
+): boolean => {
   switch (change.type) {
     case 'add-access':
-      if (state[change.publicKeyId] === undefined) {
-        state[change.publicKeyId] = change.role;
+      if (state[change.publicKeys.id] === undefined) {
+        state[change.publicKeys.id] = change.role;
+        if (publicKeysById[change.publicKeys.id] === undefined) {
+          publicKeysById[change.publicKeys.id] = change.publicKeys;
+        }
         return true;
       }
       break;

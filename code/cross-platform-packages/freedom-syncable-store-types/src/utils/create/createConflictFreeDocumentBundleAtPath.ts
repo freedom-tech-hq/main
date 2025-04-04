@@ -5,7 +5,7 @@ import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableIdParts, timeId, uuidId } from 'freedom-sync-types';
+import { isSyncableItemEncrypted, timeId, uuidId } from 'freedom-sync-types';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
@@ -39,7 +39,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     const docPath = docBundle.value.path;
 
     // Snapshots are encrypted if their parent bundle is encrypted
-    const isEncrypted = extractSyncableIdParts(docPath.lastId!).encrypted;
+    const isEncrypted = isSyncableItemEncrypted(docPath.lastId!);
     const snapshots = await createBundleAtPath(trace, store, docPath.append(SNAPSHOTS_BUNDLE_ID({ encrypted: isEncrypted })));
     /* node:coverage disable */
     if (!snapshots.ok) {
@@ -86,7 +86,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
           }
 
           // Deltas are encrypted if their parent bundle is encrypted
-          const areDeltasEncrypted = extractSyncableIdParts(docPath.lastId!).encrypted;
+          const areDeltasEncrypted = isSyncableItemEncrypted(docPath.lastId!);
           const deltasPath = docPath.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.snapshotId));
           const deltas = await getBundleAtPath(trace, store, deltasPath);
           if (!deltas.ok) {
