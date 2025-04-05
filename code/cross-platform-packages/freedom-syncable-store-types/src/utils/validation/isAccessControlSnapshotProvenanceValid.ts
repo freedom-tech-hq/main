@@ -5,8 +5,8 @@ import { extractKeyIdFromSignedValue, isSignedValueValid } from 'freedom-crypto'
 
 import type { SyncableFileAccessor } from '../../types/SyncableFileAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
-import { getFolderAtPath } from '../get/getFolderAtPath.ts';
-import { getNearestFolderPath } from '../get/getNearestFolderPath.ts';
+import { getNearestFolder } from '../get/getNearestFolder.ts';
+import { getOwningAccessControlDocument } from '../get/getOwningAccessControlDocument.ts';
 
 /** Access control snapshots can only be created by the store creator or the folder creator */
 export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
@@ -47,17 +47,7 @@ export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
       // Otherwise, we'll check if this was signed by the folder creator using the keys from the folder's parent folder (since that's the
       // folder that would have granted access to create this folder)
 
-      const folderPath = item.path.parentPath?.parentPath;
-      if (folderPath === undefined) {
-        return makeSuccess(false);
-      }
-
-      const folderParentPath = folderPath.parentPath;
-      if (folderParentPath === undefined) {
-        return makeSuccess(false);
-      }
-
-      const folder = await getFolderAtPath(trace, store, folderPath);
+      const folder = await getNearestFolder(trace, store, item.path);
       if (!folder.ok) {
         return generalizeFailureResult(trace, folder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
       }
@@ -72,22 +62,17 @@ export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
         return generalizeFailureResult(trace, folderSignedByKeyId, 'not-found');
       }
 
-      const folderParentFolderPath = await getNearestFolderPath(trace, store, folderParentPath);
-      if (!folderParentFolderPath.ok) {
-        return generalizeFailureResult(trace, folderParentFolderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      const folderParentPath = folder.value.path.parentPath;
+      if (folderParentPath === undefined) {
+        return makeSuccess(false);
       }
 
-      const folderParentFolder = await getFolderAtPath(trace, store, folderParentFolderPath.value);
-      if (!folderParentFolder.ok) {
-        return generalizeFailureResult(trace, folderParentFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      const foldersParentFolderAccessControlDoc = await getOwningAccessControlDocument(trace, store, folderParentPath);
+      if (!foldersParentFolderAccessControlDoc.ok) {
+        return generalizeFailureResult(trace, foldersParentFolderAccessControlDoc, 'not-found');
       }
 
-      const accessControlDoc = await folderParentFolder.value.getAccessControlDocument(trace);
-      if (!accessControlDoc.ok) {
-        return accessControlDoc;
-      }
-
-      const folderSignedByPublicKey = await accessControlDoc.value.getPublicKeysById(trace, folderSignedByKeyId.value);
+      const folderSignedByPublicKey = await foldersParentFolderAccessControlDoc.value.getPublicKeysById(trace, folderSignedByKeyId.value);
       if (!folderSignedByPublicKey.ok) {
         return generalizeFailureResult(trace, folderSignedByPublicKey, 'not-found');
       }

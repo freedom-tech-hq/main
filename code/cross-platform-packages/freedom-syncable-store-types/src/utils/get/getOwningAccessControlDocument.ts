@@ -5,8 +5,7 @@ import { extractSyncableItemTypeFromId, type SyncablePath } from 'freedom-sync-t
 
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import type { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
-import { getFolderAtPath } from './getFolderAtPath.ts';
-import { getNearestFolderPath } from './getNearestFolderPath.ts';
+import { getNearestFolder } from './getNearestFolder.ts';
 
 /** Gets the access control document that grants permission over the specified item */
 export const getOwningAccessControlDocument = makeAsyncResultFunc(
@@ -21,12 +20,7 @@ export const getOwningAccessControlDocument = makeAsyncResultFunc(
       path = path.parentPath!;
     }
 
-    const nearestFolderPath = await getNearestFolderPath(trace, store, path);
-    if (!nearestFolderPath.ok) {
-      return generalizeFailureResult(trace, nearestFolderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const nearestFolder = await getFolderAtPath(trace, store, nearestFolderPath.value);
+    const nearestFolder = await getNearestFolder(trace, store, path);
     if (!nearestFolder.ok) {
       return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }

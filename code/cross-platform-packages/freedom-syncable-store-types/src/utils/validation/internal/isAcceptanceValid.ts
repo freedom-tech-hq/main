@@ -9,8 +9,7 @@ import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.t
 import type { SyncableStore } from '../../../types/SyncableStore.ts';
 import type { SyncableStoreAccessControlDocument } from '../../../types/SyncableStoreAccessControlDocument.ts';
 import { ownerAndAboveRoles } from '../../../types/SyncableStoreRole.ts';
-import { getNearestFolderPath } from '../../get/getNearestFolderPath.ts';
-import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
+import { getNearestFolder } from '../../get/getNearestFolder.ts';
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
 import { isTrustedTimeValid } from '../isTrustedTimeValid.ts';
 
@@ -72,12 +71,7 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    const nearestFolderPath = await getNearestFolderPath(trace, store, item.path);
-    if (!nearestFolderPath.ok) {
-      return generalizeFailureResult(trace, nearestFolderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const nearestFolder = await getSyncableAtPath(trace, store, nearestFolderPath.value, 'folder');
+    const nearestFolder = await getNearestFolder(trace, store, item.path);
     if (!nearestFolder.ok) {
       return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }

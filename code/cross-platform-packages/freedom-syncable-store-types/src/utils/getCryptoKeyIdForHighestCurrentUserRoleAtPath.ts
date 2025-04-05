@@ -7,8 +7,7 @@ import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import type { SyncableStoreRole } from '../types/SyncableStoreRole.ts';
 import { roleComparator } from '../types/SyncableStoreRole.ts';
-import { getNearestFolderPath } from './get/getNearestFolderPath.ts';
-import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
+import { getNearestFolder } from './get/getNearestFolder.ts';
 
 export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc(
   [import.meta.filename],
@@ -27,12 +26,7 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
       return makeSuccess({ role: 'creator' as const, cryptoKeySetId: store.creatorPublicKeys.id });
     }
 
-    const nearestFolderPath = await getNearestFolderPath(trace, store, path);
-    if (!nearestFolderPath.ok) {
-      return nearestFolderPath;
-    }
-
-    const nearestFolder = await getSyncableAtPath(trace, store, nearestFolderPath.value, 'folder');
+    const nearestFolder = await getNearestFolder(trace, store, path);
     if (!nearestFolder.ok) {
       return nearestFolder;
     }
