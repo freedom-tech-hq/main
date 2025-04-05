@@ -6,7 +6,7 @@ import { extractKeyIdFromSignedValue, isSignedValueValid } from 'freedom-crypto'
 import type { SyncableFileAccessor } from '../../types/SyncableFileAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import { getFolderAtPath } from '../get/getFolderAtPath.ts';
-import { getFolderPath } from '../get/getFolderPath.ts';
+import { getNearestFolderPath } from '../get/getNearestFolderPath.ts';
 
 /** Access control snapshots can only be created by the store creator or the folder creator */
 export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
@@ -29,12 +29,20 @@ export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
     if (signedByKeyId.value === store.creatorPublicKeys.id) {
       // If this was signed by the store creator, then it's always valid
 
-      return await isSignedValueValid(
+      const isValid = await isSignedValueValid(
         trace,
         metadata.value.provenance.origin,
         { name: metadata.value.name, path: item.path, type: 'file' },
         { verifyingKeys: store.creatorPublicKeys }
       );
+      if (!isValid.ok) {
+        return isValid;
+      } else if (!isValid.value) {
+        return makeSuccess(false);
+      }
+
+      store.localTrustMarks.markTrusted(item.path, 'provenance');
+      return makeSuccess(true);
     } else {
       // Otherwise, we'll check if this was signed by the folder creator using the keys from the folder's parent folder (since that's the
       // folder that would have granted access to create this folder)
@@ -64,7 +72,7 @@ export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
         return generalizeFailureResult(trace, folderSignedByKeyId, 'not-found');
       }
 
-      const folderParentFolderPath = await getFolderPath(trace, store, folderParentPath);
+      const folderParentFolderPath = await getNearestFolderPath(trace, store, folderParentPath);
       if (!folderParentFolderPath.ok) {
         return generalizeFailureResult(trace, folderParentFolderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
       }
@@ -74,17 +82,30 @@ export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
         return generalizeFailureResult(trace, folderParentFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
       }
 
-      const folderSignedByPublicKey = await folderParentFolder.value.getPublicKeysById(trace, folderSignedByKeyId.value);
+      const accessControlDoc = await folderParentFolder.value.getAccessControlDocument(trace);
+      if (!accessControlDoc.ok) {
+        return accessControlDoc;
+      }
+
+      const folderSignedByPublicKey = await accessControlDoc.value.getPublicKeysById(trace, folderSignedByKeyId.value);
       if (!folderSignedByPublicKey.ok) {
         return generalizeFailureResult(trace, folderSignedByPublicKey, 'not-found');
       }
 
-      return await isSignedValueValid(
+      const isValid = await isSignedValueValid(
         trace,
         metadata.value.provenance.origin,
         { name: metadata.value.name, path: item.path, type: 'file' },
         { verifyingKeys: folderSignedByPublicKey.value }
       );
+      if (!isValid.ok) {
+        return isValid;
+      } else if (!isValid.value) {
+        return makeSuccess(false);
+      }
+
+      store.localTrustMarks.markTrusted(item.path, 'provenance');
+      return makeSuccess(true);
     }
   }
 );

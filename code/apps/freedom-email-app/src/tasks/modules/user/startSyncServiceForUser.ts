@@ -131,8 +131,6 @@ export const startSyncServiceForUser = makeAsyncResultFunc(
           if (!addedRemoteAppenderAccess.ok) {
             return generalizeFailureResult(trace, addedRemoteAppenderAccess, 'conflict');
           }
-
-          console.log('Remote now has appender access');
         }
 
         mockRemotes = started.value;

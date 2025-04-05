@@ -110,7 +110,7 @@ const makeFlatLoggingFunc =
       }
     }
 
-    loggingFunc(messageParts.join(' '), 'trace:', traceStacks.map((stack) => stack.join('>')).join(';'));
+    loggingFunc(messageParts.join(' '), 'trace:', traceStacks.map((stack) => JSON.stringify(stack)).join(';'));
   };
 
 const makeStructuredLoggingFunc =

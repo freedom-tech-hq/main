@@ -6,7 +6,7 @@ import { callAsyncFunc, log } from 'freedom-async';
 import { Cast } from 'freedom-cast';
 import { attachToTrace, makeTrace } from 'freedom-contexts';
 import { LogJson } from 'freedom-logging-types';
-import { authTokenContextProvider } from 'freedom-server-trace-auth-token';
+import { authTokenProvider } from 'freedom-server-trace-auth-token';
 import { makeServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
 import { StatusCodes } from 'http-status-codes';
 import type { AnyBody, AnyHeaders, AnyParams, AnyQuery, AnyStatus, HttpApi, OptionalIfPossiblyUndefined } from 'yaschema-api';
@@ -111,7 +111,7 @@ export const makeHttpApiHandler =
 
             const authToken = selectedAuthToken?.value;
 
-            await authTokenContextProvider(trace, authToken, async (trace) => {
+            await authTokenProvider(trace, authToken, async (trace) => {
               /* node:coverage disable */
               const debugUserInfo = () => {
                 if (authToken === undefined) {

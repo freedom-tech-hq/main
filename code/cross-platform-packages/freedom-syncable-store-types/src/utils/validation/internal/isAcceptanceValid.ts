@@ -9,7 +9,7 @@ import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.t
 import type { SyncableStore } from '../../../types/SyncableStore.ts';
 import type { SyncableStoreAccessControlDocument } from '../../../types/SyncableStoreAccessControlDocument.ts';
 import { ownerAndAboveRoles } from '../../../types/SyncableStoreRole.ts';
-import { getFolderPath } from '../../get/getFolderPath.ts';
+import { getNearestFolderPath } from '../../get/getNearestFolderPath.ts';
 import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
 import { isTrustedTimeValid } from '../isTrustedTimeValid.ts';
@@ -72,19 +72,19 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    const folderPath = await getFolderPath(trace, store, item.path);
-    if (!folderPath.ok) {
-      return generalizeFailureResult(trace, folderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+    const nearestFolderPath = await getNearestFolderPath(trace, store, item.path);
+    if (!nearestFolderPath.ok) {
+      return generalizeFailureResult(trace, nearestFolderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    const folder = await getSyncableAtPath(trace, store, folderPath.value, 'folder');
-    if (!folder.ok) {
-      return generalizeFailureResult(trace, folder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+    const nearestFolder = await getSyncableAtPath(trace, store, nearestFolderPath.value, 'folder');
+    if (!nearestFolder.ok) {
+      return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     const timeMSec = extractTimeMSecFromTimeId(acceptance.value.timeId);
 
-    const isValid = await folder.value.didCryptoKeyHaveRoleAtTimeMSec(trace, {
+    const isValid = await nearestFolder.value.didCryptoKeyHaveRoleAtTimeMSec(trace, {
       cryptoKeySetId: signedByKeyId.value,
       oneOfRoles: ownerAndAboveRoles,
       timeMSec

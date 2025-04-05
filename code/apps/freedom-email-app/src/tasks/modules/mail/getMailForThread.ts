@@ -2,7 +2,7 @@ import type { PR, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { prefixedUuidId } from 'freedom-sync-types';
-import { getBundleAtPath, getJsonFromFileAtPath } from 'freedom-syncable-store-types';
+import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import type { Mail } from '../../../modules/mail-types/Mail.ts';
@@ -55,7 +55,7 @@ export const getMailForThread = makeAsyncResultFunc(
     }
 
     const mailId = mailIdInfo.make(mailThreadIdInfo.removePrefix(threadId));
-    const storedMail = await getJsonFromFileAtPath(
+    const storedMail = await getJsonFromFile(
       trace,
       userFs.value,
       mailStorageBundle.value.path.append(prefixedUuidId('file', mailId)),

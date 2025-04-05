@@ -1,19 +1,22 @@
-import type { PR } from 'freedom-async';
+import type { ChainableResult, PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath } from 'freedom-sync-types';
 
+import type { SyncableFileAccessor } from '../../types/SyncableFileAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
-import { getBinaryFromFileAtPath } from './getBinaryFromFileAtPath.ts';
+import { getBinaryFromFile } from './getBinaryFromFile.ts';
 
-export const getStringFromFileAtPath = makeAsyncResultFunc(
+export const getStringFromFile = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace: Trace,
     store: SyncableStore,
-    path: SyncablePath
+    pathOrAccessor:
+      | SyncablePath
+      | ChainableResult<SyncableFileAccessor, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>
   ): PR<string, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const binary = await getBinaryFromFileAtPath(trace, store, path);
+    const binary = await getBinaryFromFile(trace, store, pathOrAccessor);
     if (!binary.ok) {
       return binary;
     }

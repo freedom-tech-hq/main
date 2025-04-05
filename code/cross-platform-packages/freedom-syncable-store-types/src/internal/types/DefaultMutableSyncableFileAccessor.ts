@@ -119,4 +119,8 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
 
     return makeSuccess(metadata.value);
   });
+
+  public toString() {
+    return `File(${this.path.toString()})`;
+  }
 }

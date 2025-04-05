@@ -40,7 +40,10 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
 
     // Snapshots are encrypted if their parent bundle is encrypted
     const isEncrypted = isSyncableItemEncrypted(docPath.lastId!);
-    const snapshots = await createBundleAtPath(trace, store, docPath.append(SNAPSHOTS_BUNDLE_ID({ encrypted: isEncrypted })));
+    const snapshots = await docBundle.value.createBundle(trace, {
+      id: SNAPSHOTS_BUNDLE_ID({ encrypted: isEncrypted }),
+      trustedTimeSignature: undefined
+    });
     /* node:coverage disable */
     if (!snapshots.ok) {
       return snapshots;
@@ -50,11 +53,10 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
 
     const initialSnapshotId = timeId({ encrypted: isEncrypted, type: 'file' });
 
-    const deltas = await createBundleAtPath(
-      trace,
-      store,
-      docPath.append(makeDeltasBundleId({ encrypted: isEncrypted }, initialSnapshotId))
-    );
+    const deltas = await docBundle.value.createBundle(trace, {
+      id: makeDeltasBundleId({ encrypted: isEncrypted }, initialSnapshotId),
+      trustedTimeSignature: undefined
+    });
     /* node:coverage disable */
     if (!deltas.ok) {
       return deltas;

@@ -38,8 +38,7 @@ import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
-import { guardIsProvenanceValid } from '../../utils/guards/guardIsProvenanceValid.ts';
-import { guardIsSyncableItemAcceptedOrWasWriteLegit } from '../../utils/guards/guardIsSyncableItemAcceptedOrWasWriteLegit.ts';
+import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
@@ -80,6 +79,12 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     this.folderOperationsHandler_ = folderOperationsHandler;
     this.path = path;
     this.makeFolderAccessor_ = makeFolderAccessor;
+  }
+
+  // Public Methods
+
+  public toString() {
+    return `DefaultFolderStore(${this.path.toString()})`;
   }
 
   // MutableFolderStore Methods (partially implemented)
@@ -245,12 +250,9 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
       const item = this.makeMutableItemAccessor_<T>(getPath, itemType as T);
 
-      const finalGuards = await allResults(trace, [
-        guardIsProvenanceValid(trace, store, item),
-        guardIsSyncableItemAcceptedOrWasWriteLegit(trace, store, item)
-      ]);
-      if (!finalGuards.ok) {
-        return finalGuards;
+      const trustGuard = await guardIsSyncableItemTrusted(trace, store, item);
+      if (!trustGuard.ok) {
+        return trustGuard;
       }
 
       return makeSuccess(item);

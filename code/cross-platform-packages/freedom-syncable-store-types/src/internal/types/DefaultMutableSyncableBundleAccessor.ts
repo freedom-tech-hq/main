@@ -77,5 +77,9 @@ export class DefaultMutableSyncableBundleAccessor implements MutableSyncableBund
 
   // Public Methods
 
+  public toString() {
+    return `Bundle(${this.path.toString()})`;
+  }
+
   public readonly sweep = (trace: Trace) => this.data_.sweep(trace);
 }

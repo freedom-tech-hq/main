@@ -13,7 +13,7 @@ import { generalizeFailureResult, InternalStateError } from 'freedom-common-erro
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
-import type { CombinationCryptoKeySet, CryptoKeySetId } from 'freedom-crypto-data';
+import type { CryptoKeySetId } from 'freedom-crypto-data';
 import {
   extractSyncableIdParts,
   isSyncableItemEncrypted,
@@ -143,6 +143,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // MutableAccessControlledFolderAccessor Methods
 
+  public readonly getAccessControlDocument = makeAsyncResultFunc(
+    [import.meta.filename, 'getAccessControlDocument'],
+    async (trace: Trace): PR<SyncableStoreAccessControlDocument> => await getAccessControlDocument(trace, this.weakStore_, this.path)
+  );
+
   public readonly updateAccess = makeAsyncResultFunc(
     [import.meta.filename, 'updateAccess'],
     async (trace: Trace, change: AccessChangeParams<SyncableStoreRole>): PR<undefined, 'conflict'> => {
@@ -230,20 +235,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       }
 
       return await accessControlDoc.value.didHaveRoleAtTimeMSec(trace, { cryptoKeySetId, oneOfRoles, timeMSec });
-    }
-  );
-
-  public readonly getPublicKeysById = makeAsyncResultFunc(
-    [import.meta.filename, 'getPublicKeysById'],
-    async (trace, id: CryptoKeySetId): PR<CombinationCryptoKeySet, 'not-found'> => {
-      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
-      /* node:coverage disable */
-      if (!accessControlDoc.ok) {
-        return accessControlDoc;
-      }
-      /* node:coverage enable */
-
-      return await accessControlDoc.value.getPublicKeysById(trace, id);
     }
   );
 

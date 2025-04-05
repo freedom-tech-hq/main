@@ -33,6 +33,12 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     });
   }
 
+  // Public Methods
+
+  public toString() {
+    return `DefaultEncryptedFileStore(${this.path.toString()})`;
+  }
+
   // DefaultBundleBase Abstract Method Implementations
 
   protected override computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash> {

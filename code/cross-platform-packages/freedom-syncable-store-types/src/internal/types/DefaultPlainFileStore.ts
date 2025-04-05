@@ -14,6 +14,12 @@ import { DefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFile
 export type DefaultPlainFileStoreConstructorArgs = DefaultFileStoreBaseConstructorArgs;
 
 export class DefaultPlainFileStore extends DefaultFileStoreBase {
+  // Public Methods
+
+  public toString() {
+    return `DefaultPlainFileStore(${this.path.toString()})`;
+  }
+
   // DefaultBundleBase Abstract Method Implementations
 
   protected override computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash> {

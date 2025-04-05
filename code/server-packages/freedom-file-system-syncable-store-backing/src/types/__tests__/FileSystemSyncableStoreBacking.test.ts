@@ -20,7 +20,7 @@ import {
   generateProvenanceForNewSyncableStore,
   getFolderAtPath,
   getMutableFolderAtPath,
-  getStringFromFileAtPath,
+  getStringFromFile,
   initializeRoot,
   saltedId
 } from 'freedom-syncable-store-types';
@@ -92,14 +92,14 @@ describe('FileSystemSyncableStore', () => {
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
-    const helloWorldStringContent = await getStringFromFileAtPath(trace, store, helloWorldTxtPath);
+    const helloWorldStringContent = await getStringFromFile(trace, store, helloWorldTxtPath);
     expectOk(helloWorldStringContent);
     t.assert.strictEqual(helloWorldStringContent.value, 'hello world');
 
     // Deleting file
     expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
 
-    expectErrorCode(await getStringFromFileAtPath(trace, store, helloWorldTxtPath), 'deleted');
+    expectErrorCode(await getStringFromFile(trace, store, helloWorldTxtPath), 'deleted');
 
     // Deleting folder
     expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));
@@ -155,7 +155,7 @@ describe('FileSystemSyncableStore', () => {
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -183,7 +183,7 @@ describe('FileSystemSyncableStore', () => {
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -211,13 +211,13 @@ describe('FileSystemSyncableStore', () => {
     expectOk(createdTestTxtFile);
 
     // Should NOT be able to read back that file
-    const textContent2 = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
     cryptoService.hotSwap(primaryUserCryptoService);
 
     // Primary user should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });

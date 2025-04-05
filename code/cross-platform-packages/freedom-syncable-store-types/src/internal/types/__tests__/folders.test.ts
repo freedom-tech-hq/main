@@ -21,7 +21,7 @@ import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts'
 import { createStringFileAtPath } from '../../../utils/create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../../utils/generateProvenanceForNewSyncableStore.ts';
 import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
-import { getStringFromFileAtPath } from '../../../utils/get/getStringFromFileAtPath.ts';
+import { getStringFromFile } from '../../../utils/get/getStringFromFile.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
 import { saltedId } from '../../../utils/saltedId.ts';
 
@@ -87,7 +87,7 @@ describe('folders', () => {
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -113,13 +113,13 @@ describe('folders', () => {
     expectOk(createdTestTxtFile);
 
     // Should NOT be able to read back that file
-    const textContent2 = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
     cryptoService.hotSwap(primaryUserCryptoService);
 
     // Primary user should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -169,7 +169,7 @@ describe('folders', () => {
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
-    const textValue = await getStringFromFileAtPath(trace, store, helloWorldTxtPath);
+    const textValue = await getStringFromFile(trace, store, helloWorldTxtPath);
     expectOk(textValue);
     t.assert.strictEqual(textValue.value, 'hello world');
 

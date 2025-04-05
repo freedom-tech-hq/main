@@ -41,4 +41,10 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
       makeFolderAccessor: ({ path }) => new DefaultMutableSyncableFolderAccessor({ store: this, backing, path, syncTracker })
     });
   }
+
+  // Public Methods
+
+  public toString() {
+    return `Store(${this.path.toString()})`;
+  }
 }

@@ -1,22 +1,25 @@
-import type { PR } from 'freedom-async';
+import type { ChainableResult, PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { Schema } from 'yaschema';
 
+import type { SyncableFileAccessor } from '../../types/SyncableFileAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
-import { getStringFromFileAtPath } from './getStringFromFileAtPath.ts';
+import { getStringFromFile } from './getStringFromFile.ts';
 
-export const getJsonFromFileAtPath = makeAsyncResultFunc(
+export const getJsonFromFile = makeAsyncResultFunc(
   [import.meta.filename],
   async <T>(
     trace: Trace,
     store: SyncableStore,
-    path: SyncablePath,
+    pathOrAccessor:
+      | SyncablePath
+      | ChainableResult<SyncableFileAccessor, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>,
     schema: Schema<T>
   ): PR<T, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const jsonString = await getStringFromFileAtPath(trace, store, path);
+    const jsonString = await getStringFromFile(trace, store, pathOrAccessor);
     /* node:coverage disable */
     if (!jsonString.ok) {
       return jsonString;

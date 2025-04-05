@@ -34,8 +34,7 @@ import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
-import { guardIsProvenanceValid } from '../../utils/guards/guardIsProvenanceValid.ts';
-import { guardIsSyncableItemAcceptedOrWasWriteLegit } from '../../utils/guards/guardIsSyncableItemAcceptedOrWasWriteLegit.ts';
+import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
@@ -291,12 +290,9 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
       const item = this.makeMutableItemAccessor_<T>(getPath, itemType as T);
 
-      const finalGuards = await allResults(trace, [
-        guardIsProvenanceValid(trace, store, item),
-        guardIsSyncableItemAcceptedOrWasWriteLegit(trace, store, item)
-      ]);
-      if (!finalGuards.ok) {
-        return finalGuards;
+      const trustGuard = await guardIsSyncableItemTrusted(trace, store, item);
+      if (!trustGuard.ok) {
+        return trustGuard;
       }
 
       return makeSuccess(item);

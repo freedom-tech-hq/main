@@ -7,7 +7,7 @@ import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from '../types/SyncableStore.ts';
 import type { SyncableStoreRole } from '../types/SyncableStoreRole.ts';
 import { roleComparator } from '../types/SyncableStoreRole.ts';
-import { getFolderPath } from './get/getFolderPath.ts';
+import { getNearestFolderPath } from './get/getNearestFolderPath.ts';
 import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
 
 export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc(
@@ -27,17 +27,17 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
       return makeSuccess({ role: 'creator' as const, cryptoKeySetId: store.creatorPublicKeys.id });
     }
 
-    const folderPath = await getFolderPath(trace, store, path);
-    if (!folderPath.ok) {
-      return folderPath;
+    const nearestFolderPath = await getNearestFolderPath(trace, store, path);
+    if (!nearestFolderPath.ok) {
+      return nearestFolderPath;
     }
 
-    const folder = await getSyncableAtPath(trace, store, folderPath.value, 'folder');
-    if (!folder.ok) {
-      return folder;
+    const nearestFolder = await getSyncableAtPath(trace, store, nearestFolderPath.value, 'folder');
+    if (!nearestFolder.ok) {
+      return nearestFolder;
     }
 
-    const rolesByCryptoKeySetId = await folder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: privateKeyIds.value });
+    const rolesByCryptoKeySetId = await nearestFolder.value.getRolesByCryptoKeySetId(trace, { cryptoKeySetIds: privateKeyIds.value });
     if (!rolesByCryptoKeySetId.ok) {
       return rolesByCryptoKeySetId;
     }
