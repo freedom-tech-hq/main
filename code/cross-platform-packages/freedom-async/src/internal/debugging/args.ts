@@ -2,6 +2,7 @@
 
 import { devMakeEnvDerivative, type Trace } from 'freedom-contexts';
 
+import { useProbeSettings } from '../../context/probe.ts';
 import { genericValueToString } from '../utils/genericValueToString.ts';
 import { makeShouldIncludeTraceForDebuggingFunc } from './makeShouldIncludeTraceForDebuggingFunc.ts';
 
@@ -9,9 +10,10 @@ export let shouldLogFuncArgs: (trace: Trace) => boolean = () => false;
 export let argsToStrings: (args: any[]) => string[];
 
 DEV: {
-  shouldLogFuncArgs = devMakeEnvDerivative('FREEDOM_LOG_ARGS', process.env.FREEDOM_LOG_ARGS, (envValue) =>
-    makeShouldIncludeTraceForDebuggingFunc(envValue)
-  );
+  shouldLogFuncArgs = devMakeEnvDerivative('FREEDOM_LOG_ARGS', process.env.FREEDOM_LOG_ARGS, (envValue) => (trace) => {
+    const probeSettings = useProbeSettings(trace);
+    return (probeSettings.enabled && probeSettings.args) || makeShouldIncludeTraceForDebuggingFunc(envValue)(trace);
+  });
 
   argsToStrings = (args) => {
     const out: string[] = ['ARGS:'];
