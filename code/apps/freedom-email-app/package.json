@@ -30,6 +30,8 @@
     "freedom-crypto": "0.0.0",
     "freedom-data-source-types": "0.0.0",
     "freedom-device-notification-types": "0.0.0",
+    "freedom-fake-email-service-api": "0.0.0",
+    "freedom-fetching": "0.0.0",
     "freedom-localization": "0.0.0",
     "freedom-notification-types": "0.0.0",
     "freedom-object-store-types": "0.0.0",
@@ -44,7 +46,8 @@
     "react-dom": "19.0.0",
     "react-waitables": "2.3.9",
     "react": "19.0.0",
-    "yaschema": "4.4.2"
+    "yaschema": "4.4.2",
+    "yaschema-api": "4.1.7"
   },
   "devDependencies": {
     "freedom-localization-tools": "0.0.0",
@@ -70,7 +73,7 @@
     "build:worker:tasks": "node ../../dev-packages/freedom-build-tools/lib/mjs/freedom-build.mjs --bundle --platform=web --entry-points ./src/tasks.ts --tsconfig tsconfig.mjs.json",
     "build:workers": "yarn build:worker:tasks",
     "clean": "rimraf ./coverage ./build ./lib",
-    "depcheck": "depcheck --ignores=freedom-build-tools,freedom-localization-tools || (code ./package.json && exit 1)",
+    "depcheck": "depcheck --ignores=buffer,freedom-build-tools,freedom-localization-tools || (code ./package.json && exit 1)",
     "generate-https-key-and-cert": "mkdir -p ./.ssl && openssl req -x509 -newkey rsa:4096 -keyout ./.ssl/key.pem -out ./.ssl/cert.pem -sha256 -days 365 -nodes -config ./openssl.local.conf",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
     "prep:build-dir": "rimraf ./build && mkdir -p ./build && node ../../dev-packages/freedom-build-tools/lib/mjs/copy-template.mjs --include './public/**/*' --drop-prefixes 'public/' --outdir ./build",

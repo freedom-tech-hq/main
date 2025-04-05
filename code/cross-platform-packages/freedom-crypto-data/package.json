@@ -2,8 +2,6 @@
   "dependencies": {
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
-    "freedom-common-errors": "0.0.0",
-    "is-promise": "4.0.0",
     "lodash-es": "4.17.21",
     "yaschema": "4.4.2"
   },

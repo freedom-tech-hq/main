@@ -14,6 +14,7 @@
     "freedom-crypto-service": "0.0.0",
     "freedom-logging-types": "0.0.0",
     "freedom-notification-types": "0.0.0",
+    "freedom-serialization": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-task-queue": "0.0.0",
     "freedom-trace-logging-and-metrics": "0.0.0",

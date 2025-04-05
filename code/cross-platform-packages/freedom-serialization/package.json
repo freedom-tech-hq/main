@@ -1,12 +1,13 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
+    "freedom-contexts": "0.0.0",
     "yaschema": "4.4.2"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",
-    "freedom-profiler": "0.0.0",
     "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.2"
   },
