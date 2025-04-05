@@ -15,13 +15,13 @@ const LoggingAndMetricsControlContext = createTraceContext<LoggingAndMetricsCont
 }));
 
 /** Logging and metrics control */
-export const useLamControlContext = (trace: Trace) => useTraceContext(trace, LoggingAndMetricsControlContext);
+export const useLamControl = (trace: Trace) => useTraceContext(trace, LoggingAndMetricsControlContext);
 
 /** Disable logging and metrics for sub-trace */
 export const disableLam = <ReturnT>(trace: Trace, disable: DisableErrorsForLoggingAndMetrics, callback: (trace: Trace) => ReturnT) =>
-  lamControlContextModifier(trace, { disable }, callback);
+  lamControlModifier(trace, { disable }, callback);
 
-export const lamControlContextModifier = <ReturnT>(
+export const lamControlModifier = <ReturnT>(
   trace: Trace,
   {
     mode = 'merge',
@@ -29,7 +29,7 @@ export const lamControlContextModifier = <ReturnT>(
   }: (LoggingAndMetricsControl & { mode: 'override' }) | (Partial<LoggingAndMetricsControl> & { mode?: 'merge' }),
   callback: (trace: Trace) => ReturnT
 ) => {
-  const parentControls = useLamControlContext(trace);
+  const parentControls = useLamControl(trace);
 
   switch (mode) {
     case 'override':

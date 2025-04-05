@@ -14,8 +14,5 @@ export const useTraceCache = <T extends Record<string, any>>(trace: Trace, id: s
   return allCaches[id] as T;
 };
 
-export const traceCacheContextProvider = <ReturnT>(
-  trace: Trace,
-  storage: Partial<Record<string, any>>,
-  callback: (trace: Trace) => ReturnT
-) => TraceCacheContext.provider(trace, storage, callback);
+export const traceCacheProvider = <ReturnT>(trace: Trace, storage: Partial<Record<string, any>>, callback: (trace: Trace) => ReturnT) =>
+  TraceCacheContext.provider(trace, storage, callback);

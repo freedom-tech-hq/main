@@ -1,7 +1,7 @@
 import type { Trace } from 'freedom-contexts';
 import { getTraceStackTop } from 'freedom-contexts';
 import { LogJson } from 'freedom-logging-types';
-import { shouldDisableErrorForLoggingAndMetrics, useLamControlContext } from 'freedom-trace-logging-and-metrics';
+import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import { once } from 'lodash-es';
 import type { Logger } from 'yaschema';
 
@@ -107,7 +107,7 @@ export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT ext
 
     const durationMSec = stop - start;
 
-    const lamControl = useLamControlContext(trace);
+    const lamControl = useLamControl(trace);
 
     /* node:coverage disable */
     if (
