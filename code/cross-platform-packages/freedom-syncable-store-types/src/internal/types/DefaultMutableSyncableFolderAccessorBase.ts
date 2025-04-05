@@ -143,6 +143,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // MutableAccessControlledFolderAccessor Methods
 
+  public readonly getAccessControlDocument = makeAsyncResultFunc(
+    [import.meta.filename, 'getAccessControlDocument'],
+    async (trace: Trace): PR<SyncableStoreAccessControlDocument> => await getAccessControlDocument(trace, this.weakStore_, this.path)
+  );
+
   public readonly updateAccess = makeAsyncResultFunc(
     [import.meta.filename, 'updateAccess'],
     async (trace: Trace, change: AccessChangeParams<SyncableStoreRole>): PR<undefined, 'conflict'> => {
@@ -475,7 +480,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
       const store = this.selectStoreForId_(id);
       return await store.getMutable(trace, id, expectedType);
     }
@@ -508,7 +513,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+      await this.getMutable(trace, id, expectedType)
   );
 
   // BundleManagement Methods

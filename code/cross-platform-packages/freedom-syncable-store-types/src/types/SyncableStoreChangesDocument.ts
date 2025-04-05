@@ -10,7 +10,7 @@ import type { SyncablePath } from 'freedom-sync-types';
 
 import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../consts/special-file-ids.ts';
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
-import { getFolderPath } from '../utils/get/getFolderPath.ts';
+import { getNearestFolderPath } from '../utils/get/getNearestFolderPath.ts';
 import { getSyncableAtPath } from '../utils/get/getSyncableAtPath.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncableStoreChange } from './SyncableStoreChange.ts';
@@ -115,10 +115,10 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
           case 'delete': {
             const checked = await allResultsMapped(trace, addedChange.value.paths, {}, async (trace, path) => {
               // Checking that the path being deleted is directly associated with the folder associated with this store change document
-              const folderPath = await getFolderPath(trace, store, path);
-              if (!folderPath.ok) {
-                return folderPath;
-              } else if (!folderPath.value.isEqual(deltaPath)) {
+              const nearestFolderPath = await getNearestFolderPath(trace, store, path);
+              if (!nearestFolderPath.ok) {
+                return nearestFolderPath;
+              } else if (!nearestFolderPath.value.isEqual(deltaPath)) {
                 return makeSuccess(false);
               }
 

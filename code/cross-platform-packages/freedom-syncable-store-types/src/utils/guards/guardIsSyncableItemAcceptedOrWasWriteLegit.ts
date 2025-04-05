@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ForbiddenError } from 'freedom-common-errors';
 
+import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import { isSyncableItemAcceptedOrWasWriteLegit } from '../validation/isSyncableItemAcceptedOrWasWriteLegit.ts';
@@ -9,6 +10,10 @@ import { isSyncableItemAcceptedOrWasWriteLegit } from '../validation/isSyncableI
 export const guardIsSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore, item: SyncableItemAccessor): PR<undefined, 'untrusted'> => {
+    if (!useIsSyncableValidationEnabled(trace).enabled) {
+      return makeSuccess(undefined);
+    }
+
     const acceptedOrLegitWrite = await isSyncableItemAcceptedOrWasWriteLegit(trace, store, item);
     if (!acceptedOrLegitWrite.ok) {
       return acceptedOrLegitWrite;

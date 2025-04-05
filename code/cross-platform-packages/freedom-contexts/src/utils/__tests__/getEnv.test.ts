@@ -13,7 +13,6 @@ describe('getEnv', () => {
 
     let calledOnEnvChange = 0;
     devOnEnvChange('SOME_ENV_VALUE', 'my-testing-value', () => {
-      console.trace('CALLED');
       calledOnEnvChange += 1;
     });
 

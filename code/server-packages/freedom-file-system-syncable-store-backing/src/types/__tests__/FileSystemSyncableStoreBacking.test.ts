@@ -8,6 +8,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
+import type { CryptoService } from 'freedom-crypto-service';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import {
   createBinaryFileAtPath,
@@ -19,13 +20,12 @@ import {
   generateProvenanceForNewSyncableStore,
   getFolderAtPath,
   getMutableFolderAtPath,
-  getStringFromFileAtPath,
+  getStringFromFile,
   initializeRoot,
   saltedId
 } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import type { TestingCryptoService } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import type { HotSwappableCryptoService } from '../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { makeHotSwappableCryptoServiceForTesting } from '../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
@@ -35,7 +35,7 @@ describe('FileSystemSyncableStore', () => {
   let trace!: Trace;
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;
-  let primaryUserCryptoService!: TestingCryptoService;
+  let primaryUserCryptoService!: CryptoService;
   let storeBacking!: FileSystemSyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -92,14 +92,14 @@ describe('FileSystemSyncableStore', () => {
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
-    const helloWorldStringContent = await getStringFromFileAtPath(trace, store, helloWorldTxtPath);
+    const helloWorldStringContent = await getStringFromFile(trace, store, helloWorldTxtPath);
     expectOk(helloWorldStringContent);
     t.assert.strictEqual(helloWorldStringContent.value, 'hello world');
 
     // Deleting file
     expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
 
-    expectErrorCode(await getStringFromFileAtPath(trace, store, helloWorldTxtPath), 'deleted');
+    expectErrorCode(await getStringFromFile(trace, store, helloWorldTxtPath), 'deleted');
 
     // Deleting folder
     expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));
@@ -140,12 +140,10 @@ describe('FileSystemSyncableStore', () => {
   it('giving root folder access to a second user should work', async (t: TestContext) => {
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(await store.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' }));
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
-    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -157,7 +155,7 @@ describe('FileSystemSyncableStore', () => {
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -168,14 +166,12 @@ describe('FileSystemSyncableStore', () => {
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(
       await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' })
     );
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
-    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -187,7 +183,7 @@ describe('FileSystemSyncableStore', () => {
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -198,14 +194,12 @@ describe('FileSystemSyncableStore', () => {
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(
       await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'appender' })
     );
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
-    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -217,13 +211,13 @@ describe('FileSystemSyncableStore', () => {
     expectOk(createdTestTxtFile);
 
     // Should NOT be able to read back that file
-    const textContent2 = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
     cryptoService.hotSwap(primaryUserCryptoService);
 
     // Primary user should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });

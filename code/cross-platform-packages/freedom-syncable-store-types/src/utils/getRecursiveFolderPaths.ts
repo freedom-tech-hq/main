@@ -38,7 +38,7 @@ export const getRecursiveFolderPaths = makeAsyncResultFunc(
           return makeSuccess(undefined);
         });
         if (!processed.ok) {
-          return generalizeFailureResult(trace, processed, ['deleted', 'not-found', 'wrong-type']);
+          return generalizeFailureResult(trace, processed, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
         }
 
         return makeSuccess(undefined);

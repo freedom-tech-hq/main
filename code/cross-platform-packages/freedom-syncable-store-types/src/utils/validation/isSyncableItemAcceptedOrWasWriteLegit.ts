@@ -2,16 +2,40 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ForbiddenError, generalizeFailureResult } from 'freedom-common-errors';
 
+import { useAccessControlDocument } from '../../internal/context/accessControlDocument.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
 import { rolesWithWriteAccess } from '../../types/SyncableStoreRole.ts';
-import { getRoleForOriginWithPath } from './getRoleForOriginWithPath.ts';
+import { getOwningAccessControlDocument } from '../get/getOwningAccessControlDocument.ts';
+import { getRoleForOrigin } from './getRoleForOrigin.ts';
+import { isAccessControlDocumentSnapshotFilePath, isSpecialAutomaticallyTrustedPath } from './internal/special-path-checks.ts';
 
 export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore, item: SyncableItemAccessor): PR<boolean, 'untrusted'> => {
     if (store.localTrustMarks.isTrusted(item.path, 'accepted-or-legit-write')) {
       return makeSuccess(true);
+    }
+
+    if (isSpecialAutomaticallyTrustedPath(item.path)) {
+      store.localTrustMarks.markTrusted(item.path, 'accepted-or-legit-write');
+      return makeSuccess(true);
+    }
+
+    // Access control snapshots are special, since they can only be created by the store creator or the folder creator
+    // It's assumed that the provenance is validated elsewhere
+    if (isAccessControlDocumentSnapshotFilePath(item.path)) {
+      store.localTrustMarks.markTrusted(item.path, 'accepted-or-legit-write');
+      return makeSuccess(true);
+    }
+
+    const accessControlDocFromContext = useAccessControlDocument(trace).accessControlDoc;
+
+    const accessControlDoc = await (accessControlDocFromContext !== undefined
+      ? Promise.resolve(makeSuccess(accessControlDocFromContext))
+      : getOwningAccessControlDocument(trace, store, item.path));
+    if (!accessControlDoc.ok) {
+      return generalizeFailureResult(trace, accessControlDoc, 'not-found');
     }
 
     const metadata = await item.getMetadata(trace);
@@ -28,7 +52,7 @@ export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const originRole = await getRoleForOriginWithPath(trace, store, { path: item.path, origin: provenance.origin });
+    const originRole = await getRoleForOrigin(trace, store, { origin: provenance.origin, accessControlDoc: accessControlDoc.value });
     if (!originRole.ok) {
       return generalizeFailureResult(trace, originRole, ['deleted', 'not-found', 'wrong-type']);
     } else if (originRole.value === undefined) {

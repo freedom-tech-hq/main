@@ -15,7 +15,7 @@ import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMe
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { getStringFromFileAtPath } from '../get/getStringFromFileAtPath.ts';
+import { getStringFromFile } from '../get/getStringFromFile.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
 describe('createStringFileAtPath', () => {
@@ -67,7 +67,7 @@ describe('createStringFileAtPath', () => {
     expectOk(helloTxtFile);
     const helloTxtPath = helloTxtFile.value.path;
 
-    const stringValue = await getStringFromFileAtPath(trace, store, helloTxtPath);
+    const stringValue = await getStringFromFile(trace, store, helloTxtPath);
     expectOk(stringValue);
     t.assert.strictEqual(stringValue.value, 'hello world');
   });

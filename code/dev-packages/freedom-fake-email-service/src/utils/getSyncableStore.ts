@@ -7,7 +7,7 @@ import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-sto
 import type { StorageRootId } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore, SyncableStore } from 'freedom-syncable-store-types';
-import { DefaultSyncableStore, getFolderPath, getSyncableHashAtPath } from 'freedom-syncable-store-types';
+import { DefaultSyncableStore, getNearestFolderPath, getSyncableHashAtPath } from 'freedom-syncable-store-types';
 
 import { getCryptoService } from './getCryptoService.ts';
 import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
@@ -61,7 +61,11 @@ export const getSyncableStore = makeAsyncResultFunc(
     const onFolderAddedOrRemoved = makeAsyncResultFunc(
       [import.meta.filename, 'onFolderAddedOrRemoved'],
       async (trace, args: { store: SyncableStore; path: SyncablePath }) => {
-        const parentFolderPath = await getFolderPath(trace, args.store, args.path.parentPath ?? new SyncablePath(args.path.storageRootId));
+        const parentFolderPath = await getNearestFolderPath(
+          trace,
+          args.store,
+          args.path.parentPath ?? new SyncablePath(args.path.storageRootId)
+        );
         if (!parentFolderPath.ok) {
           return parentFolderPath;
         }
@@ -73,12 +77,12 @@ export const getSyncableStore = makeAsyncResultFunc(
     const onItemAdded = makeAsyncResultFunc(
       [import.meta.filename, 'onItemAdded'],
       async (trace, args: { store: SyncableStore; path: SyncablePath }) => {
-        const folderPath = await getFolderPath(trace, args.store, args.path);
-        if (!folderPath.ok) {
-          return folderPath;
+        const nearestFolderPath = await getNearestFolderPath(trace, args.store, args.path);
+        if (!nearestFolderPath.ok) {
+          return nearestFolderPath;
         }
 
-        return await triggerContentChangeNotificationSoonForPath(trace, { ...args, path: folderPath.value });
+        return await triggerContentChangeNotificationSoonForPath(trace, { ...args, path: nearestFolderPath.value });
       }
     );
 

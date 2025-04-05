@@ -3,6 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 
+import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import { getMutableSyncableAtPath } from '../get/getMutableSyncableAtPath.ts';
@@ -15,7 +16,13 @@ export const createBundleAtPath = makeAsyncResultFunc(
     path: SyncablePath,
     { name, trustedTimeSignature }: Partial<SyncableOriginOptions> & { name?: DynamicSyncableItemName } = {}
   ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const parent = await getMutableSyncableAtPath(trace, store, path.parentPath!, syncableItemTypes.exclude('file'));
+    // Disabling validation since we're creating something new -- and this might be a new access control bundle for example, which would
+    // make checking it impossible anyway
+    const parent = await isSyncableValidationEnabledProvider(
+      trace,
+      false,
+      async (trace) => await getMutableSyncableAtPath(trace, store, path.parentPath!, syncableItemTypes.exclude('file'))
+    );
     if (!parent.ok) {
       return parent;
     }

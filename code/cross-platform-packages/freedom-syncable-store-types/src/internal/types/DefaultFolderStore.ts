@@ -38,6 +38,7 @@ import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncTracker } from '../../types/SyncTracker.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { guardIsExpectedType } from '../../utils/guards/guardIsExpectedType.ts';
+import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
@@ -78,6 +79,12 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     this.folderOperationsHandler_ = folderOperationsHandler;
     this.path = path;
     this.makeFolderAccessor_ = makeFolderAccessor;
+  }
+
+  // Public Methods
+
+  public toString() {
+    return `DefaultFolderStore(${this.path.toString()})`;
   }
 
   // MutableFolderStore Methods (partially implemented)
@@ -216,7 +223,12 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
       const getPath = this.path.append(id);
 
       const itemType = extractSyncableItemTypeFromId(id);
@@ -236,7 +248,14 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
         return makeFailure(new NotFoundError(trace, { message: `${getPath.toString()} not found`, errorCode: 'not-found' }));
       }
 
-      return makeSuccess(this.makeMutableItemAccessor_<T>(getPath, itemType as T));
+      const item = this.makeMutableItemAccessor_<T>(getPath, itemType as T);
+
+      const trustGuard = await guardIsSyncableItemTrusted(trace, store, item);
+      if (!trustGuard.ok) {
+        return trustGuard;
+      }
+
+      return makeSuccess(item);
     }
   );
 
@@ -371,7 +390,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+      await this.getMutable(trace, id, expectedType)
   );
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(

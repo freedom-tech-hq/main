@@ -7,8 +7,9 @@ import type { SignedSyncableAcceptance } from 'freedom-sync-types';
 
 import type { SyncableItemAccessor } from '../../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../../types/SyncableStore.ts';
+import type { SyncableStoreAccessControlDocument } from '../../../types/SyncableStoreAccessControlDocument.ts';
 import { ownerAndAboveRoles } from '../../../types/SyncableStoreRole.ts';
-import { getFolderPath } from '../../get/getFolderPath.ts';
+import { getNearestFolderPath } from '../../get/getNearestFolderPath.ts';
 import { getSyncableAtPath } from '../../get/getSyncableAtPath.ts';
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
 import { isTrustedTimeValid } from '../isTrustedTimeValid.ts';
@@ -19,25 +20,14 @@ export const isAcceptanceValid = makeAsyncResultFunc(
     trace,
     store: SyncableStore,
     item: SyncableItemAccessor,
-    { acceptance }: { acceptance: SignedSyncableAcceptance }
+    { acceptance, accessControlDoc }: { acceptance: SignedSyncableAcceptance; accessControlDoc: SyncableStoreAccessControlDocument }
   ): PR<boolean> => {
-    const contentHash = await getSha256HashForItemProvenance(trace, item);
-    if (!contentHash.ok) {
-      return contentHash;
-    }
-
     const signedByKeyId = extractKeyIdFromSignedValue(trace, { signedValue: acceptance });
     if (!signedByKeyId.ok) {
       return generalizeFailureResult(trace, signedByKeyId, 'not-found');
     }
 
-    // TODO: TEMP
-    if (Math.random() < 1) {
-      return makeSuccess(true);
-    }
-
-    // TODO: this should look up from document
-    const signedByPublicKeys = await store.cryptoService.getPublicCryptoKeySetForId(trace, signedByKeyId.value);
+    const signedByPublicKeys = await accessControlDoc.getPublicKeysById(trace, signedByKeyId.value);
     if (!signedByPublicKeys.ok) {
       return generalizeFailureResult(trace, signedByPublicKeys, 'not-found');
     }
@@ -65,6 +55,11 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
+    const contentHash = await getSha256HashForItemProvenance(trace, item);
+    if (!contentHash.ok) {
+      return contentHash;
+    }
+
     const trustedTimeValid = await isTrustedTimeValid(trace, store, {
       ...acceptance.value,
       parentPath: item.path,
@@ -77,19 +72,19 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return makeSuccess(false);
     }
 
-    const folderPath = await getFolderPath(trace, store, item.path);
-    if (!folderPath.ok) {
-      return generalizeFailureResult(trace, folderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+    const nearestFolderPath = await getNearestFolderPath(trace, store, item.path);
+    if (!nearestFolderPath.ok) {
+      return generalizeFailureResult(trace, nearestFolderPath, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    const folder = await getSyncableAtPath(trace, store, folderPath.value, 'folder');
-    if (!folder.ok) {
-      return generalizeFailureResult(trace, folder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+    const nearestFolder = await getSyncableAtPath(trace, store, nearestFolderPath.value, 'folder');
+    if (!nearestFolder.ok) {
+      return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     const timeMSec = extractTimeMSecFromTimeId(acceptance.value.timeId);
 
-    const isValid = await folder.value.didCryptoKeyHaveRoleAtTimeMSec(trace, {
+    const isValid = await nearestFolder.value.didCryptoKeyHaveRoleAtTimeMSec(trace, {
       cryptoKeySetId: signedByKeyId.value,
       oneOfRoles: ownerAndAboveRoles,
       timeMSec

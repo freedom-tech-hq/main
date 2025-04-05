@@ -1,29 +1,24 @@
+import type { AccessControlDocumentPrefix } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
-import {
-  allResultsMappedSkipFailures,
-  allResultsNamed,
-  debugTopic,
-  inline,
-  makeAsyncResultFunc,
-  makeFailure,
-  makeSuccess
-} from 'freedom-async';
-import { Cast } from 'freedom-cast';
+import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 import { isSyncableItemEncrypted } from 'freedom-sync-types';
-import { once } from 'lodash-es';
 
-import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
+import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
+import { accessControlDocumentProvider } from '../../internal/context/accessControlDocument.ts';
+import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
+import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import type { SyncableStoreRole } from '../../types/SyncableStoreRole.ts';
-import { getRoleForOriginWithPath } from '../validation/getRoleForOriginWithPath.ts';
+import { getRoleForOrigin } from '../validation/getRoleForOrigin.ts';
 import { getBundleAtPath } from './getBundleAtPath.ts';
-import { getProvenanceOfSyncableAtPath } from './getProvenanceOfSyncableAtPath.ts';
-import { getStringFromFileAtPath } from './getStringFromFileAtPath.ts';
+import { getOwningAccessControlDocument } from './getOwningAccessControlDocument.ts';
+import { getProvenanceOfSyncable } from './getProvenanceOfSyncable.ts';
+import { getStringFromFile } from './getStringFromFile.ts';
 
 export interface IsConflictFreeDocumentSnapshotValidArgs<PrefixT extends string> {
   store: SyncableStore;
@@ -65,6 +60,9 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     path: SyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<DocumentT, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+    const isSyncableValidationEnabled = useIsSyncableValidationEnabled(trace).enabled;
+    const isAccessControlBundle = path.lastId === ACCESS_CONTROL_BUNDLE_ID;
+
     const docBundle = await getBundleAtPath(trace, store, path);
     /* node:coverage disable */
     if (!docBundle.ok) {
@@ -74,8 +72,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
     // Snapshots are encrypted if their parent bundle is encrypted
     const isSnapshotEncrypted = isSyncableItemEncrypted(path.lastId!);
-    const snapshotsPath = path.append(SNAPSHOTS_BUNDLE_ID({ encrypted: isSnapshotEncrypted }));
-    const snapshots = await getBundleAtPath(trace, store, snapshotsPath);
+    const snapshots = await docBundle.value.get(trace, SNAPSHOTS_BUNDLE_ID({ encrypted: isSnapshotEncrypted }), 'bundle');
     /* node:coverage disable */
     if (!snapshots.ok) {
       return snapshots;
@@ -100,23 +97,47 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       const snapshotId = snapshotIds.value[snapshotIndex];
       snapshotIndex -= 1;
 
-      const snapshotPath = snapshotsPath.append(snapshotId);
-      const encodedSnapshot = await getStringFromFileAtPath(trace, store, snapshotPath);
+      const snapshotFile = await snapshots.value.get(trace, snapshotId, 'file');
+      if (!snapshotFile.ok) {
+        return snapshotFile;
+      }
+
+      const encodedSnapshot = await getStringFromFile(trace, store, snapshotFile.value);
       /* node:coverage disable */
       if (!encodedSnapshot.ok) {
         return encodedSnapshot;
       }
       /* node:coverage enable */
 
-      const snapshotProvenance = await getProvenanceOfSyncableAtPath(trace, store, snapshotPath);
+      let accessControlDoc: SyncableStoreAccessControlDocument | undefined;
+      if (isSyncableValidationEnabled) {
+        if (isAccessControlBundle) {
+          // Access control bundles are specially validated
+
+          accessControlDoc = new SyncableStoreAccessControlDocument({
+            snapshot: { id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> }
+          });
+        } else {
+          const foundAccessControlDoc = await getOwningAccessControlDocument(trace, store, path);
+          if (!foundAccessControlDoc.ok) {
+            return foundAccessControlDoc;
+          }
+
+          accessControlDoc = foundAccessControlDoc.value;
+        }
+      }
+
+      // This is already validated when the file is retrieved
+      const snapshotProvenance = await getProvenanceOfSyncable(trace, store, snapshotFile.value);
       if (!snapshotProvenance.ok) {
         return snapshotProvenance;
       }
 
-      const getOriginRole = once(() => getRoleForOriginWithPath(trace, store, { path, origin: snapshotProvenance.value.origin }));
+      const getOriginRole = () =>
+        getRoleForOrigin(trace, store, { origin: snapshotProvenance.value.origin, accessControlDoc: accessControlDoc! });
 
       // For not-yet-accepted values, performing additional checks
-      if (snapshotProvenance.value.acceptance === undefined) {
+      if (isSyncableValidationEnabled && !isAccessControlBundle && snapshotProvenance.value.acceptance === undefined) {
         const originRole = await getOriginRole();
         if (!originRole.ok) {
           return generalizeFailureResult(trace, originRole, 'not-found');
@@ -127,7 +148,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
         const snapshotValid = await isSnapshotValid(trace, {
           store,
-          path: snapshotPath,
+          path: snapshotFile.value.path,
           validatedProvenance: snapshotProvenance.value,
           originRole: originRole.value,
           snapshot: { id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> }
@@ -135,23 +156,24 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         if (!snapshotValid.ok) {
           return snapshotValid;
         } else if (!snapshotValid.value) {
-          DEV: debugTopic('VALIDATION', (log) => log(`Snapshot invalid for ${snapshotPath.toString()}`));
+          DEV: debugTopic('VALIDATION', (log) => log(`Snapshot invalid for ${snapshotFile.value.path.toString()}`));
           continue;
         }
       }
 
-      const document = newDocument({ id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> });
+      const document =
+        isAccessControlBundle && accessControlDoc !== undefined
+          ? accessControlDoc
+          : newDocument({ id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> });
 
       // Deltas are encrypted if their parent bundle is encrypted
       const areDeltaEncrypted = isSyncableItemEncrypted(path.lastId!);
-      const dynamicDeltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltaEncrypted }, snapshotId));
-      const deltas = await getBundleAtPath(trace, store, dynamicDeltasPath);
+      const deltas = await docBundle.value.get(trace, makeDeltasBundleId({ encrypted: areDeltaEncrypted }, snapshotId), 'bundle');
       /* node:coverage disable */
       if (!deltas.ok) {
         return deltas;
       }
       /* node:coverage enable */
-      const deltasPath = deltas.value.path;
 
       const deltaIds = await deltas.value.getIds(trace, { type: 'file' });
       /* node:coverage disable */
@@ -164,50 +186,27 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       // Delta names are prefixed by ISO timestamps, so sorting them will give us the most recent one last
       deltaIds.value.sort();
 
-      const encodedDeltasAndProvenances = await allResultsMappedSkipFailures(
-        trace,
-        deltaIds.value,
-        {
-          _errorCodeType: Cast<'format-error' | 'not-found' | 'untrusted'>(),
-          skipErrorCodes: ['format-error', 'not-found', 'untrusted']
-        },
-        async (
-          trace,
-          deltaId
-        ): PR<
-          { deltaPath: SyncablePath; provenance: SyncableProvenance; encodedDelta: string },
-          'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'
-        > => {
-          const deltaPath = deltasPath.append(deltaId);
-
-          return await allResultsNamed(
-            trace,
-            { _errorCodeType: Cast<'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>() },
-            {
-              deltaPath: inline(async () => makeSuccess(deltaPath)),
-              provenance: getProvenanceOfSyncableAtPath(trace, store, deltaPath),
-              encodedDelta: getStringFromFileAtPath(trace, store, deltaPath)
-            }
-          );
-        }
-      );
-      /* node:coverage disable */
-      if (!encodedDeltasAndProvenances.ok) {
-        return encodedDeltasAndProvenances;
-      }
-      /* node:coverage enable */
-
-      for (const deltaAndProvenance of encodedDeltasAndProvenances.value) {
-        if (deltaAndProvenance === undefined) {
-          // Skipping deltas that were invalid due to 'format-error' | 'not-found' | 'untrusted'
-          // Other, more general, errors would still stop processing above however
-          continue;
+      for (const deltaId of deltaIds.value) {
+        // Using a potentially progressively loaded access control document for validating deltas.  If this bundle is itself an access
+        // control document, it will be progressively loaded as it's validated
+        const deltaFile = await accessControlDocumentProvider(trace, accessControlDoc, (trace) => deltas.value.get(trace, deltaId, 'file'));
+        if (!deltaFile.ok) {
+          return deltaFile;
         }
 
-        const { deltaPath, provenance, encodedDelta } = deltaAndProvenance;
+        // This is already validated when the file is retrieved
+        const deltaProvenance = await getProvenanceOfSyncable(trace, store, deltaFile.value);
+        if (!deltaProvenance.ok) {
+          return deltaProvenance;
+        }
+
+        const encodedDelta = await getStringFromFile(trace, store, deltaFile.value);
+        if (!encodedDelta.ok) {
+          return encodedDelta;
+        }
 
         // For not-yet-accepted values, performing additional checks
-        if (provenance.acceptance === undefined) {
+        if (isSyncableValidationEnabled && deltaProvenance.value.acceptance === undefined) {
           const originRole = await getOriginRole();
           if (!originRole.ok) {
             return generalizeFailureResult(trace, originRole, 'not-found');
@@ -218,23 +217,24 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
           const deltaValid = await isDeltaValidForDocument(trace, document.clone() as DocumentT, {
             store,
-            path: deltaPath,
-            validatedProvenance: provenance,
+            path: deltaFile.value.path,
+            validatedProvenance: deltaProvenance.value,
             originRole: originRole.value,
-            encodedDelta: encodedDelta as EncodedConflictFreeDocumentDelta<PrefixT>
+            encodedDelta: encodedDelta.value as EncodedConflictFreeDocumentDelta<PrefixT>
           });
           if (!deltaValid.ok) {
             return deltaValid;
           } else if (!deltaValid.value) {
-            DEV: debugTopic('VALIDATION', (log) => log(`Delta invalid for ${deltaPath.toString()}`));
+            DEV: debugTopic('VALIDATION', (log) => log(`Delta invalid for ${deltaFile.value.path.toString()}`));
             continue;
           }
         }
 
-        document.applyDeltas([encodedDelta as EncodedConflictFreeDocumentDelta<PrefixT>]);
+        // If this is an access control bundle, this is also how it will progressively load
+        (document as DocumentT).applyDeltas([encodedDelta.value as EncodedConflictFreeDocumentDelta<PrefixT>]);
       }
 
-      return makeSuccess(document);
+      return makeSuccess(document as DocumentT);
     }
 
     return makeFailure(new NotFoundError(trace, { message: `No valid snapshots found for: ${path.toString()}`, errorCode: 'not-found' }));

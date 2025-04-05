@@ -16,7 +16,7 @@ import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMe
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createJsonFileAtPath } from '../create/createJsonFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { getJsonFromFileAtPath } from '../get/getJsonFromFileAtPath.ts';
+import { getJsonFromFile } from '../get/getJsonFromFile.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
 const theSchema = schema.object({ one: schema.string(), two: schema.number() });
@@ -71,7 +71,7 @@ describe('createJsonFileAtPath', () => {
     expectOk(helloJsonFile);
     const helloJsonPath = helloJsonFile.value.path;
 
-    const objValue = await getJsonFromFileAtPath(trace, store, helloJsonPath, theSchema);
+    const objValue = await getJsonFromFile(trace, store, helloJsonPath, theSchema);
     expectOk(objValue);
     t.assert.deepStrictEqual(objValue.value, { one: 'hello', two: 3.14 });
   });

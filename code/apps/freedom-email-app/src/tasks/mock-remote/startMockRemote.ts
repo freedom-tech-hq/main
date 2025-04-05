@@ -19,7 +19,7 @@ import { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 import {
   DefaultSyncableStore,
-  getFolderPath,
+  getNearestFolderPath,
   getSyncableHashAtPath,
   InMemorySyncableStoreBacking,
   pullPath,
@@ -66,7 +66,11 @@ export const startMockRemote = async (_trace: Trace): PR<MockRemote> => {
   const onFolderAddedOrRemoved = makeAsyncResultFunc(
     [import.meta.filename, 'onFolderAddedOrRemoved'],
     async (trace, args: { store: SyncableStore; path: SyncablePath }) => {
-      const parentFolderPath = await getFolderPath(trace, args.store, args.path.parentPath ?? new SyncablePath(args.path.storageRootId));
+      const parentFolderPath = await getNearestFolderPath(
+        trace,
+        args.store,
+        args.path.parentPath ?? new SyncablePath(args.path.storageRootId)
+      );
       if (!parentFolderPath.ok) {
         return parentFolderPath;
       }
@@ -78,12 +82,12 @@ export const startMockRemote = async (_trace: Trace): PR<MockRemote> => {
   const onItemAdded = makeAsyncResultFunc(
     [import.meta.filename, 'onItemAdded'],
     async (trace, args: { store: SyncableStore; path: SyncablePath }) => {
-      const folderPath = await getFolderPath(trace, args.store, args.path);
-      if (!folderPath.ok) {
-        return folderPath;
+      const nearestFolderPath = await getNearestFolderPath(trace, args.store, args.path);
+      if (!nearestFolderPath.ok) {
+        return nearestFolderPath;
       }
 
-      return await triggerContentChangeNotificationSoonForPath(trace, { ...args, path: folderPath.value });
+      return await triggerContentChangeNotificationSoonForPath(trace, { ...args, path: nearestFolderPath.value });
     }
   );
 
@@ -138,7 +142,6 @@ export const startMockRemote = async (_trace: Trace): PR<MockRemote> => {
       }
 
       const cryptoService = makeCryptoServiceForMockRemote();
-      cryptoService.addPublicKeys({ publicKeys: creatorPublicKeys });
 
       const storeBacking = new InMemorySyncableStoreBacking(metadata);
 

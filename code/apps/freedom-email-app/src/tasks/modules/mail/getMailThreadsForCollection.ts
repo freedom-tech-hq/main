@@ -6,7 +6,7 @@ import { extractUnmarkedSyncableId, prefixedUuidId } from 'freedom-sync-types';
 import {
   getBundleAtPath,
   getConflictFreeDocumentFromBundleAtPath,
-  getJsonFromFileAtPath,
+  getJsonFromFile,
   getMutableConflictFreeDocumentFromBundleAtPath
 } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -73,7 +73,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     }
 
     const mailStorageBundlePathString = mailStorageBundle.value.path.toString();
-    const removeItemAddedListener = userFs.value.addListener('itemAdded', async ({ type, path, hash }) => {
+    const removeItemAddedListener = userFs.value.addListener('itemAdded', async ({ path }) => {
       if (path.toString().startsWith(mailStorageBundlePathString)) {
         const mailId = extractUnmarkedSyncableId(path.lastId!);
         if (!mailIdInfo.is(mailId)) {
@@ -109,7 +109,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
               continue;
             }
 
-            const mailJson = await getJsonFromFileAtPath(trace, userFs.value, path, storedMailSchema);
+            const mailJson = await getJsonFromFile(trace, userFs.value, path, storedMailSchema);
             if (!mailJson.ok) {
               log().debug?.(trace, `Failed to read mail ${mailId}:`, mailJson.value);
               continue;
@@ -183,12 +183,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       mailIds,
       {},
       async (trace, mailId) =>
-        await getJsonFromFileAtPath(
-          trace,
-          userFs.value,
-          mailStorageBundle.value.path.append(prefixedUuidId('file', mailId)),
-          storedMailSchema
-        )
+        await getJsonFromFile(trace, userFs.value, mailStorageBundle.value.path.append(prefixedUuidId('file', mailId)), storedMailSchema)
     );
     if (!storedMails.ok) {
       return generalizeFailureResult(trace, storedMails, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);

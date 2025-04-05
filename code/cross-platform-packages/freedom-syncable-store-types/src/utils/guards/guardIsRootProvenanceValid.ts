@@ -3,18 +3,17 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { UnauthorizedError } from 'freedom-common-errors';
 
 import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
-import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
-import { isProvenanceValid } from '../validation/isProvenanceValid.ts';
+import { isRootProvenanceValid } from '../validation/isRootProvenanceValid.ts';
 
-export const guardIsProvenanceValid = makeAsyncResultFunc(
+export const guardIsRootProvenanceValid = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, item: SyncableItemAccessor): PR<undefined, 'untrusted'> => {
+  async (trace, store: SyncableStore): PR<undefined, 'untrusted'> => {
     if (!useIsSyncableValidationEnabled(trace).enabled) {
       return makeSuccess(undefined);
     }
 
-    const isValid = await isProvenanceValid(trace, store, item);
+    const isValid = await isRootProvenanceValid(trace, store);
     if (!isValid.ok) {
       return isValid;
     } else if (!isValid.value) {

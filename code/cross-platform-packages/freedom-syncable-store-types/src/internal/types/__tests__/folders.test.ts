@@ -5,10 +5,10 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
+import type { CryptoService } from 'freedom-crypto-service';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import type { TestingCryptoService } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import type { HotSwappableCryptoService } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { makeHotSwappableCryptoServiceForTesting } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
@@ -21,7 +21,7 @@ import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts'
 import { createStringFileAtPath } from '../../../utils/create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../../utils/generateProvenanceForNewSyncableStore.ts';
 import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
-import { getStringFromFileAtPath } from '../../../utils/get/getStringFromFileAtPath.ts';
+import { getStringFromFile } from '../../../utils/get/getStringFromFile.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
 import { saltedId } from '../../../utils/saltedId.ts';
 
@@ -29,7 +29,7 @@ describe('folders', () => {
   let trace!: Trace;
   let cryptoKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;
-  let primaryUserCryptoService!: TestingCryptoService;
+  let primaryUserCryptoService!: CryptoService;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -72,12 +72,10 @@ describe('folders', () => {
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'editor' }));
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
-    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -89,7 +87,7 @@ describe('folders', () => {
     expectOk(createdTestTxtFile);
 
     // Should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -100,12 +98,10 @@ describe('folders', () => {
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'appender' }));
 
     const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
-    secondaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys.publicOnly() });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -117,13 +113,13 @@ describe('folders', () => {
     expectOk(createdTestTxtFile);
 
     // Should NOT be able to read back that file
-    const textContent2 = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
     cryptoService.hotSwap(primaryUserCryptoService);
 
     // Primary user should be able to read back that file
-    const textContent = await getStringFromFileAtPath(trace, store, createdTestTxtFile.value.path);
+    const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectOk(textContent);
     t.assert.strictEqual(textContent.value, 'hello world');
   });
@@ -134,8 +130,6 @@ describe('folders', () => {
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
-
-    primaryUserCryptoService.addPublicKeys({ publicKeys: cryptoKeys2.value.publicOnly() });
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'editor' }));
 
@@ -175,7 +169,7 @@ describe('folders', () => {
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
-    const textValue = await getStringFromFileAtPath(trace, store, helloWorldTxtPath);
+    const textValue = await getStringFromFile(trace, store, helloWorldTxtPath);
     expectOk(textValue);
     t.assert.strictEqual(textValue.value, 'hello world');
 

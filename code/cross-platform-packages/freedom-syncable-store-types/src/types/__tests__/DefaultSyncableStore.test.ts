@@ -16,7 +16,7 @@ import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.t
 import { generateProvenanceForNewSyncableStore } from '../../utils/generateProvenanceForNewSyncableStore.ts';
 import { getFolderAtPath } from '../../utils/get/getFolderAtPath.ts';
 import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.ts';
-import { getStringFromFileAtPath } from '../../utils/get/getStringFromFileAtPath.ts';
+import { getStringFromFile } from '../../utils/get/getStringFromFile.ts';
 import { initializeRoot } from '../../utils/initializeRoot.ts';
 import { DefaultSyncableStore } from '../DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../in-memory-backing/InMemorySyncableStoreBacking.ts';
@@ -72,14 +72,14 @@ describe('DefaultSyncableStore', () => {
     expectOk(helloWorldTxtFile);
     const helloWorldTxtPath = helloWorldTxtFile.value.path;
 
-    const helloWorldStringContent = await getStringFromFileAtPath(trace, store, helloWorldTxtPath);
+    const helloWorldStringContent = await getStringFromFile(trace, store, helloWorldTxtPath);
     expectOk(helloWorldStringContent);
     t.assert.strictEqual(helloWorldStringContent.value, 'hello world');
 
     // Deleting file
     expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
 
-    expectErrorCode(await getStringFromFileAtPath(trace, store, helloWorldTxtPath), 'deleted');
+    expectErrorCode(await getStringFromFile(trace, store, helloWorldTxtPath), 'deleted');
 
     // Deleting folder
     expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));

@@ -5,6 +5,7 @@ import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 
 import type { FileStore } from './FileStore.ts';
 import type { FolderStore } from './FolderStore.ts';
+import type { SyncableStoreAccessControlDocument } from './SyncableStoreAccessControlDocument.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
 
 export interface SyncableFolderAccessor extends FileStore, FolderStore {
@@ -19,6 +20,9 @@ export interface SyncableFolderAccessor extends FileStore, FolderStore {
     never,
     [{ cryptoKeySetId: CryptoKeySetId; oneOfRoles: Set<SyncableStoreRole>; timeMSec: number }]
   >;
+
+  /** Gets the access control document */
+  readonly getAccessControlDocument: PRFunc<SyncableStoreAccessControlDocument>;
 
   /** Gets the metadata */
   readonly getMetadata: PRFunc<SyncableItemMetadata>;

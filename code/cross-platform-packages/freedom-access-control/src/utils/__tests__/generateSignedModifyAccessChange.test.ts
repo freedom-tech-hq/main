@@ -8,10 +8,10 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
+import type { CryptoService } from 'freedom-crypto-service';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
-import type { TestingCryptoService } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
@@ -22,7 +22,7 @@ describe('generateSignedModifyAccessChange', () => {
   let trace!: Trace;
   let cryptoKeys1!: PrivateCombinationCryptoKeySet;
   let cryptoKeys2!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: TestingCryptoService;
+  let cryptoService!: CryptoService;
   let accessControlDoc!: TestAccessControlDocument;
 
   beforeEach(async () => {
@@ -52,8 +52,6 @@ describe('generateSignedModifyAccessChange', () => {
     const internalCryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(internalCryptoKeys2);
     cryptoKeys2 = internalCryptoKeys2.value;
-
-    cryptoService.addPublicKeys({ publicKeys: cryptoKeys2 });
   });
 
   it('should work maintaining read access', async () => {
