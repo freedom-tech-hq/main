@@ -1,4 +1,3 @@
-import isPromise from 'is-promise';
 import { isEqual } from 'lodash-es';
 import type { JsonValue, Schema } from 'yaschema';
 import type * as Y from 'yjs';
@@ -116,10 +115,8 @@ export const makeConflictFreeMapFieldFromYMap = <KeyT extends string, ValueT>(
       }
 
       const parsed = JSON.parse(item) as JsonValue;
-      const deserialization = schema.deserializeAsync(parsed, { forceSync: true });
-      if (isPromise(deserialization)) {
-        throw new Error('Deserialization must be synchronous');
-      } else if (deserialization.error !== undefined) {
+      const deserialization = schema.deserialize(parsed);
+      if (deserialization.error !== undefined) {
         throw new Error(`Failed to deserialize value: ${deserialization.error}`);
       }
       return deserialization.deserialized;
@@ -203,10 +200,8 @@ export const makeConflictFreeMapFieldFromYMap = <KeyT extends string, ValueT>(
       const yMap = getNativeField({ create: true });
       const currentValue = yMap.get(key);
       if (!isEqual(currentValue, value)) {
-        const serialization = schema.serializeAsync(value, { forceSync: true });
-        if (isPromise(serialization)) {
-          throw new Error('Serialization must be synchronous');
-        } else if (serialization.error !== undefined) {
+        const serialization = schema.serialize(value);
+        if (serialization.error !== undefined) {
           throw new Error(`Failed to serialize value: ${serialization.error}`);
         }
 

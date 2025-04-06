@@ -7,7 +7,6 @@ import type {
 import { makeEncodedConflictFreeDocumentDeltaInfo, makeEncodedConflictFreeDocumentSnapshotInfo } from 'freedom-conflict-free-document-data';
 import type { Notifiable } from 'freedom-notification-types';
 import { NotificationManager } from 'freedom-notification-types';
-import isPromise from 'is-promise';
 import { escapeRegExp } from 'lodash-es';
 import { schema } from 'yaschema';
 import * as Y from 'yjs';
@@ -194,11 +193,9 @@ export class ConflictFreeDocument<PrefixT extends string> implements Notifiable<
 
   #loadFieldInfos() {
     const fieldNamesJson = this.#yDoc.getMap(fieldInfosFieldName).toJSON() ?? {};
-    const deserialization = fieldNamesSchema.deserializeAsync(fieldNamesJson, { forceSync: true });
+    const deserialization = fieldNamesSchema.deserialize(fieldNamesJson);
     /* node:coverage disable */
-    if (isPromise(deserialization)) {
-      throw new Error(`Failed to deserialize conflict free document: deserialization is an unexpected promise`);
-    } else if (deserialization.error !== undefined) {
+    if (deserialization.error !== undefined) {
       throw new Error(`Failed to deserialize conflict free document: ${deserialization.error}`);
     }
     /* node:coverage enable */

@@ -1,4 +1,3 @@
-import isPromise from 'is-promise';
 import type { JsonValue, Schema } from 'yaschema';
 import type * as Y from 'yjs';
 
@@ -49,11 +48,9 @@ export const makeConflictFreeObjectFieldFromYArray = <ValueT>(
       }
 
       const parsed = JSON.parse(item) as JsonValue;
-      const deserialization = schema.deserializeAsync(parsed, { forceSync: true });
+      const deserialization = schema.deserialize(parsed);
       /* node:coverage disable */
-      if (isPromise(deserialization)) {
-        throw new Error('Deserialization must be synchronous');
-      } else if (deserialization.error !== undefined) {
+      if (deserialization.error !== undefined) {
         throw new Error(`Failed to deserialize value: ${deserialization.error}`);
       }
       /* node:coverage enable */
@@ -68,11 +65,9 @@ export const makeConflictFreeObjectFieldFromYArray = <ValueT>(
           yArray.delete(0);
         }
       } else {
-        const serialization = schema.serializeAsync(newValue, { forceSync: true });
+        const serialization = schema.serialize(newValue);
         /* node:coverage disable */
-        if (isPromise(serialization)) {
-          throw new Error('Serialization must be synchronous');
-        } else if (serialization.error !== undefined) {
+        if (serialization.error !== undefined) {
           throw new Error(`Failed to serialize value: ${serialization.error}`);
         }
         /* node:coverage enable */

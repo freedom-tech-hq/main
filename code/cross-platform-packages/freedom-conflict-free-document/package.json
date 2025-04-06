@@ -2,7 +2,6 @@
   "dependencies": {
     "freedom-conflict-free-document-data": "0.0.0",
     "freedom-notification-types": "0.0.0",
-    "is-promise": "4.0.0",
     "lodash-es": "4.17.21",
     "yaschema": "4.4.3",
     "yjs": "13.6.24"
