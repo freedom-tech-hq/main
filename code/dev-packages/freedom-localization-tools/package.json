@@ -1,14 +1,14 @@
 {
   "dependencies": {
-    "@typescript-eslint/parser": "^8.26.1",
+    "@typescript-eslint/parser": "^8.29.0",
     "freedom-localization": "0.0.0",
     "glob": "11.0.1",
     "lodash-es": "4.17.21",
     "yargs": "17.7.2",
-    "yaschema": "4.4.2"
+    "yaschema": "4.4.3"
   },
   "devDependencies": {
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "type": "module",
   "name": "freedom-localization-tools",

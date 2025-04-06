@@ -5,9 +5,9 @@
     "freedom-contexts": "0.0.0"
   },
   "devDependencies": {
-    "@types/express": "5.0.0",
+    "@types/express": "5.0.1",
     "freedom-build-tools": "0.0.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "type": "module",
   "main": "lib/mjs/exports.mjs",

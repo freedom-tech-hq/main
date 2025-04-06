@@ -1,5 +1,5 @@
-import type { Express, Response } from 'express';
-import type { HttpApiHandlerOptions, YaschemaApiExpressContextAccessor } from 'express-yaschema-api-handler';
+import type { Response } from 'express';
+import type { HttpApiHandlerOptions } from 'express-yaschema-api-handler';
 import { registerHttpApiHandler } from 'express-yaschema-api-handler';
 import type { FuncOptions } from 'freedom-async';
 import { callAsyncFunc, log } from 'freedom-async';
@@ -16,6 +16,7 @@ import { metricsCollector } from '../config/metrics.ts';
 import { isAcceptedRouteType } from '../config/route-types.ts';
 import type { GenericallyFailableHttpOutput } from '../internal/types/GenericallyFailableHttpOutput.ts';
 import { httpError } from '../internal/utils/http-error.ts';
+import type { ExpressWithYaschemaApi } from '../types/ExpressWithYaschemaApi.ts';
 import type { LogPrefixedHttpApiHandler } from '../types/LogPrefixedHttpApiHandler.ts';
 
 export const makeHttpApiHandler =
@@ -66,7 +67,7 @@ export const makeHttpApiHandler =
       ExtrasT
     >
   ) =>
-  (app: Express & YaschemaApiExpressContextAccessor) => {
+  (app: ExpressWithYaschemaApi) => {
     /* node:coverage disable */
     if (!isAcceptedRouteType(api.routeType)) {
       return;

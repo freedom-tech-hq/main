@@ -4,17 +4,17 @@
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
     "dotenv": "16.4.7",
+    "express": "5.1.0",
     "express-ws": "5.0.2",
-    "express-yaschema-api-handler": "4.1.7",
-    "express-yaschema-ws-api-handler": "4.2.7",
-    "express": "4.21.2",
+    "express-yaschema-api-handler": "4.1.8",
+    "express-yaschema-ws-api-handler": "4.2.8",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
-    "freedom-crypto": "0.0.0",
     "freedom-do-soon": "0.0.0",
     "freedom-fake-email-service-api": "0.0.0",
     "freedom-file-system-syncable-store-backing": "0.0.0",
@@ -25,7 +25,7 @@
     "freedom-trace-service-context": "0.0.0",
     "http-status-codes": "2.3.0",
     "lodash-es": "4.17.21",
-    "yaschema": "4.4.2"
+    "yaschema": "4.4.3"
   },
   "devDependencies": {
     "@types/cookie-parser": "1.4.8",
@@ -33,7 +33,7 @@
     "@types/express-ws": "3.0.5",
     "@types/lodash-es": "4.17.12",
     "freedom-build-tools": "0.0.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "name": "freedom-fake-email-service",
   "nx": {

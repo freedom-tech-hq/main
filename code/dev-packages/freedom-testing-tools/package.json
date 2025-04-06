@@ -5,7 +5,7 @@
   "devDependencies": {
     "@types/lodash-es": "4.17.12",
     "freedom-build-tools": "0.0.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "type": "module",
   "main": "lib/mjs/exports.mjs",

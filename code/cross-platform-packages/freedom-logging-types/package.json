@@ -1,10 +1,10 @@
 {
   "dependencies": {
-    "yaschema": "4.4.2"
+    "yaschema": "4.4.3"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "type": "module",
   "main": "lib/mjs/exports.mjs",

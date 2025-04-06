@@ -5,12 +5,12 @@
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
     "http-status-codes": "2.3.0",
-    "yaschema-api-fetcher": "5.1.7",
-    "yaschema-api": "4.1.7"
+    "yaschema-api": "4.1.8",
+    "yaschema-api-fetcher": "5.1.8"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "type": "module",
   "main": "lib/mjs/exports.mjs",

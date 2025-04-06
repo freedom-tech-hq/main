@@ -40,7 +40,7 @@ export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace
 
   finalizeApiHandlerRegistrations();
 
-  app.all('*', (req, res, _next) => {
+  app.all(/.*/, (req, res, _next) => {
     log().debug?.(trace, `Unhandled request encountered for path: ${req.path}`);
     res.status(StatusCodes.NOT_FOUND).send('Not found');
   });
