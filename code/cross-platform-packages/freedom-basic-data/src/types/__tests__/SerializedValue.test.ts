@@ -15,7 +15,7 @@ describe('SerializedValue', () => {
   it('should work', async (t: TestContext) => {
     const value: Value = { a: 'a', b: Buffer.from('hello world', 'utf-8') };
 
-    const valueSerialization = await valueSchema.serializeAsync(value, { validation: 'hard' });
+    const valueSerialization = await valueSchema.serializeAsync(value);
     t.assert.strictEqual(valueSerialization.error, undefined);
 
     const serializedValueSerialization = await serializedValueSchema.serializeAsync(
@@ -40,7 +40,7 @@ describe('SerializedValue', () => {
       })
     );
 
-    const valueDeserialization = await valueSchema.deserializeAsync(valueSerialization.serialized, { validation: 'hard' });
+    const valueDeserialization = await valueSchema.deserializeAsync(valueSerialization.serialized);
     t.assert.strictEqual(valueDeserialization.error, undefined);
     t.assert.deepStrictEqual(valueDeserialization.deserialized, value);
   });

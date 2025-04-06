@@ -1,9 +1,9 @@
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure } from 'freedom-async';
 import type { Base64String } from 'freedom-basic-data';
-import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { VerifyingKeySet } from 'freedom-crypto-data';
+import { serialize } from 'freedom-serialization';
 import type { JsonValue, Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
@@ -32,24 +32,26 @@ export const isSignatureValidForValue = makeAsyncResultFunc(
     try {
       let serialized: JsonValue;
       if (signatureExtras === undefined || signatureExtrasSchema === undefined) {
-        const serialization = await valueSchema.serializeAsync(value);
-        if (serialization.error !== undefined) {
-          return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));
+        const serialization = await serialize(trace, value, valueSchema);
+        if (!serialization.ok) {
+          return serialization;
         }
 
-        serialized = serialization.serialized;
+        serialized = serialization.value.serializedValue;
       } else {
-        const serialization = await schema
-          .object<{ value: T; extras: SignatureExtrasT }, 'no-infer'>({
+        const serialization = await serialize(
+          trace,
+          { value, extras: signatureExtras },
+          schema.object<{ value: T; extras: SignatureExtrasT }, 'no-infer'>({
             value: valueSchema,
             extras: signatureExtrasSchema
           })
-          .serializeAsync({ value, extras: signatureExtras });
-        if (serialization.error !== undefined) {
-          return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));
+        );
+        if (!serialization.ok) {
+          return serialization;
         }
 
-        serialized = serialization.serialized;
+        serialized = serialization.value.serializedValue;
       }
 
       const jsonString = JSON.stringify(serialized);

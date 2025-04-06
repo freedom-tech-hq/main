@@ -9,7 +9,7 @@ import type { Schema } from 'yaschema';
 export const serialize = makeAsyncResultFunc(
   [import.meta.filename],
   async <T>(trace: Trace, value: T, valueSchema: Schema<T>): PR<SerializedValue<T>> => {
-    const serialization = await valueSchema.serializeAsync(value, { validation: 'hard' });
+    const serialization = await valueSchema.serializeAsync(value);
     /* node:coverage disable */
     if (serialization.error !== undefined) {
       return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));

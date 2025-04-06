@@ -2,8 +2,9 @@ import type { ChainableResult, PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
+import { deserialize } from 'freedom-serialization';
 import type { SyncablePath } from 'freedom-sync-types';
-import type { Schema } from 'yaschema';
+import type { JsonValue, Schema } from 'yaschema';
 
 import type { SyncableFileAccessor } from '../../types/SyncableFileAccessor.ts';
 import type { SyncableStore } from '../../types/SyncableStore.ts';
@@ -27,15 +28,15 @@ export const getJsonFromFile = makeAsyncResultFunc(
     /* node:coverage enable */
 
     try {
-      const json = JSON.parse(jsonString.value) as T;
-      const deserialization = await schema.deserializeAsync(json);
+      const json = JSON.parse(jsonString.value) as JsonValue;
+      const deserialization = await deserialize(trace, { serializedValue: json, valueSchema: schema });
       /* node:coverage disable */
-      if (deserialization.error !== undefined) {
-        return makeFailure(new ConflictError(trace, { message: deserialization.error, errorCode: 'format-error' }));
+      if (!deserialization.ok) {
+        return makeFailure(new ConflictError(trace, { cause: deserialization.value, errorCode: 'format-error' }));
       }
       /* node:coverage enable */
 
-      return makeSuccess(deserialization.deserialized);
+      return makeSuccess(deserialization.value);
     } catch (e) {
       /* node:coverage ignore next */
       return makeFailure(new GeneralError(trace, e, 'format-error'));

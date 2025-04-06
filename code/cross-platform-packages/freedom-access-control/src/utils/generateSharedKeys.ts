@@ -1,10 +1,9 @@
 import { type SharedKeys, sharedPublicKeysSchema, type SharedSecretKeys, sharedSecretKeysSchema } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
-import { allResultsReduced, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { makeSerializedValue } from 'freedom-basic-data';
-import { InternalSchemaValidationError } from 'freedom-common-errors';
+import { allResultsReduced, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generateCryptoEncryptDecryptKeySet, generateEncryptedValue } from 'freedom-crypto';
 import type { CryptoKeySetId, EncryptedValue, EncryptingKeySet } from 'freedom-crypto-data';
+import { serialize } from 'freedom-serialization';
 
 export const generateSharedKeys = makeAsyncResultFunc(
   [import.meta.filename],
@@ -40,17 +39,14 @@ export const generateSharedKeys = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const publicKeysSerialization = await sharedPublicKeysSchema.serializeAsync(sharedEncryptDecryptKeys.value.publicOnly());
-    if (publicKeysSerialization.error !== undefined) {
-      return makeFailure(new InternalSchemaValidationError(trace, { message: publicKeysSerialization.error }));
+    const publicKeysSerialization = await serialize(trace, sharedEncryptDecryptKeys.value.publicOnly(), sharedPublicKeysSchema);
+    if (!publicKeysSerialization.ok) {
+      return publicKeysSerialization;
     }
 
     return makeSuccess({
       id: sharedEncryptDecryptKeys.value.id,
-      publicKeys: makeSerializedValue({
-        valueSchema: sharedPublicKeysSchema,
-        serializedValue: publicKeysSerialization.serialized
-      }),
+      publicKeys: publicKeysSerialization.value,
       secretKeysEncryptedPerMember: secretKeysEncryptedPerMember.value
     });
   }

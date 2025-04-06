@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { InternalSchemaValidationError } from 'freedom-common-errors';
+import { deserialize } from 'freedom-serialization';
 import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
 import type { JsonValue } from 'yaschema';
 
@@ -19,12 +19,12 @@ export const makeFolderMetaFuncForPath = (rootPath: string, ids: readonly Syncab
       const metadataJsonString = await fs.readFile(filePath, 'utf8');
       try {
         const metadataJson = JSON.parse(metadataJsonString) as JsonValue;
-        const deserialization = await storedMetadataSchema.deserializeAsync(metadataJson, { validation: 'hard' });
-        if (deserialization.error !== undefined) {
-          return makeFailure(new InternalSchemaValidationError(trace, { message: deserialization.error }));
+        const deserialization = await deserialize(trace, { serializedValue: metadataJson, valueSchema: storedMetadataSchema });
+        if (!deserialization.ok) {
+          return deserialization;
         }
 
-        return makeSuccess(deserialization.deserialized);
+        return makeSuccess(deserialization.value);
       } catch (e) {
         return makeFailure(new GeneralError(trace, e));
       }

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { InternalSchemaValidationError } from 'freedom-common-errors';
+import { deserialize, serialize } from 'freedom-serialization';
 import type { SyncableId } from 'freedom-sync-types';
 import type { JsonValue } from 'yaschema';
 
@@ -23,22 +23,22 @@ export const updateLocalMetadata = makeAsyncResultFunc(
     const metadataJsonString = await fs.readFile(filePath, 'utf-8');
     try {
       const metadataJson = JSON.parse(metadataJsonString) as JsonValue;
-      const deserialization = await storedMetadataSchema.deserializeAsync(metadataJson, { validation: 'hard' });
-      if (deserialization.error !== undefined) {
-        return makeFailure(new InternalSchemaValidationError(trace, { message: deserialization.error }));
+      const deserialization = await deserialize(trace, { serializedValue: metadataJson, valueSchema: storedMetadataSchema });
+      if (!deserialization.ok) {
+        return deserialization;
       }
 
-      const metadata = deserialization.deserialized;
+      const metadata = deserialization.value;
 
       if ('hash' in metadataChanges) {
         metadata.hash = metadataChanges.hash;
 
-        const serialization = await storedMetadataSchema.serializeAsync(metadata, { validation: 'hard' });
-        if (serialization.error !== undefined) {
-          return makeFailure(new InternalSchemaValidationError(trace, { message: serialization.error }));
+        const serialization = await serialize(trace, metadata, storedMetadataSchema);
+        if (!serialization.ok) {
+          return serialization;
         }
 
-        const outMetadataJsonString = JSON.stringify(serialization.serialized);
+        const outMetadataJsonString = JSON.stringify(serialization.value.serializedValue);
         await fs.writeFile(filePath, outMetadataJsonString, 'utf-8');
       }
 

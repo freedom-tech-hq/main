@@ -1,10 +1,11 @@
 import { sharedPublicKeysSchema } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { generalizeFailureResult, InternalSchemaValidationError, InternalStateError } from 'freedom-common-errors';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { encryptBuffer, generateSignedBuffer } from 'freedom-crypto';
 import type { CryptoService } from 'freedom-crypto-service';
+import { deserialize } from 'freedom-serialization';
 
 import type { SyncableStoreAccessControlDocument } from '../types/SyncableStoreAccessControlDocument.ts';
 
@@ -36,12 +37,15 @@ export const encryptAndSignBinary = makeAsyncResultFunc(
 
     const selectedSharedKeys = sharedKeys.value.find((sharedKeys) => sharedKeys.id === selectedSharedKeysId)!;
 
-    const publicKeysDeserialization = await sharedPublicKeysSchema.deserializeAsync(selectedSharedKeys.publicKeys.serializedValue);
-    if (publicKeysDeserialization.error !== undefined) {
-      return makeFailure(new InternalSchemaValidationError(trace, { message: publicKeysDeserialization.error }));
+    const publicKeysDeserialization = await deserialize(trace, {
+      serializedValue: selectedSharedKeys.publicKeys.serializedValue,
+      valueSchema: sharedPublicKeysSchema
+    });
+    if (!publicKeysDeserialization.ok) {
+      return publicKeysDeserialization;
     }
 
-    const encryptedValue = await encryptBuffer(trace, { value, encryptingKeys: publicKeysDeserialization.deserialized });
+    const encryptedValue = await encryptBuffer(trace, { value, encryptingKeys: publicKeysDeserialization.value });
     /* node:coverage disable */
     if (!encryptedValue.ok) {
       return encryptedValue;
