@@ -25,8 +25,8 @@ coverage
 
 # dotenv environment variables file
 *.env
-!*.env.sample
 .env.*
+!*.env.sample
 # These env files are not samples, they contain useful values loaded by freedom-config/loadEnv.ts:
 !.env.defaults
 !.env.*.defaults

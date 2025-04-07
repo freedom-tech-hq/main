@@ -5,9 +5,9 @@ import { processEmail } from '../../email-encoder/utils/processEmail.ts';
 type FastifyInstance = ReturnType<typeof fastify>;
 
 /**
- * Create and configure the Fastify server
+ * Put together the HTTP server. Do not start
  */
-export function assembleServer(): FastifyInstance {
+export function assembleHttpServer(): FastifyInstance {
   const server = fastify({ logger: true });
 
   // Define routes
@@ -24,7 +24,7 @@ export function assembleServer(): FastifyInstance {
       });
     }
 
-    await processEmail(emailData);
+    await processEmail('received', emailData);
 
     return {};
   });

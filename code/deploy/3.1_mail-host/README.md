@@ -26,7 +26,10 @@ Put [users.json](../../../backends/freedom-mail-host/src/__tests__/fixtures/user
 Local, assuming fixture `users.json`:
 
 ```bash
-swaks --to user1@my-test.com --from sender@my-test.com --server 127.0.0.1 --body "This is a test email"
+swaks --to user1@local.dev.freedommail.me \
+      --from nowhere@no-server.linefeedr.com \
+      --server 127.0.0.1:25 \
+      --body "This is a test inbound email"
 ```
 
 Generic:

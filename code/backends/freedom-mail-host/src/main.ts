@@ -1,11 +1,16 @@
-/**
- * Main entry point for the freedom-mail-host module
- */
+import { startHttpServer } from './modules/http-server/utils/startHttpServer.ts';
+import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
 
-import { startServer } from './modules/http-server/utils/startServer.ts';
+async function main() {
+  // Start HTTP server for API endpoints
+  await startHttpServer();
 
-// Start the server
-startServer().catch(err => {
-  console.error('Failed to start server:', err);
+  // Start SMTP server for receiving emails directly
+  await startSmtpServer();
+}
+
+// Entrypoint
+main().catch(error => {
+  console.error('Failed to start servers:', error);
   process.exit(1);
 });

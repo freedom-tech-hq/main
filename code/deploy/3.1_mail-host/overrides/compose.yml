@@ -17,20 +17,24 @@ services:
   #    - mail-host
   #  restart: unless-stopped
 
-  #mail-host:
-  #  build: .
-  #  env_file: .env
-  #  environment:
-  #    - SMTP_TLS_CERT=/app/tls_cert.pem
-  #    - SMTP_TLS_KEY=/app/tls_key.pem
-  #    - "SMTP_OUR_DOMAINS=$SMTP_OUR_DOMAINS"
-  #    - APP_BUCKET=user-files-dev-abd0971d
-  #  ports:
-  #    - "3000:3000" # HTTP
-  #    - "25:25"
-  #    - "465:465"
-  #    - "587:587"
-  #  restart: unless-stopped
+  freedom-host:
+    build: .
+
+    env_file: .env
+
+    networks:
+      - internal
+    ports:
+      - "3000:3000" # HTTP
+      - "25:25"
+      - "465:465"
+      - "587:587"
+
+    volumes:
+      # Secrets
+      - "${DEPLOY_LETSENCRYPT_DIR:-VALUE_REQUIRED}/:/etc/letsencrypt/:ro"
+
+    restart: unless-stopped
 
   delivery-host:
     build: ./code/backends/delivery-host
@@ -48,7 +52,6 @@ services:
 
     networks:
       - internal
-
     ports: [] # No exposure, see https://github.com/docker-mailserver/docker-mailserver/issues/1405
 
     volumes:
