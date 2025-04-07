@@ -1,0 +1,16 @@
+{
+  "name": "dms-container",
+  "description": "Docker Mailserver Setup",
+  "nx": {
+    "projectType": "application",
+    "tags": [
+      "type:non-js",
+      "platform:server"
+    ]
+  },
+  "private": true,
+  "scripts": {
+    "deploy:extract": "./deploy.extract.sh"
+  },
+  "version": "0.0.0"
+}

@@ -1,0 +1,45 @@
+name: test-delivery-host
+
+services:
+  delivery-host:
+    build: .
+
+    hostname: smtp1.local.dev.freedommail.me
+    env_file: mailserver.env
+    environment:
+      #- LOG_LEVEL=trace
+      - LOG_LEVEL=info
+      - SSL_TYPE=self-signed # In dev and production: SSL_TYPE=letsencrypt
+      - PERMIT_DOCKER=connected-networks # Ensure this setting never goes to production
+
+      # TODO: try and ensure this does not affect outbound
+      #- ENABLE_OPENDKIM=0
+      #- ENABLE_OPENDMARC=0
+
+    # More information about the mail-server ports:
+    # https://docker-mailserver.github.io/docker-mailserver/latest/config/security/understanding-the-ports/
+    #ports:
+    #  # - "25:25"    # SMTP  (explicit TLS => STARTTLS, Authentication is DISABLED => use port 465/587 instead)
+    #  # - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+    #  # - "465:465"  # ESMTP (implicit TLS)
+    #  # - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+    #  # - "993:993"  # IMAP4 (implicit TLS)
+
+    volumes:
+      # Config. You do the config by running `setup` commands inside the container.
+      # But then this dir should go to git and be used to spin up new instances.
+      - ./test-data/dms/config/:/tmp/docker-mailserver/
+
+      # Readable runtime data
+      - ./test-data/dms/mail-data/:/var/mail/
+      - ./test-data/dms/mail-logs/:/var/log/mail/
+
+      # Unreadable runtime data (internal formats, only persist it for restarts)
+      # Do not bind as a directory on Macs, sockets will not work
+      - mail-state:/var/mail-state/
+
+      # Runtime environment
+      - /etc/localtime:/etc/localtime:ro
+
+volumes:
+  mail-state:

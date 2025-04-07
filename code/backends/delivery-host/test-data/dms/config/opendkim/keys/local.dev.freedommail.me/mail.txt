@@ -1,0 +1,3 @@
+mail._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; "
+	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqpwtFBzTgrdo7Cm0iYgp8qGitmLen12zQLUrqOeSAmVyvcqZt1uguJJuFoSJy2siQwmGj0xBvbDTBRf8ypPgaB6GC8tvr5CTxgrVdKRBHk8f3R6LXSgRSHJezOo0oj0qqqkH7uRcULxClB5o8UrqnKDuwWubcM1UCNLVcZlsAiwWftPF28jKErKt+zAFv2ql9BCjXXnrKIzxrd"
+	  "6iPci6a32hi8nlUDVYoCMsC5ywa4asQ5SKDdgNhAuuElifJsBD2wAuVdZ/AykDevBJyn8x/TEqiRzyoQTwIeD7xATJwFNyHBJ+sJOgryuKXOkH3/VyapyWDr2ixtr6XDa4Z9wxgQIDAQAB" )  ; ----- DKIM key mail for local.dev.freedommail.me

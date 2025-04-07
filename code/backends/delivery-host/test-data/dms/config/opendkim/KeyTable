@@ -1,0 +1,1 @@
+mail._domainkey.local.dev.freedommail.me local.dev.freedommail.me:mail:/etc/opendkim/keys/local.dev.freedommail.me/mail.private
