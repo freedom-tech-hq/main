@@ -9,6 +9,7 @@ coverage
 *.rhl
 *.tsbuildinfo
 .ssl
+!.gitkeep
 
 # Account key
 *serviceAccountKey*

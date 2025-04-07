@@ -21,7 +21,7 @@ No extra parameters are needed so far.
 terraform apply
 ```
 
-Then deploy the [application(s)](../../../deploy/deployments)
+Then deploy the application(s) from `deploy/3.N_xxx` folder(s).
 
 ## Connecting to the Docker VM
 

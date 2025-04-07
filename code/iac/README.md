@@ -17,7 +17,7 @@ work in the following combination.
     - Manually deployed machines should be bound to either Dev account, or Production account, or a certain deployment.
 - Deployment Infrastructure
   - A deployment infrastructure is a set of hardware and cloud services, required to host one instance of
-    a particular app deployment. App deployments are in [deploy/deployments/](../deploy/deployments).
+    a particular app deployment. App deployments are in `deploy/3.N_xxx` folders.
   - Note: to release apps separately, use many App Deployments but in a single Deployment Infrastructure.
     Maintaining several Deployment Infrastructures is an overhead.
 

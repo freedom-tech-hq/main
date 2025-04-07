@@ -37,3 +37,29 @@ export TEST_MAIL_TO=user1@mail-host.dev.linefeedr.com
 
 swaks --to "$TEST_MAIL_TO" --from sender@my-test.com --server "$DOCKER_VM_IP" --body "This is a test email"
 ```
+
+### delivery-host
+
+Note: **ports are not exposed**, so running `swaks` inside the container.
+
+Local env:
+
+```bash
+docker exec mail-host-delivery-host-1 \
+    swaks --to nowhere@freedommail.me \
+          --from user1@local.dev.freedommail.me \
+          --server 127.0.0.1:25 \
+          --tls \
+          --body "This is a test email"
+```
+
+Dev env:
+
+```bash
+docker --context freedom-dev exec mail-host-delivery-host-1 \
+    swaks --to pavel.koryagin@freedomtechhq.com \
+          --from user1@mail-host.dev.linefeedr.com \
+          --server 127.0.0.1:25 \
+          --tls \
+          --body "This is a test email"
+```

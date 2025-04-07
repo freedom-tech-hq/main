@@ -8,7 +8,7 @@ Not using build for JS as it is supposed to be small and fast.
 
 ## Cloud Deployment
 
-See [mail-host](../../deploy/deployments/mail-host/README.md) deployment.
+See [mail-host](../../deploy/3.1_mail-host/README.md) deployment.
 
 ## Development
 

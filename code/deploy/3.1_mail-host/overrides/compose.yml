@@ -1,0 +1,80 @@
+name: mail-host
+
+services:
+  #inbound-smtp-server:
+  #  build:
+  #    context: ./code/backends/freedom-mta-bridge
+  #    args:
+  #      - "MAIL_DOMAIN=$MAIL_DOMAIN"
+  #  ports:
+  #    - "25:25"  # SMTP
+  #  environment:
+  #    # Note: These variables do not work yet.
+  #    # See the comment in bridge_incoming.js (need an intermediate file to pass them through)
+  #    - MAIL_SERVER_HOST=mail-host
+  #    - MAIL_SERVER_PORT=3000
+  #  depends_on:
+  #    - mail-host
+  #  restart: unless-stopped
+
+  #mail-host:
+  #  build: .
+  #  env_file: .env
+  #  environment:
+  #    - SMTP_TLS_CERT=/app/tls_cert.pem
+  #    - SMTP_TLS_KEY=/app/tls_key.pem
+  #    - "SMTP_OUR_DOMAINS=$SMTP_OUR_DOMAINS"
+  #    - APP_BUCKET=user-files-dev-abd0971d
+  #  ports:
+  #    - "3000:3000" # HTTP
+  #    - "25:25"
+  #    - "465:465"
+  #    - "587:587"
+  #  restart: unless-stopped
+
+  delivery-host:
+    build: ./code/backends/delivery-host
+
+    # Provide the FQDN of your mail server here (Your DNS MX record should point to this value)
+    hostname: "$DEPLOY_DELIVERY_HOST_NAME"
+    env_file: ./code/backends/delivery-host/mailserver.env
+    environment:
+      - "SSL_TYPE=$DEPLOY_DELIVERY_HOST_SSL_TYPE"
+      # - LOG_LEVEL=trace
+
+      # We need to permit mail with no auth from mail-host
+      # TODO: Implement safer, with single IP
+      - PERMIT_DOCKER=connected-networks # only allowed when NO ports are published
+
+    networks:
+      - internal
+
+    ports: [] # No exposure, see https://github.com/docker-mailserver/docker-mailserver/issues/1405
+
+    volumes:
+      # Secrets
+      - "${DEPLOY_LETSENCRYPT_DIR:-VALUE_REQUIRED}/:/etc/letsencrypt/:ro"
+
+      # Readable runtime data
+      - "${DEPLOY_DELIVERY_HOST_DATA_DIR:-VALUE_REQUIRED}:/var/mail/"
+      - "${DEPLOY_DELIVERY_HOST_LOGS_DIR:-VALUE_REQUIRED}:/var/log/mail/"
+
+      # Unreadable runtime data (internal formats, only persist it for restarts)
+      # Do not bind as a directory on Macs, sockets will not work
+      - delivery-host-mail-state:/var/mail-state/
+
+      # Runtime environment
+      - /etc/localtime:/etc/localtime:ro
+
+    restart: unless-stopped
+    stop_grace_period: 1m
+    healthcheck:
+      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+      timeout: 3s
+      retries: 1
+
+volumes:
+  delivery-host-mail-state:
+
+networks:
+  internal:
