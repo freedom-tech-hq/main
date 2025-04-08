@@ -23,7 +23,7 @@ import { initializeRoot } from '../initializeRoot.ts';
 
 describe('createConflictFreeDocumentBundleAtPath', () => {
   let trace!: Trace;
-  let cryptoKeys!: PrivateCombinationCryptoKeySet;
+  let privateKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: CryptoService;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
@@ -35,9 +35,9 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
 
     const internalCryptoKeys = await generateCryptoCombinationKeySet(trace);
     expectOk(internalCryptoKeys);
-    cryptoKeys = internalCryptoKeys.value;
+    privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys });
+    cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
@@ -51,7 +51,7 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      creatorPublicKeys: cryptoKeys.publicOnly(),
+      creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 
@@ -66,12 +66,12 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
     const newDocument = (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'TEST_'> }) =>
       new ConflictFreeDocument('TEST_', snapshot);
 
-    const doc = await createConflictFreeDocumentBundleAtPath(trace, store, testingPath.append(uuidId('bundle')), {
+    const docPath = testingPath.append(uuidId('bundle'));
+    const doc = await createConflictFreeDocumentBundleAtPath(trace, store, docPath, {
       name: encName('doc'),
       newDocument
     });
     expectOk(doc);
-    const docPath = doc.value.path;
 
     const nameField = doc.value.document.generic.getRestrictedTextField('name', '');
     nameField.set('test user');

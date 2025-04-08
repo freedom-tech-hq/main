@@ -18,12 +18,12 @@ export const makeCryptoService = ({
   getPrivateCryptoKeySet: makeAsyncResultFunc(
     [import.meta.filename, 'getPrivateKeySet'],
     async (trace, id?: CryptoKeySetId): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
-      const cryptoKeys = await (id !== undefined ? getPrivateCryptoKeysById(trace, id) : getMostRecentPrivateCryptoKeys(trace));
-      if (!cryptoKeys.ok) {
-        return cryptoKeys;
+      const privateKeys = await (id !== undefined ? getPrivateCryptoKeysById(trace, id) : getMostRecentPrivateCryptoKeys(trace));
+      if (!privateKeys.ok) {
+        return privateKeys;
       }
 
-      return makeSuccess(cryptoKeys.value);
+      return makeSuccess(privateKeys.value);
     }
   )
 });

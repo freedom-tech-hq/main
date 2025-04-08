@@ -11,6 +11,7 @@ import type { GetMailCollectionPacket } from '../../../tasks/modules/mail/getMai
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailCollectionGroup } from '../../mail-types/MailCollectionGroup.ts';
+import { makeSelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
@@ -72,7 +73,7 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
 
             for (const newCollection of newGroup.collections) {
               addedIndices.push(items.current.length);
-              items.current.push({ type: 'collection', id: newCollection.id, collection: newCollection });
+              items.current.push({ type: 'collection', id: makeSelectableMailCollectionId(newCollection), collection: newCollection });
             }
           }
 
@@ -113,7 +114,7 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
               addedIndices.push(groupEndItemIndex + newCollectionIndex);
               items.current.splice(groupEndItemIndex + newCollectionIndex, 0, {
                 type: 'collection',
-                id: newCollection.id,
+                id: makeSelectableMailCollectionId(newCollection),
                 collection: newCollection
               });
               newCollectionIndex += 1;

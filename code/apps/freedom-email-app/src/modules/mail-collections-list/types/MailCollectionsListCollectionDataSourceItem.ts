@@ -1,8 +1,8 @@
 import type { MailCollection } from '../../mail-types/MailCollection.ts';
-import type { MailCollectionId } from '../../mail-types/MailCollectionId.ts';
+import type { SelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 
 export interface MailCollectionsListCollectionDataSourceItem {
   type: 'collection';
-  id: MailCollectionId;
+  id: SelectableMailCollectionId;
   collection: MailCollection;
 }

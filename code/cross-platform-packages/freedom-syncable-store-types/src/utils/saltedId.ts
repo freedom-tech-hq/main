@@ -14,9 +14,11 @@ export interface SyncableSaltedIdConfig extends SyncableIdConfig {
 
 export type SyncableSaltedIdSettings = SyncableItemType | SyncableSaltedIdConfig;
 
+export type SaltedId = (salt: SyncableStore | string | undefined) => Promise<SyncableId>;
+
 // Not using makeAsyncResultFunc here because we want this to be easily inlined for readability
 export const saltedId =
-  (settings: SyncableSaltedIdSettings, plainId: string) =>
+  (settings: SyncableSaltedIdSettings, plainId: string): SaltedId =>
   async (salt: SyncableStore | string | undefined): Promise<SyncableId> => {
     if (salt === undefined) {
       throw new GeneralError(trace, 'Salt is required');

@@ -1,7 +1,6 @@
 import type { Trace } from 'freedom-contexts';
 import { createTraceContext, useTraceContext } from 'freedom-contexts';
-
-import type { EmailUserId } from '../../types/EmailUserId.ts';
+import type { EmailUserId } from 'freedom-email-sync';
 
 const ActiveUserIdContext = createTraceContext<{ userId?: EmailUserId }>(() => ({}));
 

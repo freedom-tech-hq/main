@@ -1,6 +1,7 @@
 import { Box, CssBaseline } from '@mui/material';
 import { inline } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
+import type { EmailUserId } from 'freedom-email-sync';
 import { Fragment, useEffect, useMemo } from 'react';
 import { BC, useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
@@ -9,7 +10,6 @@ import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { TasksProvider, useTasks } from '../contexts/tasks.tsx';
 import { MailThread } from '../modules/mail-thread/components/MailThread.tsx';
 import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
-import type { EmailUserId } from '../types/EmailUserId.ts';
 import { AppGlobalStyles } from './AppGlobalStyles.tsx';
 import { AppNavbar } from './AppNavbar.tsx';
 import { AppTheme } from './AppTheme.tsx';

@@ -2,7 +2,7 @@
 
 import { devMakeEnvDerivative, type Trace } from 'freedom-contexts';
 
-import { useProbeSettings } from '../../context/probe.ts';
+import { useProbeSettings } from '../../contexts/probe.ts';
 import { makeShouldIncludeTraceForDebuggingFunc } from './makeShouldIncludeTraceForDebuggingFunc.ts';
 
 export let shouldLogFunc: (trace: Trace) => boolean = () => false;

@@ -3,6 +3,7 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
+import type { MailId } from 'freedom-email-sync';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
@@ -11,7 +12,6 @@ import { useTasks } from '../../../contexts/tasks.tsx';
 import type { GetMailForThreadPacket } from '../../../tasks/modules/mail/getMailForThread.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
-import type { MailId } from '../../mail-types/MailId.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 

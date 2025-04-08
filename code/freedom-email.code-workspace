@@ -4,6 +4,12 @@
             "path": "apps/freedom-email-app"
         },
         {
+            "path": "backends/freedom-mail-host"
+        },
+        {
+            "path": "backends/freedom-mta-bridge"
+        },
+        {
             "path": "cross-platform-packages/freedom-access-control-types"
         },
         {
@@ -40,13 +46,16 @@
             "path": "cross-platform-packages/freedom-crypto"
         },
         {
-            "path": "cross-platform-packages/freedom-data-source-types"
-        },
-        {
             "path": "cross-platform-packages/freedom-device-notification-types"
         },
         {
             "path": "cross-platform-packages/freedom-do-soon"
+        },
+        {
+            "path": "cross-platform-packages/freedom-email-sync"
+        },
+        {
+            "path": "cross-platform-packages/freedom-email-user"
         },
         {
             "path": "cross-platform-packages/freedom-fetching"
@@ -65,6 +74,9 @@
         },
         {
             "path": "cross-platform-packages/freedom-metrics-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-nest"
         },
         {
             "path": "cross-platform-packages/freedom-notification-types"
@@ -146,12 +158,6 @@
         },
         {
             "path": "web-packages/freedom-react-localization"
-        },
-        {
-            "path": "backends/freedom-mail-host"
-        },
-        {
-            "path": "backends/freedom-mta-bridge"
         }
     ],
     "settings": {}

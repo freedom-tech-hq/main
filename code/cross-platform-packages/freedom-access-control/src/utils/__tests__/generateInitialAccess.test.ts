@@ -15,14 +15,14 @@ describe('generateInitialAccess', () => {
   it('should work', async () => {
     const trace = makeTrace('test');
 
-    const cryptoKeys = await generateCryptoCombinationKeySet(trace);
-    expectOk(cryptoKeys);
+    const privateKeys = await generateCryptoCombinationKeySet(trace);
+    expectOk(privateKeys);
 
-    const cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys.value });
+    const cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys.value });
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,
-      initialAccess: [{ role: 'creator', publicKeys: cryptoKeys.value.publicOnly() }],
+      initialAccess: [{ role: 'creator', publicKeys: privateKeys.value.publicOnly() }],
       roleSchema,
       doesRoleHaveReadAccess: () => true
     });
@@ -31,6 +31,6 @@ describe('generateInitialAccess', () => {
     const deserializedInitialAccessState = await deserialize(trace, initialAccess.value.state.value);
     expectOk(deserializedInitialAccessState);
 
-    expectDeepStrictEqual(deserializedInitialAccessState.value, { [cryptoKeys.value.id]: 'creator' });
+    expectDeepStrictEqual(deserializedInitialAccessState.value, { [privateKeys.value.id]: 'creator' });
   });
 });

@@ -29,7 +29,7 @@ export interface ResolvedSyncableIdSettings {
 
 export const unmarkedSyncablePlainIdInfo = makeIdInfo('._');
 export type UnmarkedSyncablePlainId = typeof unmarkedSyncablePlainIdInfo.schema.valueType;
-export const plainId = (settings: SyncableIdSettings, plainId: string) =>
+export const plainId = (settings: SyncableIdSettings, plainId: string): SyncableId =>
   makeSyncableId(settings, unmarkedSyncablePlainIdInfo.make(plainId));
 
 export const saltIdInfo = makeIdInfo('SALT_');
@@ -45,18 +45,19 @@ export type UnmarkedSyncableSaltedId = typeof unmarkedSyncableSaltedIdInfo.schem
 
 export const unmarkedSyncableUuidSchema = uuidSchema;
 export type UnmarkedSyncableUuidId = Uuid;
-export const uuidId = (settings: SyncableIdSettings, uuid?: Uuid) => makeSyncableId(settings, uuid ?? makeUuid());
+export const uuidId = (settings: SyncableIdSettings, uuid?: Uuid): SyncableId => makeSyncableId(settings, uuid ?? makeUuid());
 
 export const unmarkedTimeIdInfo = timeIdInfo;
 export const unmarkedTimeIdSchema = unmarkedTimeIdInfo.schema;
 export type UnmarkedTimeId = TimeId;
 
-export const timeId = (settings: SyncableIdSettings, timeId?: TimeId) =>
+export const timeId = (settings: SyncableIdSettings, timeId?: TimeId): SyncableId =>
   makeSyncableId(settings, timeId ?? timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`));
 
 export const unmarkedPrefixedSyncableUuidSchema = anyPrefixedUuidSchema;
 export type UnmarkedPrefixedSyncableUuidId = AnyPrefixedUuid;
-export const prefixedUuidId = (settings: SyncableIdSettings, prefixedUuid: AnyPrefixedUuid) => makeSyncableId(settings, prefixedUuid);
+export const prefixedUuidId = (settings: SyncableIdSettings, prefixedUuid: AnyPrefixedUuid): SyncableId =>
+  makeSyncableId(settings, prefixedUuid);
 
 export const unmarkedSyncableIdSchema = schema.oneOf5(
   unmarkedSyncablePlainIdInfo.schema,
