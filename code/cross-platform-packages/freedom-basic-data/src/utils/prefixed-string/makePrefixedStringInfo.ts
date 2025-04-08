@@ -21,6 +21,7 @@ export const makePrefixedStringInfo = <PrefixT extends `${string}_`, NonPrefixed
   schema: options.schemaOverride ?? makePrefixedStringSchema(prefix, { ...options }),
   nonAnchoredRegex: options.nonAnchoredRegexOverride ?? makeNonAnchoredPrefixedStringRegex(prefix),
   is: (value: string) => isPrefixedString<PrefixT, NonPrefixedT>(prefix, value, options),
+  checked: (value: string) => (isPrefixedString<PrefixT, NonPrefixedT>(prefix, value, options) ? value : undefined),
   make: (nonPrefixedValue: NonPrefixedT) => `${prefix}${nonPrefixedValue}`,
   parse: makePrefixedStringParser(prefix),
   removePrefix: (value: PrefixedString<PrefixT, NonPrefixedT>) => {

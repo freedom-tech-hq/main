@@ -1,25 +1,22 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { prefixedUuidId } from 'freedom-sync-types';
-import { createBundleAtPath, createConflictFreeDocumentBundleAtPath, initializeRoot } from 'freedom-syncable-store-types';
+import type { EmailUserId } from 'freedom-email-sync';
+import { getUserMailPaths } from 'freedom-email-user';
+import { createBundleAtPath, createFolderAtPath, initializeRoot } from 'freedom-syncable-store-types';
 
-import { mailCollectionIdInfo } from '../../../modules/mail-types/MailCollectionId.ts';
-import type { EmailUserId } from '../../../types/EmailUserId.ts';
-import { MAIL_COLLECTIONS_BUNDLE_ID, MAIL_FOLDER_ID, MAIL_STORAGE_BUNDLE_ID } from '../../consts/user-syncable-paths.js';
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
-import { makeNewMailCollectionDocument } from '../../types/MailCollectionDocument.ts';
-import { createSyncableFolderForUserWithDefaultInitialAccess } from '../internal/storage/createSyncableFolderForUserWithDefaultInitialAccess.ts';
-import { getUserFs } from '../internal/storage/getUserFs.ts';
-import { createInitialMockContentForUser } from '../internal/user/createInitialMockContentForUser.ts';
+import { createDefaultCollectionsForUser } from '../internal/user/createDefaultCollectionsForUser.ts';
 import { createUserIdAndCryptoKeys } from '../internal/user/createUserIdAndCryptoKeys.ts';
+import { createWelcomeContentForUser } from '../internal/user/createWelcomeContentForUser.ts';
+import { getOrCreateEmailAccessForUser } from '../internal/user/getOrCreateEmailAccessForUser.ts';
 
 /**
  * Creates:
  * - crypto keys
  * - user ID
- * - a "mail-collections" folder with initial access controls (signed with the new signing key)
- * - an empty "inbox" bundle in the "mail-collections" folder
+ * - basic user folder structure
+ * - default collections (ex. inbox, sent, spam)
  *
  * @returns the user ID
  */
@@ -33,55 +30,65 @@ export const createUser = makeAsyncResultFunc([import.meta.filename], async (tra
 
   const { userId } = userIdAndCryptoKeys.value;
 
-  const userFs = await getUserFs(trace, { userId });
-  if (!userFs.ok) {
-    return userFs;
+  const access = await getOrCreateEmailAccessForUser(trace, { userId });
+  if (!access.ok) {
+    return access;
   }
 
-  const mailFolderId = await MAIL_FOLDER_ID(userFs.value);
-  const mailStorageBundleId = await MAIL_STORAGE_BUNDLE_ID(userFs.value);
-  const mailCollectionsBundleId = await MAIL_COLLECTIONS_BUNDLE_ID(userFs.value);
-  const mailCollectionsInboxDocumentId = prefixedUuidId('bundle', mailCollectionIdInfo.make());
+  const userFs = access.value.userFs;
+  const paths = await getUserMailPaths(userFs);
 
-  const initializedStore = await initializeRoot(trace, userFs.value);
+  const initializedStore = await initializeRoot(trace, userFs);
   if (!initializedStore.ok) {
     return generalizeFailureResult(trace, initializedStore, ['conflict', 'not-found']);
   }
 
-  // Mail Folder
-  const mailFolder = await createSyncableFolderForUserWithDefaultInitialAccess(trace, {
-    userId,
-    path: userFs.value.path.append(mailFolderId)
-  });
-  if (!mailFolder.ok) {
-    return generalizeFailureResult(trace, mailFolder, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
-  }
-
-  // Mail Storage Bundle
-  const mailStorageBundle = await createBundleAtPath(trace, userFs.value, mailFolder.value.path.append(mailStorageBundleId), {});
+  // Mail Storage Folder
+  const mailStorageBundle = await createFolderAtPath(trace, userFs, paths.storage.value);
   if (!mailStorageBundle.ok) {
     return generalizeFailureResult(trace, mailStorageBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
 
+  // Mail Out Folder
+  const mailOutFolder = await createFolderAtPath(trace, userFs, paths.out.value);
+  if (!mailOutFolder.ok) {
+    return generalizeFailureResult(trace, mailOutFolder, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+  }
+
   // Mail Collections Bundle
-  const mailCollectionsBundle = await createBundleAtPath(trace, userFs.value, mailFolder.value.path.append(mailCollectionsBundleId), {});
+  const mailCollectionsBundle = await createBundleAtPath(trace, userFs, paths.collections.value);
   if (!mailCollectionsBundle.ok) {
     return generalizeFailureResult(trace, mailCollectionsBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
 
-  // Empty Inbox Bundle
-  const inboxBundle = await createConflictFreeDocumentBundleAtPath(
-    trace,
-    userFs.value,
-    mailCollectionsBundle.value.path.append(mailCollectionsInboxDocumentId),
-    { newDocument: () => makeNewMailCollectionDocument({ name: 'loc:inbox', collectionType: 'inbox' }) }
-  );
-  if (!inboxBundle.ok) {
-    return generalizeFailureResult(trace, inboxBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+  // Mail Indexes Bundle
+  const mailIndexesBundle = await createBundleAtPath(trace, userFs, paths.indexes.value);
+  if (!mailIndexesBundle.ok) {
+    return generalizeFailureResult(trace, mailIndexesBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
 
-  // TODO: TEMP
-  await createInitialMockContentForUser(trace, { userId, mailCollectionsInboxDocumentId });
+  // Mail Email Ids by Message Id Index Bundle
+  const mailIdsByMessageIdIndexBundle = await createBundleAtPath(trace, userFs, paths.indexes.mailIdsByMessageIdIndex);
+  if (!mailIdsByMessageIdIndexBundle.ok) {
+    return generalizeFailureResult(trace, mailIdsByMessageIdIndexBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+  }
+
+  // Mail Threads Bundle
+  const mailThreadsBundle = await createBundleAtPath(trace, userFs, paths.threads);
+  if (!mailThreadsBundle.ok) {
+    return generalizeFailureResult(trace, mailThreadsBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+  }
+
+  // Creating default collections
+  const createdDefaultCollections = await createDefaultCollectionsForUser(trace, { userId });
+  if (!createdDefaultCollections.ok) {
+    return createdDefaultCollections;
+  }
+
+  const welcomeContentAdded = await createWelcomeContentForUser(trace, { userId });
+  if (!welcomeContentAdded.ok) {
+    return welcomeContentAdded;
+  }
 
   activeUserId.userId = userId;
 

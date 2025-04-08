@@ -3,21 +3,21 @@ import { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
-import type { MailCollectionId } from '../modules/mail-types/MailCollectionId.ts';
+import type { SelectableMailCollectionId } from '../modules/mail-types/SelectableMailCollectionId.ts';
 
-const SelectedMailCollectionContext = createContext<Binding<MailCollectionId | undefined>>(
-  makeBinding<MailCollectionId | undefined>(() => undefined, { id: 'selectedMailCollectionId', detectChanges: true })
+const SelectedMailCollectionIdContext = createContext<Binding<SelectableMailCollectionId | undefined>>(
+  makeBinding<SelectableMailCollectionId | undefined>(() => undefined, { id: 'selectedMailCollectionId', detectChanges: true })
 );
 
-export interface SelectedMailCollectionProviderProps {
-  selectedMailCollectionId: Binding<MailCollectionId | undefined>;
+export interface SelectedMailCollectionIdProviderProps {
+  selectedMailCollectionId: Binding<SelectableMailCollectionId | undefined>;
 }
 
-export const SelectedMailCollectionProvider = ({
+export const SelectedMailCollectionIdProvider = ({
   children,
   selectedMailCollectionId
-}: SelectedMailCollectionProviderProps & { children: ReactNode }) => (
-  <SelectedMailCollectionContext value={selectedMailCollectionId}>{children}</SelectedMailCollectionContext>
+}: SelectedMailCollectionIdProviderProps & { children: ReactNode }) => (
+  <SelectedMailCollectionIdContext value={selectedMailCollectionId}>{children}</SelectedMailCollectionIdContext>
 );
 
-export const useSelectedMailCollectionId = () => useContext(SelectedMailCollectionContext);
+export const useSelectedMailCollectionId = () => useContext(SelectedMailCollectionIdContext);

@@ -3,20 +3,23 @@ import {
   AutoDeleteOutlined as TrashIcon,
   DraftsOutlined as DraftsIcon,
   InboxOutlined as InboxIcon,
-  LabelOutlined as LabelIcon,
-  OutboxOutlined as OutboxIcon,
   ReportOutlined as SpamIcon,
   SendOutlined as SentIcon
 } from '@mui/icons-material';
 import type { SvgIconOwnProps } from '@mui/material';
 import { Chip, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
+import type { MailCollectionType } from 'freedom-email-user';
+import { useT } from 'freedom-react-localization';
+import type { TFunction } from 'i18next';
 import type { ComponentType } from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
 import type { AppTheme } from '../../../components/AppTheme.tsx';
 import { useListHasFocus } from '../../../contexts/list-has-focus.tsx';
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
-import type { MailCollectionType } from '../../mail-types/MailCollectionType.ts';
+import { $mailCollectionType } from '../../../localizations/mail-collection-types.ts';
+import type { MailCollection } from '../../mail-types/MailCollection.ts';
+import { makeSelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 import type { MailCollectionsListCollectionDataSourceItem } from '../types/MailCollectionsListCollectionDataSourceItem.ts';
 
 export interface MailCollectionListItemProps<TagT> extends Omit<MailCollectionsListCollectionDataSourceItem, 'type'> {
@@ -27,13 +30,15 @@ export interface MailCollectionListItemProps<TagT> extends Omit<MailCollectionsL
 export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: MailCollectionListItemProps<TagT>) => {
   const listHasFocus = useListHasFocus();
   const selectedCollectionId = useSelectedMailCollectionId();
+  const t = useT();
   const theme = useTheme<AppTheme>();
 
   const taggedOnClick = useCallbackRef(() => onClick(tag));
 
-  const isSelected = useDerivedBinding(selectedCollectionId, (selectedCollectionId) => selectedCollectionId === collection.id, {
+  const selectableId = makeSelectableMailCollectionId(collection);
+  const isSelected = useDerivedBinding(selectedCollectionId, (selectedCollectionId) => selectedCollectionId === selectableId, {
     id: 'isSelected',
-    deps: [collection.id]
+    deps: [selectableId]
   });
 
   const IconComponent = iconComponentsByCollectionType[collection.collectionType];
@@ -53,7 +58,7 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
             ))}
           </ListItemIcon>
           <ListItemText
-            primary={collection.title}
+            primary={getTitleForMailCollection(collection, t)}
             slotProps={{ primary: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }}
           />
           {shouldShowUnreadCountByCollectionType[collection.collectionType] ? <Chip size="small" label={collection.unreadCount} /> : null}
@@ -69,20 +74,21 @@ const iconComponentsByCollectionType: Record<MailCollectionType, ComponentType<S
   archive: ArchiveIcon,
   drafts: DraftsIcon,
   inbox: InboxIcon,
-  label: LabelIcon,
-  outbox: OutboxIcon,
   sent: SentIcon,
   spam: SpamIcon,
-  trash: TrashIcon
+  trash: TrashIcon,
+  custom: InboxIcon
 };
 
 const shouldShowUnreadCountByCollectionType: Record<MailCollectionType, boolean> = {
   archive: false,
   drafts: false,
   inbox: true,
-  label: true,
-  outbox: false,
   sent: false,
   spam: true,
-  trash: false
+  trash: false,
+  custom: true
 };
+
+const getTitleForMailCollection = (collection: MailCollection, t: TFunction) =>
+  collection.title.length > 0 ? collection.title : $mailCollectionType[collection.collectionType](t);

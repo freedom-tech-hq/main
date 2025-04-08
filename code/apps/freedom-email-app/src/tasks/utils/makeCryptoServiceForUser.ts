@@ -1,30 +1,27 @@
 import { makeAsyncResultFunc, uncheckedResult } from 'freedom-async';
 import type { CryptoService } from 'freedom-crypto-service';
 import { makeCryptoService } from 'freedom-crypto-service';
+import type { EmailUserId } from 'freedom-email-sync';
 
-import type { EmailUserId } from '../../types/EmailUserId.ts';
-import { getCryptoKeysDb } from '../modules/internal/storage/getCryptoKeysDb.ts';
-import { getRequiredCryptoKeysForUser } from '../modules/internal/user/getRequiredCryptoKeysForUser.ts';
+import { getOrCreateKeyStoreForUser } from '../modules/internal/storage/getOrCreateKeyStoreForUser.ts';
+import { getRequiredPrivateKeysForUser } from '../modules/internal/user/getRequiredPrivateKeysForUser.ts';
 
 export const makeCryptoServiceForUser = ({ userId }: { userId: EmailUserId }): CryptoService =>
   makeCryptoService({
     getPrivateCryptoKeySetIds: makeAsyncResultFunc([import.meta.filename, 'getPrivateCryptoKeySetIds'], async (trace) => {
-      const cryptoKeysDb = await uncheckedResult(getCryptoKeysDb(trace));
+      const keyStore = await uncheckedResult(getOrCreateKeyStoreForUser(trace, { userId }));
 
-      const userCryptoKeysDb = cryptoKeysDb({ userId });
-      return await userCryptoKeysDb.keys.asc().keys(trace);
+      return await keyStore.keys.asc().keys(trace);
     }),
 
     getPrivateCryptoKeysById: makeAsyncResultFunc([import.meta.filename, 'getPrivateCryptoKeysById'], async (trace, id) => {
-      const cryptoKeysDb = await uncheckedResult(getCryptoKeysDb(trace));
+      const keyStore = await uncheckedResult(getOrCreateKeyStoreForUser(trace, { userId }));
 
-      const userCryptoKeysDb = cryptoKeysDb({ userId });
-
-      return await userCryptoKeysDb.object(id).get(trace);
+      return await keyStore.object(id).get(trace);
     }),
 
     getMostRecentPrivateCryptoKeys: makeAsyncResultFunc(
       [import.meta.filename, 'getMostRecentPrivateCryptoKeys'],
-      async (trace) => await getRequiredCryptoKeysForUser(trace, { userId })
+      async (trace) => await getRequiredPrivateKeysForUser(trace, { userId })
     )
   });

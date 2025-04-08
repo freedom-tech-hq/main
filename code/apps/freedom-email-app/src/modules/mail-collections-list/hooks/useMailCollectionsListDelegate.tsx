@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailCollection } from '../../mail-types/MailCollection.ts';
 import { mailCollectionGroupIdInfo } from '../../mail-types/MailCollectionGroupId.ts';
-import { type MailCollectionId, mailCollectionIdInfo } from '../../mail-types/MailCollectionId.ts';
+import { makeSelectableMailCollectionId, type SelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailCollectionGroupTitleListItem } from '../components/MailCollectionGroupTitleListItem.tsx';
 import { MailCollectionListItem } from '../components/MailCollectionListItem.tsx';
@@ -21,7 +21,7 @@ export const useMailCollectionsListDelegate = (
     onArrowLeft,
     onArrowRight
   }: {
-    onCollectionClicked: (collectionId: MailCollectionId) => void;
+    onCollectionClicked: (collectionId: SelectableMailCollectionId) => void;
     onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
@@ -63,7 +63,6 @@ export const useMailCollectionsListDelegate = (
 };
 
 const prototypeCollection: MailCollection = {
-  id: mailCollectionIdInfo.make(),
   collectionType: 'inbox',
   title: 'Prototype',
   unreadCount: 0
@@ -72,7 +71,14 @@ const itemPrototypes = {
   collection: {
     defaultEstimatedSizePx: 48,
     isSizeDynamic: false,
-    Component: () => <MailCollectionListItem id={prototypeCollection.id} collection={prototypeCollection} tag={undefined} onClick={noop} />
+    Component: () => (
+      <MailCollectionListItem
+        id={makeSelectableMailCollectionId(prototypeCollection)}
+        collection={prototypeCollection}
+        tag={undefined}
+        onClick={noop}
+      />
+    )
   },
   separator: {
     defaultEstimatedSizePx: 16,

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
-import { SelectedMailCollectionProvider, useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
+import { SelectedMailCollectionIdProvider, useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import type { MailThreadId } from '../../mail-types/MailThreadId.ts';
 import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
@@ -31,9 +31,9 @@ export const MailCollection = (fwd: MailCollectionProps) => {
   );
 
   return (
-    <SelectedMailCollectionProvider selectedMailCollectionId={lastSelectedCollectionId}>
+    <SelectedMailCollectionIdProvider selectedMailCollectionId={lastSelectedCollectionId}>
       <InternalMailList {...fwd} />
-    </SelectedMailCollectionProvider>
+    </SelectedMailCollectionIdProvider>
   );
 };
 

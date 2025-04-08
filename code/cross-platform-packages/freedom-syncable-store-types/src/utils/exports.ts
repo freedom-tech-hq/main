@@ -16,6 +16,7 @@ export * from './generateTrustedTime.ts';
 export * from './generateTrustedTimeForSyncableAcceptance.ts';
 export * from './generateTrustedTimeForSyncableStoreAccessChange.ts';
 export * from './get/exports.ts';
+export * from './get-or-create/exports.ts';
 export * from './getCryptoKeyIdForHighestCurrentUserRoleAtPath.ts';
 export * from './getRecursiveFolderPaths.ts';
 export * from './getSha256HashForItemProvenance.ts';

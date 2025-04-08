@@ -2,13 +2,13 @@ import readline from 'node:readline';
 
 import type { PR } from 'freedom-async';
 import { bestEffort, inline, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { StorageRootId } from 'freedom-sync-types';
+import type { EmailUserId } from 'freedom-email-sync';
 
 import { addDemoEmail } from './addDemoEmail.ts';
 
 export const setupKeyHandlers = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { storageRootId }: { storageRootId: StorageRootId }): PR<undefined> => {
+  async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
     readline.emitKeypressEvents(process.stdin);
 
     if (process.stdin.isTTY) {
@@ -26,7 +26,7 @@ export const setupKeyHandlers = makeAsyncResultFunc(
         switch (key?.name ?? '') {
           case 'n':
             console.log('Got new demo email command');
-            inline(async () => await bestEffort(trace, addDemoEmail(trace, { storageRootId })));
+            inline(async () => await bestEffort(trace, addDemoEmail(trace, { userId })));
             break;
           case 'c':
             if (key?.ctrl ?? false) {

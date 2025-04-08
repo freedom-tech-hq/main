@@ -29,7 +29,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
       name?: DynamicSyncableItemName;
       newDocument: (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> }) => DocumentT;
     }
-  ): PR<SaveableDocument<DocumentT> & { path: SyncablePath }, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<SaveableDocument<DocumentT>, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const docBundle = await createBundleAtPath(trace, store, path, { name, trustedTimeSignature });
     /* node:coverage disable */
     if (!docBundle.ok) {
@@ -79,7 +79,6 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
 
     return makeSuccess({
       document,
-      path: docPath,
       save: makeAsyncResultFunc(
         [import.meta.filename, 'save'],
         async (trace, { trustedTime }: { trustedTime?: TrustedTime } = {}): PR<undefined, 'conflict'> => {

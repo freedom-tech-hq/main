@@ -33,7 +33,7 @@ import { FileSystemSyncableStoreBacking } from '../FileSystemSyncableStoreBackin
 
 describe('FileSystemSyncableStore', () => {
   let trace!: Trace;
-  let cryptoKeys!: PrivateCombinationCryptoKeySet;
+  let privateKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;
   let primaryUserCryptoService!: CryptoService;
   let storeBacking!: FileSystemSyncableStoreBacking;
@@ -46,13 +46,13 @@ describe('FileSystemSyncableStore', () => {
 
     const internalCryptoKeys = await generateCryptoCombinationKeySet(trace);
     expectOk(internalCryptoKeys);
-    cryptoKeys = internalCryptoKeys.value;
+    privateKeys = internalCryptoKeys.value;
   });
 
   beforeEach(async () => {
     trace = makeTrace('test');
 
-    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys });
+    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
     cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
@@ -71,7 +71,7 @@ describe('FileSystemSyncableStore', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      creatorPublicKeys: cryptoKeys.publicOnly(),
+      creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 

@@ -27,7 +27,7 @@ import { saltedId } from '../../../utils/saltedId.ts';
 
 describe('folders', () => {
   let trace!: Trace;
-  let cryptoKeys!: PrivateCombinationCryptoKeySet;
+  let privateKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;
   let primaryUserCryptoService!: CryptoService;
   let storeBacking!: InMemorySyncableStoreBacking;
@@ -40,9 +40,9 @@ describe('folders', () => {
 
     const internalCryptoKeys = await generateCryptoCombinationKeySet(trace);
     expectOk(internalCryptoKeys);
-    cryptoKeys = internalCryptoKeys.value;
+    privateKeys = internalCryptoKeys.value;
 
-    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys });
+    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
     cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
@@ -57,7 +57,7 @@ describe('folders', () => {
       storageRootId,
       backing: storeBacking,
       cryptoService,
-      creatorPublicKeys: cryptoKeys.publicOnly(),
+      creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
 
@@ -143,12 +143,12 @@ describe('folders', () => {
     );
 
     const rolesByCryptoKeySetId = await testingFolder.value.getRolesByCryptoKeySetId(trace, {
-      cryptoKeySetIds: [cryptoKeys.id, cryptoKeys2.value.id]
+      cryptoKeySetIds: [privateKeys.id, cryptoKeys2.value.id]
     });
     expectOk(rolesByCryptoKeySetId);
 
     t.assert.deepStrictEqual(rolesByCryptoKeySetId.value, {
-      [cryptoKeys.id]: 'creator',
+      [privateKeys.id]: 'creator',
       [cryptoKeys2.value.id]: 'viewer'
     });
   });

@@ -1,4 +1,4 @@
-import type { MailId } from './MailId.ts';
+import type { MailId } from 'freedom-email-sync';
 
 export interface Mail {
   readonly id: MailId;

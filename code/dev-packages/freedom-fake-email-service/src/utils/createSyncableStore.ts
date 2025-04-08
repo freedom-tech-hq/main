@@ -3,34 +3,36 @@ import fs from 'node:fs/promises';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
-import { generateSha256HashFromString } from 'freedom-crypto';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
+import type { EmailUserId } from 'freedom-email-sync';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
-import type { SaltId, StorageRootId, SyncableItemMetadata } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, type SaltId, storageRootIdInfo, type SyncableItemMetadata } from 'freedom-sync-types';
 
 import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
 import { getFsStatsAtPath } from './getFsStatsAtPath.ts';
+import { getOrCreateSaltStoreForUser } from './getOrCreateSaltStoreForUser.ts';
 import { getPublicKeyStore } from './getPublicKeyStore.ts';
-import { getSaltsStore } from './getSaltsStore.ts';
 
 export const createSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     {
-      storageRootId,
+      userId,
       metadata,
       creatorPublicKeys,
       saltsById
     }: {
-      storageRootId: StorageRootId;
+      userId: EmailUserId;
       metadata: Omit<SyncableItemMetadata, 'name'>;
       creatorPublicKeys: CombinationCryptoKeySet;
       saltsById: Partial<Record<SaltId, string>>;
     }
   ): PR<undefined, 'conflict'> => {
+    const storageRootId = storageRootIdInfo.make(userId);
+
     const publicKeyStore = await uncheckedResult(getPublicKeyStore(trace));
-    const saltsStore = await uncheckedResult(getSaltsStore(trace));
+    const saltStore = await uncheckedResult(getOrCreateSaltStoreForUser(trace, { userId }));
     const rootPath = await uncheckedResult(getFsRootPathForStorageRootId(trace, storageRootId));
 
     const storedPublicKey = await publicKeyStore.mutableObject(creatorPublicKeys.id).create(trace, creatorPublicKeys);
@@ -39,15 +41,13 @@ export const createSyncableStore = makeAsyncResultFunc(
       return storedPublicKey;
     }
 
-    const storedSalts = await saltsStore.mutableObject(storageRootId).create(trace, saltsById);
-    if (!storedSalts.ok && storedSalts.value.errorCode !== 'conflict') {
-      // Ignoring if the salts were already stored
-      return storedSalts;
-    }
-
-    const hashedStorageRootId = await generateSha256HashFromString(trace, storageRootId);
-    if (!hashedStorageRootId.ok) {
-      return hashedStorageRootId;
+    const defaultSalt = saltsById[DEFAULT_SALT_ID];
+    if (defaultSalt !== undefined) {
+      const storedSalts = await saltStore.mutableObject(DEFAULT_SALT_ID).create(trace, defaultSalt);
+      if (!storedSalts.ok && storedSalts.value.errorCode !== 'conflict') {
+        // Ignoring if the salts were already stored
+        return storedSalts;
+      }
     }
 
     const fsStats = await getFsStatsAtPath(trace, rootPath);
