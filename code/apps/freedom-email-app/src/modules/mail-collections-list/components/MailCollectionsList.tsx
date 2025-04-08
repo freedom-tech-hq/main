@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
-import type { SelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
+import type { CollectionLikeId } from '../../mail-types/CollectionLikeId.ts';
 import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
 import type { VirtualListControls } from '../../virtual-list/types/VirtualListControls.ts';
 import { useMailCollectionsListDataSource } from '../hooks/useMailCollectionsListDataSource.ts';
@@ -45,7 +45,7 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
     })
   );
 
-  const onCollectionClicked = useCallbackRef((collectionId: SelectableMailCollectionId) => {
+  const onCollectionClicked = useCallbackRef((collectionId: CollectionLikeId) => {
     if (selectedCollectionId.get() === collectionId) {
       // If this item was already selected and the collection list had focus, deselect the item
       if (listControls.current.hasFocus?.() ?? false) {

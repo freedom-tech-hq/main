@@ -1,4 +1,4 @@
-import { makePrefixedUuidInfo } from 'freedom-basic-data';
+import { makePrefixedTimeIdInfo } from 'freedom-basic-data';
 
-export const mailIdInfo = makePrefixedUuidInfo('MAIL_');
+export const mailIdInfo = makePrefixedTimeIdInfo('MAIL_');
 export type MailId = typeof mailIdInfo.schema.valueType;

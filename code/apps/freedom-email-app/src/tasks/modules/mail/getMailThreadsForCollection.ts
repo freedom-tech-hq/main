@@ -10,10 +10,9 @@ import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
+import type { CollectionLikeId } from '../../../modules/mail-types/CollectionLikeId.ts';
 import type { MailThread } from '../../../modules/mail-types/MailThread.ts';
 import type { MailThreadId } from '../../../modules/mail-types/MailThreadId.ts';
-import { mailThreadIdInfo } from '../../../modules/mail-types/MailThreadId.ts';
-import type { SelectableMailCollectionId } from '../../../modules/mail-types/SelectableMailCollectionId.ts';
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
 import { getOrCreateEmailAccessForUser } from '../internal/user/getOrCreateEmailAccessForUser.ts';
 
@@ -36,7 +35,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
   async (
     trace,
     // TODO: TEMP
-    _collectionId: SelectableMailCollectionId,
+    _collectionId: CollectionLikeId,
     isConnected: () => TypeOrPromisedType<boolean>,
     onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
@@ -79,7 +78,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
             type: 'mail-added' as const,
             threads: [
               {
-                id: mailThreadIdInfo.make(mailIdInfo.removePrefix(mailId)),
+                id: mailId,
                 from: storedMail.value.from,
                 to: storedMail.value.to,
                 subject: storedMail.value.subject,
@@ -87,7 +86,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
                 timeMSec: storedMail.value.timeMSec,
                 numMessages: 1,
                 numUnread: 1
-              }
+              } satisfies MailThread
             ]
           })
         );
@@ -135,7 +134,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       }
 
       threads.push({
-        id: mailThreadIdInfo.make(mailIdInfo.removePrefix(mailId)),
+        id: mailId,
         from: storedMail.from,
         to: storedMail.to,
         subject: storedMail.subject,

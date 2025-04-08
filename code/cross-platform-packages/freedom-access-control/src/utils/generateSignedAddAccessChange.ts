@@ -10,7 +10,7 @@ import { makeTimedAccessChangeSchema } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { SerializedValue } from 'freedom-basic-data';
-import { extractTimeMSecFromTimeId, makeSerializedValueSchema } from 'freedom-basic-data';
+import { makeSerializedValueSchema, timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
@@ -74,7 +74,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const timeMSec = extractTimeMSecFromTimeId(trustedTime.value.timeId);
+    const timeMSec = timeIdInfo.extractTimeMSec(trustedTime.value.timeId);
 
     const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {

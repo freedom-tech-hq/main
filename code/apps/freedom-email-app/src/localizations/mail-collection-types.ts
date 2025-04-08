@@ -6,7 +6,6 @@ export const $mailCollectionType = {
   archive: LOCALIZE('Archive')({ ns }),
   // custom not really used, but including for completeness
   custom: LOCALIZE('Custom')({ ns }),
-  drafts: LOCALIZE('Drafts')({ ns }),
   inbox: LOCALIZE('Inbox')({ ns }),
   sent: LOCALIZE('Sent')({ ns }),
   spam: LOCALIZE('Spam')({ ns }),

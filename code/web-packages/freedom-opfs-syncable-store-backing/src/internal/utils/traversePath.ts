@@ -1,0 +1,81 @@
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { NotFoundError } from 'freedom-common-errors';
+import type { Trace } from 'freedom-contexts';
+import type { SyncableId, SyncableItemType } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, SyncablePath } from 'freedom-sync-types';
+import { guardIsExpectedType } from 'freedom-syncable-store-types';
+import type { SingleOrArray } from 'yaschema';
+
+import type { OpfsSyncableStoreBackingItem } from '../types/OpfsSyncableStoreBackingItem.ts';
+
+type BackingTypeBySyncableItemType<T extends SyncableItemType> =
+  | (T extends 'file' ? 'file' : never)
+  | (T extends 'bundle' ? 'folder' : never)
+  | (T extends 'folder' ? 'folder' : never);
+
+export const traversePath = makeAsyncResultFunc(
+  [import.meta.filename],
+  async <T extends SyncableItemType = SyncableItemType>(
+    trace: Trace,
+    item: OpfsSyncableStoreBackingItem,
+    path: SyncablePath,
+    expectedType?: SingleOrArray<T>
+  ): PR<
+    OpfsSyncableStoreBackingItem & {
+      type: BackingTypeBySyncableItemType<T>;
+      metadata: OpfsSyncableStoreBackingItem['metadata'] & { type: T };
+    },
+    'not-found' | 'wrong-type'
+  > => {
+    const idsSoFar: SyncableId[] = [];
+
+    let cursor: OpfsSyncableStoreBackingItem = item;
+    for (const pathId of path.ids) {
+      idsSoFar.push(pathId);
+
+      switch (cursor.type) {
+        case 'file':
+          return makeFailure(
+            new NotFoundError(trace, {
+              message: `Expected folder or bundle, found: ${cursor.type}`,
+              errorCode: 'wrong-type'
+            })
+          );
+
+        case 'folder': {
+          const contents = await cursor.contents(trace);
+          if (!contents.ok) {
+            return contents;
+          }
+
+          const nextCursor = contents.value[pathId];
+
+          if (nextCursor === undefined) {
+            return makeFailure(
+              new NotFoundError(trace, {
+                message: `No item found at ${new SyncablePath(path.storageRootId, ...idsSoFar).toString()}`,
+                errorCode: 'not-found'
+              })
+            );
+          }
+
+          cursor = nextCursor;
+        }
+      }
+    }
+
+    const itemType = path.lastId === undefined ? 'folder' : extractSyncableItemTypeFromId(path.lastId!);
+    const guards = guardIsExpectedType(trace, path, itemType, expectedType, 'wrong-type');
+    if (!guards.ok) {
+      return guards;
+    }
+
+    return makeSuccess(
+      cursor as OpfsSyncableStoreBackingItem & {
+        type: BackingTypeBySyncableItemType<T>;
+        metadata: OpfsSyncableStoreBackingItem['metadata'] & { type: T };
+      }
+    );
+  }
+);

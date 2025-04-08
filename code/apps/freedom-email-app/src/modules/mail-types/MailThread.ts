@@ -1,7 +1,7 @@
-import type { MailThreadId } from './MailThreadId.ts';
+import type { ThreadLikeId } from './ThreadLikeId.ts';
 
 export interface MailThread {
-  readonly id: MailThreadId;
+  readonly id: ThreadLikeId;
   readonly from: string;
   readonly to: string;
   readonly subject: string;

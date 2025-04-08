@@ -61,6 +61,12 @@ export const createUser = makeAsyncResultFunc([import.meta.filename], async (tra
     return generalizeFailureResult(trace, mailCollectionsBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
   }
 
+  // Mail Drafts Bundle
+  const mailDraftsBundle = await createBundleAtPath(trace, userFs, paths.drafts.value);
+  if (!mailDraftsBundle.ok) {
+    return generalizeFailureResult(trace, mailDraftsBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+  }
+
   // Mail Indexes Bundle
   const mailIndexesBundle = await createBundleAtPath(trace, userFs, paths.indexes.value);
   if (!mailIndexesBundle.ok) {

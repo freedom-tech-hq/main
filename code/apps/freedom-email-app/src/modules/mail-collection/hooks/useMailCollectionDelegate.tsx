@@ -4,28 +4,29 @@ import { useMemo } from 'react';
 
 import type { DataSource } from '../../../types/DataSource.ts';
 import type { MailThread } from '../../mail-types/MailThread.ts';
-import { type MailThreadId, mailThreadIdInfo } from '../../mail-types/MailThreadId.ts';
+import { mailThreadIdInfo } from '../../mail-types/MailThreadId.ts';
+import type { ThreadLikeId } from '../../mail-types/ThreadLikeId.ts';
 import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailThreadListItem } from '../components/MailThreadListItem.tsx';
 import type { MailCollectionDataSourceItem } from '../types/MailCollectionDataSourceItem.ts';
 import { useMailCollectionSelectionDelegate } from './useMailCollectionSelectionDelegate.ts';
 
 export const useMailCollectionDelegate = (
-  dataSource: DataSource<MailCollectionDataSourceItem, MailThreadId>,
+  dataSource: DataSource<MailCollectionDataSourceItem, ThreadLikeId>,
   {
     onThreadClicked,
     onArrowLeft,
     onArrowRight
   }: {
-    onThreadClicked: (threadId: MailThreadId) => void;
+    onThreadClicked: (threadLikeId: ThreadLikeId) => void;
     onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
-): VirtualListDelegate<MailCollectionDataSourceItem, MailThreadId, 'mail-thread'> => {
+): VirtualListDelegate<MailCollectionDataSourceItem, ThreadLikeId, 'mail-thread'> => {
   const selectionDelegate = useMailCollectionSelectionDelegate(dataSource, { onArrowLeft, onArrowRight });
 
   return useMemo(
-    (): VirtualListDelegate<MailCollectionDataSourceItem, MailThreadId, 'mail-thread'> => ({
+    (): VirtualListDelegate<MailCollectionDataSourceItem, ThreadLikeId, 'mail-thread'> => ({
       itemPrototypes,
       getTemplateIdForItemAtIndex: (index) => dataSource.getItemAtIndex(index).type,
       renderItem: (_key, item, _index) => {

@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
-import { base64String, makeIsoDateTime, timeIdInfo } from 'freedom-basic-data';
-import { makeTrace, makeUuid } from 'freedom-contexts';
+import { base64String, timeIdInfo } from 'freedom-basic-data';
+import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
@@ -50,7 +50,7 @@ describe('generateSignedAddAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: { publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' },

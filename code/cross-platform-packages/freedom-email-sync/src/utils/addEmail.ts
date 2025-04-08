@@ -15,9 +15,9 @@ export const addEmail = makeAsyncResultFunc(
     const paths = await getMailPaths(userFs);
 
     const mailId = mailIdInfo.make();
+    const mailDate = new Date(mailIdInfo.extractTimeMSec(mailId));
 
-    const nowDate = new Date();
-    const storageYearPath = paths.storage.year(nowDate);
+    const storageYearPath = paths.storage.year(mailDate);
     const currentHourBundle = await getOrCreateBundlesAtPaths(
       trace,
       userFs,

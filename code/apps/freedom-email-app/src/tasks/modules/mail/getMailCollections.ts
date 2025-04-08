@@ -9,7 +9,7 @@ import type { MailCollection } from '../../../modules/mail-types/MailCollection.
 import type { MailCollectionGroup } from '../../../modules/mail-types/MailCollectionGroup.ts';
 import type { MailCollectionGroupId } from '../../../modules/mail-types/MailCollectionGroupId.ts';
 import { mailCollectionGroupIdInfo } from '../../../modules/mail-types/MailCollectionGroupId.ts';
-import type { SelectableMailCollectionId } from '../../../modules/mail-types/SelectableMailCollectionId.ts';
+import type { CollectionLikeId } from '../../../modules/mail-types/CollectionLikeId.ts';
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
 import { getOrCreateEmailAccessForUser } from '../internal/user/getOrCreateEmailAccessForUser.ts';
 
@@ -30,7 +30,7 @@ export interface GetMailCollection_CollectionsAddedPacket {
 
 export interface GetMailCollection_CollectionsRemovedPacket {
   readonly type: 'collections-removed';
-  readonly idsByGroupId: Record<MailCollectionGroupId, SelectableMailCollectionId[]>;
+  readonly idsByGroupId: Record<MailCollectionGroupId, CollectionLikeId[]>;
 }
 
 export type GetMailCollectionPacket =

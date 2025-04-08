@@ -1,7 +1,7 @@
-import type { MailId } from 'freedom-email-sync';
+import type { MailLikeId } from './MailLikeId.ts';
 
 export interface Mail {
-  readonly id: MailId;
+  readonly id: MailLikeId;
   readonly from: string;
   readonly to: string;
   readonly subject: string;

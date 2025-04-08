@@ -1,7 +1,6 @@
 import {
   ArchiveOutlined as ArchiveIcon,
   AutoDeleteOutlined as TrashIcon,
-  DraftsOutlined as DraftsIcon,
   InboxOutlined as InboxIcon,
   ReportOutlined as SpamIcon,
   SendOutlined as SentIcon
@@ -18,8 +17,8 @@ import type { AppTheme } from '../../../components/AppTheme.tsx';
 import { useListHasFocus } from '../../../contexts/list-has-focus.tsx';
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { $mailCollectionType } from '../../../localizations/mail-collection-types.ts';
+import { makeCollectionLikeIdForCollection } from '../../mail-types/CollectionLikeId.ts';
 import type { MailCollection } from '../../mail-types/MailCollection.ts';
-import { makeSelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 import type { MailCollectionsListCollectionDataSourceItem } from '../types/MailCollectionsListCollectionDataSourceItem.ts';
 
 export interface MailCollectionListItemProps<TagT> extends Omit<MailCollectionsListCollectionDataSourceItem, 'type'> {
@@ -35,7 +34,7 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
 
   const taggedOnClick = useCallbackRef(() => onClick(tag));
 
-  const selectableId = makeSelectableMailCollectionId(collection);
+  const selectableId = makeCollectionLikeIdForCollection(collection);
   const isSelected = useDerivedBinding(selectedCollectionId, (selectedCollectionId) => selectedCollectionId === selectableId, {
     id: 'isSelected',
     deps: [selectableId]
@@ -72,7 +71,6 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
 
 const iconComponentsByCollectionType: Record<MailCollectionType, ComponentType<SvgIconOwnProps>> = {
   archive: ArchiveIcon,
-  drafts: DraftsIcon,
   inbox: InboxIcon,
   sent: SentIcon,
   spam: SpamIcon,
@@ -82,7 +80,6 @@ const iconComponentsByCollectionType: Record<MailCollectionType, ComponentType<S
 
 const shouldShowUnreadCountByCollectionType: Record<MailCollectionType, boolean> = {
   archive: false,
-  drafts: false,
   inbox: true,
   sent: false,
   spam: true,

@@ -4,6 +4,7 @@ import './utils/fwd-env.ts';
 import { expose } from 'comlink';
 import { makeTrace } from 'freedom-contexts';
 
+import type { createMailDraft } from './tasks/modules/mail/createMailDraft.ts';
 import type { getMailCollections } from './tasks/modules/mail/getMailCollections.ts';
 import type { getMailForThread } from './tasks/modules/mail/getMailForThread.ts';
 import type { getMailThreadsForCollection } from './tasks/modules/mail/getMailThreadsForCollection.ts';
@@ -19,6 +20,8 @@ class TasksImpl {
   readonly #trace = makeTrace('worker');
 
   // Mail
+  public readonly createMailDraft = async (...args: ParametersExceptFirst<typeof createMailDraft>) =>
+    await (await import('./tasks/modules/mail/createMailDraft.ts')).createMailDraft(this.#trace, ...args);
   public readonly getMailForThread = async (...args: ParametersExceptFirst<typeof getMailForThread>) =>
     await (await import('./tasks/modules/mail/getMailForThread.ts')).getMailForThread(this.#trace, ...args);
   public readonly getMailCollections = async (...args: ParametersExceptFirst<typeof getMailCollections>) =>
