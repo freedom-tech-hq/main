@@ -16,7 +16,7 @@
     "react-dom": ">=19.0.0"
   },
   "type": "module",
-  "main": "lib/mjs/exports.mjs",
+  "main": "lib/exports.mjs",
   "name": "freedom-react-localization",
   "nx": {
     "tags": [
@@ -26,7 +26,7 @@
   },
   "private": true,
   "scripts": {
-    "build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/lib/mjs/freedom-build.mjs --tsconfig tsconfig.mjs.json",
+    "build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/bin/freedom-build.mjs --tsconfig tsconfig.mjs.json",
     "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
     "build:tests": "tsc",
     "clean": "rimraf ./coverage ./lib",

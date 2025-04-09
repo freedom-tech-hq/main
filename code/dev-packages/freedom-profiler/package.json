@@ -8,7 +8,7 @@
     "typescript": "5.8.3"
   },
   "type": "module",
-  "main": "lib/mjs/exports.mjs",
+  "main": "lib/exports.mjs",
   "name": "freedom-profiler",
   "nx": {
     "tags": [
@@ -18,7 +18,7 @@
   },
   "private": true,
   "scripts": {
-    "build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/lib/mjs/freedom-build.mjs --tsconfig tsconfig.mjs.json",
+    "build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/bin/freedom-build.mjs --tsconfig tsconfig.mjs.json",
     "clean": "rimraf ./coverage ./lib",
     "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",

@@ -1,9 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./lib/mjs",
+    "outDir": "./bin",
     "noEmit": false
   },
   "include": [ "src" ],
-  "exclude": [ "**/__tests__", "**/__test_dependency__", "lib" ]
+  "exclude": [ "**/__tests__", "**/__test_dependency__", "bin" ]
 }

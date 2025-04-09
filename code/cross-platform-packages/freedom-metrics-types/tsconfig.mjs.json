@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./lib/mjs",
+    "outDir": "./lib",
     "noEmit": false
   },
   "include": [ "src" ],
