@@ -6,18 +6,18 @@ import { useT } from 'freedom-react-localization';
 import { formatDate } from '../../../utils/formatDate.ts';
 import { formatTime } from '../../../utils/formatTime.ts';
 import { makeStringAvatarProps } from '../../../utils/makeStringAvatarProps.ts';
-import type { MailDataSourceItem } from '../types/MailDataSourceItem.ts';
+import type { MailDataSourceMailItem } from '../types/MailDataSourceItem.ts';
 import { MailActionsMenu } from './MailActionsMenu.tsx';
 
 const ns = 'ui';
 const $toLabel = LOCALIZE('To:')({ ns });
 
-export interface MailItemProps<TagT> extends Omit<MailDataSourceItem, 'type'> {
+export interface MailListItemProps<TagT> extends Omit<MailDataSourceMailItem, 'type'> {
   isFirst: boolean;
   tag: TagT;
 }
 
-export const MailListItem = <TagT,>({ isFirst, mail }: MailItemProps<TagT>) => {
+export const MailListItem = <TagT,>({ isFirst, mail }: MailListItemProps<TagT>) => {
   const t = useT();
 
   return (

@@ -1,9 +1,9 @@
+import type { Tasks } from 'freedom-email-tasks-web-worker';
 import type { ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 import { useWaitableFunction, WaitablesConsumer } from 'react-waitables';
 
 import { getTasks } from '../modules/task-support/utils/getTasks.ts';
-import type { Tasks } from '../tasks.ts';
 
 const TasksContext = createContext<Tasks | undefined>(undefined);
 

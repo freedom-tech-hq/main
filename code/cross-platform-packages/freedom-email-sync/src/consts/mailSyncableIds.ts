@@ -51,32 +51,5 @@ const out = nest(saltedId('folder', 'out'), {
   })
 });
 
-/**
- * Ref: https://docs.google.com/document/d/1jNj7QtxoSJu14NiC8OjBmTd7iMd-5bKYyMKeq7XjbO0/edit?tab=t.0
- *
- * ```plaintext
- * /saltedId(storage) # folder, server only creates/appends
- *     /plainId(<year>) # bundle, utc
- *         /plainId(<month>)
- *             /plainId(<date>)
- *                 /plainId(<hour>)
- *                     /timeId()
- *                         /saltedId(summary.json)
- *                         /saltedId(detailed.json)
- *                         /saltedId(attachments) # only if needed
- *                             /<attachment-uuid>
- *                                 /saltedId(chunk-<chunkNumber>) # binary
- * /saltedId(out) # folder, server gets read/write access
- *     /plainId(<year>) # bundle
- *         /plainId(<month>)
- *             /plainId(<date>)
- *                 /plainId(<hour>)
- *                     /timeId()
- *                         /saltedId(summary.json)
- *                         /saltedId(detailed.json)
- *                         /saltedId(attachments) # only if needed
- *                             /<attachment-uuid>
- *                                 /saltedId(chunk-<chunkNumber>) # binary
- * ```
- */
+/** See SYNCABLE_MAIL_STORAGE.md */
 export const mailSyncableIds = { storage, out };

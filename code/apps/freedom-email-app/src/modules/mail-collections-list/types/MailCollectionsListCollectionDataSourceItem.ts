@@ -1,8 +1,7 @@
-import type { MailCollection } from '../../mail-types/MailCollection.ts';
-import type { SelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
+import type { CollectionLikeId, MailCollection } from 'freedom-email-user';
 
 export interface MailCollectionsListCollectionDataSourceItem {
   type: 'collection';
-  id: SelectableMailCollectionId;
+  id: CollectionLikeId;
   collection: MailCollection;
 }

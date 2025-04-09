@@ -3,19 +3,21 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
-import type { MailId } from 'freedom-email-sync';
+import { mailIdInfo } from 'freedom-email-sync';
+import type { GetMailForThreadPacket } from 'freedom-email-tasks-web-worker';
+import type { MailLikeId } from 'freedom-email-user';
+import { mailDraftIdInfo } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailForThreadPacket } from '../../../tasks/modules/mail/getMailForThread.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 
-export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, MailId> => {
+export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, MailLikeId> => {
   const selectedThreadId = useSelectedMailThreadId();
   const tasks = useTasks();
 
@@ -60,8 +62,13 @@ export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, 
           case 'mail-added': {
             const addedIndices: number[] = [];
             for (const newMail of packet.value.mail) {
-              addedIndices.push(items.current.length);
-              items.current.push({ type: 'mail', id: newMail.id, mail: newMail });
+              if (mailIdInfo.is(newMail.id)) {
+                addedIndices.push(items.current.length);
+                items.current.push({ type: 'mail', id: newMail.id, mail: newMail });
+              } else if (mailDraftIdInfo.is(newMail.id)) {
+                addedIndices.push(items.current.length);
+                items.current.push({ type: 'draft', id: newMail.id, mail: newMail });
+              }
             }
 
             dataSource.itemsAdded({ indices: addedIndices });

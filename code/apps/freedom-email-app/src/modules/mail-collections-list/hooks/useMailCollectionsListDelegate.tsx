@@ -1,11 +1,10 @@
 import { CircularProgress, ListItem, ListItemText } from '@mui/material';
+import type { CollectionLikeId, MailCollection } from 'freedom-email-user';
+import { mailCollectionGroupIdInfo, makeCollectionLikeIdForCollection } from 'freedom-email-user';
 import { noop } from 'lodash-es';
 import { useMemo } from 'react';
 
 import type { DataSource } from '../../../types/DataSource.ts';
-import type { MailCollection } from '../../mail-types/MailCollection.ts';
-import { mailCollectionGroupIdInfo } from '../../mail-types/MailCollectionGroupId.ts';
-import { makeSelectableMailCollectionId, type SelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailCollectionGroupTitleListItem } from '../components/MailCollectionGroupTitleListItem.tsx';
 import { MailCollectionListItem } from '../components/MailCollectionListItem.tsx';
@@ -21,7 +20,7 @@ export const useMailCollectionsListDelegate = (
     onArrowLeft,
     onArrowRight
   }: {
-    onCollectionClicked: (collectionId: SelectableMailCollectionId) => void;
+    onCollectionClicked: (collectionId: CollectionLikeId) => void;
     onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
@@ -73,7 +72,7 @@ const itemPrototypes = {
     isSizeDynamic: false,
     Component: () => (
       <MailCollectionListItem
-        id={makeSelectableMailCollectionId(prototypeCollection)}
+        id={makeCollectionLikeIdForCollection(prototypeCollection)}
         collection={prototypeCollection}
         tag={undefined}
         onClick={noop}

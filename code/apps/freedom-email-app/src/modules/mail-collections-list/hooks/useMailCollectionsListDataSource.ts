@@ -4,14 +4,14 @@ import { inline } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
+import type { GetMailCollectionPacket } from 'freedom-email-tasks-web-worker';
+import type { MailCollectionGroup } from 'freedom-email-user';
+import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailCollectionPacket } from '../../../tasks/modules/mail/getMailCollections.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
-import type { MailCollectionGroup } from '../../mail-types/MailCollectionGroup.ts';
-import { makeSelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
@@ -73,7 +73,7 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
 
             for (const newCollection of newGroup.collections) {
               addedIndices.push(items.current.length);
-              items.current.push({ type: 'collection', id: makeSelectableMailCollectionId(newCollection), collection: newCollection });
+              items.current.push({ type: 'collection', id: makeCollectionLikeIdForCollection(newCollection), collection: newCollection });
             }
           }
 
@@ -114,7 +114,7 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
               addedIndices.push(groupEndItemIndex + newCollectionIndex);
               items.current.splice(groupEndItemIndex + newCollectionIndex, 0, {
                 type: 'collection',
-                id: makeSelectableMailCollectionId(newCollection),
+                id: makeCollectionLikeIdForCollection(newCollection),
                 collection: newCollection
               });
               newCollectionIndex += 1;

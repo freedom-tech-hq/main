@@ -3,19 +3,19 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
+import type { GetMailThreadsForCollectionPacket } from 'freedom-email-tasks-web-worker';
+import type { ThreadLikeId } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailThreadsForCollectionPacket } from '../../../tasks/modules/mail/getMailThreadsForCollection.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
-import type { MailThreadId } from '../../mail-types/MailThreadId.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionDataSourceItem } from '../types/MailCollectionDataSourceItem.ts';
 
-export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSourceItem, MailThreadId> => {
+export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSourceItem, ThreadLikeId> => {
   const selectedCollectionId = useSelectedMailCollectionId();
   const tasks = useTasks();
 

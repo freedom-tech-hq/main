@@ -1,4 +1,3 @@
-import type { MailCollectionGroupId } from '../../mail-types/MailCollectionGroupId.ts';
-import type { SelectableMailCollectionId } from '../../mail-types/SelectableMailCollectionId.ts';
+import type { CollectionLikeId, MailCollectionGroupId } from 'freedom-email-user';
 
-export type MailCollectionsListDataSourceKey = MailCollectionGroupId | `${MailCollectionGroupId}-separator` | SelectableMailCollectionId;
+export type MailCollectionsListDataSourceKey = MailCollectionGroupId | `${MailCollectionGroupId}-separator` | CollectionLikeId;

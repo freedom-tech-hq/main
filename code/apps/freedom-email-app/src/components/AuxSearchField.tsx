@@ -1,8 +1,10 @@
 import { SearchOutlined as SearchIcon } from '@mui/icons-material';
 import type { SxProps, Theme } from '@mui/material';
-import { Input } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import { useBinding } from 'react-bindings';
+
+import { ControlledInput } from './form/ControlledTextField.tsx';
 
 const ns = 'ui';
 const $searchFieldPlaceholder = LOCALIZE('Search')({ ns });
@@ -10,8 +12,11 @@ const $searchFieldPlaceholder = LOCALIZE('Search')({ ns });
 export const AuxSearchField = () => {
   const t = useT();
 
+  const search = useBinding(() => '', { id: 'search', detectChanges: true });
+
   return (
-    <Input
+    <ControlledInput
+      value={search}
       size="small"
       placeholder={$searchFieldPlaceholder(t)}
       type="search"

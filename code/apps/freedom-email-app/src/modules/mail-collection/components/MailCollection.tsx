@@ -1,9 +1,9 @@
+import type { ThreadLikeId } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { SelectedMailCollectionIdProvider, useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
-import type { MailThreadId } from '../../mail-types/MailThreadId.ts';
 import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
 import type { VirtualListControls } from '../../virtual-list/types/VirtualListControls.ts';
 import { useMailCollectionDataSource } from '../hooks/useMailCollectionDataSource.ts';
@@ -11,7 +11,7 @@ import { useMailCollectionDelegate } from '../hooks/useMailCollectionDelegate.ts
 
 export interface MailCollectionProps {
   scrollParent: HTMLElement | string;
-  controls?: VirtualListControls<MailThreadId>;
+  controls?: VirtualListControls<ThreadLikeId>;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
 }
@@ -43,7 +43,7 @@ const InternalMailList = ({ scrollParent, controls, onArrowLeft, onArrowRight }:
   const mailDataSource = useMailCollectionDataSource();
   const selectedThreadId = useSelectedMailThreadId();
 
-  const listControls = useRef<VirtualListControls<MailThreadId>>({});
+  const listControls = useRef<VirtualListControls<ThreadLikeId>>({});
 
   const selectFirstMailIfNothingIsSelected = useCallbackRef(() => {
     if (selectedThreadId.get() !== undefined) {
@@ -68,14 +68,14 @@ const InternalMailList = ({ scrollParent, controls, onArrowLeft, onArrowRight }:
     })
   );
 
-  const onThreadClicked = useCallbackRef((threadId: MailThreadId) => {
-    if (selectedThreadId.get() === threadId) {
+  const onThreadClicked = useCallbackRef((threadLikeId: ThreadLikeId) => {
+    if (selectedThreadId.get() === threadLikeId) {
       // If this item was already selected and the thread list had focus, deselect the item
       if (listControls.current.hasFocus?.() ?? false) {
         selectedThreadId.set(undefined);
       }
     } else {
-      selectedThreadId.set(threadId);
+      selectedThreadId.set(threadLikeId);
     }
   });
 

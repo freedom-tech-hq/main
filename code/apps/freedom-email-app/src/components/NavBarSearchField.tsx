@@ -1,9 +1,11 @@
 import { SearchOutlined as SearchIcon } from '@mui/icons-material';
 import type { SxProps, Theme } from '@mui/material';
-import { Input, useTheme } from '@mui/material';
+import { useTheme } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import { useBinding } from 'react-bindings';
 
+import { ControlledInput } from './form/ControlledTextField.tsx';
 import { MAIL_MENU_WIDTH_PX } from './SideMenu.tsx';
 
 const ns = 'ui';
@@ -13,8 +15,11 @@ export const NavBarSearchField = () => {
   const t = useT();
   const theme = useTheme();
 
+  const search = useBinding(() => '', { id: 'search', detectChanges: true });
+
   return (
-    <Input
+    <ControlledInput
+      value={search}
       size="small"
       placeholder={$searchFieldPlaceholder(t)}
       type="search"
