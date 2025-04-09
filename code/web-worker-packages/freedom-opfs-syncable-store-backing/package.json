@@ -24,7 +24,7 @@
   "nx": {
     "tags": [
       "type:lib",
-      "platform:web"
+      "platform:web-worker"
     ]
   },
   "private": true,

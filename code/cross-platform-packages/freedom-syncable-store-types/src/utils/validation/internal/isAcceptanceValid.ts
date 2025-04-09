@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { extractTimeMSecFromTimeId } from 'freedom-basic-data';
+import { timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractKeyIdFromSignedValue, isSignedValueValid } from 'freedom-crypto';
 import type { SignedSyncableAcceptance } from 'freedom-sync-types';
@@ -76,7 +76,7 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    const timeMSec = extractTimeMSecFromTimeId(acceptance.value.timeId);
+    const timeMSec = timeIdInfo.extractTimeMSec(acceptance.value.timeId);
 
     const isValid = await nearestFolder.value.didCryptoKeyHaveRoleAtTimeMSec(trace, {
       cryptoKeySetId: signedByKeyId.value,

@@ -1,9 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { makeIsoDateTime, timeIdInfo } from 'freedom-basic-data';
+import { timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { makeUuid } from 'freedom-contexts';
 import { generateSignatureForValue } from 'freedom-crypto';
 import type { SyncablePath } from 'freedom-sync-types';
 import { type TrustedTime, trustedTimeSignatureParamsSchema } from 'freedom-trusted-time-source';
@@ -17,7 +16,7 @@ export const generateSelfSignedTrustedTime = makeAsyncResultFunc(
     store: SyncableStore,
     { parentPath, contentHash }: { parentPath: SyncablePath; contentHash: Sha256Hash }
   ): PR<TrustedTime> => {
-    const timeId = timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`);
+    const timeId = timeIdInfo.make();
 
     const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {

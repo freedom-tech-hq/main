@@ -1,8 +1,7 @@
 import type { PR } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { makeIsoDateTime, type Sha256Hash, timeIdInfo } from 'freedom-basic-data';
+import { type Sha256Hash, timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import { makeUuid } from 'freedom-contexts';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 
@@ -36,7 +35,7 @@ export const generateTrustedTime = makeAsyncResultFunc(
       return generalizeFailureResult(trace, trustedTimeSources, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    const timeId = timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`);
+    const timeId = timeIdInfo.make();
 
     const trustedTimeSignatures = await allResultsMappedSkipFailures(
       trace,

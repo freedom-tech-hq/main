@@ -2,7 +2,7 @@ import type { AccessControlDocumentPrefix, InitialAccess } from 'freedom-access-
 import { AccessControlDocument } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { inline, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { extractTimeMSecFromTimeId, timeIdInfo } from 'freedom-basic-data';
+import { timeIdInfo } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
@@ -127,7 +127,7 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
         // The file ID should be a timeId
         return makeSuccess(false);
       }
-      const deltaFileTimeMSec = extractTimeMSecFromTimeId(timeId);
+      const deltaFileTimeMSec = timeIdInfo.extractTimeMSec(timeId);
       for (const addedChange of addedChanges) {
         const deserializedChange = await deserialize(trace, addedChange.value);
         if (!deserializedChange.ok) {

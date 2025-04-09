@@ -3,9 +3,9 @@ import type { TestContext } from 'node:test';
 import { beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
-import { base64String, makeIsoDateTime, timeIdInfo } from 'freedom-basic-data';
+import { base64String, timeIdInfo } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
-import { makeTrace, makeUuid } from 'freedom-contexts';
+import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
@@ -62,7 +62,7 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: { publicKeys: cryptoKeys2.publicOnly(), role: 'editor' },
@@ -80,7 +80,7 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: {
@@ -109,7 +109,7 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: { publicKeys: cryptoKeys2.publicOnly(), role: 'editor' },
@@ -127,7 +127,7 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: {
@@ -164,7 +164,7 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: { publicKeys: cryptoKeys2.publicOnly(), role: 'appender' },
@@ -182,7 +182,7 @@ describe('generateSignedModifyAccessChange', () => {
       // Not validating trusted times here
       generateTrustedTimeForAccessChange: async () =>
         makeSuccess({
-          timeId: timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`),
+          timeId: timeIdInfo.make(),
           trustedTimeSignature: base64String.makeWithUtf8String('test')
         }),
       params: {

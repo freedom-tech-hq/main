@@ -10,6 +10,7 @@ export * from './IsoDateTime.ts';
 export * from './NonNegativeInteger.ts';
 export * from './PrefixedString.ts';
 export * from './PrefixedStringInfo.ts';
+export * from './PrefixedTimeId.ts';
 export * from './PrefixedUuid.ts';
 export * from './SerializedValue.ts';
 export * from './SessionTokenDetails.ts';

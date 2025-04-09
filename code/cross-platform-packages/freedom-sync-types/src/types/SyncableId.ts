@@ -1,8 +1,9 @@
-import type { AnyPrefixedUuid, TimeId, Uuid } from 'freedom-basic-data';
+import type { AnyPrefixedTimeId, AnyPrefixedUuid, TimeId, Uuid } from 'freedom-basic-data';
 import {
+  anyPrefixedTimeIdSchema,
   anyPrefixedUuidSchema,
   makeIdInfo,
-  makeIsoDateTime,
+  nonAnchoredAnyPrefixTimeIdRegex,
   nonAnchoredAnyPrefixUuidRegex,
   nonAnchoredUuidRegex,
   timeIdInfo,
@@ -51,25 +52,27 @@ export const unmarkedTimeIdInfo = timeIdInfo;
 export const unmarkedTimeIdSchema = unmarkedTimeIdInfo.schema;
 export type UnmarkedTimeId = TimeId;
 
-export const timeId = (settings: SyncableIdSettings, timeId?: TimeId): SyncableId =>
-  makeSyncableId(settings, timeId ?? timeIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`));
+export const timeId = (settings: SyncableIdSettings, timeId?: TimeId): SyncableId => makeSyncableId(settings, timeId ?? timeIdInfo.make());
 
 export const unmarkedPrefixedSyncableUuidSchema = anyPrefixedUuidSchema;
 export type UnmarkedPrefixedSyncableUuidId = AnyPrefixedUuid;
 export const prefixedUuidId = (settings: SyncableIdSettings, prefixedUuid: AnyPrefixedUuid): SyncableId =>
   makeSyncableId(settings, prefixedUuid);
 
-export const unmarkedSyncableIdSchema = schema.oneOf5(
-  unmarkedSyncablePlainIdInfo.schema,
-  unmarkedSyncableSaltedIdInfo.schema,
-  unmarkedSyncableUuidSchema,
-  unmarkedPrefixedSyncableUuidSchema,
-  unmarkedTimeIdInfo.schema
+export const unmarkedPrefixedSyncableTimeIdSchema = anyPrefixedTimeIdSchema;
+export type UnmarkedPrefixedSyncableTimeIdId = AnyPrefixedTimeId;
+export const prefixedTimeId = (settings: SyncableIdSettings, prefixedTimeId: AnyPrefixedTimeId): SyncableId =>
+  makeSyncableId(settings, prefixedTimeId);
+
+export const unmarkedSyncableIdSchema = schema.oneOf3(
+  schema.oneOf(unmarkedSyncablePlainIdInfo.schema, unmarkedSyncableSaltedIdInfo.schema),
+  schema.oneOf(unmarkedSyncableUuidSchema, unmarkedPrefixedSyncableUuidSchema),
+  schema.oneOf(unmarkedTimeIdInfo.schema, unmarkedPrefixedSyncableTimeIdSchema)
 );
 export type UnmarkedSyncableId = typeof unmarkedSyncableIdSchema.valueType;
 
 export const nonAnchoredSyncableIdRegex = new RegExp(
-  `E[yn]T[Fbf](?:${unmarkedSyncablePlainIdInfo.nonAnchoredRegex.source}|${unmarkedSyncableSaltedIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source}|${nonAnchoredAnyPrefixUuidRegex.source}|${unmarkedTimeIdInfo.nonAnchoredRegex.source})`
+  `E[yn]T[Fbf](?:${unmarkedSyncablePlainIdInfo.nonAnchoredRegex.source}|${unmarkedSyncableSaltedIdInfo.nonAnchoredRegex.source}|${nonAnchoredUuidRegex.source}|${nonAnchoredAnyPrefixUuidRegex.source}|${unmarkedTimeIdInfo.nonAnchoredRegex.source}|${nonAnchoredAnyPrefixTimeIdRegex.source})`
 );
 export const syncableIdSchema = schema.regex<SyncableId>(new RegExp(`^${nonAnchoredSyncableIdRegex.source}$`));
 export type SyncableId = `E${'y' | 'n'}T${'F' | 'b' | 'f'}${UnmarkedSyncableId}`;

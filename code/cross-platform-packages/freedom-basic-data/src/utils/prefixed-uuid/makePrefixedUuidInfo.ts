@@ -1,5 +1,4 @@
-import { v4 } from 'uuid';
-
+import { makeUuid } from '../../internal/utils/makeUuid.ts';
 import type { PrefixedStringInfo } from '../../types/PrefixedStringInfo.ts';
 import { makeNonAnchoredPrefixedUuidRegex, makePrefixedUuidSchema } from '../../types/PrefixedUuid.ts';
 import type { Uuid } from '../../types/Uuid.ts';
@@ -18,7 +17,3 @@ export const makePrefixedUuidInfo = <PrefixT extends `${string}_`>(prefix: Prefi
 
   return output;
 };
-
-// Helpers
-
-const makeUuid = (): Uuid => v4() as Uuid;
