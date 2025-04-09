@@ -1,12 +1,9 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { EmailUserId } from 'freedom-email-sync';
-import { storageRootIdInfo } from 'freedom-sync-types';
-import {
-  generateProvenanceForNewSyncableStore,
-  InMemorySyncableStoreBacking,
-  type SyncableStoreBacking
-} from 'freedom-syncable-store-types';
+import { OpfsSyncableStoreBacking } from 'freedom-opfs-syncable-store-backing';
+import { storageRootIdInfo, SyncablePath } from 'freedom-sync-types';
+import { generateProvenanceForNewSyncableStore, type SyncableStoreBacking } from 'freedom-syncable-store-types';
 
 import { makeCryptoServiceForUser } from '../../../utils/makeCryptoServiceForUser.ts';
 
@@ -23,8 +20,9 @@ export const getOrCreateSyncableStoreBackingForUserEmail = makeAsyncResultFunc(
 
     const cryptoService = makeCryptoServiceForUser({ userId });
 
+    const storageRootId = storageRootIdInfo.make(userId);
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
-      storageRootId: storageRootIdInfo.make(userId),
+      storageRootId,
       cryptoService,
       trustedTimeSignature: undefined
     });
@@ -32,7 +30,16 @@ export const getOrCreateSyncableStoreBackingForUserEmail = makeAsyncResultFunc(
       return provenance;
     }
 
-    const output = new InMemorySyncableStoreBacking({ provenance: provenance.value });
+    const systemRoot = await navigator.storage.getDirectory();
+    const userRoot = await systemRoot.getDirectoryHandle(storageRootIdInfo.make(userId), { create: true });
+
+    const output = new OpfsSyncableStoreBacking(userRoot, new SyncablePath(storageRootId));
+    const initialized = await output.initialize(trace, { provenance: provenance.value });
+    if (!initialized.ok) {
+      return initialized;
+    }
+
+    // const output = new InMemorySyncableStoreBacking({ provenance: provenance.value });
     globalCache[userId] = output;
 
     return makeSuccess(output);

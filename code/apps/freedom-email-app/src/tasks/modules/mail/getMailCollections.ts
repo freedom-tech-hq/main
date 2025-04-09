@@ -5,11 +5,11 @@ import { getCollectionIdsFromSaltedCollectionIds, getUserMailPaths } from 'freed
 import { getBundleAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
+import type { CollectionLikeId } from '../../../modules/mail-types/CollectionLikeId.ts';
 import type { MailCollection } from '../../../modules/mail-types/MailCollection.ts';
 import type { MailCollectionGroup } from '../../../modules/mail-types/MailCollectionGroup.ts';
 import type { MailCollectionGroupId } from '../../../modules/mail-types/MailCollectionGroupId.ts';
 import { mailCollectionGroupIdInfo } from '../../../modules/mail-types/MailCollectionGroupId.ts';
-import type { CollectionLikeId } from '../../../modules/mail-types/CollectionLikeId.ts';
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
 import { getOrCreateEmailAccessForUser } from '../internal/user/getOrCreateEmailAccessForUser.ts';
 

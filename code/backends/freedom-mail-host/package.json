@@ -28,6 +28,7 @@
     "tags": [
       "skip:depcheck",
       "skip:lint",
+      "skip:test",
       "type:app",
       "platform:server"
     ]

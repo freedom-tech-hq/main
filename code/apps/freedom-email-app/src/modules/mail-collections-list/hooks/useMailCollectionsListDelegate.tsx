@@ -3,9 +3,9 @@ import { noop } from 'lodash-es';
 import { useMemo } from 'react';
 
 import type { DataSource } from '../../../types/DataSource.ts';
+import { type CollectionLikeId, makeCollectionLikeIdForCollection } from '../../mail-types/CollectionLikeId.ts';
 import type { MailCollection } from '../../mail-types/MailCollection.ts';
 import { mailCollectionGroupIdInfo } from '../../mail-types/MailCollectionGroupId.ts';
-import { makeCollectionLikeIdForCollection, type CollectionLikeId } from '../../mail-types/CollectionLikeId.ts';
 import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailCollectionGroupTitleListItem } from '../components/MailCollectionGroupTitleListItem.tsx';
 import { MailCollectionListItem } from '../components/MailCollectionListItem.tsx';
