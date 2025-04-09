@@ -1,4 +1,5 @@
 export * from './decryptBuffer.ts';
+export * from './decryptBufferWithPassword.ts';
 export * from './decryptEncryptedValue.ts';
 export * from './decryptString.ts';
 export * from './decryptValue.ts';

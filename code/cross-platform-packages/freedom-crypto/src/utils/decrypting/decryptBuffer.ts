@@ -119,9 +119,9 @@ export const decryptBuffer = makeAsyncResultFunc(
               ['decrypt']
             );
 
-            const decryptedString = await decrypt({ name: 'AES-GCM', iv: decryptedIv }, aesKey, encryptedString);
+            const decrypted = await decrypt({ name: 'AES-GCM', iv: decryptedIv }, aesKey, encryptedString);
 
-            return makeSuccess(Buffer.from(decryptedString));
+            return makeSuccess(Buffer.from(decrypted));
           } else {
             return makeFailure(
               new InternalSchemaValidationError(trace, { message: `Expected complexityMode = 1 | 2, found: ${complexityMode}` })

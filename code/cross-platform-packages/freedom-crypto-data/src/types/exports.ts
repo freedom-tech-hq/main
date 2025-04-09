@@ -4,6 +4,7 @@ export * from './CryptoKeySetId.ts';
 export * from './EncryptedValue.ts';
 export * from './EncryptionMode.ts';
 export * from './HashingMode.ts';
+export * from './PasswordEncryptionMode.ts';
 export * from './PlainOrEncryptedValue.ts';
 export * from './PrivatePem.ts';
 export * from './PublicKeysById.ts';
