@@ -1,8 +1,8 @@
+import type { CollectionLikeId } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
-import type { CollectionLikeId } from '../../mail-types/CollectionLikeId.ts';
 import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
 import type { VirtualListControls } from '../../virtual-list/types/VirtualListControls.ts';
 import { useMailCollectionsListDataSource } from '../hooks/useMailCollectionsListDataSource.ts';

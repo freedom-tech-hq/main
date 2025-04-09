@@ -3,6 +3,26 @@ import fs from 'node:fs/promises';
 import type { Plugin } from 'esbuild';
 import { escapeRegExp } from 'lodash-es';
 
+const importDirectSingleQuoteRegex = /import\s+'(\.\.?\/[^']+)\.[jt]sx?'/gm;
+const importDirectDoubleQuoteRegex = /import\s+"(\.\.?\/[^"]+)\.[jt]sx?"/gm;
+const dynamicImportSingleQuoteRegex = /import\s*\(\s*'(\.\.?\/[^']+)\.[jt]sx?'\s*\)/gm;
+const dynamicImportDoubleQuoteRegex = /import\s*\(\s*"(\.\.?\/[^"]+)\.[jt]sx?"\s*\)/gm;
+const importFromSingleQuoteRegex = /from\s+'(\.\.?\/[^']+)\.[jt]sx?'/gm;
+const importFromDoubleQuoteRegex = /from\s+"(\.\.?\/[^"]+)\.[jt]sx?"/gm;
+const anyImportRegex = new RegExp(
+  [
+    importDirectSingleQuoteRegex,
+    importDirectDoubleQuoteRegex,
+    dynamicImportSingleQuoteRegex,
+    dynamicImportDoubleQuoteRegex,
+    importFromSingleQuoteRegex,
+    importFromDoubleQuoteRegex
+  ]
+    .map((regex) => `(?:${regex.source})`)
+    .join('|'),
+  'gm'
+);
+
 export const makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin = ({
   packageName,
   bundle
@@ -27,9 +47,15 @@ export const makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin = ({
 
         // When bundling we don't want to update the import extensions since they'll be processed by esbuild
         if (!bundle) {
-          contents = contents
-            .replace(/from\s+'(\.\.?\/[^']+)\.[jt]sx?'/gm, "from '$1.mjs'")
-            .replace(/from\s+"(\.\.?\/[^"]+)\.[jt]sx?"/gm, 'from "$1.mjs"');
+          contents = contents.replace(anyImportRegex, (match) =>
+            match
+              .replace(importDirectSingleQuoteRegex, "import '$1.mjs'")
+              .replace(importDirectDoubleQuoteRegex, 'import "$1.mjs"')
+              .replace(dynamicImportSingleQuoteRegex, "import('$1.mjs')")
+              .replace(dynamicImportDoubleQuoteRegex, 'import("$1.mjs")')
+              .replace(importFromSingleQuoteRegex, "from '$1.mjs'")
+              .replace(importFromDoubleQuoteRegex, 'from "$1.mjs"')
+          );
         }
 
         return { contents, loader: 'default' };

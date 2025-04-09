@@ -1,6 +1,6 @@
+import type { Tasks } from 'freedom-email-tasks-web-worker';
 import { once } from 'lodash-es';
 
-import type { Tasks } from '../../../tasks.ts';
 import { getRemoteConstructor } from '../../../utils/getRemoteConstructor.ts';
 
 export const getTasks = once(async (): Promise<Tasks> => {

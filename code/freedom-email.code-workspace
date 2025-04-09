@@ -161,6 +161,9 @@
         },
         {
             "path": "web-worker-packages/freedom-opfs-syncable-store-backing"
+        },
+        {
+            "path": "web-worker-packages/freedom-email-tasks-web-worker"
         }
     ],
     "settings": {}

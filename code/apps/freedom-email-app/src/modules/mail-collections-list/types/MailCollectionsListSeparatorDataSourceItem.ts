@@ -1,4 +1,4 @@
-import type { MailCollectionGroupId } from '../../mail-types/MailCollectionGroupId.ts';
+import type { MailCollectionGroupId } from 'freedom-email-user';
 
 export interface MailCollectionsListSeparatorDataSourceItem {
   type: 'separator';

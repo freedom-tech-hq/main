@@ -1,13 +1,11 @@
 import { CircularProgress, ListItem, ListItemText } from '@mui/material';
 import type { MailId } from 'freedom-email-sync';
 import { mailIdInfo } from 'freedom-email-sync';
-import type { MailDraftId } from 'freedom-email-user';
+import type { Mail, MailDraftId, MailLikeId } from 'freedom-email-user';
 import { mailDraftIdInfo } from 'freedom-email-user';
 import { useMemo } from 'react';
 
 import type { DataSource } from '../../../types/DataSource.ts';
-import type { Mail } from '../../mail-types/Mail.ts';
-import type { MailLikeId } from '../../mail-types/MailLikeId.ts';
 import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailDraftListItem } from '../components/MailDraftListItem.tsx';
 import { MailListItem } from '../components/MailListItem.tsx';

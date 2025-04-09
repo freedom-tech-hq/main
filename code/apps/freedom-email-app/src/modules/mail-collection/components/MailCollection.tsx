@@ -1,9 +1,9 @@
+import type { ThreadLikeId } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { SelectedMailCollectionIdProvider, useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
-import type { ThreadLikeId } from '../../mail-types/ThreadLikeId.ts';
 import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
 import type { VirtualListControls } from '../../virtual-list/types/VirtualListControls.ts';
 import { useMailCollectionDataSource } from '../hooks/useMailCollectionDataSource.ts';

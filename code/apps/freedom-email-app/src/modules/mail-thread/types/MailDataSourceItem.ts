@@ -1,7 +1,5 @@
 import type { MailId } from 'freedom-email-sync';
-import type { MailDraftId } from 'freedom-email-user';
-
-import type { Mail } from '../../mail-types/Mail.ts';
+import type { Mail, MailDraftId } from 'freedom-email-user';
 
 export type MailDataSourceItem = MailDataSourceMailItem | MailDataSourceDraftItem;
 

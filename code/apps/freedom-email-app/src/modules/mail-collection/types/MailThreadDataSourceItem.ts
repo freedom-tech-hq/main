@@ -1,5 +1,4 @@
-import type { MailThread } from '../../mail-types/MailThread.ts';
-import type { ThreadLikeId } from '../../mail-types/ThreadLikeId.ts';
+import type { MailThread, ThreadLikeId } from 'freedom-email-user';
 
 export interface MailThreadDataSourceItem {
   type: 'mail-thread';

@@ -1,9 +1,8 @@
+import type { CollectionLikeId } from 'freedom-email-user';
 import type { ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
-
-import type { CollectionLikeId } from '../modules/mail-types/CollectionLikeId.ts';
 
 const SelectedMailCollectionIdContext = createContext<Binding<CollectionLikeId | undefined>>(
   makeBinding<CollectionLikeId | undefined>(() => undefined, { id: 'selectedMailCollectionId', detectChanges: true })

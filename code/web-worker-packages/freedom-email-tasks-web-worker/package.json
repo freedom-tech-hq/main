@@ -1,0 +1,56 @@
+{
+  "dependencies": {
+    "comlink": "4.4.2",
+    "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
+    "freedom-cast": "0.0.0",
+    "freedom-common-errors": "0.0.0",
+    "freedom-contexts": "0.0.0",
+    "freedom-crypto": "0.0.0",
+    "freedom-crypto-data": "0.0.0",
+    "freedom-crypto-service": "0.0.0",
+    "freedom-device-notification-types": "0.0.0",
+    "freedom-email-sync": "0.0.0",
+    "freedom-email-user": "0.0.0",
+    "freedom-fake-email-service-api": "0.0.0",
+    "freedom-fetching": "0.0.0",
+    "freedom-notification-types": "0.0.0",
+    "freedom-object-store-types": "0.0.0",
+    "freedom-opfs-syncable-store-backing": "0.0.0",
+    "freedom-sync-service": "0.0.0",
+    "freedom-sync-types": "0.0.0",
+    "freedom-syncable-store-types": "0.0.0",
+    "freedom-trace-logging-and-metrics": "0.0.0",
+    "yaschema": "4.4.3",
+    "yaschema-api": "4.1.8"
+  },
+  "devDependencies": {
+    "freedom-build-tools": "0.0.0",
+    "typescript": "5.8.3"
+  },
+  "type": "module",
+  "main": "lib/mjs/exports.mjs",
+  "name": "freedom-email-tasks-web-worker",
+  "nx": {
+    "tags": [
+      "type:lib",
+      "platform:web-worker"
+    ]
+  },
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/lib/mjs/freedom-build.mjs --tsconfig tsconfig.mjs.json",
+    "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
+    "build:tests": "tsc",
+    "clean": "rimraf ./coverage ./lib",
+    "depcheck": "depcheck --ignores=freedom-build-tools,@types/multer || (code ./package.json && exit 1)",
+    "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
+    "test": "yarn test:unit-tests",
+    "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
+    "test:perf": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
+    "test:unit-tests": "NODE_OPTIONS='--experimental-transform-types  --disable-warning=ExperimentalWarning' node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=300000 --test",
+    "deploy:extract": "../../poc/repo/deploy.extract.sh"
+  },
+  "types": "lib/exports.d.ts",
+  "version": "0.0.0"
+}

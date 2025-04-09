@@ -4,16 +4,16 @@ import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import { mailIdInfo } from 'freedom-email-sync';
+import type { GetMailForThreadPacket } from 'freedom-email-tasks-web-worker';
+import type { MailLikeId } from 'freedom-email-user';
 import { mailDraftIdInfo } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import type { GetMailForThreadPacket } from '../../../tasks/modules/mail/getMailForThread.ts';
 import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
-import type { MailLikeId } from '../../mail-types/MailLikeId.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 

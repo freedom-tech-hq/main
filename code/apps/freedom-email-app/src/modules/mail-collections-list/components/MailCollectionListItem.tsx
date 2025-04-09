@@ -7,7 +7,8 @@ import {
 } from '@mui/icons-material';
 import type { SvgIconOwnProps } from '@mui/material';
 import { Chip, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
-import type { MailCollectionType } from 'freedom-email-user';
+import type { MailCollection, MailCollectionType } from 'freedom-email-user';
+import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
 import { useT } from 'freedom-react-localization';
 import type { TFunction } from 'i18next';
 import type { ComponentType } from 'react';
@@ -17,8 +18,6 @@ import type { AppTheme } from '../../../components/AppTheme.tsx';
 import { useListHasFocus } from '../../../contexts/list-has-focus.tsx';
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { $mailCollectionType } from '../../../localizations/mail-collection-types.ts';
-import { makeCollectionLikeIdForCollection } from '../../mail-types/CollectionLikeId.ts';
-import type { MailCollection } from '../../mail-types/MailCollection.ts';
 import type { MailCollectionsListCollectionDataSourceItem } from '../types/MailCollectionsListCollectionDataSourceItem.ts';
 
 export interface MailCollectionListItemProps<TagT> extends Omit<MailCollectionsListCollectionDataSourceItem, 'type'> {
