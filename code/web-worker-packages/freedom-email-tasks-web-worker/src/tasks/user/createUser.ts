@@ -1,9 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { EmailUserId } from 'freedom-email-sync';
-import { getUserMailPaths } from 'freedom-email-user';
+import { encryptUserAuthPackageWithPassword, getUserMailPaths } from 'freedom-email-user';
 import { createBundleAtPath, createFolderAtPath, initializeRoot } from 'freedom-syncable-store-types';
 
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
@@ -26,7 +25,7 @@ import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCr
  */
 export const createUser = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace): PR<{ userId: EmailUserId; privateKeys: PrivateCombinationCryptoKeySet }> => {
+  async (trace, { password }: { password: string }): PR<{ userId: EmailUserId; encryptedUserAuthPackage: string }> => {
     const activeUserId = useActiveUserId(trace);
 
     const userIdAndCryptoKeys = await createUserIdAndCryptoKeys(trace);
@@ -35,6 +34,14 @@ export const createUser = makeAsyncResultFunc(
     }
 
     const { userId, privateKeys } = userIdAndCryptoKeys.value;
+
+    const encryptedUserAuthPackage = await encryptUserAuthPackageWithPassword(trace, {
+      userAuthPackage: { userId, privateKeys },
+      password
+    });
+    if (!encryptedUserAuthPackage.ok) {
+      return encryptedUserAuthPackage;
+    }
 
     const access = await getOrCreateEmailAccessForUser(trace, { userId });
     if (!access.ok) {
@@ -104,6 +111,6 @@ export const createUser = makeAsyncResultFunc(
 
     activeUserId.userId = userId;
 
-    return makeSuccess({ userId, privateKeys });
+    return makeSuccess({ userId, encryptedUserAuthPackage: encryptedUserAuthPackage.value });
   }
 );

@@ -13,3 +13,4 @@ export * from './MailLikeId.ts';
 export * from './MailThread.ts';
 export * from './MailThreadId.ts';
 export * from './ThreadLikeId.ts';
+export * from './UserAuthPackage.ts';

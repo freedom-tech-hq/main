@@ -1,8 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { UserAuthPackage } from 'freedom-email-user';
 
 import { useActiveUserId } from '../../contexts/active-user-id.ts';
 import { getOrCreateKeyStoreForUser } from '../../internal/tasks/storage/getOrCreateKeyStoreForUser.ts';
@@ -12,7 +11,7 @@ import { getOrCreateKeyStoreForUser } from '../../internal/tasks/storage/getOrCr
  */
 export const restoreUser = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { userId, privateKeys }: { userId: EmailUserId; privateKeys: PrivateCombinationCryptoKeySet }): PR<undefined> => {
+  async (trace, { userId, privateKeys }: UserAuthPackage): PR<undefined> => {
     const activeUserId = useActiveUserId(trace);
 
     const keyStore = await getOrCreateKeyStoreForUser(trace, { userId });
