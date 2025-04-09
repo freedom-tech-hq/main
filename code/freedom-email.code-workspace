@@ -158,6 +158,9 @@
         },
         {
             "path": "web-packages/freedom-react-localization"
+        },
+        {
+            "path": "web-worker-packages/freedom-opfs-syncable-store-backing"
         }
     ],
     "settings": {}
