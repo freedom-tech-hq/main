@@ -13,12 +13,12 @@
     "jsx": "react",                     /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
     "declaration": true,                   /* Generates corresponding '.d.ts' file. */
     "declarationMap": true,                /* Generates a sourcemap for each corresponding '.d.ts' file. */
-    "declarationDir" : "./lib",
+    "declarationDir" : "./bin",
     "sourceMap": true,                     /* Generates corresponding '.map' file. */
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
     // "outFile": "./",                       /* Concatenate and emit output to single file. */
-    // "outDir": "./lib/",                        /* Redirect output structure to the directory. */
+    // "outDir": "./bin/",                        /* Redirect output structure to the directory. */
     "rootDir": "./src/",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     "noEmit": true,
     // "composite": true,                     /* Enable project compilation */

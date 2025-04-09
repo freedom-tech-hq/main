@@ -87,5 +87,5 @@ In each monorepo package that might contain localized strings, the `package.json
 ```bash
 …
 "test": "yarn test:localizations && …",
-"test:localizations": "../../dev-packages/freedom-localization-tools/lib/mjs/check-localizations.js --in src"
+"test:localizations": "../../dev-packages/freedom-localization-tools/lib/check-localizations.js --in src"
 …
