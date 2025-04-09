@@ -63,6 +63,7 @@
       "server-packages/*",
       "backends/*",
       "web-packages/*",
+      "web-worker-packages/*",
       "appliance-plugin-packages/*"
     ]
   }
