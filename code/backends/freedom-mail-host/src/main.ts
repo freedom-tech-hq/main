@@ -1,9 +1,8 @@
-import { startHttpServer } from './modules/http-server/utils/startHttpServer.ts';
 import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
 
 async function main() {
   // Start HTTP server for API endpoints
-  await startHttpServer();
+  // await startHttpServer();
 
   // Start SMTP server for receiving emails directly
   await startSmtpServer();

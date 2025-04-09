@@ -62,5 +62,6 @@
     "test:unit-tests": "echo tests-disabled # NODE_OPTIONS='--experimental-transform-types --disable-warning=ExperimentalWarning' node --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=90000 --test"
   },
   "types": "build/exports.d.ts",
+  "main": "build/exports.mjs",
   "version": "0.0.0"
 }

@@ -1,11 +1,11 @@
 import type { PR } from 'freedom-async';
-import { computeAsyncOnce, makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
+import { computeAsyncOnce, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { type CryptoService } from 'freedom-crypto-service';
 
-import { getPrivateKeyStore } from './getPrivateKeyStore.ts';
+import { getServerPrivateKeys } from './getServerPrivateKeys.ts';
 
 const secretKey = makeUuid();
 
@@ -13,9 +13,7 @@ export const getCryptoService = makeAsyncResultFunc(
   [import.meta.filename],
   async (_trace) =>
     await computeAsyncOnce([import.meta.filename], secretKey, async (trace): PR<CryptoService> => {
-      const privateKeyStore = await uncheckedResult(getPrivateKeyStore(trace));
-
-      const serverPrivateKeys = await privateKeyStore.object('server-keys').get(trace);
+      const serverPrivateKeys = await getServerPrivateKeys(trace);
       if (!serverPrivateKeys.ok) {
         return generalizeFailureResult(trace, serverPrivateKeys, 'not-found');
       }

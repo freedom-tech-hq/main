@@ -21,6 +21,7 @@ export const createMetadataFile = makeAsyncResultFunc(
 
     const outMetadataJsonString = JSON.stringify(serialization.value.serializedValue);
     await fs.writeFile(filePath, outMetadataJsonString, 'utf-8');
+    // console.log(`   CM>  ${decodeURIComponent(filePath.substring(rootPath.length))}`);
 
     return makeSuccess(undefined);
   }

@@ -59,7 +59,7 @@ export const createSyncableStore = makeAsyncResultFunc(
       await fs.mkdir(rootPath);
     }
 
-    console.log(`File system path for ${userId}:`, rootPath);
+    console.log(`File system path for ${userId}\n  is:`, rootPath);
 
     const storeBacking = new FileSystemSyncableStoreBacking(rootPath);
     const initialized = await storeBacking.initialize(trace, metadata);
