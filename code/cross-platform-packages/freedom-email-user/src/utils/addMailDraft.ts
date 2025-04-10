@@ -9,7 +9,7 @@ import { type MailDraftId, mailDraftIdInfo } from '../types/MailDraftId.ts';
 import { getMailSummaryById } from './getMailSummaryById.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
-export const addDraft = makeAsyncResultFunc(
+export const addMailDraft = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, access: EmailAccess, { inReplyToMailId }: { inReplyToMailId?: MailId }): PR<{ draftId: MailDraftId }> => {
     const userFs = access.userFs;
@@ -17,9 +17,9 @@ export const addDraft = makeAsyncResultFunc(
 
     const draftId = mailDraftIdInfo.make();
     const draftIdPath = await paths.drafts.draftId(draftId);
-    const currentHourBundle = await createBundleAtPath(trace, userFs, draftIdPath.value);
-    if (!currentHourBundle.ok) {
-      return generalizeFailureResult(trace, currentHourBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+    const draftBundle = await createBundleAtPath(trace, userFs, draftIdPath.value);
+    if (!draftBundle.ok) {
+      return generalizeFailureResult(trace, draftBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     // If this is in reply to another email, we should determine the subject from the original email

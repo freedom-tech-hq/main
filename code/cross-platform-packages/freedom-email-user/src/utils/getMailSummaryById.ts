@@ -13,7 +13,7 @@ export const getMailSummaryById = makeAsyncResultFunc(
     const date = new Date(mailIdInfo.extractTimeMSec(mailId));
 
     const storageYearPath = paths.storage.year(date);
-    const mailSummaryPath = (await storageYearPath.month.date.hour.mailId(mailId)).summary;
+    const mailSummaryPath = (await storageYearPath.month.day.hour.mailId(mailId)).summary;
 
     const mailSummary = await getJsonFromFile(trace, userFs, mailSummaryPath, mailSummarySchema);
     if (!mailSummary.ok) {

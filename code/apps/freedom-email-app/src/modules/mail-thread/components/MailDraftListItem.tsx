@@ -20,7 +20,8 @@ export interface MailDraftListItemProps<TagT> extends Omit<MailDataSourceDraftIt
 export const MailDraftListItem = <TagT,>({ isFirst, mail }: MailDraftListItemProps<TagT>) => {
   const t = useT();
 
-  const to = useBinding(() => mail.to, { id: 'to', detectChanges: true });
+  // TODO: support array
+  const to = useBinding(() => mail.to[0] ?? '', { id: 'to', detectChanges: true });
   const subject = useBinding(() => mail.subject, { id: 'subject', detectChanges: true });
 
   return (

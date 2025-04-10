@@ -8,7 +8,7 @@ import { type MailId, mailIdInfo } from '../types/MailId.ts';
 import { type StoredMail, storedMailSchema } from '../types/StoredMail.ts';
 import { getMailPaths } from './getMailPaths.ts';
 
-export const addEmail = makeAsyncResultFunc(
+export const addMail = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, access: EmailAccess, mail: StoredMail): PR<{ mailId: MailId }> => {
     const userFs = access.userFs;
@@ -18,21 +18,21 @@ export const addEmail = makeAsyncResultFunc(
     const mailDate = new Date(mailIdInfo.extractTimeMSec(mailId));
 
     const storageYearPath = paths.storage.year(mailDate);
-    const currentHourBundle = await getOrCreateBundlesAtPaths(
+    const mailBundle = await getOrCreateBundlesAtPaths(
       trace,
       userFs,
       storageYearPath.value,
       storageYearPath.month.value,
-      storageYearPath.month.date.value,
-      storageYearPath.month.date.hour.value,
-      (await storageYearPath.month.date.hour.mailId(mailId)).value
+      storageYearPath.month.day.value,
+      storageYearPath.month.day.hour.value,
+      (await storageYearPath.month.day.hour.mailId(mailId)).value
     );
-    if (!currentHourBundle.ok) {
-      return generalizeFailureResult(trace, currentHourBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+    if (!mailBundle.ok) {
+      return generalizeFailureResult(trace, mailBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     // TODO: should add summary and attachments etc
-    const stored = await createJsonFileAtPath(trace, userFs, (await storageYearPath.month.date.hour.mailId(mailId)).detailed, {
+    const stored = await createJsonFileAtPath(trace, userFs, (await storageYearPath.month.day.hour.mailId(mailId)).detailed, {
       value: mail,
       schema: storedMailSchema
     });

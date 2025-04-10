@@ -3,7 +3,7 @@ import { mailSyncableIds } from 'freedom-email-sync';
 import type { Nested } from 'freedom-nest';
 import { nest } from 'freedom-nest';
 import type { SyncableId } from 'freedom-sync-types';
-import { plainId, prefixedUuidId, uuidId } from 'freedom-sync-types';
+import { plainId, prefixedTimeId, prefixedUuidId, uuidId } from 'freedom-sync-types';
 import type { SaltedId, SyncableSaltedIdSettings } from 'freedom-syncable-store-types';
 import { saltedId } from 'freedom-syncable-store-types';
 
@@ -51,7 +51,7 @@ const collections = nest(emailAppSaltedId('bundle', 'collections'), {
 /** Server gets no access */
 const drafts = nest(emailAppSaltedId('bundle', 'drafts'), {
   draftId: (draftId: MailDraftId) =>
-    nest(prefixedUuidId('bundle', draftId), {
+    nest(prefixedTimeId('bundle', draftId), {
       draft: emailAppSaltedId('bundle', 'draft'),
       attachments: nest(saltedId('bundle', 'attachments'), {
         attachmentId: nest((uuid?: Uuid): SyncableId => uuidId('bundle', uuid), {

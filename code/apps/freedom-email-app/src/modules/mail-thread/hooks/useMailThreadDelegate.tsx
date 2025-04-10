@@ -41,7 +41,7 @@ export const useMailThreadDelegate = (dataSource: DataSource<MailThreadDataSourc
 const prototypeMail: Mail & { id: MailId } = {
   id: mailIdInfo.make(),
   from: 'hello@freedomtechhq.com',
-  to: 'hello@freedomtechhq.com',
+  to: ['hello@freedomtechhq.com'],
   subject: 'Prototype',
   body: 'Prototype',
   timeMSec: Date.now(),
@@ -50,7 +50,7 @@ const prototypeMail: Mail & { id: MailId } = {
 const prototypeDraft: Mail & { id: MailDraftId } = {
   id: mailDraftIdInfo.make(),
   from: 'hello@freedomtechhq.com',
-  to: 'hello@freedomtechhq.com',
+  to: ['hello@freedomtechhq.com'],
   subject: 'Prototype',
   body: 'Prototype',
   timeMSec: Date.now(),

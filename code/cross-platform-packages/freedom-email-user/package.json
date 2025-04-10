@@ -7,6 +7,7 @@
     "freedom-conflict-free-document-data": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "freedom-nest": "0.0.0",
+    "freedom-paginated-data": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
     "yaschema": "4.4.3"

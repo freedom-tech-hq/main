@@ -1,4 +1,5 @@
 import type { Uuid } from 'freedom-basic-data';
+import type { Nested } from 'freedom-nest';
 import { nest } from 'freedom-nest';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
@@ -8,13 +9,19 @@ import type { MailId } from '../types/MailId.ts';
 
 export const getMailPaths = async (userFs: SyncableStore) =>
   await nest(userFs.path, async (rootPath) => ({
-    storage: await nest([mailSyncableIds.storage], async (id) => rootPath.append(await id.value(userFs)), timeOrganizedMailStorage(userFs)),
-    out: await nest([mailSyncableIds.out], async (id) => rootPath.append(await id.value(userFs)), timeOrganizedMailStorage(userFs))
+    storage: await nest(
+      [mailSyncableIds.storage],
+      async (id) => rootPath.append(await id.value(userFs)),
+      timeOrganizedCollectionStorage(userFs)
+    ),
+    out: await nest([mailSyncableIds.out], async (id) => rootPath.append(await id.value(userFs)), timeOrganizedCollectionStorage(userFs))
   }));
+
+export type TimeOrganizedMailStorage = Nested<SyncablePath, ReturnType<ReturnType<typeof timeOrganizedCollectionStorage>>>;
 
 // Helpers
 
-const timeOrganizedMailStorage =
+const timeOrganizedCollectionStorage =
   (userFs: SyncableStore) => (parentPath: SyncablePath, parentId: typeof mailSyncableIds.storage | typeof mailSyncableIds.out) => ({
     year: (date: Date) =>
       nest(
@@ -25,9 +32,9 @@ const timeOrganizedMailStorage =
             [parentId.month],
             (id) => parentPath.append(id.value({ month: date.getUTCMonth() + 1 })),
             (parentPath, parentId) => ({
-              date: nest(
-                [parentId.date],
-                (id) => parentPath.append(id.value({ date: date.getUTCDate() })),
+              day: nest(
+                [parentId.day],
+                (id) => parentPath.append(id.value({ day: date.getUTCDate() })),
                 (parentPath, parentId) => ({
                   hour: nest(
                     [parentId.hour],

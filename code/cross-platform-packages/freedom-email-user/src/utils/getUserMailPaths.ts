@@ -36,10 +36,10 @@ export const getUserMailPaths = async (userFs: SyncableStore) =>
         ...(await reduceAsync(
           mailCollectionTypes,
           async (out, collectionType) => {
-            out[collectionType] = nest(parentPath.append(await parentId[collectionType].value(userFs)), collectionYearMonth);
+            out[collectionType] = nest(parentPath.append(await parentId[collectionType].value(userFs)), timeOrganizedCollectionStorage);
             return out;
           },
-          {} as Record<MailCollectionType, Nested<SyncablePath, CollectionYearMonth>>
+          {} as Record<MailCollectionType, Nested<SyncablePath, TimeOrganizedCollectionStorage>>
         )),
         custom: await nest(
           [parentId.custom],
@@ -50,7 +50,7 @@ export const getUserMailPaths = async (userFs: SyncableStore) =>
                 [parentId.collectionId(collectionId)],
                 (id) => parentPath.append(id.value),
                 async (parentPath, parentId) => ({
-                  ...collectionYearMonth(parentPath),
+                  ...timeOrganizedCollectionStorage(parentPath),
                   collectionMeta: parentPath.append(await parentId.collectionMeta(userFs))
                 })
               )
@@ -89,12 +89,13 @@ export const getUserMailPaths = async (userFs: SyncableStore) =>
     )
   }));
 
+export type TimeOrganizedCollectionStorage = ReturnType<typeof timeOrganizedCollectionStorage>;
+
 // Helpers
 
-const collectionYearMonth = (parentPath: SyncablePath) => ({
+const timeOrganizedCollectionStorage = (parentPath: SyncablePath) => ({
   year: (date: Date) =>
     nest(parentPath.append(collectionIds.year.value({ year: date.getUTCFullYear() })), (parentPath) => ({
       month: parentPath.append(collectionIds.year.month({ month: date.getUTCMonth() + 1 }))
     }))
 });
-type CollectionYearMonth = ReturnType<typeof collectionYearMonth>;

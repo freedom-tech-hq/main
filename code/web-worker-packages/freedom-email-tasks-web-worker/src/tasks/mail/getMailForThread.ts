@@ -4,7 +4,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { MailId } from 'freedom-email-sync';
 import { mailIdInfo, storedMailSchema } from 'freedom-email-sync';
 import type { Mail, MailDraftId, ThreadLikeId } from 'freedom-email-user';
-import { getMailDraftById, getUserMailPaths, mailDraftIdInfo, mailThreadIdInfo } from 'freedom-email-user';
+import { getMailDraftById, getUserMailPaths, mailDraftIdInfo, mailThreadIdInfo, makeMailFromDraft } from 'freedom-email-user';
 import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
@@ -39,7 +39,7 @@ export const getMailForThread = makeAsyncResultFunc(
 
     // TODO: temp this should load progressively backwards
     // TODO: temp this should load IDs from the thread document
-    const mailStorageBundle = await getBundleAtPath(trace, userFs, paths.storage.year(nowDate).month.date.hour.value);
+    const mailStorageBundle = await getBundleAtPath(trace, userFs, paths.storage.year(nowDate).month.day.hour.value);
     if (!mailStorageBundle.ok) {
       return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
@@ -51,7 +51,7 @@ export const getMailForThread = makeAsyncResultFunc(
       const storedMail = await getJsonFromFile(
         trace,
         userFs,
-        (await storageYearPath.month.date.hour.mailId(mailId)).detailed,
+        (await storageYearPath.month.day.hour.mailId(mailId)).detailed,
         storedMailSchema
       );
       if (!storedMail.ok) {
@@ -78,14 +78,15 @@ export const getMailForThread = makeAsyncResultFunc(
         return generalizeFailureResult(trace, draftDoc, ['not-found']);
       }
 
+      const storedMail = makeMailFromDraft(draftDoc.value.document);
       const mail: Mail[] = [
         {
           id: mailDraftId,
-          from: 'testing@freedommail.me',
-          to: draftDoc.value.document.to.getString(),
-          subject: draftDoc.value.document.subject.getString(),
-          body: draftDoc.value.document.body.getString(),
-          timeMSec: 0,
+          from: storedMail.from,
+          to: storedMail.to,
+          subject: storedMail.subject,
+          body: storedMail.body,
+          timeMSec: storedMail.timeMSec,
           isUnread: false
         }
       ];

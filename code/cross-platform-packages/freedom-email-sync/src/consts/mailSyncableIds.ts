@@ -13,7 +13,7 @@ import type { MailId } from '../types/MailId.ts';
 const storage = nest(saltedId('folder', 'storage'), {
   year: nest(({ year }: { year: number }): SyncableId => plainId('bundle', `${year}`), {
     month: nest(({ month }: { month: number }): SyncableId => plainId('bundle', `${month}`), {
-      date: nest(({ date }: { date: number }): SyncableId => plainId('bundle', `${date}`), {
+      day: nest(({ day }: { day: number }): SyncableId => plainId('bundle', `${day}`), {
         hour: nest(({ hour }: { hour: number }): SyncableId => plainId('bundle', `${hour}`), {
           emailId: nest((mailId: MailId): SyncableId => prefixedUuidId('bundle', mailId), {
             summary: saltedId('file', 'summary.json'),
@@ -34,7 +34,7 @@ const storage = nest(saltedId('folder', 'storage'), {
 const out = nest(saltedId('folder', 'out'), {
   year: nest(({ year }: { year: number }): SyncableId => plainId('bundle', `${year}`), {
     month: nest(({ month }: { month: number }): SyncableId => plainId('bundle', `${month}`), {
-      date: nest(({ date }: { date: number }): SyncableId => plainId('bundle', `${date}`), {
+      day: nest(({ day }: { day: number }): SyncableId => plainId('bundle', `${day}`), {
         hour: nest(({ hour }: { hour: number }): SyncableId => plainId('bundle', `${hour}`), {
           emailId: nest((mailId: MailId): SyncableId => prefixedUuidId('bundle', mailId), {
             summary: saltedId('file', 'summary.json'),
