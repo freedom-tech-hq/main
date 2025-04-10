@@ -11,6 +11,9 @@ coverage
 .ssl
 !.gitkeep
 
+# Dev-time storage
+/data
+
 # Account key
 *serviceAccountKey*
 
