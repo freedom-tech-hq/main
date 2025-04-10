@@ -1,23 +1,30 @@
 {
   "dependencies": {
-    "avl": "1.6.0",
+    "better-sqlite3": "11.9.1",
     "freedom-async": "0.0.0",
+    "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-indexing-types": "0.0.0",
+    "freedom-object-store-types": "0.0.0",
+    "freedom-paginated-data": "0.0.0",
+    "freedom-serialization": "0.0.0",
+    "lodash-es": "4.17.21",
     "yaschema": "4.4.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/lodash-es": "4.17.12",
     "freedom-build-tools": "0.0.0",
     "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
   },
   "type": "module",
   "main": "lib/exports.mjs",
-  "name": "freedom-indexing-types",
+  "name": "freedom-sqlite-object-store",
   "nx": {
     "tags": [
       "type:lib",
-      "platform:server",
-      "platform:web"
+      "platform:server"
     ]
   },
   "private": true,
@@ -26,7 +33,7 @@
     "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
     "build:tests": "tsc",
     "clean": "rimraf ./coverage ./lib",
-    "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
+    "depcheck": "depcheck --ignores=freedom-build-tools,@types/multer || (code ./package.json && exit 1)",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
