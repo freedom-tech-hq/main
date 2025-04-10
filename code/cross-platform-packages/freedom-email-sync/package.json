@@ -5,11 +5,14 @@
     "freedom-common-errors": "0.0.0",
     "freedom-crypto-service": "0.0.0",
     "freedom-nest": "0.0.0",
+    "freedom-paginated-data": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
+    "luxon": "3.6.1",
     "yaschema": "4.4.3"
   },
   "devDependencies": {
+    "@types/luxon": "3.6.2",
     "freedom-build-tools": "0.0.0",
     "typescript": "5.8.3"
   },

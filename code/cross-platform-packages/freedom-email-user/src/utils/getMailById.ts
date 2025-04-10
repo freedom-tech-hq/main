@@ -14,7 +14,7 @@ export const getMailById = makeAsyncResultFunc(
     const date = new Date(mailIdInfo.extractTimeMSec(mailId));
 
     const storageYearPath = paths.storage.year(date);
-    const mailDetailedPath = (await storageYearPath.month.date.hour.mailId(mailId)).detailed;
+    const mailDetailedPath = (await storageYearPath.month.day.hour.mailId(mailId)).detailed;
 
     const mail = await getJsonFromFile(trace, userFs, mailDetailedPath, storedMailSchema);
     if (!mail.ok) {

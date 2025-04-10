@@ -40,7 +40,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     const nowDate = new Date();
     // TODO: temp this should load progressively backwards
-    const mailStorageBundlePath = paths.storage.year(nowDate).month.date.hour;
+    const mailStorageBundlePath = paths.storage.year(nowDate).month.day.hour;
     const mailStorageBundle = await getBundleAtPath(trace, userFs, mailStorageBundlePath.value);
     if (!mailStorageBundle.ok) {
       return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);

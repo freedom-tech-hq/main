@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import { addEmail, type EmailUserId } from 'freedom-email-sync';
+import { addMail, type EmailUserId } from 'freedom-email-sync';
 
 import { getOrCreateEmailAccessForUser } from './getOrCreateEmailAccessForUser.ts';
 
@@ -9,9 +9,9 @@ export const createWelcomeContentForUser = makeAsyncResultFunc(
   async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
     const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, { userId }));
 
-    const emailAdded = await addEmail(trace, access, {
+    const emailAdded = await addMail(trace, access, {
       from: 'test@freedomtechhq.com',
-      to: 'test@freedomtechhq.com',
+      to: ['test@freedomtechhq.com'],
       subject: 'Welcome to Freedom!',
       body: 'This is a test email',
       timeMSec: Date.now()

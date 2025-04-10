@@ -24,7 +24,7 @@ export class MailDraftDocument extends ConflictFreeDocument<MailDraftDocumentPre
   }
 
   public get to() {
-    return this.generic.getTextField('to');
+    return this.generic.getArrayField('to', schema.string());
   }
 
   public get cc() {
