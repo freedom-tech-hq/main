@@ -1,5 +1,5 @@
 import type { TestContext } from 'node:test';
-import { before, describe, it } from 'node:test';
+import { describe, it } from 'node:test';
 
 import { makeTrace } from 'freedom-contexts';
 import { expectOk } from 'freedom-testing-tools';
@@ -160,56 +160,5 @@ describe('InMemoryIndexStore', () => {
     const keys = await indexStore.desc({ offset: 1 }).keys(trace);
     expectOk(keys);
     t.assert.deepStrictEqual(keys.value, ['hello']);
-  });
-
-  describe('keyRange', () => {
-    const indexStore = new InMemoryIndexStore({ config: { type: 'key' } });
-
-    const trace = makeTrace('test');
-
-    before(async () => {
-      expectOk(await indexStore.addToIndex(trace, 'hello', undefined));
-      expectOk(await indexStore.addToIndex(trace, 'world', undefined));
-      expectOk(await indexStore.addToIndex(trace, 'one', undefined));
-      expectOk(await indexStore.addToIndex(trace, 'two', undefined));
-      expectOk(await indexStore.addToIndex(trace, 'three', undefined));
-      expectOk(await indexStore.addToIndex(trace, 'four', undefined));
-    });
-
-    it('keyRange with undefined min and max keys should work', async (t: TestContext) => {
-      const keys = await indexStore.keyRange(undefined, undefined).keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['four', 'hello', 'one', 'three', 'two', 'world']);
-    });
-
-    it('keyRange with same inclusive min and max keys should work', async (t: TestContext) => {
-      const keys = await indexStore.keyRange('one', 'one').keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['one']);
-    });
-
-    it('keyRange with same exclusive min and max keys should work', async (t: TestContext) => {
-      const keys = await indexStore.keyRange('one', 'one', { inclusiveMin: false, inclusiveMax: false }).keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, []);
-    });
-
-    it('keyRange with inclusive min and max keys should work', async (t: TestContext) => {
-      const keys = await indexStore.keyRange('one', 'two').keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['one', 'three', 'two']);
-    });
-
-    it('keyRange with exclusive min and max keys should work', async (t: TestContext) => {
-      const keys = await indexStore.keyRange('one', 'two', { inclusiveMin: false, inclusiveMax: false }).keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['three']);
-    });
-
-    it('keyRange with inclusive min and undefined max keys should work', async (t: TestContext) => {
-      const keys = await indexStore.keyRange('one', undefined).keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['one', 'three', 'two', 'world']);
-    });
   });
 });

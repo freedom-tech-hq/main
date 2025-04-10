@@ -31,19 +31,13 @@ export interface IndexStore<KeyT extends string, IndexedValueT> {
     filters?: IndexedEntryFilters<IndexedValueT>
   ) => PR<number>;
 
-  /** Ascending order.  `offset` and `limit` take precedence over `prefix`, so when `prefix` is specified and non-empty, there may be cases
-   * where fewer than the `limit` number of results are returned, but there may be additional results beyond `offset + limit` anyway. */
+  /** Ascending order.  `offset` and `limit` may take precedence over `prefix`, so when `prefix` is specified and non-empty, there may be
+   * cases where fewer than the `limit` number of results are returned, but there may be additional results beyond `offset + limit`
+   * anyway. */
   asc: (options?: IndexedEntryOptions, filters?: IndexedEntryFilters<IndexedValueT>) => IndexedEntries<KeyT, IndexedValueT>;
 
-  /** Descending order.  `offset` and `limit` take precedence over `prefix`, so when `prefix` is specified and non-empty, there may be cases
-   * where fewer than the `limit` number of results are returned, but there may be additional results beyond `offset + limit` anyway. */
+  /** Descending order.  `offset` and `limit` may take precedence over `prefix`, so when `prefix` is specified and non-empty, there may be
+   * cases where fewer than the `limit` number of results are returned, but there may be additional results beyond `offset + limit`
+   * anyway. */
   desc: (options?: IndexedEntryOptions, filters?: IndexedEntryFilters<IndexedValueT>) => IndexedEntries<KeyT, IndexedValueT>;
-
-  /** Ascending order from `minKey` to `maxKey`, inclusive.  The order of keys is index-specific.  `inclusiveMin` and `inclusiveMax` are
-   * `true` by default. */
-  keyRange: (
-    minKey: KeyT | undefined,
-    maxKey: KeyT | undefined,
-    options?: { prefix?: string; suffix?: string; inclusiveMin?: boolean; inclusiveMax?: boolean }
-  ) => IndexedEntries<KeyT, IndexedValueT>;
 }

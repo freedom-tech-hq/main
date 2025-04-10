@@ -1,7 +1,6 @@
 import { Tree as AvlTree } from 'avl';
 import type { PR, Result } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess, withResolved } from 'freedom-async';
-import { InternalStateError, NotFoundError } from 'freedom-common-errors';
+import { makeAsyncResultFunc, makeSuccess, withResolved } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -62,24 +61,6 @@ export class InMemoryIndexStore<KeyT extends string, IndexedValueT> implements M
     });
   }
 
-  public keyRange(
-    minKey: KeyT | undefined,
-    maxKey: KeyT | undefined,
-    {
-      prefix,
-      suffix,
-      inclusiveMin = true,
-      inclusiveMax = true
-    }: { prefix?: string; suffix?: string; inclusiveMin?: boolean; inclusiveMax?: boolean } = {}
-  ): IndexedEntries<KeyT, IndexedValueT> {
-    return this.makeIndexedEntriesForKeyRange_(minKey, maxKey, {
-      prefix: prefix ?? '',
-      suffix: suffix ?? '',
-      inclusiveMin,
-      inclusiveMax
-    });
-  }
-
   // MutableIndexStore Methods
 
   public readonly addToIndex = makeAsyncResultFunc(
@@ -118,130 +99,6 @@ export class InMemoryIndexStore<KeyT extends string, IndexedValueT> implements M
   );
 
   // Private Methods
-
-  private makeIndexedEntriesForKeyRange_(
-    minKey: KeyT | undefined,
-    maxKey: KeyT | undefined,
-    { prefix, suffix, inclusiveMin, inclusiveMax }: { prefix: string; suffix: string; inclusiveMin: boolean; inclusiveMax: boolean }
-  ): IndexedEntries<KeyT, IndexedValueT> {
-    const forEach = async <ErrorCodeT extends string = never>(
-      trace: Trace,
-      callback: (trace: Trace, key: KeyT, value: IndexedValueT) => TypeOrPromisedType<Result<undefined, ErrorCodeT> | void>
-    ): PR<undefined, ErrorCodeT> => {
-      if (minKey === undefined) {
-        const minNode = this.index_.minNode();
-        /* node:coverage disable */
-        if (minNode === null || minNode.key === undefined) {
-          // No entries in the range
-          return makeSuccess(undefined);
-        }
-        /* node:coverage enable */
-
-        minKey = minNode.key[0];
-        inclusiveMin = true;
-      }
-
-      if (maxKey === undefined) {
-        const maxNode = this.index_.maxNode();
-        /* node:coverage disable */
-        if (maxNode === null || maxNode.key === undefined) {
-          // No entries in the range
-          return makeSuccess(undefined);
-        }
-        /* node:coverage enable */
-
-        maxKey = maxNode.key[0];
-        inclusiveMax = true;
-      }
-
-      let minEntry = this.indexEntriesByKey_.get(minKey);
-      const minNode = minEntry !== undefined ? this.index_.find(minEntry) : null;
-      /* node:coverage disable */
-      if (minEntry === undefined || minNode === null) {
-        return makeFailure(
-          new InternalStateError(trace, {
-            cause: new NotFoundError(trace, { message: `No entry found for key: ${minKey}`, errorCode: 'not-found' })
-          })
-        );
-      }
-      /* node:coverage enable */
-
-      let maxEntry = this.indexEntriesByKey_.get(maxKey);
-      const maxNode = maxEntry !== undefined ? this.index_.find(maxEntry) : null;
-      /* node:coverage disable */
-      if (maxEntry === undefined || maxNode === null) {
-        return makeFailure(
-          new InternalStateError(trace, {
-            cause: new NotFoundError(trace, { message: `No entry found for key: ${maxKey}`, errorCode: 'not-found' })
-          })
-        );
-      }
-      /* node:coverage enable */
-
-      if (!inclusiveMin) {
-        const nextNode = this.index_.next(minNode);
-        /* node:coverage disable */
-        if (nextNode === null || nextNode.key === undefined) {
-          // No entries in the range
-          return makeSuccess(undefined);
-        }
-        /* node:coverage enable */
-
-        minEntry = nextNode.key;
-      }
-
-      if (!inclusiveMax) {
-        const prevNode = this.index_.prev(maxNode);
-        /* node:coverage disable */
-        if (prevNode === null || prevNode.key === undefined) {
-          // No entries in the range
-          return makeSuccess(undefined);
-        }
-        /* node:coverage enable */
-
-        maxEntry = prevNode.key;
-      }
-
-      const entriesInRange: Array<[KeyT, IndexedValueT]> = [];
-      this.index_.range(minEntry, maxEntry, (node) => {
-        /* node:coverage disable */
-        if (node.key === undefined) {
-          return;
-        }
-        /* node:coverage enable */
-
-        const [key, indexedValue] = node.key;
-        if (key.startsWith(prefix) && key.endsWith(suffix)) {
-          entriesInRange.push([key, indexedValue]);
-        }
-      });
-
-      for (const [key, indexedValue] of entriesInRange) {
-        const result = await callback(trace, key, indexedValue);
-        /* node:coverage disable */
-        if (result !== undefined && !result.ok) {
-          return result;
-        }
-        /* node:coverage enable */
-      }
-
-      return makeSuccess(undefined);
-    };
-
-    const map = <SuccessT, ErrorCodeT extends string = never>(
-      trace: Trace,
-      callback: (trace: Trace, key: KeyT, value: IndexedValueT) => TypeOrPromisedType<Result<SuccessT, ErrorCodeT>>
-    ): PR<SuccessT[], ErrorCodeT> => mapUsingForEach(trace, forEach, callback);
-
-    return {
-      forEach: makeAsyncResultFunc([import.meta.filename, 'forEach'], forEach),
-      map: makeAsyncResultFunc([import.meta.filename, 'map'], map),
-      entries: makeAsyncResultFunc([import.meta.filename, 'entries'], (trace) =>
-        map(trace, (_trace, key, value) => makeSuccess([key, value] as [KeyT, IndexedValueT]))
-      ),
-      keys: makeAsyncResultFunc([import.meta.filename, 'keys'], (trace) => map(trace, (_trace, key) => makeSuccess(key)))
-    };
-  }
 
   private makeIndexedEntriesForOrder_({
     prefix,

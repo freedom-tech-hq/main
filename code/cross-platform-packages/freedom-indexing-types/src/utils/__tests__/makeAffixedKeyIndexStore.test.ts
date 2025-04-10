@@ -1,7 +1,6 @@
 import type { TestContext } from 'node:test';
 import { before, describe, it } from 'node:test';
 
-import { makeSuccess } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 import { expectOk } from 'freedom-testing-tools';
 
@@ -85,45 +84,6 @@ describe('makeAffixedKeyIndexStore', () => {
 
     it("desc({ prefix:'h' }).keys should return all correctly prefixed keys, in descending order, when combined with prefix", async (t: TestContext) => {
       const keys = await prefixedIndexStore.desc({ prefix: 'h' }).keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['hello']);
-    });
-
-    it('keyRange(…).entries should work', async (t: TestContext) => {
-      const keys = await prefixedIndexStore.keyRange('hello', 'three').entries(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, [
-        ['hello', undefined],
-        ['one', undefined],
-        ['three', undefined]
-      ]);
-    });
-
-    it('keyRange(…).entries should work, when combined with prefix', async (t: TestContext) => {
-      const keys = await prefixedIndexStore.keyRange('hello', 'three', { prefix: 'h' }).entries(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, [['hello', undefined]]);
-    });
-
-    it('keyRange(…).forEach should work', async (t: TestContext) => {
-      const keys: string[] = [];
-      expectOk(
-        await prefixedIndexStore.keyRange('hello', 'three', { prefix: 'h' }).forEach(trace, async (_trace, key) => {
-          keys.push(key);
-          return makeSuccess(undefined);
-        })
-      );
-      t.assert.deepStrictEqual(keys, ['hello']);
-    });
-
-    it('keyRange(…).keys should work', async (t: TestContext) => {
-      const keys = await prefixedIndexStore.keyRange('hello', 'three').keys(trace);
-      expectOk(keys);
-      t.assert.deepStrictEqual(keys.value, ['hello', 'one', 'three']);
-    });
-
-    it('keyRange(…).keys should work, when combined with prefix', async (t: TestContext) => {
-      const keys = await prefixedIndexStore.keyRange('hello', 'three', { prefix: 'h' }).keys(trace);
       expectOk(keys);
       t.assert.deepStrictEqual(keys.value, ['hello']);
     });

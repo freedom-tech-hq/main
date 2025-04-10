@@ -26,24 +26,5 @@ export const makeAffixedKeyIndexStore = <KeyPrefixT extends string, KeyT extends
     makeAffixedKeyIndexedEntries<KeyPrefixT, KeyT, KeySuffixT, IndexedValueT>(
       { prefix, suffix },
       indexStore.desc({ prefix: `${prefix}${extraPrefix}`, suffix: `${extraSuffix}${suffix}`, offset, limit }, filters)
-    ),
-
-  keyRange: (
-    minKey: KeyT | undefined,
-    maxKey: KeyT | undefined,
-    {
-      prefix: extraPrefix = '',
-      suffix: extraSuffix = '',
-      inclusiveMin,
-      inclusiveMax
-    }: { prefix?: string; suffix?: string; inclusiveMin?: boolean; inclusiveMax?: boolean } = {}
-  ) =>
-    makeAffixedKeyIndexedEntries<KeyPrefixT, KeyT, KeySuffixT, IndexedValueT>(
-      { prefix, suffix },
-      indexStore.keyRange(
-        minKey !== undefined ? `${prefix}${minKey}${suffix}` : undefined,
-        maxKey !== undefined ? `${prefix}${maxKey}${suffix}` : undefined,
-        { prefix: `${prefix}${extraPrefix}`, suffix: `${extraSuffix}${suffix}`, inclusiveMin, inclusiveMax }
-      )
     )
 });
