@@ -164,6 +164,9 @@
         },
         {
             "path": "web-worker-packages/freedom-email-tasks-web-worker"
+        },
+        {
+            "path": "server-packages/freedom-sqlite-object-store"
         }
     ],
     "settings": {}
