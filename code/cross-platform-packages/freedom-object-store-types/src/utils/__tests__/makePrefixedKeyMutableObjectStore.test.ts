@@ -36,7 +36,7 @@ describe('makePrefixedKeyMutableObjectStore', () => {
 
     const aValue = await prefixedObjectStore.mutableObject('a').getMutable(trace);
     expectOk(aValue);
-    t.assert.deepStrictEqual(aValue.value, { insertionCount: 0, storedValue: 0, updateCount: 0 });
+    t.assert.deepStrictEqual(aValue.value, { storedValue: 0, updateCount: 0 });
   });
 
   it('keyRange with undefined min and exclusive max arguments, should work on a non-empty object store', async (t: TestContext) => {

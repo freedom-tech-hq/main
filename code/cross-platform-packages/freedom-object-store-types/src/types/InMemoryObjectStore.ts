@@ -14,8 +14,6 @@ import type { ObjectAccessor } from './ObjectAccessor.ts';
 import type { ObjectStoreManagement } from './ObjectStoreManagement.ts';
 import type { StorableObject } from './StorableObject.ts';
 
-type StoredType<T> = StorableObject<T> & { insertionCount: number };
-
 export type InMemoryObjectStoreConstructorArgs<KeyT extends string, T> = {
   schema: Schema<T>;
   _keyType?: KeyT;
@@ -24,13 +22,12 @@ export type InMemoryObjectStoreConstructorArgs<KeyT extends string, T> = {
 export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T>, ObjectStoreManagement<KeyT, T> {
   public readonly uid = makeUuid();
 
-  private readonly keys_ = new InMemoryIndexStore<KeyT, number>({ config: { type: 'numeric' } });
+  private readonly keys_ = new InMemoryIndexStore<KeyT, unknown>({ config: { type: 'key' } });
   public readonly keys = this.keys_ as IndexStore<KeyT, unknown>;
 
   private readonly schema_: Schema<T>;
   private readonly deletedKeys_ = new Set<KeyT>();
-  private readonly storage_ = new Map<KeyT, StoredType<T>>();
-  private insertionCount_ = 0;
+  private readonly storage_ = new Map<KeyT, StorableObject<T>>();
 
   constructor({ schema }: InMemoryObjectStoreConstructorArgs<KeyT, T>) {
     this.schema_ = schema;
@@ -58,9 +55,8 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
         /* node:coverage enable */
 
         cloned.value.updateCount = 0;
-        cloned.value.insertionCount = this.insertionCount_++;
 
-        const initialStoredValue: StoredType<T> = cloned.value;
+        const initialStoredValue: StorableObject<T> = cloned.value;
 
         this.storage_.set(key, initialStoredValue);
 
@@ -147,9 +143,8 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
           /* node:coverage enable */
 
           cloned.value.updateCount = newValue.updateCount + 1;
-          cloned.value.insertionCount = found.insertionCount;
 
-          const newStoredValue: StoredType<T> = cloned.value;
+          const newStoredValue: StorableObject<T> = cloned.value;
 
           this.storage_.set(key, newStoredValue);
 
@@ -243,30 +238,33 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
 
   private readonly addToIndices_ = makeAsyncResultFunc(
     [import.meta.filename, 'addToIndices_'],
-    async (trace, key: KeyT, stored: StoredType<T>) => await this.keys_.addToIndex(trace, key, stored.insertionCount)
+    async (trace, key: KeyT, _stored: StorableObject<T>) => await this.keys_.addToIndex(trace, key, undefined)
   );
 
-  private readonly get_ = makeAsyncResultFunc([import.meta.filename, 'get_'], async (trace, key: KeyT): PR<StoredType<T>, 'not-found'> => {
-    const found = this.storage_.get(key);
-    /* node:coverage disable */
-    if (found === undefined) {
-      return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
-    } else if (this.deletedKeys_.has(key)) {
-      return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key} (was deleted)`, errorCode: 'not-found' }));
+  private readonly get_ = makeAsyncResultFunc(
+    [import.meta.filename, 'get_'],
+    async (trace, key: KeyT): PR<StorableObject<T>, 'not-found'> => {
+      const found = this.storage_.get(key);
+      /* node:coverage disable */
+      if (found === undefined) {
+        return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
+      } else if (this.deletedKeys_.has(key)) {
+        return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key} (was deleted)`, errorCode: 'not-found' }));
+      }
+      /* node:coverage enable */
+
+      const cloned = await this.cloneValue_(trace, found.storedValue);
+      /* node:coverage disable */
+      if (!cloned.ok) {
+        return cloned;
+      }
+      /* node:coverage enable */
+
+      cloned.value.updateCount = found.updateCount;
+
+      return makeSuccess(cloned.value);
     }
-    /* node:coverage enable */
-
-    const cloned = await this.cloneValue_(trace, found.storedValue);
-    /* node:coverage disable */
-    if (!cloned.ok) {
-      return cloned;
-    }
-    /* node:coverage enable */
-
-    cloned.value.updateCount = found.updateCount;
-
-    return makeSuccess(cloned.value);
-  });
+  );
 
   private readonly removeFromIndices_ = makeAsyncResultFunc(
     [import.meta.filename, 'removeFromIndices_'],
@@ -275,7 +273,7 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
 
   private readonly cloneValue_ = makeAsyncResultFunc(
     [import.meta.filename, 'cloneValue_'],
-    async (trace: Trace, value: T): PR<StoredType<T>> => {
+    async (trace: Trace, value: T): PR<StorableObject<T>> => {
       const cloning = await this.schema_.cloneValueAsync(value);
       /* node:coverage disable */
       if (cloning.error !== undefined) {
@@ -283,7 +281,7 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
       }
       /* node:coverage enable */
 
-      const output: StoredType<T> = { storedValue: cloning.cloned, insertionCount: 0, updateCount: 0 };
+      const output: StorableObject<T> = { storedValue: cloning.cloned, updateCount: 0 };
 
       return makeSuccess(output);
     }
