@@ -1,9 +1,10 @@
 import type { PR } from 'freedom-async';
-import { allResults, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { Base64String } from 'freedom-basic-data';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 
-import { writeKv } from '../../utils/writeKv.ts';
+import { getEmailCredentialObjectStore } from '../../utils/getEmailCredentialObjectStore.ts';
 
 export const storeEncryptedEmailCredentialLocally = makeAsyncResultFunc(
   [import.meta.filename],
@@ -11,14 +12,13 @@ export const storeEncryptedEmailCredentialLocally = makeAsyncResultFunc(
     trace,
     { description, encryptedEmailCredential }: { description: string; encryptedEmailCredential: Base64String }
   ): PR<undefined> => {
+    const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
+
     const uuid = makeUuid();
 
-    const wrote = await allResults(trace, [
-      writeKv(trace, `EMAIL_CREDENTIAL_${uuid}.encrypted`, encryptedEmailCredential),
-      writeKv(trace, `EMAIL_CREDENTIAL_${uuid}.description`, description)
-    ]);
-    if (!wrote.ok) {
-      return wrote;
+    const stored = await emailCredentialStore.mutableObject(uuid).create(trace, { encrypted: encryptedEmailCredential, description });
+    if (!stored.ok) {
+      return generalizeFailureResult(trace, stored, 'conflict');
     }
 
     return makeSuccess(undefined);

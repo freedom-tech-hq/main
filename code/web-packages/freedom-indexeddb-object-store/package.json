@@ -1,32 +1,30 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
-    "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
-    "freedom-conflict-free-document": "0.0.0",
-    "freedom-conflict-free-document-data": "0.0.0",
-    "freedom-crypto": "0.0.0",
-    "freedom-crypto-data": "0.0.0",
-    "freedom-email-sync": "0.0.0",
-    "freedom-nest": "0.0.0",
+    "freedom-contexts": "0.0.0",
+    "freedom-indexing-types": "0.0.0",
+    "freedom-locking-types": "0.0.0",
+    "freedom-object-store-types": "0.0.0",
     "freedom-paginated-data": "0.0.0",
     "freedom-serialization": "0.0.0",
-    "freedom-sync-types": "0.0.0",
-    "freedom-syncable-store-types": "0.0.0",
+    "freedom-trace-logging-and-metrics": "0.0.0",
+    "lodash-es": "4.17.21",
     "yaschema": "4.4.4"
   },
   "devDependencies": {
+    "fake-indexeddb": "6.0.0",
     "freedom-build-tools": "0.0.0",
+    "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
   },
   "type": "module",
   "main": "lib/exports.mjs",
-  "name": "freedom-email-user",
+  "name": "freedom-indexeddb-object-store",
   "nx": {
     "tags": [
       "type:lib",
-      "platform:server",
-      "platform:web"
+      "platform:server"
     ]
   },
   "private": true,
@@ -35,12 +33,12 @@
     "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
     "build:tests": "tsc",
     "clean": "rimraf ./coverage ./lib",
-    "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
+    "depcheck": "depcheck --ignores=freedom-build-tools,@types/multer || (code ./package.json && exit 1)",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
     "test:perf": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
-    "test:unit-tests": "echo tests-disabled # NODE_OPTIONS='--experimental-transform-types  --disable-warning=ExperimentalWarning' node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=300000 --test",
+    "test:unit-tests": "NODE_OPTIONS='--experimental-transform-types  --disable-warning=ExperimentalWarning' node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=300000 --test",
     "deploy:extract": "../../poc/repo/deploy.extract.sh"
   },
   "types": "lib/exports.d.ts",

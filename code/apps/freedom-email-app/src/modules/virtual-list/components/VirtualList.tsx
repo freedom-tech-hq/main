@@ -405,11 +405,13 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   const makeOnVisibleRangeChange = useCallbackRef(() => {
     const scrollParentElem = typeof scrollParent === 'string' ? document.getElementById(scrollParent) : scrollParent;
     if (scrollParentElem === null) {
+      console.error('No scroll parent found for VirtualList', uuid);
       return;
     }
 
     const listElem = document.getElementById(uuid);
     if (listElem === null) {
+      console.error('No element found for VirtualList', uuid);
       return;
     }
 
@@ -549,11 +551,13 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   useEffect(() => {
     const scrollParentElem = typeof scrollParent === 'string' ? document.getElementById(scrollParent) : scrollParent;
     if (scrollParentElem === null) {
+      console.error('No scroll parent found for VirtualList', uuid);
       return;
     }
 
     const listElem = document.getElementById(uuid);
     if (listElem === null) {
+      console.error('No element found for VirtualList', uuid);
       return;
     }
 

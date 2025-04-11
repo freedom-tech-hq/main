@@ -58,7 +58,8 @@ export class NotificationManager<NotifT extends Record<string, object>> implemen
       return;
     }
 
-    for (const listener of listeners.toArray()) {
+    const allListeners = listeners.toArray();
+    for (const listener of allListeners) {
       listener(args);
     }
   }

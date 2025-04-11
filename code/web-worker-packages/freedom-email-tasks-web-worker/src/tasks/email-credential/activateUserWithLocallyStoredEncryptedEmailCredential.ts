@@ -1,12 +1,11 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { base64String, type Uuid } from 'freedom-basic-data';
-import { NotFoundError } from 'freedom-common-errors';
+import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { type Uuid } from 'freedom-basic-data';
 import type { EmailUserId } from 'freedom-email-sync';
 import { decryptEmailCredentialWithPassword } from 'freedom-email-user';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { readKV } from '../../internal/utils/readKV.ts';
+import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 
 export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncResultFunc(
   [import.meta.filename],
@@ -14,21 +13,17 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
     trace,
     { localCredentialUuid, password }: { localCredentialUuid: Uuid; password: string }
   ): PR<{ userId: EmailUserId }, 'not-found'> => {
+    const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
+
     const activeCredential = useActiveCredential(trace);
 
-    const encryptedCredential = await readKV(trace, `EMAIL_CREDENTIAL_${localCredentialUuid}.encrypted`);
+    const encryptedCredential = await emailCredentialStore.object(localCredentialUuid).get(trace);
     if (!encryptedCredential.ok) {
       return encryptedCredential;
-    } else if (encryptedCredential.value === undefined) {
-      return makeFailure(new NotFoundError(trace, { errorCode: 'not-found' }));
-    } else if (!base64String.is(encryptedCredential.value)) {
-      return makeFailure(
-        new NotFoundError(trace, { message: `Email credential ${localCredentialUuid} appears to be corrupted`, errorCode: 'not-found' })
-      );
     }
 
     const decryptedCredential = await decryptEmailCredentialWithPassword(trace, {
-      encryptedEmailCredential: encryptedCredential.value,
+      encryptedEmailCredential: encryptedCredential.value.encrypted,
       password
     });
     if (!decryptedCredential.ok) {

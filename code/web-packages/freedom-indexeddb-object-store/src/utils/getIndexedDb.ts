@@ -4,13 +4,12 @@ import { makeUuid } from 'freedom-contexts';
 
 const secretKey = makeUuid();
 
-// TODO: get rid of these and use ObjectStore
-export const getKvDb = makeAsyncResultFunc(
+export const getIndexedDb = makeAsyncResultFunc(
   [import.meta.filename],
   async (_trace, { dbName, dbVersion, storeName }: { dbName: string; dbVersion: number; storeName: string }): PR<IDBDatabase> =>
     await computeAsyncOnce(
       [import.meta.filename],
-      `${secretKey}.${dbName}.${dbVersion}.${storeName}`,
+      `${secretKey}.${dbName}.${dbVersion}`,
       async (trace) =>
         await new Promise((resolve) => {
           const request = indexedDB.open(dbName, dbVersion);
