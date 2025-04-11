@@ -64,7 +64,6 @@ export const startSyncService = makeAsyncResultFunc([import.meta.filename], asyn
   // Giving Appender Access on the Storage Folder to the Server
   {
     const storageFolderPath = mailPaths.storage.value;
-    console.log('FOOBARBLA storageFolderPath', storageFolderPath.toString());
     const storageFolder = await getMutableFolderAtPath(trace, userFs, storageFolderPath);
     if (!storageFolder.ok) {
       return generalizeFailureResult(trace, storageFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);

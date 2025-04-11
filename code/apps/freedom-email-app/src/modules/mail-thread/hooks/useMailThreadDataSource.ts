@@ -1,6 +1,6 @@
 import { proxy } from 'comlink';
 import type { Result } from 'freedom-async';
-import { inline } from 'freedom-async';
+import { inline, log } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import { mailIdInfo } from 'freedom-email-sync';
@@ -101,6 +101,9 @@ export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, 
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
             const data = await tasks.getMailForThread(selectedThreadId, isConnected, onData);
+            if (!data.ok) {
+              log().error?.('Failed to load email', data);
+            }
             clearOldData();
             onData(data);
           } finally {

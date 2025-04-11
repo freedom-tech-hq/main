@@ -1,9 +1,9 @@
 import type { PR } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { Uuid } from 'freedom-basic-data';
+import { generalizeFailureResult } from 'freedom-common-errors';
 
-import { listKvKeys } from '../../internal/utils/listKvKeys.ts';
-import { readKV } from '../../internal/utils/readKV.ts';
+import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 
 export interface EmailCredentialInfo {
   description?: string;
@@ -13,21 +13,20 @@ export interface EmailCredentialInfo {
 export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<EmailCredentialInfo[]> => {
-    const keys = await listKvKeys(trace);
+    const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
+
+    const keys = await emailCredentialStore.keys.asc().keys(trace);
     if (!keys.ok) {
       return keys;
     }
 
-    const matchingKeys = keys.value.filter((key) => key.startsWith('EMAIL_CREDENTIAL_') && key.endsWith('.encrypted'));
-
-    return await allResultsMapped(trace, matchingKeys, {}, async (trace, key) => {
-      const localUuid = key.substring('EMAIL_CREDENTIAL_'.length, key.length - '.encrypted'.length) as Uuid;
-      const description = await readKV(trace, `EMAIL_CREDENTIAL_${localUuid}.description`);
-      if (!description.ok) {
-        return description;
+    return await allResultsMapped(trace, keys.value, {}, async (trace, key) => {
+      const storedCredential = await emailCredentialStore.object(key).get(trace);
+      if (!storedCredential.ok) {
+        return generalizeFailureResult(trace, storedCredential, 'not-found');
       }
 
-      return makeSuccess({ description: description.value, localUuid });
+      return makeSuccess({ description: storedCredential.value.description, localUuid: key });
     });
   }
 );

@@ -76,7 +76,7 @@ const BootstrappedWebApp = () => {
       >
         {/* Main content */}
         <Box id={`${uuid}-main`} component="main" sx={{ flexGrow: 1, overflow: 'auto' }}>
-          <AppMainContent />
+          <AppMainContent scrollParent={`${uuid}-main`} />
         </Box>
       </Box>
     </>

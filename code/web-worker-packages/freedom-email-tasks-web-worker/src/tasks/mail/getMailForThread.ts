@@ -2,10 +2,9 @@ import type { PR, Result } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { MailId } from 'freedom-email-sync';
-import { mailIdInfo, storedMailSchema } from 'freedom-email-sync';
+import { mailIdInfo } from 'freedom-email-sync';
 import type { Mail, MailDraftId, ThreadLikeId } from 'freedom-email-user';
-import { getMailDraftById, getUserMailPaths, mailDraftIdInfo, mailThreadIdInfo, makeMailFromDraft } from 'freedom-email-user';
-import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store-types';
+import { getMailById, getMailDraftById, mailDraftIdInfo, mailThreadIdInfo, makeMailFromDraft } from 'freedom-email-user';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -31,31 +30,13 @@ export const getMailForThread = makeAsyncResultFunc(
 
     const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
-
-    const nowDate = new Date();
-    const storageYearPath = paths.storage.year(nowDate);
-
-    // TODO: temp this should load progressively backwards
-    // TODO: temp this should load IDs from the thread document
-    const mailStorageBundle = await getBundleAtPath(trace, userFs, paths.storage.year(nowDate).month.day.hour.value);
-    if (!mailStorageBundle.ok) {
-      return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
-    }
-
     if (mailThreadIdInfo.is(threadLikeId)) {
       return makeFailure(new GeneralError(trace, new Error("MailThreadId isn't supported yet")));
     } else if (mailIdInfo.is(threadLikeId)) {
       const mailId: MailId = threadLikeId;
-      const storedMail = await getJsonFromFile(
-        trace,
-        userFs,
-        (await storageYearPath.month.day.hour.mailId(mailId)).detailed,
-        storedMailSchema
-      );
+      const storedMail = await getMailById(trace, access, mailId);
       if (!storedMail.ok) {
-        return generalizeFailureResult(trace, storedMail, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
+        return generalizeFailureResult(trace, storedMail, 'not-found');
       }
 
       const mail: Mail[] = [
