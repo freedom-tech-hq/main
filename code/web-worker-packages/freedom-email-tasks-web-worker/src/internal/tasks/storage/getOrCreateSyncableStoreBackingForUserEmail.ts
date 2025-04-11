@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generateSha256HashFromString } from 'freedom-crypto';
 import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailCredential } from 'freedom-email-user';
 import { OpfsSyncableStoreBacking } from 'freedom-opfs-syncable-store-backing';
 import { storageRootIdInfo, SyncablePath } from 'freedom-sync-types';
 import { generateProvenanceForNewSyncableStore, type SyncableStoreBacking } from 'freedom-syncable-store-types';
@@ -13,15 +14,15 @@ const globalCache: Record<EmailUserId, SyncableStoreBacking> = {};
 
 export const getOrCreateSyncableStoreBackingForUserEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { userId }: { userId: EmailUserId }): PR<SyncableStoreBacking> => {
-    const cached = globalCache[userId];
+  async (trace, credential: EmailCredential): PR<SyncableStoreBacking> => {
+    const cached = globalCache[credential.userId];
     if (cached !== undefined) {
       return makeSuccess(cached);
     }
 
-    const cryptoService = makeCryptoServiceForUser({ userId });
+    const cryptoService = makeCryptoServiceForUser(credential);
 
-    const storageRootId = storageRootIdInfo.make(userId);
+    const storageRootId = storageRootIdInfo.make(credential.userId);
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
       cryptoService,
@@ -46,7 +47,7 @@ export const getOrCreateSyncableStoreBackingForUserEmail = makeAsyncResultFunc(
     }
 
     // const output = new InMemorySyncableStoreBacking({ provenance: provenance.value });
-    globalCache[userId] = output;
+    globalCache[credential.userId] = output;
 
     return makeSuccess(output);
   }

@@ -13,9 +13,13 @@ DEV: {
 
       const actualDigest = await crypto.subtle.digest(algorithm, data);
 
-      const outBuffer = new Uint8Array(actualDigest.byteLength + dataBuffer.byteLength);
+      const mockPrefixBuffer = Buffer.from('MOCK_DIGEST_', 'utf-8');
+      const outBuffer = new Uint8Array(mockPrefixBuffer.byteLength + actualDigest.byteLength + dataBuffer.byteLength);
 
       let offset = 0;
+      outBuffer.set(mockPrefixBuffer, offset);
+      offset += mockPrefixBuffer.byteLength;
+
       outBuffer.set(Buffer.from(actualDigest), offset);
       offset += actualDigest.byteLength;
 

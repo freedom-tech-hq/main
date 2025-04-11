@@ -17,6 +17,7 @@ import {
   type SyncPullResponse,
   type SyncPusher
 } from 'freedom-sync-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { InferHttpRequestBodyType } from 'yaschema-api';
 import { getDefaultApiRoutingContext, setDefaultUrlBase } from 'yaschema-api';
 
@@ -46,8 +47,14 @@ export const startLocalFakeEmailServiceSyncing = makeAsyncResultFunc([import.met
   const register = makeAsyncResultFunc([import.meta.filename, 'register'], async (trace, args: RegisterArgs): PR<undefined, 'conflict'> => {
     storageRootId = args.storageRootId;
 
-    const registered = await registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() });
+    const registered = await disableLam(trace, 'conflict', (trace) =>
+      registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() })
+    );
     if (!registered.ok) {
+      if (registered.value.errorCode === 'conflict') {
+        // If there's a conflict, the account was probably already registered
+        return makeSuccess(undefined);
+      }
       return registered;
     }
 

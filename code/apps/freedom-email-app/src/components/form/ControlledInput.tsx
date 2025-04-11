@@ -1,20 +1,20 @@
-import type { TextFieldProps } from '@mui/material';
-import { TextField } from '@mui/material';
+import type { InputProps } from '@mui/material';
+import { Input } from '@mui/material';
 import type { Binding } from 'react-bindings';
 import { BindingsConsumer, useCallbackRef } from 'react-bindings';
 
-export type ControlledTextFieldProps = TextFieldProps & {
+export type ControlledInputProps = InputProps & {
   value: Binding<string>;
 };
 
-export const ControlledTextField = ({ value, ...fwd }: ControlledTextFieldProps) => {
+export const ControlledInput = ({ value, ...fwd }: ControlledInputProps) => {
   const onChange: React.ChangeEventHandler<HTMLInputElement> = useCallbackRef((event) => {
     value.set(event.target.value);
   });
 
   return (
     <BindingsConsumer bindings={value} limitType="none">
-      {(value) => <TextField {...fwd} value={value} onChange={onChange} />}
+      {(value) => <Input {...fwd} value={value} onChange={onChange} />}
     </BindingsConsumer>
   );
 };

@@ -5,7 +5,7 @@ import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useBinding } from 'react-bindings';
 
-import { ControlledInput } from './form/ControlledTextField.tsx';
+import { ControlledInput } from './form/ControlledInput.tsx';
 import { MAIL_MENU_WIDTH_PX } from './SideMenu.tsx';
 
 const ns = 'ui';

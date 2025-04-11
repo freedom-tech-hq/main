@@ -1,7 +1,7 @@
 import { Box, CssBaseline } from '@mui/material';
-import { inline } from 'freedom-async';
+import { log } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
@@ -27,10 +27,26 @@ export const WebApp = () => (
 // Helpers
 
 const BootstrappedWebApp = () => {
-  const uuid = useMemo(() => makeUuid(), []);
   const activeUserId = useActiveUserId();
+  const uuid = useMemo(() => makeUuid(), []);
   const sideMenuWidth = useSideMenuWidth();
   const tasks = useTasks();
+
+  useBindingEffect(
+    activeUserId,
+    async (activeUserId) => {
+      if (tasks === undefined || activeUserId === undefined) {
+        return; // Not ready
+      }
+
+      const startedSyncService = await tasks.startSyncService();
+      if (!startedSyncService.ok) {
+        log().error?.('Failed to start sync service', startedSyncService.value);
+        return;
+      }
+    },
+    { deps: [tasks] }
+  );
 
   useBindingEffect(
     sideMenuWidth,
@@ -44,36 +60,6 @@ const BootstrappedWebApp = () => {
     },
     { limitMSec: TARGET_FPS_MSEC }
   );
-
-  useEffect(() => {
-    if (tasks === undefined) {
-      return;
-    }
-
-    inline(async () => {
-      // TODO: TEMP password
-      const created = await tasks.createUser({ password: 'hello world' });
-      if (!created.ok) {
-        console.error('Failed to create user', created.value);
-        return;
-      }
-
-      // TODO: make sure the user saves these somewhere
-      console.log('FOOBARBLA userId', created.value.userId);
-      console.log('FOOBARBLA encryptedUserAuthPackage', created.value.encryptedUserAuthPackage);
-
-      const startedSyncService = await tasks.startSyncServiceForUser({ userId: created.value.userId });
-      if (!startedSyncService.ok) {
-        console.error('Failed to start sync service', startedSyncService.value);
-        return;
-      }
-
-      console.log('Sync service started for user', created.value.userId);
-
-      // TODO: TEMP
-      activeUserId.set(created.value.userId);
-    });
-  });
 
   return (
     <>
