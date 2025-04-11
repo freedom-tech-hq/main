@@ -157,6 +157,9 @@
             "path": "server-packages/freedom-server-trace-auth-token"
         },
         {
+            "path": "web-packages/freedom-logical-web-components"
+        },
+        {
             "path": "web-packages/freedom-react-localization"
         },
         {

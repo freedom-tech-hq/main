@@ -8,7 +8,7 @@ import { getMailDraftById, getUserMailPaths, mailDraftIdInfo, mailThreadIdInfo, 
 import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
-import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 import type { GetMailForThread_MailAddedPacket } from '../../types/mail/getMailForThread/GetMailForThread_MailAddedPacket.ts';
 import type { GetMailForThreadPacket } from '../../types/mail/getMailForThread/GetMailForThreadPacket.ts';
@@ -23,13 +23,13 @@ export const getMailForThread = makeAsyncResultFunc(
     _isConnected: () => TypeOrPromisedType<boolean>,
     _onData: (value: Result<GetMailForThreadPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailForThread_MailAddedPacket> => {
-    const activeUserId = useActiveUserId(trace);
+    const credential = useActiveCredential(trace).credential;
 
-    if (activeUserId.userId === undefined) {
+    if (credential === undefined) {
       return makeSuccess({ type: 'mail-added' as const, mail: [] });
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, { userId: activeUserId.userId }));
+    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "yaschema": "4.4.3"
+    "yaschema": "4.4.4"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

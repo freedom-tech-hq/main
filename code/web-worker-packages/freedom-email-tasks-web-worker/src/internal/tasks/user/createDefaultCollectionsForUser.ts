@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailCredential } from 'freedom-email-user';
 import { getUserMailPaths, mailCollectionTypes } from 'freedom-email-user';
 import { createBundleAtPath } from 'freedom-syncable-store-types';
 
@@ -9,8 +9,8 @@ import { getOrCreateEmailAccessForUser } from './getOrCreateEmailAccessForUser.t
 
 export const createDefaultCollectionsForUser = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, { userId }));
+  async (trace, credential: EmailCredential): PR<undefined> => {
+    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);

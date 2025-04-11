@@ -37,6 +37,14 @@ export const devSetEnv = (name: string, value: string | undefined) => {
   }
 };
 
+/** Gets all of the  */
+export let devGetAllEnvOverrides = () => ({});
+
+// Replacing devGetAllEnvOverrides in DEV build mode
+DEV: {
+  devGetAllEnvOverrides = () => ({ ...globalEnvOverrides });
+}
+
 /**
  * In DEV build mode, makes a function that is updated anytime the environment is changed using `devSetEnv`.
  *

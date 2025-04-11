@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailCredential } from 'freedom-email-user';
 import type { MakeSyncServiceArgs, SyncService } from 'freedom-sync-service';
 import { makeSyncService } from 'freedom-sync-service';
 
@@ -11,13 +11,13 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
   async (
     trace,
     {
-      userId,
+      credential,
       ...fwdArgs
     }: Omit<MakeSyncServiceArgs, 'shouldSyncWithAllRemotes' | 'store'> & {
-      userId: EmailUserId;
+      credential: EmailCredential;
     }
   ): PR<SyncService> => {
-    const access = await getOrCreateEmailAccessForUser(trace, { userId });
+    const access = await getOrCreateEmailAccessForUser(trace, credential);
     if (!access.ok) {
       return access;
     }

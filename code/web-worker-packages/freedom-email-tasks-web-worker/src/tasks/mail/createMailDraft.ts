@@ -4,19 +4,19 @@ import { InternalStateError } from 'freedom-common-errors';
 import type { MailId } from 'freedom-email-sync';
 import { addMailDraft, type MailDraftId } from 'freedom-email-user';
 
-import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 
 export const createMailDraft = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { inReplyToMailId }: { inReplyToMailId?: MailId } = {}): PR<{ draftId: MailDraftId }> => {
-    const activeUserId = useActiveUserId(trace);
+    const credential = useActiveCredential(trace).credential;
 
-    if (activeUserId.userId === undefined) {
+    if (credential === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'No active user' }));
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, { userId: activeUserId.userId }));
+    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
     const added = await addMailDraft(trace, access, { inReplyToMailId });
     if (!added.ok) {

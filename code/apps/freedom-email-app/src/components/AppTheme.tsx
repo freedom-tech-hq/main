@@ -28,6 +28,44 @@ export interface AppTheme extends Theme {
 export const AppTheme = ({ children }: { children: ReactNode }) => {
   const theme = useMemo(() => {
     const theme = createTheme({
+      typography: {
+        body1: {
+          fontSize: '17px'
+        },
+        body2: {
+          fontSize: '15px'
+        },
+        caption: {
+          fontSize: '13px'
+        },
+        button: {
+          fontSize: '17px'
+        },
+        h1: {
+          fontSize: '24px',
+          fontWeight: 'bold'
+        },
+        h2: {
+          fontSize: '21px',
+          fontWeight: 'bold'
+        },
+        h3: {
+          fontSize: '20px',
+          fontWeight: 'bold'
+        },
+        h4: {
+          fontSize: '19px',
+          fontWeight: 'bold'
+        },
+        h5: {
+          fontSize: '18px',
+          fontWeight: 'bold'
+        },
+        h6: {
+          fontSize: '17px',
+          fontWeight: 'bold'
+        }
+      },
       palette: {
         action: {
           hover: 'transparent',

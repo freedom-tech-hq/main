@@ -9,7 +9,7 @@
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
     "luxon": "3.6.1",
-    "yaschema": "4.4.3"
+    "yaschema": "4.4.4"
   },
   "devDependencies": {
     "@types/luxon": "3.6.2",

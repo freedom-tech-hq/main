@@ -4,7 +4,7 @@
     "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
-    "yaschema": "4.4.3"
+    "yaschema": "4.4.4"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

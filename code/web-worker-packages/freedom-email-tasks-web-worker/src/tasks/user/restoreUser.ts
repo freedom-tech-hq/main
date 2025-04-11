@@ -1,33 +1,42 @@
-import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { generalizeFailureResult } from 'freedom-common-errors';
-import type { UserAuthPackage } from 'freedom-email-user';
+import { type EmailCredential, encryptEmailCredentialWithPassword } from 'freedom-email-user';
 
-import { useActiveUserId } from '../../contexts/active-user-id.ts';
-import { getOrCreateKeyStoreForUser } from '../../internal/tasks/storage/getOrCreateKeyStoreForUser.ts';
+import { useActiveCredential } from '../../contexts/active-credential.ts';
+import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';
 
-/**
- * Restores a user from known information, including the user ID and private keys.
- */
 export const restoreUser = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { userId, privateKeys }: UserAuthPackage): PR<undefined> => {
-    const activeUserId = useActiveUserId(trace);
+  async (
+    trace,
+    credential: EmailCredential,
+    {
+      install
+    }: {
+      /** If provided, the credential is encrypted with the specified password and stored locally */
+      install?: {
+        description: string;
+        password: string;
+      };
+    }
+  ) => {
+    const activeCredential = useActiveCredential(trace);
 
-    const keyStore = await getOrCreateKeyStoreForUser(trace, { userId });
-    if (!keyStore.ok) {
-      return keyStore;
+    if (install !== undefined) {
+      const encryptedEmailCredential = await encryptEmailCredentialWithPassword(trace, { credential, password: install.password });
+      if (!encryptedEmailCredential.ok) {
+        return encryptedEmailCredential;
+      }
+
+      const storedEncryptedEmailCredential = await storeEncryptedEmailCredentialLocally(trace, {
+        description: install.description,
+        encryptedEmailCredential: encryptedEmailCredential.value
+      });
+      if (!storedEncryptedEmailCredential.ok) {
+        return storedEncryptedEmailCredential;
+      }
     }
 
-    const secretAccessor = keyStore.value.mutableObject(privateKeys.id);
-
-    const storedSecret = await secretAccessor.create(trace, privateKeys);
-    if (!storedSecret.ok) {
-      // Conflicts won't happen here since the IDs are UUID based
-      return generalizeFailureResult(trace, storedSecret, 'conflict');
-    }
-
-    activeUserId.userId = userId;
+    activeCredential.credential = credential;
 
     return makeSuccess(undefined);
   }

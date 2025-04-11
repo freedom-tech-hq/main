@@ -5,15 +5,15 @@ import { decryptBufferWithPassword } from 'freedom-crypto';
 import { deserialize } from 'freedom-serialization';
 import type { JsonValue } from 'yaschema';
 
-import { type UserAuthPackage, userAuthPackageSchema } from '../types/UserAuthPackage.ts';
+import { type EmailCredential, emailCredentialSchema } from '../types/EmailCredential.ts';
 
-export const decryptUserAuthPackageWithPassword = makeAsyncResultFunc(
+export const decryptEmailCredentialWithPassword = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { encryptedUserAuthPackage, password }: { encryptedUserAuthPackage: Base64String; password: string }
-  ): PR<UserAuthPackage> => {
-    const encryptedValue = base64String.toBuffer(encryptedUserAuthPackage);
+    { encryptedEmailCredential, password }: { encryptedEmailCredential: Base64String; password: string }
+  ): PR<EmailCredential> => {
+    const encryptedValue = base64String.toBuffer(encryptedEmailCredential);
 
     const decryptedBuffer = await decryptBufferWithPassword(trace, { encryptedValue, password });
     if (!decryptedBuffer.ok) {
@@ -23,7 +23,7 @@ export const decryptUserAuthPackageWithPassword = makeAsyncResultFunc(
     const jsonString = Buffer.from(decryptedBuffer.value).toString('utf-8');
     const serializedValue = JSON.parse(jsonString) as JsonValue;
 
-    const deserializedPackage = await deserialize(trace, { serializedValue, valueSchema: userAuthPackageSchema });
+    const deserializedPackage = await deserialize(trace, { serializedValue, valueSchema: emailCredentialSchema });
     if (!deserializedPackage.ok) {
       return deserializedPackage;
     }

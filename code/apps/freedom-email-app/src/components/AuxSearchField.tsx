@@ -4,7 +4,7 @@ import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useBinding } from 'react-bindings';
 
-import { ControlledInput } from './form/ControlledTextField.tsx';
+import { ControlledInput } from './form/ControlledInput.tsx';
 
 const ns = 'ui';
 const $searchFieldPlaceholder = LOCALIZE('Search')({ ns });

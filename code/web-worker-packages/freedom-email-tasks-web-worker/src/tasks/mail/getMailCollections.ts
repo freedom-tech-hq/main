@@ -6,7 +6,7 @@ import { getCollectionIdsFromSaltedCollectionIds, getUserMailPaths, mailCollecti
 import { getBundleAtPath } from 'freedom-syncable-store-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
-import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 import type { GetMailCollection_GroupsAddedPacket } from '../../types/mail/getMailCollection/GetMailCollection_GroupsAddedPacket.ts';
 import type { GetMailCollectionPacket } from '../../types/mail/getMailCollection/GetMailCollectionPacket.ts';
@@ -18,13 +18,13 @@ export const getMailCollections = makeAsyncResultFunc(
     _isConnected: () => TypeOrPromisedType<boolean>,
     _onData: (value: Result<GetMailCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailCollection_GroupsAddedPacket> => {
-    const activeUserId = useActiveUserId(trace);
+    const credential = useActiveCredential(trace).credential;
 
-    if (activeUserId.userId === undefined) {
+    if (credential === undefined) {
       return makeSuccess({ type: 'groups-added' as const, groups: [] });
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, { userId: activeUserId.userId }));
+    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);

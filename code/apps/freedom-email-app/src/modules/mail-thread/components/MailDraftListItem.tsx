@@ -4,7 +4,7 @@ import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useBinding } from 'react-bindings';
 
-import { ControlledInput } from '../../../components/form/ControlledTextField.tsx';
+import { ControlledTextField } from '../../../components/form/ControlledTextField.tsx';
 import { makeStringAvatarProps } from '../../../utils/makeStringAvatarProps.ts';
 import type { MailDataSourceDraftItem } from '../types/MailDataSourceItem.ts';
 import { MailActionsMenu } from './MailActionsMenu.tsx';
@@ -40,12 +40,12 @@ export const MailDraftListItem = <TagT,>({ isFirst, mail }: MailDraftListItemPro
             </Typography>
             <Stack direction="row" gap={1}>
               <Typography variant="body2">{$toLabel(t)}</Typography>
-              <ControlledInput size="small" value={to} />
+              <ControlledTextField size="small" value={to} />
             </Stack>
           </Stack>
         </Stack>
 
-        <ControlledInput size="small" value={subject} sx={{ mt: 1 }} />
+        <ControlledTextField size="small" value={subject} sx={{ mt: 1 }} />
 
         <Divider sx={{ mx: -2, my: 1 }} />
 
