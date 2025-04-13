@@ -1,27 +1,31 @@
-import { makeAsyncResultFunc, uncheckedResult } from 'freedom-async';
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { InternalStateError } from 'freedom-common-errors';
+import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { makeCryptoService } from 'freedom-crypto-service';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailCredential } from 'freedom-email-user';
 
-import { getOrCreateKeyStoreForUser } from '../tasks/storage/getOrCreateKeyStoreForUser.ts';
-import { getRequiredPrivateKeysForUser } from '../tasks/user/getRequiredPrivateKeysForUser.ts';
-
-export const makeCryptoServiceForUser = ({ userId }: { userId: EmailUserId }): CryptoService =>
+export const makeCryptoServiceForUser = (credential: EmailCredential): CryptoService =>
   makeCryptoService({
-    getPrivateCryptoKeySetIds: makeAsyncResultFunc([import.meta.filename, 'getPrivateCryptoKeySetIds'], async (trace) => {
-      const keyStore = await uncheckedResult(getOrCreateKeyStoreForUser(trace, { userId }));
+    getPrivateCryptoKeySetIds: makeAsyncResultFunc(
+      [import.meta.filename, 'getPrivateCryptoKeySetIds'],
+      async (_trace): PR<CryptoKeySetId[]> => makeSuccess([credential.privateKeys.id])
+    ),
 
-      return await keyStore.keys.asc().keys(trace);
-    }),
+    getPrivateCryptoKeysById: makeAsyncResultFunc(
+      [import.meta.filename, 'getPrivateCryptoKeysById'],
+      async (trace, id): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
+        if (id !== credential.privateKeys.id) {
+          return makeFailure(new InternalStateError(trace, { message: `Key not found with ID: ${id}`, errorCode: 'not-found' }));
+        }
 
-    getPrivateCryptoKeysById: makeAsyncResultFunc([import.meta.filename, 'getPrivateCryptoKeysById'], async (trace, id) => {
-      const keyStore = await uncheckedResult(getOrCreateKeyStoreForUser(trace, { userId }));
-
-      return await keyStore.object(id).get(trace);
-    }),
+        return makeSuccess(credential.privateKeys);
+      }
+    ),
 
     getMostRecentPrivateCryptoKeys: makeAsyncResultFunc(
       [import.meta.filename, 'getMostRecentPrivateCryptoKeys'],
-      async (trace) => await getRequiredPrivateKeysForUser(trace, { userId })
+      async (_trace): PR<PrivateCombinationCryptoKeySet> => makeSuccess(credential.privateKeys)
     )
   });

@@ -1,42 +1,69 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { EmailUserId } from 'freedom-email-sync';
-import { getUserMailPaths } from 'freedom-email-user';
+import { encryptEmailCredentialWithPassword, getUserMailPaths } from 'freedom-email-user';
 import { createBundleAtPath, createFolderAtPath, initializeRoot } from 'freedom-syncable-store-types';
 
-import { useActiveUserId } from '../../contexts/active-user-id.ts';
+import { useActiveCredential } from '../../contexts/active-credential.ts';
+import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';
 import { createDefaultCollectionsForUser } from '../../internal/tasks/user/createDefaultCollectionsForUser.ts';
-import { createUserIdAndCryptoKeys } from '../../internal/tasks/user/createUserIdAndCryptoKeys.ts';
+import { createEmailCredential } from '../../internal/tasks/user/createEmailCredential.ts';
 import { createWelcomeContentForUser } from '../../internal/tasks/user/createWelcomeContentForUser.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 
 /**
  * Creates:
- * - crypto keys
- * - user ID
+ * - email credential
  * - basic user folder structure
  * - default collections (ex. inbox, sent, spam)
  *
  * The user should keep their user ID and private keys somewhere safe, so they can use them for account recovery or to sign in on other
  * devices
  *
- * @returns the user ID
+ * @returns the user ID and encrypted email credential
  */
 export const createUser = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace): PR<{ userId: EmailUserId; privateKeys: PrivateCombinationCryptoKeySet }> => {
-    const activeUserId = useActiveUserId(trace);
+  async (
+    trace,
+    {
+      install,
+      password
+    }: {
+      /** If provided, the credential is encrypted with the specified password and stored locally */
+      install?: {
+        /** Stored with the credential so the user can intelligibly select which credential to use later */
+        description: string;
+      };
+      password: string;
+    }
+  ): PR<{ userId: EmailUserId; encryptedEmailCredential: string }> => {
+    const activeCredential = useActiveCredential(trace);
 
-    const userIdAndCryptoKeys = await createUserIdAndCryptoKeys(trace);
-    if (!userIdAndCryptoKeys.ok) {
-      return userIdAndCryptoKeys;
+    const credential = await createEmailCredential(trace);
+    if (!credential.ok) {
+      return credential;
     }
 
-    const { userId, privateKeys } = userIdAndCryptoKeys.value;
+    const userId = credential.value.userId;
 
-    const access = await getOrCreateEmailAccessForUser(trace, { userId });
+    const encryptedEmailCredential = await encryptEmailCredentialWithPassword(trace, { credential: credential.value, password });
+    if (!encryptedEmailCredential.ok) {
+      return encryptedEmailCredential;
+    }
+
+    if (install) {
+      const storedEncryptedEmailCredential = await storeEncryptedEmailCredentialLocally(trace, {
+        description: install.description,
+        encryptedEmailCredential: encryptedEmailCredential.value
+      });
+      if (!storedEncryptedEmailCredential.ok) {
+        return storedEncryptedEmailCredential;
+      }
+    }
+
+    const access = await getOrCreateEmailAccessForUser(trace, credential.value);
     if (!access.ok) {
       return access;
     }
@@ -92,18 +119,18 @@ export const createUser = makeAsyncResultFunc(
     }
 
     // Creating default collections
-    const createdDefaultCollections = await createDefaultCollectionsForUser(trace, { userId });
+    const createdDefaultCollections = await createDefaultCollectionsForUser(trace, credential.value);
     if (!createdDefaultCollections.ok) {
       return createdDefaultCollections;
     }
 
-    const welcomeContentAdded = await createWelcomeContentForUser(trace, { userId });
+    const welcomeContentAdded = await createWelcomeContentForUser(trace, credential.value);
     if (!welcomeContentAdded.ok) {
       return welcomeContentAdded;
     }
 
-    activeUserId.userId = userId;
+    activeCredential.credential = credential.value;
 
-    return makeSuccess({ userId, privateKeys });
+    return makeSuccess({ userId, encryptedEmailCredential: encryptedEmailCredential.value });
   }
 );

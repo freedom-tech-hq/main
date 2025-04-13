@@ -4,6 +4,8 @@ import type { Trace } from 'freedom-contexts';
 import type { HashingMode } from 'freedom-crypto-data';
 import { preferredHashingMode } from 'freedom-crypto-data';
 
+import { digest } from '../../internal/utils/digest.ts';
+
 export const generateHashFromBuffer = async (
   trace: Trace,
   { mode = preferredHashingMode, value }: { mode?: HashingMode; value: Uint8Array }
@@ -11,7 +13,7 @@ export const generateHashFromBuffer = async (
   try {
     switch (mode) {
       case 'SHA-256':
-        return makeSuccess(Buffer.from(await crypto.subtle.digest('SHA-256', value)));
+        return makeSuccess(Buffer.from(await digest('SHA-256', value)));
     }
   } catch (e) {
     /* node:coverage ignore next */

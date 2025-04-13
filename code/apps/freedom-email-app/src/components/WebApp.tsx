@@ -1,16 +1,15 @@
 import { Box, CssBaseline } from '@mui/material';
-import { inline } from 'freedom-async';
+import { log } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
-import type { EmailUserId } from 'freedom-email-sync';
-import { Fragment, useEffect, useMemo } from 'react';
-import { BC, useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
+import { useMemo } from 'react';
+import { useBindingEffect } from 'react-bindings';
 
-import { useSelectedMailThreadId } from '../contexts/selected-mail-thread.tsx';
+import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { TasksProvider, useTasks } from '../contexts/tasks.tsx';
-import { MailThread } from '../modules/mail-thread/components/MailThread.tsx';
 import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
 import { AppGlobalStyles } from './AppGlobalStyles.tsx';
+import { AppMainContent } from './AppMainContent.tsx';
 import { AppNavbar } from './AppNavbar.tsx';
 import { AppTheme } from './AppTheme.tsx';
 import { SideMenu } from './SideMenu.tsx';
@@ -28,16 +27,26 @@ export const WebApp = () => (
 // Helpers
 
 const BootstrappedWebApp = () => {
+  const activeUserId = useActiveUserId();
   const uuid = useMemo(() => makeUuid(), []);
   const sideMenuWidth = useSideMenuWidth();
-  const selectedMailThreadId = useSelectedMailThreadId();
   const tasks = useTasks();
 
-  const activeUserId = useBinding<EmailUserId | undefined>(() => undefined, { id: 'activeUserId', detectChanges: true });
+  useBindingEffect(
+    activeUserId,
+    async (activeUserId) => {
+      if (tasks === undefined || activeUserId === undefined) {
+        return; // Not ready
+      }
 
-  const hasSelectedMailThreadId = useDerivedBinding(selectedMailThreadId, (selectedThreadId) => selectedThreadId !== undefined, {
-    id: 'hasSelectedMailThreadId'
-  });
+      const startedSyncService = await tasks.startSyncService();
+      if (!startedSyncService.ok) {
+        log().error?.('Failed to start sync service', startedSyncService.value);
+        return;
+      }
+    },
+    { deps: [tasks] }
+  );
 
   useBindingEffect(
     sideMenuWidth,
@@ -52,55 +61,24 @@ const BootstrappedWebApp = () => {
     { limitMSec: TARGET_FPS_MSEC }
   );
 
-  useEffect(() => {
-    if (tasks === undefined) {
-      return;
-    }
-
-    inline(async () => {
-      const created = await tasks.createUser();
-      if (!created.ok) {
-        console.error('Failed to create user', created.value);
-        return;
-      }
-
-      const startedSyncService = await tasks.startSyncServiceForUser({ userId: created.value.userId });
-      if (!startedSyncService.ok) {
-        console.error('Failed to start sync service', startedSyncService.value);
-        return;
-      }
-
-      console.log('Sync service started for user', created.value.userId);
-
-      // TODO: TEMP
-      activeUserId.set(created.value.userId);
-    });
-  });
-
   return (
     <>
-      {BC(activeUserId, (activeUserId) => (
-        <Fragment key={activeUserId ?? ''}>
-          <AppNavbar />
-          <SideMenu />
-          <Box
-            id={`${uuid}-main-content-offset`}
-            sx={{
-              pl: `${sideMenuWidth.get()}px`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'stretch'
-            }}
-          >
-            {/* Main content */}
-            <Box id={`${uuid}-main`} component="main" sx={{ flexGrow: 1, overflow: 'auto' }}>
-              {BC(hasSelectedMailThreadId, (hasSelectedThreadId) =>
-                hasSelectedThreadId ? <MailThread scrollParent={`${uuid}-main`} /> : null
-              )}
-            </Box>
-          </Box>
-        </Fragment>
-      ))}
+      <AppNavbar />
+      <SideMenu />
+      <Box
+        id={`${uuid}-main-content-offset`}
+        sx={{
+          pl: `${sideMenuWidth.get()}px`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch'
+        }}
+      >
+        {/* Main content */}
+        <Box id={`${uuid}-main`} component="main" sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <AppMainContent scrollParent={`${uuid}-main`} />
+        </Box>
+      </Box>
     </>
   );
 };

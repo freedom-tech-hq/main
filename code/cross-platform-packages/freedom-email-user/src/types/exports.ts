@@ -1,5 +1,6 @@
 export * from './CollectionLikeId.ts';
 export * from './CustomMailCollectionId.ts';
+export * from './EmailCredential.ts';
 export * from './Mail.ts';
 export * from './MailCollection.ts';
 export * from './MailCollectionDocument.ts';
