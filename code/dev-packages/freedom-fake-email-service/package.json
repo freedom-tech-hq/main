@@ -3,11 +3,11 @@
     "body-parser": "2.2.0",
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
-    "dotenv": "16.4.7",
+    "dotenv": "16.5.0",
     "express": "5.1.0",
     "express-ws": "5.0.2",
-    "express-yaschema-api-handler": "4.1.8",
-    "express-yaschema-ws-api-handler": "4.2.8",
+    "express-yaschema-api-handler": "4.1.9",
+    "express-yaschema-ws-api-handler": "4.2.9",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
@@ -28,7 +28,7 @@
     "freedom-trace-service-context": "0.0.0",
     "http-status-codes": "2.3.0",
     "lodash-es": "4.17.21",
-    "yaschema": "4.4.3"
+    "yaschema": "4.4.4"
   },
   "devDependencies": {
     "@types/cookie-parser": "1.4.8",
@@ -55,7 +55,7 @@
     "generate-https-key-and-cert": "mkdir -p ./.ssl && openssl req -x509 -newkey rsa:4096 -keyout ./.ssl/key.pem -out ./.ssl/cert.pem -sha256 -days 365 -nodes -config ./openssl.local.conf",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
     "start:https": "yarn build && HTTPS_SERVER_KEY_PATH=./.ssl/key.pem HTTPS_SERVER_CERT_PATH=./.ssl/cert.pem PORT=8443 CORS_ORIGINS='https://www.local.dev.freedommail.me:3443' node ./build/index.mjs",
-    "start:https:debug": "FREEDOM_BUILD_MODE=DEV FREEDOM_MOCK_CRYPTO=${FREEDOM_MOCK_CRYPTO:-true} FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} yarn start:https",
+    "start:https:debug": "FREEDOM_BUILD_MODE=DEV FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} yarn start:https",
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
     "test:perf": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",

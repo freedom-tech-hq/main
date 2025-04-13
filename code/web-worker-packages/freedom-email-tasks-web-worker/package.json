@@ -14,15 +14,15 @@
     "freedom-email-user": "0.0.0",
     "freedom-fake-email-service-api": "0.0.0",
     "freedom-fetching": "0.0.0",
+    "freedom-indexeddb-object-store": "0.0.0",
     "freedom-notification-types": "0.0.0",
-    "freedom-object-store-types": "0.0.0",
     "freedom-opfs-syncable-store-backing": "0.0.0",
     "freedom-sync-service": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
     "freedom-trace-logging-and-metrics": "0.0.0",
-    "yaschema": "4.4.3",
-    "yaschema-api": "4.1.8"
+    "yaschema": "4.4.4",
+    "yaschema-api": "4.1.9"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",
