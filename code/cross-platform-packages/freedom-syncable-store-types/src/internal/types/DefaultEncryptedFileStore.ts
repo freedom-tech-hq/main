@@ -1,7 +1,5 @@
 import type { PR } from 'freedom-async';
-import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
-import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { SyncablePath } from 'freedom-sync-types';
 
 import type { SyncableStoreBacking } from '../../types/backing/SyncableStoreBacking.ts';
@@ -41,15 +39,15 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
 
   // DefaultBundleBase Abstract Method Implementations
 
-  protected override computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash> {
-    return generateSha256HashFromBuffer(trace, encodedData);
-  }
-
   protected override decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array> {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'decode-data', pathString: this.path.toString() });
+
     return this.folderOperationsHandler_.verifyAndDecryptBuffer(trace, encodedData);
   }
 
   protected encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array> {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'encode-data', pathString: this.path.toString() });
+
     return this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
   }
 

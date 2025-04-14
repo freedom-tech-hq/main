@@ -1,5 +1,6 @@
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
+import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
 import { NotificationManager } from 'freedom-notification-types';
 import type { SaltId, StorageRootId } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
@@ -9,6 +10,7 @@ import { DefaultMutableSyncableFolderAccessorBase } from '../internal/types/Defa
 import type { SyncableStoreBacking } from './backing/SyncableStoreBacking.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 import type { MutableSyncableStore } from './MutableSyncableStore.ts';
+import type { SyncableStoreLogEntry } from './SyncableStoreLogEntry.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
 export interface DefaultSyncableStoreConstructorArgs {
@@ -47,4 +49,6 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
   public toString() {
     return `Store(${this.path.toString()})`;
   }
+
+  public readonly devLogging = makeDevLoggingSupport<SyncableStoreLogEntry>(false);
 }

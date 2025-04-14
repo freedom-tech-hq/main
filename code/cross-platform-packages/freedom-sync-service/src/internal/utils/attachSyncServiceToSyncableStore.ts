@@ -36,7 +36,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     const onRemoteContentChange = makeAsyncResultFunc(
       [import.meta.filename, 'onRemoteContentChange'],
       async (trace, { path, hash: remoteHash }: { path: SyncablePath; hash: Sha256Hash }): PR<undefined> => {
-        syncService.appendLogEntry?.({ type: 'notified', pathString: path.toString() });
+        DEV: syncService.devLogging.appendLogEntry?.({ type: 'notified', pathString: path.toString() });
 
         const localHash = await getSyncableHashAtPath(trace, store, path);
         if (!localHash.ok) {

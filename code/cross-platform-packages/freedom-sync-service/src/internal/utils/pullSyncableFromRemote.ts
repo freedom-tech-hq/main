@@ -35,7 +35,7 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
     if (!pulled.ok) {
       return pulled;
     }
-    syncService.appendLogEntry?.({
+    DEV: syncService.devLogging.appendLogEntry?.({
       type: 'pull',
       remoteId,
       itemType: pulled.value.type,

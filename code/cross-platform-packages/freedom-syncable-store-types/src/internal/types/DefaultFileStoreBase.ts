@@ -72,7 +72,15 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   // Abstract Methods
 
-  protected abstract computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash>;
+  private readonly computeHash_ = makeAsyncResultFunc(
+    [import.meta.filename, 'computeHash_'],
+    (trace, encodedData: Uint8Array): PR<Sha256Hash> => {
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'compute-hash', pathString: this.path.toString() });
+
+      return generateSha256HashFromBuffer(trace, encodedData);
+    }
+  );
+
   protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
   protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
   protected abstract makeBundleAccessor_(args: { path: SyncablePath }): MutableSyncableBundleAccessor;
@@ -180,11 +188,13 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
     async (trace, id: SyncableId): PR<undefined, 'not-found'> => {
+      const removePath = this.path.append(id);
+
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'delete', pathString: removePath.toString() });
+
       if (!this.supportsDeletion) {
         return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported in ${this.path.toString()}` }));
       }
-
-      const removePath = this.path.append(id);
 
       // Checking that the requested file exists in the backing
       const exists = await this.backing_.existsAtPath(trace, removePath);
@@ -230,6 +240,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace, id: SyncableId): PR<boolean> => {
     const checkingPath = this.path.append(id);
 
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'check-exists', pathString: checkingPath.toString() });
+
     // Checking that the requested file exists in the backing
     const exists = await this.backing_.existsAtPath(trace, checkingPath);
     /* node:coverage disable */
@@ -258,12 +270,14 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+      const getPath = this.path.append(id);
+
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get', pathString: getPath.toString() });
+
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
-
-      const getPath = this.path.append(id);
 
       const itemType = extractSyncableItemTypeFromId(id);
       const guards = await allResults(trace, [
@@ -305,6 +319,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   // FileStore Methods
 
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
+
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
@@ -443,6 +459,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
   );
 
   public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
+
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
@@ -586,6 +604,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
 
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-binary', pathString: newPath.toString() });
+
       const exists = await this.backing_.existsAtPath(trace, newPath);
       if (!exists.ok) {
         return exists;
@@ -644,6 +664,8 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       metadata: SyncableItemMetadata & LocalItemMetadata
     ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
       const newPath = this.path.append(id);
+
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-bundle', pathString: newPath.toString() });
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
       if (!exists.ok) {

@@ -1,8 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeSuccess } from 'freedom-async';
-import type { Sha256Hash } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
-import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import type { SyncablePath } from 'freedom-sync-types';
 
 import type { MutableSyncableBundleAccessor } from '../../types/MutableSyncableBundleAccessor.ts';
@@ -21,10 +19,6 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
   }
 
   // DefaultBundleBase Abstract Method Implementations
-
-  protected override computeHash_(trace: Trace, encodedData: Uint8Array): PR<Sha256Hash> {
-    return generateSha256HashFromBuffer(trace, encodedData);
-  }
 
   protected override async decodeData_(_trace: Trace, encodedData: Uint8Array): PR<Uint8Array> {
     // No change needed for plain data

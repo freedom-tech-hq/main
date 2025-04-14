@@ -98,6 +98,9 @@ describe('DefaultSyncableStore', () => {
   });
 
   it('getFolderAtPath should work', async (_t: TestContext) => {
+    // TODO: TEMP
+    store.devLogging.setShouldRecordLogs(true);
+
     // Creating folder
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
@@ -105,6 +108,12 @@ describe('DefaultSyncableStore', () => {
 
     const folder = await getFolderAtPath(trace, store, testingPath);
     expectOk(folder);
+
+    // TODO: TEMP
+    console.log('NUM ENTRIES', store.devLogging.getLogEntries().length);
+    for (const entry of store.devLogging.getLogEntries()) {
+      console.log('FOO', JSON.stringify(entry));
+    }
   });
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {

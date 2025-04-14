@@ -46,6 +46,9 @@
             "path": "cross-platform-packages/freedom-crypto"
         },
         {
+            "path": "cross-platform-packages/freedom-dev-logging-support"
+        },
+        {
             "path": "cross-platform-packages/freedom-device-notification-types"
         },
         {

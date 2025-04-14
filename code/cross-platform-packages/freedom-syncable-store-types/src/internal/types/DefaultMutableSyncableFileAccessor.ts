@@ -41,6 +41,8 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
   // FileAccessor Methods
 
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
+
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
@@ -87,6 +89,8 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
   );
 
   public readonly getEncodedBinary = makeAsyncResultFunc([import.meta.filename, 'getEncodedBinary'], async (trace): PR<Uint8Array> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-data', pathString: this.path.toString() });
+
     const found = await this.backing_.getAtPath(trace, this.path, 'file');
     if (!found.ok) {
       return generalizeFailureResult(trace, found, ['not-found', 'wrong-type']);
@@ -112,6 +116,8 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
   });
 
   public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
+
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
