@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
-import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import type { RemoteAccessor, RemoteId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
@@ -33,13 +34,6 @@ export const makeSyncService = makeAsyncResultFunc(
     const pushQueue = new TaskQueue(trace);
 
     let detachSyncService: () => void = noop;
-
-    const logEntries: SyncServiceLogEntry[] = [];
-
-    const appendLogEntry = (logEntry: SyncServiceLogEntry) => {
-      DEV: debugTopic('SYNC', (log) => log('Appending sync log entry', logEntry));
-      logEntries.push(logEntry);
-    };
 
     const service = {
       // External
@@ -111,25 +105,7 @@ export const makeSyncService = makeAsyncResultFunc(
 
       areQueuesEmpty: () => pushQueue.isEmpty() && pullQueue.isEmpty(),
 
-      // Logging Support
-
-      setShouldRecordLogs: (shouldRecord) => {
-        shouldRecordLogs = shouldRecord;
-
-        service.appendLogEntry = shouldRecord ? appendLogEntry : undefined;
-      },
-
-      isRecordingLogs: () => shouldRecordLogs,
-
-      appendLogEntry: shouldRecordLogs ? appendLogEntry : undefined,
-
-      getLogEntries: () => {
-        return [...logEntries];
-      },
-
-      clearLogEntries: () => {
-        logEntries.length = 0;
-      }
+      devLogging: makeDevLoggingSupport<SyncServiceLogEntry>(shouldRecordLogs)
     } satisfies SyncService;
 
     return makeSuccess(service);

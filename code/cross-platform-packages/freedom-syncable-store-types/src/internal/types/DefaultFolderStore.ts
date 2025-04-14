@@ -149,6 +149,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     async (trace, id: SyncableId): PR<undefined, 'not-found'> => {
       const removePath = this.path.append(id);
 
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'delete', pathString: removePath.toString() });
+
       // Checking that the requested file exists in the backing
       const exists = await this.backing_.existsAtPath(trace, removePath);
       /* node:coverage disable */
@@ -196,6 +198,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
   public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace, id: SyncableId): PR<boolean> => {
     const checkingPath = this.path.append(id);
 
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'check-exists', pathString: checkingPath.toString() });
+
     // Checking that the requested file exists in the backing
     const exists = await this.backing_.existsAtPath(trace, checkingPath);
     /* node:coverage disable */
@@ -224,12 +228,14 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+      const getPath = this.path.append(id);
+
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get', pathString: getPath.toString() });
+
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
-
-      const getPath = this.path.append(id);
 
       const itemType = extractSyncableItemTypeFromId(id);
       const guards = await allResults(trace, [
@@ -265,6 +271,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
   // FolderStore Methods
 
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
+
     const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
     if (!metadata.ok) {
       return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
@@ -278,27 +286,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     do {
       const needsRecomputeHashCount = this.needsRecomputeHashCount_;
 
-      const metadataById = await this.getMetadataById(trace);
-      /* node:coverage disable */
-      if (!metadataById.ok) {
-        return metadataById;
-      }
-      /* node:coverage enable */
-
-      const hashesById = objectEntries(metadataById.value).reduce(
-        (out, [id, metadata]) => {
-          if (metadata === undefined) {
-            return out;
-          }
-
-          out[id] = metadata.hash;
-
-          return out;
-        },
-        {} as Partial<Record<SyncableId, Sha256Hash>>
-      );
-
-      const hash = await generateSha256HashFromHashesById(trace, hashesById);
+      const hash = await this.computeHash_(trace);
       /* node:coverage disable */
       if (!hash.ok) {
         return hash;
@@ -319,6 +307,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
   public readonly getMetadataById = makeAsyncResultFunc(
     [import.meta.filename, 'getMetadataById'],
     async (trace: Trace): PR<Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>> => {
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata-by-id', pathString: this.path.toString() });
+
       // Deleted files are already filtered out using getIds
       const ids = await this.getIds(trace);
       /* node:coverage disable */
@@ -373,6 +363,8 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
   public readonly getIds = makeAsyncResultFunc(
     [import.meta.filename, 'getIds'],
     async (trace: Trace, options?: { type?: SingleOrArray<SyncableItemType> }): PR<SyncableId[]> => {
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-ids', pathString: this.path.toString() });
+
       const ids = await this.backing_.getIdsInPath(trace, this.path, {
         type: intersectSyncableItemTypes(options?.type, 'folder')
       });
@@ -514,6 +506,32 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
   // Private Methods
 
+  private readonly computeHash_ = makeAsyncResultFunc([import.meta.filename, 'computeHash_'], async (trace): PR<Sha256Hash> => {
+    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'compute-hash', pathString: this.path.toString() });
+
+    const metadataById = await this.getMetadataById(trace);
+    /* node:coverage disable */
+    if (!metadataById.ok) {
+      return metadataById;
+    }
+    /* node:coverage enable */
+
+    const hashesById = objectEntries(metadataById.value).reduce(
+      (out, [id, metadata]) => {
+        if (metadata === undefined) {
+          return out;
+        }
+
+        out[id] = metadata.hash;
+
+        return out;
+      },
+      {} as Partial<Record<SyncableId, Sha256Hash>>
+    );
+
+    return await generateSha256HashFromHashesById(trace, hashesById);
+  });
+
   private readonly createPreEncodedFolder_ = makeAsyncResultFunc(
     [import.meta.filename, 'createPreEncodedFolder_'],
     async (
@@ -521,12 +539,14 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       id: SyncableId,
       metadata: SyncableItemMetadata & LocalItemMetadata
     ): PR<DefaultMutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
+      const newPath = this.path.append(id);
+
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-folder', pathString: newPath.toString() });
+
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
-
-      const newPath = this.path.append(id);
 
       const exists = await this.backing_.existsAtPath(trace, newPath);
       if (!exists.ok) {

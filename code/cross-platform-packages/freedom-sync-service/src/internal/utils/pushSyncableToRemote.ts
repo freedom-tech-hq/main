@@ -109,7 +109,7 @@ const pushEverything = makeAsyncResultFunc(
         if (!pushed.ok) {
           return pushed;
         }
-        syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'folder', pathString: path.toString() });
+        DEV: syncService.devLogging.appendLogEntry?.({ type: 'push', remoteId, itemType: 'folder', pathString: path.toString() });
 
         return await pushFolder(trace, { store, syncService, path });
       }
@@ -127,7 +127,7 @@ const pushEverything = makeAsyncResultFunc(
         if (!pushed.ok) {
           return pushed;
         }
-        syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'bundle', pathString: path.toString() });
+        DEV: syncService.devLogging.appendLogEntry?.({ type: 'push', remoteId, itemType: 'bundle', pathString: path.toString() });
 
         return await pushBundle(trace, { store, syncService, path });
       }
@@ -262,7 +262,7 @@ const pushFile = makeAsyncResultFunc(
     if (!pushed.ok) {
       return pushed;
     }
-    syncService.appendLogEntry?.({ type: 'push', remoteId, itemType: 'file', pathString: path.toString() });
+    DEV: syncService.devLogging.appendLogEntry?.({ type: 'push', remoteId, itemType: 'file', pathString: path.toString() });
 
     return makeSuccess(undefined);
   }
