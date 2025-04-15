@@ -15,7 +15,19 @@ variable "environment" {
 
 # Define local variables
 locals {
-  smtp_outbound_ip = "79.127.219.17"
+  smtp_outbound_ip = "82.26.157.248"
+  smtp_hostname    = "smtp1.dev.linefeedr.com"
+}
+
+# Add PTR record for SMTP outbound IP
+resource "google_dns_record_set" "smtp_ptr" {
+  name = "248.157.26.82.in-addr.arpa."
+  type = "PTR"
+  ttl  = 300
+
+  managed_zone = "rdns-82-26-157"
+
+  rrdatas = ["${local.smtp_hostname}."]
 }
 
 # Generate a random suffix for the bucket name
