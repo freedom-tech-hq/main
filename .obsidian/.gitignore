@@ -1,0 +1,9 @@
+*
+!.gitignore
+
+# These settings are important for consistency and to follow our standards
+!app.json
+
+# Not adding other config files to git
+# Recommended plugins:
+#   Obsidian Smart Typography - https://github.com/mgmeyers/obsidian-smart-typography
