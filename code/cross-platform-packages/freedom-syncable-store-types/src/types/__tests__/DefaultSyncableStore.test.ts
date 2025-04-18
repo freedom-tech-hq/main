@@ -1,64 +1,21 @@
 import type { TestContext } from 'node:test';
-import { beforeEach, describe, it } from 'node:test';
+import { describe, it } from 'node:test';
 
-import type { Trace } from 'freedom-contexts';
-import { makeTrace, makeUuid } from 'freedom-contexts';
-import { generateCryptoCombinationKeySet } from 'freedom-crypto';
-import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
-import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
+import { encName, uuidId } from 'freedom-sync-types';
 import { expectErrorCode, expectIncludes, expectOk } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
+import { createStoreTestStack } from '../../__test_dependency__/createStoreTestStack.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../utils/create/createStringFileAtPath.ts';
 import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.ts';
-import { generateProvenanceForNewSyncableStore } from '../../utils/generateProvenanceForNewSyncableStore.ts';
 import { getFolderAtPath } from '../../utils/get/getFolderAtPath.ts';
 import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.ts';
 import { getStringFromFile } from '../../utils/get/getStringFromFile.ts';
-import { initializeRoot } from '../../utils/initializeRoot.ts';
-import { DefaultSyncableStore } from '../DefaultSyncableStore.ts';
-import { InMemorySyncableStoreBacking } from '../in-memory-backing/InMemorySyncableStoreBacking.ts';
 
 describe('DefaultSyncableStore', () => {
-  let trace!: Trace;
-  let privateKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: CryptoService;
-  let storeBacking!: InMemorySyncableStoreBacking;
-  let store!: DefaultSyncableStore;
-
-  const storageRootId = storageRootIdInfo.make('test');
-
-  beforeEach(async () => {
-    trace = makeTrace('test');
-
-    const internalCryptoKeys = await generateCryptoCombinationKeySet(trace);
-    expectOk(internalCryptoKeys);
-    privateKeys = internalCryptoKeys.value;
-
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
-
-    const provenance = await generateProvenanceForNewSyncableStore(trace, {
-      storageRootId,
-      cryptoService,
-      trustedTimeSignature: undefined
-    });
-    expectOk(provenance);
-
-    storeBacking = new InMemorySyncableStoreBacking({ provenance: provenance.value });
-    store = new DefaultSyncableStore({
-      storageRootId,
-      backing: storeBacking,
-      cryptoService,
-      creatorPublicKeys: privateKeys.publicOnly(),
-      saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
-    });
-
-    expectOk(await initializeRoot(trace, store));
-  });
-
   it('deleting files and folders should work', async (t: TestContext) => {
+    const { trace, store } = await createStoreTestStack();
+
     // Creating folder with default initial access
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
@@ -88,6 +45,8 @@ describe('DefaultSyncableStore', () => {
   });
 
   it('getIds should work', async (_t: TestContext) => {
+    const { trace, store } = await createStoreTestStack();
+
     // Creating folder
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
@@ -98,6 +57,8 @@ describe('DefaultSyncableStore', () => {
   });
 
   it('getFolderAtPath should work', async (_t: TestContext) => {
+    const { trace, store } = await createStoreTestStack();
+
     // TODO: TEMP
     store.devLogging.setShouldRecordLogs(true);
 
@@ -117,6 +78,8 @@ describe('DefaultSyncableStore', () => {
   });
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {
+    const { trace, store } = await createStoreTestStack();
+
     // Creating folder
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
