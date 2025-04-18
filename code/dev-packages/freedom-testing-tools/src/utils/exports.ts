@@ -11,5 +11,6 @@ export * from './expectNotOk.ts';
 export * from './expectOk.ts';
 export * from './getJsFixture.ts';
 export * from './getJsonFixture.ts';
+export * from './getSerializedFixture.ts';
 export * from './getStringFixture.ts';
 export * from './sleep.ts';
