@@ -54,5 +54,20 @@
     "deploy:extract": "../../poc/repo/deploy.extract.sh"
   },
   "types": "lib/exports.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/exports.mjs",
+      "types": "./lib/exports.d.ts"
+    },
+    "./tests": {
+      "import": "./lib/tests/exports.mjs",
+      "types": "./lib/tests/exports.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "tests": ["lib/tests/exports.d.ts"]
+    }
+  },
   "version": "0.0.0"
 }

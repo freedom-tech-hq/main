@@ -9,9 +9,9 @@ import type { CryptoService } from 'freedom-crypto-service';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../../__test_dependency__/makeCryptoServiceForTesting.ts';
-import type { HotSwappableCryptoService } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
-import { makeHotSwappableCryptoServiceForTesting } from '../../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
+import { makeCryptoServiceForTesting } from '../../../tests/makeCryptoServiceForTesting.ts';
+import type { HotSwappableCryptoService } from '../../../tests/makeHotSwappableCryptoServiceForTesting.ts';
+import { makeHotSwappableCryptoServiceForTesting } from '../../../tests/makeHotSwappableCryptoServiceForTesting.ts';
 import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../../../consts/special-file-ids.ts';
 import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';

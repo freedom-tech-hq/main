@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { encName, uuidId } from 'freedom-sync-types';
 import { expectErrorCode, expectIncludes, expectOk } from 'freedom-testing-tools';
 
-import { createStoreTestStack } from '../../__test_dependency__/createStoreTestStack.ts';
+import { createStoreTestStack } from '../../tests/createStoreTestStack.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../utils/create/createStringFileAtPath.ts';
 import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.ts';

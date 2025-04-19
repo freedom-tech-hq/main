@@ -1,5 +1,5 @@
 import { makeTrace, makeUuid } from 'freedom-contexts';
-import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, type SaltsById, storageRootIdInfo } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from './makeCryptoServiceForTesting.ts';
@@ -10,13 +10,23 @@ import { InMemorySyncableStoreBacking } from '../types/in-memory-backing/InMemor
 import { privateCombinationCryptoKeySetSchema } from 'freedom-crypto-data';
 import { getSerializedFixture } from 'freedom-testing-tools';
 
-export const storageRootId = storageRootIdInfo.make('test');
-
-export async function createStoreTestStack() {
+export async function createStoreTestStack({
+  extraSaltsById = {}
+}: {
+  extraSaltsById?: SaltsById;
+} = {}) {
   // Trace
   const trace = makeTrace('test');
 
-  // Keys
+  // User Credentials
+  // TODO: Make more realistic and freeze as a fixture
+  const storageRootId = storageRootIdInfo.make('test');
+  const saltsById = {
+    ...extraSaltsById,
+    [DEFAULT_SALT_ID]: makeUuid(),
+  };
+
+  // User Keys
   // How to generate:
   //   const internalCryptoKeys = await generateCryptoCombinationKeySet(trace);
   //   expectOk(internalCryptoKeys);
@@ -47,18 +57,22 @@ export async function createStoreTestStack() {
     backing: storeBacking,
     cryptoService,
     creatorPublicKeys: privateKeys.publicOnly(),
-    saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
+    saltsById,
   });
 
   // Initialize a store (this is a slow operation)
   expectOk(await initializeRoot(trace, store));
-
   return {
     trace,
+
+    // User Credentials
+    storageRootId,
     privateKeys,
+    saltsById,
+
+    // Test Subject
     cryptoService,
     storeBacking,
     store,
-    storageRootId
   };
 }

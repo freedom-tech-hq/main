@@ -10,7 +10,7 @@ import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-syn
 import { expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
-import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
+import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
