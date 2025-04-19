@@ -20,6 +20,7 @@ export const createFile = makeAsyncResultFunc(
     const filePath = getFsPath(rootPath, ids);
 
     await fs.writeFile(filePath, data);
+    // console.log(`  CF>   ${decodeURIComponent(filePath.substring(rootPath.length))}`);
 
     const savedMetadata = await createMetadataFile(trace, rootPath, ids, metadata);
     if (!savedMetadata.ok) {
