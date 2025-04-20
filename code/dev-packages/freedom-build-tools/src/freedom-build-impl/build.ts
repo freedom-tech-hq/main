@@ -40,7 +40,7 @@ export const build = async (args: BuildArgs) => {
       bundle: args.bundle ?? false,
       tsconfig: args.tsconfig,
       splitting: args.splitting ?? false,
-      treeShaking: false,
+      treeShaking: args.bundle ?? false,
       format: 'esm',
       outExtension: { '.js': '.mjs' },
       loader: {

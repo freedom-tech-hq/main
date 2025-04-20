@@ -2,10 +2,11 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
-import { EMAIL_APP_SALT_ID, type EmailCredential } from 'freedom-email-user';
 import type { SaltsById } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID } from 'freedom-sync-types';
 
+import { EMAIL_APP_SALT_ID } from '../consts/salt-ids.ts';
+import type { EmailCredential } from '../types/EmailCredential.ts';
 import { generateSignedUserId } from './generateSignedUserId.ts';
 
 export const createEmailCredential = makeAsyncResultFunc([import.meta.filename], async (trace): PR<EmailCredential> => {

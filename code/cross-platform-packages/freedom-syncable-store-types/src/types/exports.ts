@@ -27,5 +27,6 @@ export * from './SyncableStore.ts';
 export * from './SyncableStoreAccessControlDocument.ts';
 export * from './SyncableStoreChange.ts';
 export * from './SyncableStoreChangesDocument.ts';
+export * from './SyncableStoreLogEntry.ts';
 export * from './SyncableStoreRole.ts';
 export * from './SyncTracker.ts';
