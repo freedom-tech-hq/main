@@ -3,8 +3,8 @@
     "freedom-conflict-free-document-data": "0.0.0",
     "freedom-notification-types": "0.0.0",
     "lodash-es": "4.17.21",
-    "yaschema": "4.4.4",
-    "yjs": "13.6.24"
+    "yaschema": "4.4.5",
+    "yjs": "13.6.26"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

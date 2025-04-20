@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "doublell": "1.1.5"
+    "doublell": "1.1.6"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

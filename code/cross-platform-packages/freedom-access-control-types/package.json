@@ -9,7 +9,7 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-serialization": "0.0.0",
     "freedom-trusted-time-source": "0.0.0",
-    "yaschema": "4.4.4"
+    "yaschema": "4.4.5"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

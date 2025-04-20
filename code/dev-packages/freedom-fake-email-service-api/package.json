@@ -4,8 +4,8 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "http-status-codes": "2.3.0",
-    "yaschema": "4.4.4",
-    "yaschema-api": "4.1.9"
+    "yaschema": "4.4.5",
+    "yaschema-api": "4.1.10"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

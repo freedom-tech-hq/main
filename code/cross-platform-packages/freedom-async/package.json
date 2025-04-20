@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "doublell": "1.1.5",
+    "doublell": "1.1.6",
     "freedom-cast": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-logging-types": "0.0.0",
@@ -9,7 +9,7 @@
     "is-promise": "4.0.0",
     "lodash-es": "4.17.21",
     "p-limit": "6.2.0",
-    "yaschema": "4.4.4"
+    "yaschema": "4.4.5"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

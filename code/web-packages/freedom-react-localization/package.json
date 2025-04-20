@@ -1,13 +1,13 @@
 {
   "dependencies": {
     "freedom-localization": "0.0.0",
-    "i18next": "24.2.3",
-    "i18next-browser-languagedetector": "8.0.4",
+    "i18next": "25.0.1",
+    "i18next-browser-languagedetector": "8.0.5",
     "i18next-resources-to-backend": "1.2.1",
     "react-i18next": "15.4.1"
   },
   "devDependencies": {
-    "@types/react": "19.1.0",
+    "@types/react": "19.1.2",
     "freedom-build-tools": "0.0.0",
     "typescript": "5.8.3"
   },

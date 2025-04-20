@@ -6,8 +6,8 @@
     "dotenv": "16.5.0",
     "express": "5.1.0",
     "express-ws": "5.0.2",
-    "express-yaschema-api-handler": "4.1.9",
-    "express-yaschema-ws-api-handler": "4.2.9",
+    "express-yaschema-api-handler": "4.1.10",
+    "express-yaschema-ws-api-handler": "4.2.10",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
@@ -28,7 +28,7 @@
     "freedom-trace-service-context": "0.0.0",
     "http-status-codes": "2.3.0",
     "lodash-es": "4.17.21",
-    "yaschema": "4.4.4"
+    "yaschema": "4.4.5"
   },
   "devDependencies": {
     "@types/cookie-parser": "1.4.8",

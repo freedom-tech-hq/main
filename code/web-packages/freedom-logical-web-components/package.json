@@ -1,10 +1,10 @@
 {
   "dependencies": {
-    "react-bindings": "1.19.7",
-    "react-waitables": "2.3.9"
+    "react-bindings": "1.19.8",
+    "react-waitables": "2.3.10"
   },
   "devDependencies": {
-    "@types/react": "19.1.0",
+    "@types/react": "19.1.2",
     "freedom-build-tools": "0.0.0",
     "typescript": "5.8.3"
   },
