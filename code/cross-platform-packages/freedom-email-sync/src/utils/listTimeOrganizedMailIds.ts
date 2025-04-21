@@ -2,8 +2,8 @@ import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { type PageToken, pageTokenInfo, type Paginated, type PaginationOptions } from 'freedom-paginated-data';
-import { extractUnmarkedSyncableId } from 'freedom-sync-types';
-import { getBundleAtPath } from 'freedom-syncable-store-types';
+import { extractUnmarkedSyncableId, syncableItemTypes } from 'freedom-sync-types';
+import { getBundleAtPath, getSyncableAtPath } from 'freedom-syncable-store-types';
 import { DateTime } from 'luxon';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
@@ -188,17 +188,13 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
         }
       }
 
-      const baseBundle = await getBundleAtPath(trace, userFs, basePath);
-      if (!baseBundle.ok) {
-        if (baseBundle.value.errorCode !== 'deleted' && baseBundle.value.errorCode !== 'not-found') {
-          return generalizeFailureResult(trace, excludeFailureResult(baseBundle, 'deleted', 'not-found'), [
-            'format-error',
-            'untrusted',
-            'wrong-type'
-          ]);
+      const baseFolderLike = await getSyncableAtPath(trace, userFs, basePath, syncableItemTypes.exclude('file'));
+      if (!baseFolderLike.ok) {
+        if (baseFolderLike.value.errorCode !== 'deleted' && baseFolderLike.value.errorCode !== 'not-found') {
+          return generalizeFailureResult(trace, excludeFailureResult(baseFolderLike, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
         }
       } else {
-        const syncableIdsInBase = await baseBundle.value.getIds(trace, { type: 'bundle' });
+        const syncableIdsInBase = await baseFolderLike.value.getIds(trace, { type: 'bundle' });
         if (!syncableIdsInBase.ok) {
           return syncableIdsInBase;
         }
