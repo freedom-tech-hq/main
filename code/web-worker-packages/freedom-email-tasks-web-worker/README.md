@@ -2,7 +2,7 @@
 
 ## Summary
 
-[freedom-email-tasks-web-worker](cci:7://file:///Users/davidgobaud/Desktop/node/Freedom/main/code/web-worker-packages/freedom-email-tasks-web-worker:0:0-0:0) implements a set of asynchronous tasks for email and user management, designed to run inside a web worker and exposed via Comlink for use by the main thread. This enables offloading heavy or asynchronous operations from the UI, improving responsiveness and security in the Freedom project.
+freedom-email-tasks-web-worker implements a set of asynchronous tasks for email and user management, designed to run inside a web worker and exposed via Comlink for use by the main thread. This enables offloading heavy or asynchronous operations from the UI, improving responsiveness and security in the Freedom project.
 
 ## Overview
 
