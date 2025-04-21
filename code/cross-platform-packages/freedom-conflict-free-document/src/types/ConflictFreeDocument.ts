@@ -148,8 +148,13 @@ export class ConflictFreeDocument<PrefixT extends string> implements Notifiable<
     this.#loadFieldInfos();
 
     if (updateDeltaBasis) {
-      this.#deltaBasisYDoc = cloneYDoc(this.#yDoc);
+      this.updateDeltaBasis();
     }
+  }
+
+  /** Sets the delta basis to the current state of the document */
+  public updateDeltaBasis() {
+    this.#deltaBasisYDoc = cloneYDoc(this.#yDoc);
   }
 
   /**
@@ -160,9 +165,10 @@ export class ConflictFreeDocument<PrefixT extends string> implements Notifiable<
    * */
   public encodeDelta({ updateDeltaBasis = true }: { updateDeltaBasis?: boolean } = {}): EncodedConflictFreeDocumentDelta<PrefixT> {
     const state = Y.encodeStateVector(this.#deltaBasisYDoc);
+    // #yDoc is the latest state of the document, which has potentially been modified beyond #deltaBasisYDoc
     const encodedBuffer = Y.encodeStateAsUpdateV2(this.#yDoc, state);
     if (updateDeltaBasis) {
-      this.#deltaBasisYDoc = cloneYDoc(this.#yDoc);
+      this.updateDeltaBasis();
     }
     return this.#encodedConflictFreeDocumentDeltaInfo.makeWithBuffer(encodedBuffer);
   }

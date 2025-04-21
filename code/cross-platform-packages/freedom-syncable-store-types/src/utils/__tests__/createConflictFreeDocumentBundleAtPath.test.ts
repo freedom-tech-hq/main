@@ -86,7 +86,7 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
     });
     expectOk(loadedDoc);
 
-    const loadedNameField = loadedDoc.value.generic.getRestrictedTextField('name', '');
+    const loadedNameField = loadedDoc.value.document.generic.getRestrictedTextField('name', '');
     t.assert.strictEqual(loadedNameField.get(), 'test user');
   });
 });

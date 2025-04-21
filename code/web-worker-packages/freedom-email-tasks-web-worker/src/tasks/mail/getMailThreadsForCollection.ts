@@ -46,10 +46,9 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     }
 
-    const mailStorageBundlePathString = mailStorageBundle.value.path.toString();
     const removeItemAddedListener = userFs.addListener('itemAdded', async ({ path }) => {
       // TODO: TEMP
-      if (path.toString().startsWith(mailStorageBundlePathString)) {
+      if (path.startsWith(mailStorageBundle.value.path)) {
         const mailId = mailIdInfo.checked(path.ids.map(extractUnmarkedSyncableId).find((id) => mailIdInfo.is(id)) ?? '');
         if (mailId === undefined) {
           return;

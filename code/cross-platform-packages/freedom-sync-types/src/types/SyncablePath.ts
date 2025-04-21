@@ -37,6 +37,24 @@ export class SyncablePath {
     return this.storageRootId === anotherPath.storageRootId && isEqual(this.ids, anotherPath.ids);
   }
 
+  /** Checks if the specified path is equal to or is an ancestor of this path */
+  public startsWith(anotherPath: SyncablePath) {
+    if (this.storageRootId !== anotherPath.storageRootId) {
+      return false;
+    }
+
+    let index = 0;
+    for (const id of anotherPath.ids) {
+      if (this.ids[index] !== id) {
+        return false;
+      }
+
+      index += 1;
+    }
+
+    return true;
+  }
+
   public toString() {
     return `${encodeURIComponent(this.storageRootId)}:/${this.ids.map(encodeURIComponent).join('/')}`;
   }

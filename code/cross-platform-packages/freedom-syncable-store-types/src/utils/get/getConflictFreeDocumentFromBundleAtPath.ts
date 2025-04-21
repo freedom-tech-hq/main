@@ -59,7 +59,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     store: SyncableStore,
     path: SyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
-  ): PR<DocumentT, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<{ document: DocumentT }, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const isSyncableValidationEnabled = useIsSyncableValidationEnabled(trace).enabled;
     const isAccessControlBundle = path.lastId === ACCESS_CONTROL_BUNDLE_ID;
 
@@ -161,10 +161,11 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         }
       }
 
-      const document =
+      const document = (
         isAccessControlBundle && accessControlDoc !== undefined
           ? accessControlDoc
-          : newDocument({ id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> });
+          : newDocument({ id: snapshotId, encoded: encodedSnapshot.value as EncodedConflictFreeDocumentSnapshot<PrefixT> })
+      ) as DocumentT;
 
       // Deltas are encrypted if their parent bundle is encrypted
       const areDeltaEncrypted = isSyncableItemEncrypted(path.lastId!);
@@ -186,6 +187,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       // Delta names are prefixed by ISO timestamps, so sorting them will give us the most recent one last
       deltaIds.value.sort();
 
+      let numAppliedDeltas = 0;
       for (const deltaId of deltaIds.value) {
         // Using a potentially progressively loaded access control document for validating deltas.  If this bundle is itself an access
         // control document, it will be progressively loaded as it's validated
@@ -231,10 +233,15 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         }
 
         // If this is an access control bundle, this is also how it will progressively load
-        (document as DocumentT).applyDeltas([encodedDelta.value as EncodedConflictFreeDocumentDelta<PrefixT>]);
+        document.applyDeltas([encodedDelta.value as EncodedConflictFreeDocumentDelta<PrefixT>], { updateDeltaBasis: false });
+        numAppliedDeltas += 1;
       }
 
-      return makeSuccess(document as DocumentT);
+      if (numAppliedDeltas > 0) {
+        document.updateDeltaBasis();
+      }
+
+      return makeSuccess({ document });
     }
 
     return makeFailure(new NotFoundError(trace, { message: `No valid snapshots found for: ${path.toString()}`, errorCode: 'not-found' }));

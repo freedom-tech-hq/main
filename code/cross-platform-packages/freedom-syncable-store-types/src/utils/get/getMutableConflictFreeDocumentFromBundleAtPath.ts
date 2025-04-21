@@ -28,33 +28,35 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
     path: SyncablePath,
     { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetMutableConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
   ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const document = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, {
+    const loadedDoc = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, {
       newDocument,
       isSnapshotValid,
       isDeltaValidForDocument
     });
-    if (!document.ok) {
-      return document;
+    if (!loadedDoc.ok) {
+      return loadedDoc;
     }
 
+    const document = loadedDoc.value.document;
+
     return makeSuccess({
-      document: document.value,
+      document,
       save: makeAsyncResultFunc(
         [import.meta.filename, 'save'],
         async (trace, { trustedTime }: { trustedTime?: TrustedTime } = {}): PR<undefined, 'conflict'> => {
-          if (document.value.snapshotId === undefined) {
+          if (document.snapshotId === undefined) {
             return makeFailure(new NotFoundError(trace, { message: 'No snapshot ID is set' }));
           }
 
           // Deltas are encrypted if their parent bundle is encrypted
           const areDeltasEncrypted = isSyncableItemEncrypted(path.lastId!);
-          const deltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.value.snapshotId));
+          const deltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.snapshotId));
           const deltas = await getBundleAtPath(trace, store, deltasPath);
           if (!deltas.ok) {
             return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
           }
 
-          const encodedDelta = document.value.encodeDelta();
+          const encodedDelta = document.encodeDelta();
 
           const deltaId = timeId({ encrypted: areDeltasEncrypted, type: 'file' }, trustedTime?.timeId);
 
