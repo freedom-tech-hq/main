@@ -2,7 +2,7 @@ import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 
 import type { AccessChangeParams, AccessControlState, TrustedTimeSignedAccessChange } from 'freedom-access-control-types';
 import type { PR, Result } from 'freedom-async';
 import { allResults, allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import type { Sha256Hash } from 'freedom-basic-data';
+import { type Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
@@ -42,7 +42,6 @@ import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableSto
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
-import { getSyncableHashAtPath } from '../../utils/getSyncableHashAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { DefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
@@ -595,10 +594,6 @@ const getAccessControlDocument = makeAsyncResultFunc(
   }
 );
 
-// TODO: TEMP - this should be more like an LRU with active monitoring instead of having to check the hash all the time
-const globalAccessControlDocumentCache: Partial<
-  Record<string, { hash: Sha256Hash; doc: SaveableDocument<SyncableStoreAccessControlDocument> }>
-> = {};
 const getMutableAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableAccessControlDocument'],
   async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
@@ -608,27 +603,13 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
     }
 
     const accessControlBundlePath = path.append(ACCESS_CONTROL_BUNDLE_ID);
-    const hash = await getSyncableHashAtPath(trace, store, accessControlBundlePath);
-    if (!hash.ok) {
-      return generalizeFailureResult(trace, hash, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
 
-    const accessControlBundlePathString = accessControlBundlePath.toString();
-    const cached = globalAccessControlDocumentCache[accessControlBundlePathString];
-    if (cached !== undefined) {
-      if (hash.value === cached.hash) {
-        return makeSuccess(cached.doc);
-      } else {
-        delete globalAccessControlDocumentCache[accessControlBundlePathString];
-      }
-    }
-
-    // TODO: doc can be modified directly by changing bundle.  this should track that probably
     const doc = await getMutableConflictFreeDocumentFromBundleAtPath(
       trace,
       store,
       accessControlBundlePath,
-      SyncableStoreAccessControlDocument
+      SyncableStoreAccessControlDocument,
+      { watch: true }
     );
     /* node:coverage disable */
     if (!doc.ok) {
@@ -636,16 +617,10 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    globalAccessControlDocumentCache[accessControlBundlePathString] = { hash: hash.value, doc: doc.value };
-
     return makeSuccess(doc.value);
   }
 );
 
-// TODO: TEMP - this should be more like an LRU with active monitoring instead of having to check the hash all the time
-const globalSyncableStoreChangesDocumentCache: Partial<
-  Record<string, { hash: Sha256Hash; doc: SaveableDocument<SyncableStoreChangesDocument> }>
-> = {};
 const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
   async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
@@ -655,20 +630,6 @@ const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
     }
 
     const storeChangesBundlePath = path.append(STORE_CHANGES_BUNDLE_ID);
-    const hash = await getSyncableHashAtPath(trace, store, storeChangesBundlePath);
-    if (!hash.ok) {
-      return generalizeFailureResult(trace, hash, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const storeChangesBundlePathString = storeChangesBundlePath.toString();
-    const cached = globalSyncableStoreChangesDocumentCache[storeChangesBundlePathString];
-    if (cached !== undefined) {
-      if (hash.value === cached.hash) {
-        return makeSuccess(cached.doc);
-      } else {
-        delete globalSyncableStoreChangesDocumentCache[storeChangesBundlePathString];
-      }
-    }
 
     // TODO: doc can be modified directly by changing bundle.  this should track that probably
     const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, storeChangesBundlePath, SyncableStoreChangesDocument);
@@ -677,8 +638,6 @@ const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
       return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
     /* node:coverage enable */
-
-    globalSyncableStoreChangesDocumentCache[storeChangesBundlePathString] = { hash: hash.value, doc: doc.value };
 
     return makeSuccess(doc.value);
   }

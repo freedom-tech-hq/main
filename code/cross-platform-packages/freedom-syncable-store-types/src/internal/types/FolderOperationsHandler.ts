@@ -22,9 +22,6 @@ export class FolderOperationsHandler {
   private getMutableSyncableStoreChangesDocument_: PRFunc<SaveableDocument<SyncableStoreChangesDocument>>;
   private readonly weakStore_: WeakRef<MutableSyncableStore>;
 
-  // TODO: TEMP - this should work as a live document
-  // private storeChangesDoc_: SaveableDocument<SyncableStoreChangesDocument> | undefined;
-
   constructor({
     store,
     getAccessControlDocument,
@@ -82,16 +79,11 @@ export class FolderOperationsHandler {
   public readonly isPathMarkedAsDeleted = makeAsyncResultFunc(
     [import.meta.filename, 'isPathMarkedAsDeleted'],
     async (trace, path: SyncablePath): PR<boolean> => {
-      // TODO: TEMP - this should work as a live document
-      // if (this.storeChangesDoc_ === undefined) {
       const storeChangesDoc = await this.getMutableSyncableStoreChangesDocument_(trace);
       if (!storeChangesDoc.ok) {
         return storeChangesDoc;
       }
-      //   this.storeChangesDoc_ = storeChangesDoc.value;
-      // }
 
-      // return makeSuccess(this.storeChangesDoc_.document.isDeletedPath(path));
       return makeSuccess(storeChangesDoc.value.document.isDeletedPath(path));
     }
   );
@@ -120,22 +112,16 @@ export class FolderOperationsHandler {
         return signedStoreChange;
       }
 
-      // TODO: TEMP - this should work as a live document
-      // if (this.storeChangesDoc_ === undefined) {
       const storeChangesDoc = await this.getMutableSyncableStoreChangesDocument_(trace);
       if (!storeChangesDoc.ok) {
         return storeChangesDoc;
       }
-      //   this.storeChangesDoc_ = storeChangesDoc.value;
-      // }
 
-      // const storeChangeAdded = await this.storeChangesDoc_.document.addChange(trace, signedStoreChange.value);
       const storeChangeAdded = await storeChangesDoc.value.document.addChange(trace, signedStoreChange.value);
       if (!storeChangeAdded.ok) {
         return storeChangeAdded;
       }
 
-      // const savedStoreChangesDoc = await this.storeChangesDoc_.save(trace);
       const savedStoreChangesDoc = await storeChangesDoc.value.save(trace);
       if (!savedStoreChangesDoc.ok) {
         return generalizeFailureResult(trace, savedStoreChangesDoc, 'conflict');

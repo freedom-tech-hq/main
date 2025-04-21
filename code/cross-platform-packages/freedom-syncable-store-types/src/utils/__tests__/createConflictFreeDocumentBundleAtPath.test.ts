@@ -1,5 +1,5 @@
 import type { TestContext } from 'node:test';
-import { beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
@@ -18,7 +18,7 @@ import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMe
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { getConflictFreeDocumentFromBundleAtPath } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
+import { clearDocumentCache, getConflictFreeDocumentFromBundleAtPath } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -30,6 +30,8 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
   let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
+
+  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

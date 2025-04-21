@@ -1,3 +1,4 @@
+import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
@@ -22,6 +23,7 @@ export interface DefaultSyncableStoreConstructorArgs {
 }
 
 export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
+  public readonly uid = makeUuid();
   public readonly creatorPublicKeys: CombinationCryptoKeySet;
   public readonly cryptoService: CryptoService;
   public readonly saltsById: Partial<Record<SaltId, string>>;

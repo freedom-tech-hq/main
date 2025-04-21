@@ -1,5 +1,5 @@
 import type { TestContext } from 'node:test';
-import { beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
@@ -15,6 +15,7 @@ import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMe
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
+import { clearDocumentCache } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getStringFromFile } from '../get/getStringFromFile.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -26,6 +27,8 @@ describe('createStringFileAtPath', () => {
   let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
+
+  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

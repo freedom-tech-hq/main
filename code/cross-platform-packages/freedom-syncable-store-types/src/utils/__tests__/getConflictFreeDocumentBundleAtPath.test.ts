@@ -1,5 +1,5 @@
 import type { TestContext } from 'node:test';
-import { beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess } from 'freedom-async';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
@@ -9,7 +9,7 @@ import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
-import { expectEventually, expectOk } from 'freedom-testing-tools';
+import { expectEventually, expectOk, sleep } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
 import type { ConflictFreeDocumentEvaluator } from '../../types/ConflictFreeDocumentEvaluator.ts';
@@ -17,6 +17,7 @@ import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
+import { clearDocumentCache } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -28,6 +29,8 @@ describe('getConflictFreeDocumentBundleAtPath', () => {
   let store!: DefaultSyncableStore;
 
   const storageRootId = storageRootIdInfo.make('test');
+
+  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');
@@ -57,7 +60,7 @@ describe('getConflictFreeDocumentBundleAtPath', () => {
     expectOk(await initializeRoot(trace, store));
   });
 
-  it('watch mode should work', async (t: TestContext) => {
+  it('watch=true mode should work', async (t: TestContext) => {
     const docPath = store.path.append(uuidId('bundle'));
     const createdDoc = await createConflictFreeDocumentBundleAtPath(trace, store, docPath, {
       newDocument: () => new ConflictFreeDocument('TEST_'),
@@ -85,12 +88,45 @@ describe('getConflictFreeDocumentBundleAtPath', () => {
 
       const roNameField = roDoc.value.document.generic.getRestrictedTextField('name', '');
 
-      // Shouldn't be equal right away (because the delay is 1000/60ms = ~16ms)
-      t.assert.notStrictEqual(roNameField.get(), 'test user');
-
       await expectEventually(() => {
         t.assert.strictEqual(roNameField.get(), 'test user');
       });
+    } finally {
+      roDoc.value.stopWatching();
+    }
+  });
+
+  it('watch=false mode should work', async (t: TestContext) => {
+    const docPath = store.path.append(uuidId('bundle'));
+    const createdDoc = await createConflictFreeDocumentBundleAtPath(trace, store, docPath, {
+      newDocument: () => new ConflictFreeDocument('TEST_'),
+      name: encName('doc')
+    });
+    expectOk(createdDoc);
+
+    const documentEvaluator: ConflictFreeDocumentEvaluator<'TEST_', ConflictFreeDocument<'TEST_'>> = {
+      loadDocument: (snapshot) => new ConflictFreeDocument('TEST_', snapshot),
+      isSnapshotValid: async () => makeSuccess(true),
+      isDeltaValidForDocument: async () => makeSuccess(true)
+    };
+
+    const roDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, docPath, documentEvaluator, { watch: false });
+    expectOk(roDoc);
+    try {
+      const rwDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, docPath, documentEvaluator);
+      expectOk(rwDoc);
+
+      const nameField = rwDoc.value.document.generic.getRestrictedTextField('name', '');
+      nameField.set('test user');
+
+      const saved = await rwDoc.value.save(trace);
+      expectOk(saved);
+
+      const roNameField = roDoc.value.document.generic.getRestrictedTextField('name', '');
+
+      await sleep(1000);
+
+      t.assert.notStrictEqual(roNameField.get(), 'test user');
     } finally {
       roDoc.value.stopWatching();
     }

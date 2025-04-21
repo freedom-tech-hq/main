@@ -1,1 +1,4 @@
-export const APPLY_DELTAS_LIMIT_TIME_MSEC = 1000 / 60;
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
+
+export const APPLY_DELTAS_LIMIT_TIME_MSEC = ONE_SEC_MSEC / 60;
+export const DOCUMENT_CACHE_DURATION_MSEC = 30 * ONE_SEC_MSEC;

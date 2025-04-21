@@ -10,6 +10,8 @@ import type { SyncableStoreLogEntry } from './SyncableStoreLogEntry.ts';
 import type { SyncTrackerNotifications } from './SyncTracker.ts';
 
 export interface SyncableStore extends SyncableFolderAccessor, Notifiable<SyncTrackerNotifications> {
+  readonly uid: string;
+
   readonly localTrustMarks: MutableTrustMarkStore;
 
   readonly creatorPublicKeys: CombinationCryptoKeySet;
