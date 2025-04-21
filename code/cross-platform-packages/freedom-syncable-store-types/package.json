@@ -13,6 +13,7 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
     "freedom-dev-logging-support": "0.0.0",
+    "freedom-locking-types": "0.0.0",
     "freedom-logging-types": "0.0.0",
     "freedom-notification-types": "0.0.0",
     "freedom-serialization": "0.0.0",
