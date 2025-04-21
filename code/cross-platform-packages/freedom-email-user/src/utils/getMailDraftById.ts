@@ -5,7 +5,7 @@ import type { EmailAccess } from 'freedom-email-sync';
 import type { SaveableDocument } from 'freedom-syncable-store-types';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from 'freedom-syncable-store-types';
 
-import { type MailDraftDocument, makeMailDraftDocumentFromSnapshot } from '../types/MailDraftDocument.ts';
+import { MailDraftDocument } from '../types/MailDraftDocument.ts';
 import type { MailDraftId } from '../types/MailDraftId.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
@@ -17,13 +17,7 @@ export const getMailDraftById = makeAsyncResultFunc(
 
     const draftDocPath = (await paths.drafts.draftId(draftId)).draft;
 
-    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs, draftDocPath, {
-      newDocument: makeMailDraftDocumentFromSnapshot,
-      // TODO: TEMP
-      isDeltaValidForDocument: async () => makeSuccess(true),
-      // TODO: TEMP
-      isSnapshotValid: async () => makeSuccess(true)
-    });
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs, draftDocPath, MailDraftDocument);
     if (!doc.ok) {
       return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'untrusted', 'wrong-type']);
     }

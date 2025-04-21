@@ -5,6 +5,7 @@ import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-
 import { type Trace } from 'freedom-contexts';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 
+import type { ConflictFreeDocumentEvaluator } from '../../types/ConflictFreeDocumentEvaluator.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
@@ -18,26 +19,27 @@ export const getOrCreateConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     trace: Trace,
     store: MutableSyncableStore,
     path: SyncablePath,
+    documentEvaluator: ConflictFreeDocumentEvaluator<PrefixT, DocumentT>,
     {
       newDocument,
-      isSnapshotValid,
-      isDeltaValidForDocument,
       name,
-      trustedTimeSignature
-    }: GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT> &
+      trustedTimeSignature,
+      ...args
+    }: GetConflictFreeDocumentFromBundleAtPathArgs &
       Partial<SyncableOriginOptions> & {
-        name?: DynamicSyncableItemName;
         newDocument: (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> }) => DocumentT;
+        name?: DynamicSyncableItemName;
       }
   ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
     await getOrCreate<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>(trace, {
       get: (trace: Trace) =>
-        getMutableConflictFreeDocumentFromBundleAtPath<PrefixT, DocumentT>(trace, store, path, {
-          newDocument,
-          isSnapshotValid,
-          isDeltaValidForDocument
-        }),
+        getMutableConflictFreeDocumentFromBundleAtPath<PrefixT, DocumentT>(trace, store, path, documentEvaluator, args),
       create: (trace: Trace) =>
-        createConflictFreeDocumentBundleAtPath<PrefixT, DocumentT>(trace, store, path, { name, newDocument, trustedTimeSignature })
+        createConflictFreeDocumentBundleAtPath<PrefixT, DocumentT>(trace, store, path, {
+          ...args,
+          name,
+          newDocument,
+          trustedTimeSignature
+        })
     })
 );

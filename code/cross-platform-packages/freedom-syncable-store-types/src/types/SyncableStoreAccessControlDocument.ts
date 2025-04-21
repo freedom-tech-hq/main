@@ -11,9 +11,12 @@ import { extractUnmarkedSyncableId, type SyncablePath } from 'freedom-sync-types
 import { isEqual } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
+import type { ConflictFreeDocumentEvaluator } from './ConflictFreeDocumentEvaluator.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
-import { editorAndBelowRoles, ownerAndBelowRoles, syncableStoreRoleSchema } from './SyncableStoreRole.ts';
+import { adminAndAboveRoles, editorAndBelowRoles, ownerAndBelowRoles, syncableStoreRoleSchema } from './SyncableStoreRole.ts';
+
+type DocEval = ConflictFreeDocumentEvaluator<AccessControlDocumentPrefix, SyncableStoreAccessControlDocument>;
 
 export class SyncableStoreAccessControlDocument extends AccessControlDocument<SyncableStoreRole> {
   constructor(
@@ -23,6 +26,32 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
   ) {
     super({ roleSchema: syncableStoreRoleSchema, ...fwd });
   }
+
+  public static newDocument = (initialAccess: InitialAccess<SyncableStoreRole>) =>
+    new SyncableStoreAccessControlDocument({ initialAccess });
+
+  // ConflictFreeDocumentEvaluator Methods
+
+  public static loadDocument: DocEval['loadDocument'] = (snapshot) => new SyncableStoreAccessControlDocument({ snapshot });
+
+  public static isSnapshotValid: DocEval['isSnapshotValid'] = makeAsyncResultFunc(
+    [import.meta.filename, 'isSnapshotValid'],
+    async (_trace, { originRole }): PR<boolean> =>
+      // Only creators can create folders (and therefor access control bundles and snapshots)
+      makeSuccess(originRole === 'creator')
+  );
+
+  public static isDeltaValidForDocument: DocEval['isDeltaValidForDocument'] = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeltaValidForDocument'],
+    async (trace, document, { store, path, originRole, encodedDelta }): PR<boolean> => {
+      // Only admins and above can create access control deltas
+      if (!adminAndAboveRoles.has(originRole)) {
+        return makeSuccess(false);
+      }
+
+      return await document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
+    }
+  );
 
   // Overridden Public Methods
 

@@ -16,10 +16,11 @@ export class TaskQueue {
   private readonly entries_ = new DoubleLinkedList<Entry>();
   private readonly inFlightVersionsByKey_: Partial<Record<string, string>> = {};
   private isRunning_ = false;
-  private maxConcurrency = 1;
+  private maxConcurrency_ = 1;
   private numActive = 0;
   private pendingWaiter_: Resolvable<void> | undefined;
   private runNextTrace_: Trace;
+  private delayWhenEmptyMSec_: number = 0;
 
   constructor(trace: Trace) {
     this.runNextTrace_ = makeSubTrace(trace, ['runNext_']);
@@ -54,11 +55,32 @@ export class TaskQueue {
     entryNode = this.entries_.append({ key, version, run });
     this.entryNodesByKey_[key] = entryNode;
 
-    this.runMore_();
+    if (this.delayWhenEmptyMSec_ > 0 && this.numActive === 0) {
+      setTimeout(() => this.runMore_(), this.delayWhenEmptyMSec_);
+    } else {
+      this.runMore_();
+    }
   };
 
-  public readonly start = ({ maxConcurrency = FREEDOM_MAX_CONCURRENCY_DEFAULT }: { maxConcurrency?: number } = {}) => {
-    this.maxConcurrency = maxConcurrency;
+  public readonly start = ({
+    maxConcurrency = FREEDOM_MAX_CONCURRENCY_DEFAULT,
+    delayWhenEmptyMSec = 0
+  }: {
+    /**
+     * The maximum number of simultaneously processed tasks
+     *
+     * @defaultValue `FREEDOM_MAX_CONCURRENCY_DEFAULT`
+     */
+    maxConcurrency?: number;
+    /**
+     * If the task queue is empty when `add` is called, the number of milliseconds delay before processing will start.
+     *
+     * @defaultValue `0`
+     */
+    delayWhenEmptyMSec?: number;
+  } = {}) => {
+    this.maxConcurrency_ = maxConcurrency;
+    this.delayWhenEmptyMSec_ = delayWhenEmptyMSec;
     this.isRunning_ = true;
 
     this.runMore_();
@@ -83,6 +105,10 @@ export class TaskQueue {
       if (this.isEmpty()) {
         return;
       }
+
+      // If the queue is running and not empty, immediately calling runMore_ to process the queue in case delayWhenEmptyMSec was used to
+      // otherwise delay processing on add
+      this.runMore_();
     } else {
       if (this.numActive === 0) {
         return;
@@ -117,7 +143,7 @@ export class TaskQueue {
       return; // Not ready
     }
 
-    while (this.numActive < this.maxConcurrency && this.entries_.getLength() > 0) {
+    while (this.numActive < this.maxConcurrency_ && this.entries_.getLength() > 0) {
       this.runNext_();
     }
 

@@ -1,7 +1,6 @@
+import { makeUuid } from 'freedom-contexts';
 import { type EmailAccess, emailUserIdInfo } from 'freedom-email-sync';
 import type { SaltsById } from 'freedom-sync-types';
-import { makeUuid } from 'freedom-contexts';
-
 import { createStoreTestStack } from 'freedom-syncable-store-types/tests';
 
 import { EMAIL_APP_SALT_ID } from '../consts/salt-ids.ts';
@@ -19,7 +18,7 @@ export async function createEmailStoreTestStack() {
     userId,
     cryptoService: stack.cryptoService,
     saltsById: stack.saltsById,
-    userFs: stack.store,
+    userFs: stack.store
   };
 
   return {
@@ -29,6 +28,6 @@ export async function createEmailStoreTestStack() {
     userId,
 
     // Test Subject
-    access,
-  }
+    access
+  };
 }

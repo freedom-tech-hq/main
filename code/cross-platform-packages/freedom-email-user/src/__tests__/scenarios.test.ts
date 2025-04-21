@@ -1,11 +1,11 @@
-import { describe, test } from 'node:test';
 import { strict as assert } from 'node:assert';
+import { describe, test } from 'node:test';
 
 import { listOutboundMailIds } from 'freedom-email-sync';
+import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store-types';
 
 import { createEmailStoreTestStack } from '../__test_dependency__/createEmailStoreTestStack.ts';
 import { addMailDraft, getMailDraftById, getUserMailPaths, moveMailDraftToOutbox } from '../utils/exports.ts';
-import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store-types';
 
 describe('Outbound email routes', () => {
   test('Full external address outbound', async () => {
@@ -59,7 +59,7 @@ describe('Outbound email routes', () => {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Poll
     const listResult = await listOutboundMailIds(trace, access);
-    console.log(listResult)
+    console.log(listResult);
     // TODO: fix bug, it gets a folder where expected a bundle // assert.ok(listResult.ok);
     // assert.equal(listResult.value.items.length, 1);
     //

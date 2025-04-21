@@ -8,6 +8,7 @@ import { isSyncableItemEncrypted, timeId } from 'freedom-sync-types';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 
 import { makeDeltasBundleId } from '../../consts/special-file-ids.ts';
+import type { ConflictFreeDocumentEvaluator } from '../../types/ConflictFreeDocumentEvaluator.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
@@ -15,10 +16,7 @@ import { getBundleAtPath } from './getBundleAtPath.ts';
 import type { GetConflictFreeDocumentFromBundleAtPathArgs } from './getConflictFreeDocumentFromBundleAtPath.ts';
 import { getConflictFreeDocumentFromBundleAtPath } from './getConflictFreeDocumentFromBundleAtPath.ts';
 
-export type GetMutableConflictFreeDocumentFromBundleAtPathArgs<
-  PrefixT extends string,
-  DocumentT extends ConflictFreeDocument<PrefixT>
-> = GetConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>;
+export type GetMutableConflictFreeDocumentFromBundleAtPathArgs = GetConflictFreeDocumentFromBundleAtPathArgs;
 
 export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
   [import.meta.filename],
@@ -26,21 +24,18 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
     trace: Trace,
     store: MutableSyncableStore,
     path: SyncablePath,
-    { newDocument, isSnapshotValid, isDeltaValidForDocument }: GetMutableConflictFreeDocumentFromBundleAtPathArgs<PrefixT, DocumentT>
+    documentEvaluator: ConflictFreeDocumentEvaluator<PrefixT, DocumentT>,
+    args?: GetMutableConflictFreeDocumentFromBundleAtPathArgs
   ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const loadedDoc = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, {
-      newDocument,
-      isSnapshotValid,
-      isDeltaValidForDocument
-    });
-    if (!loadedDoc.ok) {
-      return loadedDoc;
+    const loaded = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, documentEvaluator, args);
+    if (!loaded.ok) {
+      return loaded;
     }
 
-    const document = loadedDoc.value.document;
+    const document = loaded.value.document;
 
     return makeSuccess({
-      document,
+      ...loaded.value,
       save: makeAsyncResultFunc(
         [import.meta.filename, 'save'],
         async (trace, { trustedTime }: { trustedTime?: TrustedTime } = {}): PR<undefined, 'conflict'> => {

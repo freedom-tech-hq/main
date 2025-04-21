@@ -1,17 +1,13 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
-import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
-import { isSyncableItemEncrypted, timeId, uuidId } from 'freedom-sync-types';
-import type { TrustedTime } from 'freedom-trusted-time-source';
+import { isSyncableItemEncrypted, timeId } from 'freedom-sync-types';
 
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from '../../consts/special-file-ids.ts';
 import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
-import type { SaveableDocument } from '../../types/SaveableDocument.ts';
-import { getBundleAtPath } from '../get/getBundleAtPath.ts';
 import { createBundleAtPath } from './createBundleAtPath.ts';
 import { createStringFileAtPath } from './createStringFileAtPath.ts';
 
@@ -23,13 +19,13 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     path: SyncablePath,
     {
       name,
-      newDocument,
-      trustedTimeSignature
+      trustedTimeSignature,
+      newDocument
     }: Partial<SyncableOriginOptions> & {
+      newDocument: () => DocumentT;
       name?: DynamicSyncableItemName;
-      newDocument: (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> }) => DocumentT;
     }
-  ): PR<SaveableDocument<DocumentT>, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<undefined, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const docBundle = await createBundleAtPath(trace, store, path, { name, trustedTimeSignature });
     /* node:coverage disable */
     if (!docBundle.ok) {
@@ -77,47 +73,6 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    return makeSuccess({
-      document,
-      save: makeAsyncResultFunc(
-        [import.meta.filename, 'save'],
-        async (trace, { trustedTime }: { trustedTime?: TrustedTime } = {}): PR<undefined, 'conflict'> => {
-          if (document.snapshotId === undefined) {
-            return makeFailure(new NotFoundError(trace, { message: 'No snapshot ID is set' }));
-          }
-
-          // Deltas are encrypted if their parent bundle is encrypted
-          const areDeltasEncrypted = isSyncableItemEncrypted(docPath.lastId!);
-          const deltasPath = docPath.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.snapshotId));
-          const deltas = await getBundleAtPath(trace, store, deltasPath);
-          if (!deltas.ok) {
-            return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-          }
-
-          const encodedDelta = document.encodeDelta();
-
-          const deltaId = timeId({ encrypted: areDeltasEncrypted, type: 'file' }, trustedTime?.timeId);
-
-          const savedDelta = await createStringFileAtPath(
-            trace,
-            store,
-            deltasPath.append(uuidId({ encrypted: areDeltasEncrypted, type: 'file' })),
-            {
-              name: deltaId,
-              value: encodedDelta,
-              trustedTimeSignature: trustedTime?.trustedTimeSignature
-            }
-          );
-          /* node:coverage disable */
-          if (!savedDelta.ok) {
-            // Conflicts shouldn't happen since we're using a UUID for the delta ID
-            return generalizeFailureResult(trace, savedDelta, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-          }
-          /* node:coverage enable */
-
-          return makeSuccess(undefined);
-        }
-      )
-    });
+    return makeSuccess(undefined);
   }
 );
