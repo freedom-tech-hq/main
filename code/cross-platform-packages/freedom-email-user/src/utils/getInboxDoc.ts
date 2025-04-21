@@ -1,12 +1,12 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
 import type { SaveableDocument } from 'freedom-syncable-store-types';
 import { getOrCreateBundleAtPath, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store-types';
 
-import type { MailCollectionDocument, MailCollectionDocumentPrefix } from '../types/MailCollectionDocument.ts';
-import { makeMailCollectionDocumentFromSnapshot, makeNewMailCollectionDocument } from '../types/MailCollectionDocument.ts';
+import type { MailCollectionDocumentPrefix } from '../types/MailCollectionDocument.ts';
+import { MailCollectionDocument } from '../types/MailCollectionDocument.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
 export const getInboxDoc = makeAsyncResultFunc(
@@ -29,12 +29,8 @@ export const getInboxDoc = makeAsyncResultFunc(
       trace,
       userFs,
       paths.collections.inbox.year(nowDate).month,
-      {
-        newDocument: (snapshot) =>
-          snapshot !== undefined ? makeMailCollectionDocumentFromSnapshot(snapshot) : makeNewMailCollectionDocument(),
-        isSnapshotValid: async () => makeSuccess(true),
-        isDeltaValidForDocument: async () => makeSuccess(true)
-      }
+      MailCollectionDocument,
+      { newDocument: () => MailCollectionDocument.newDocument() }
     );
   }
 );

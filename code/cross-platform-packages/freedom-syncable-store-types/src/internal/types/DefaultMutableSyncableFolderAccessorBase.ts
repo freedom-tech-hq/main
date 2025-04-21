@@ -1,16 +1,10 @@
 import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 'freedom-access-control';
-import type {
-  AccessChangeParams,
-  AccessControlDocumentPrefix,
-  AccessControlState,
-  TrustedTimeSignedAccessChange
-} from 'freedom-access-control-types';
+import type { AccessChangeParams, AccessControlState, TrustedTimeSignedAccessChange } from 'freedom-access-control-types';
 import type { PR, Result } from 'freedom-async';
 import { allResults, allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
@@ -39,22 +33,14 @@ import type { MutableSyncableStore } from '../../types/MutableSyncableStore.ts';
 import type { SaveableDocument } from '../../types/SaveableDocument.ts';
 import type { SyncableItemAccessor } from '../../types/SyncableItemAccessor.ts';
 import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
-import type { SyncableStoreChangesDocument, SyncableStoreChangesDocumentPrefix } from '../../types/SyncableStoreChangesDocument.ts';
-import {
-  makeNewSyncableStoreChangesDocument,
-  makeSyncableStoreChangesDocumentFromSnapshot
-} from '../../types/SyncableStoreChangesDocument.ts';
+import { SyncableStoreChangesDocument } from '../../types/SyncableStoreChangesDocument.ts';
 import type { SyncableStoreRole } from '../../types/SyncableStoreRole.ts';
-import { adminAndAboveRoles, syncableStoreRoleSchema } from '../../types/SyncableStoreRole.ts';
+import { syncableStoreRoleSchema } from '../../types/SyncableStoreRole.ts';
 import type { SyncTracker, SyncTrackerNotifications } from '../../types/SyncTracker.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../../utils/create/createConflictFreeDocumentBundleAtPath.ts';
 import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableStoreRoleHaveReadAccess.ts';
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
-import type {
-  IsConflictFreeDocumentSnapshotValidArgs,
-  IsDeltaValidForConflictFreeDocumentArgs
-} from '../../utils/get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { getSyncableHashAtPath } from '../../utils/getSyncableHashAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
@@ -276,7 +262,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
       // Syncable Store Changes
       const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path.append(STORE_CHANGES_BUNDLE_ID), {
-        newDocument: makeNewSyncableStoreChangesDocument
+        newDocument: () => SyncableStoreChangesDocument.newDocument()
       });
       /* node:coverage disable */
       if (!createdStoreChanges.ok) {
@@ -285,13 +271,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       /* node:coverage enable */
 
       // Access Control (should be created last since syncing will be allowed once this is created)
-      const newAccessControlDocument = () => new SyncableStoreAccessControlDocument({ initialAccess: initialAccess.value });
-
       const createdAccessControlDoc = await createConflictFreeDocumentBundleAtPath(
         trace,
         store,
         this.path.append(ACCESS_CONTROL_BUNDLE_ID),
-        { newDocument: newAccessControlDocument }
+        { newDocument: () => SyncableStoreAccessControlDocument.newDocument(initialAccess.value) }
       );
       /* node:coverage disable */
       if (!createdAccessControlDoc.ok) {
@@ -639,15 +623,13 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
       }
     }
 
-    const newDocument = (snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<'ACCESS-CONTROL'> }) =>
-      new SyncableStoreAccessControlDocument({ snapshot });
-
     // TODO: doc can be modified directly by changing bundle.  this should track that probably
-    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, accessControlBundlePath, {
-      newDocument,
-      isSnapshotValid: isAccessControlDocumentSnapshotValid,
-      isDeltaValidForDocument: isDeltaValidForAccessControlDocument
-    });
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(
+      trace,
+      store,
+      accessControlBundlePath,
+      SyncableStoreAccessControlDocument
+    );
     /* node:coverage disable */
     if (!doc.ok) {
       return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
@@ -689,11 +671,7 @@ const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
     }
 
     // TODO: doc can be modified directly by changing bundle.  this should track that probably
-    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, storeChangesBundlePath, {
-      newDocument: makeSyncableStoreChangesDocumentFromSnapshot,
-      isSnapshotValid: isStoreChangesDocumentSnapshotValid,
-      isDeltaValidForDocument: isDeltaValidForStoreChangesDocument
-    });
+    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, storeChangesBundlePath, SyncableStoreChangesDocument);
     /* node:coverage disable */
     if (!doc.ok) {
       return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
@@ -703,51 +681,5 @@ const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
     globalSyncableStoreChangesDocumentCache[storeChangesBundlePathString] = { hash: hash.value, doc: doc.value };
 
     return makeSuccess(doc.value);
-  }
-);
-
-const isAccessControlDocumentSnapshotValid = makeAsyncResultFunc(
-  [import.meta.filename, 'isAccessControlDocumentSnapshotValid'],
-  async (_trace, { originRole }: IsConflictFreeDocumentSnapshotValidArgs<AccessControlDocumentPrefix>): PR<boolean> =>
-    // Only creators can create folders (and therefor access control bundles and snapshots)
-    makeSuccess(originRole === 'creator')
-);
-
-const isDeltaValidForAccessControlDocument = makeAsyncResultFunc(
-  [import.meta.filename, 'isDeltaValidForAccessControlDocument'],
-  async (
-    trace,
-    document: SyncableStoreAccessControlDocument,
-    { store, path, originRole, encodedDelta }: IsDeltaValidForConflictFreeDocumentArgs<AccessControlDocumentPrefix>
-  ): PR<boolean> => {
-    // Only admins and above can create access control deltas
-    if (!adminAndAboveRoles.has(originRole)) {
-      return makeSuccess(false);
-    }
-
-    return await document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
-  }
-);
-
-const isStoreChangesDocumentSnapshotValid = makeAsyncResultFunc(
-  [import.meta.filename, 'isStoreChangesDocumentSnapshotValid'],
-  async (_trace, { originRole }: IsConflictFreeDocumentSnapshotValidArgs<SyncableStoreChangesDocumentPrefix>): PR<boolean> =>
-    // Only creators can create folders (and therefor store change bundles and snapshots)
-    makeSuccess(originRole === 'creator')
-);
-
-const isDeltaValidForStoreChangesDocument = makeAsyncResultFunc(
-  [import.meta.filename, 'isDeltaValidForStoreChangesDocument'],
-  async (
-    trace,
-    document: SyncableStoreChangesDocument,
-    { store, path, originRole, encodedDelta }: IsDeltaValidForConflictFreeDocumentArgs<SyncableStoreChangesDocumentPrefix>
-  ): PR<boolean> => {
-    // Only admins and above can create store change deltas
-    if (!adminAndAboveRoles.has(originRole)) {
-      return makeSuccess(false);
-    }
-
-    return await document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
   }
 );

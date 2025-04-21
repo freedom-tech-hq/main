@@ -1,5 +1,6 @@
 import type { FailureResult, PR, PRFunc } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
@@ -7,7 +8,7 @@ export const getOrCreate = makeAsyncResultFunc(
   [import.meta.filename],
   async <T, ErrorCodeT extends string>(
     trace: Trace,
-    { get, create }: { get: PRFunc<T, ErrorCodeT | 'not-found'>; create: PRFunc<T, ErrorCodeT | 'conflict'> }
+    { get, create }: { get: PRFunc<T, ErrorCodeT | 'not-found'>; create: PRFunc<T | undefined, ErrorCodeT | 'conflict'> }
   ): PR<T, Exclude<ErrorCodeT, 'conflict'>> => {
     const found = await disableLam(trace, 'not-found', (trace) => get(trace));
     if (found.ok) {
@@ -31,6 +32,19 @@ export const getOrCreate = makeAsyncResultFunc(
       return excludeFailureResult(created, 'conflict');
     }
 
-    return makeSuccess(created.value);
+    if (created.value !== undefined) {
+      // If the creation function returns the created value, return it
+
+      return makeSuccess(created.value);
+    } else {
+      // Otherwise, get it and return it
+
+      const found2 = await get(trace);
+      if (!found2.ok) {
+        return generalizeFailureResult(trace, found2, 'not-found') as any as FailureResult<Exclude<ErrorCodeT, 'conflict'>>;
+      }
+
+      return makeSuccess(found2.value);
+    }
   }
 );

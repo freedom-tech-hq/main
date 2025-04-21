@@ -4,7 +4,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess, MailId } from 'freedom-email-sync';
 import { createBundleAtPath, createConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store-types';
 
-import { makeNewMailDraftDocument } from '../types/MailDraftDocument.ts';
+import { MailDraftDocument } from '../types/MailDraftDocument.ts';
 import { type MailDraftId, mailDraftIdInfo } from '../types/MailDraftId.ts';
 import { getMailSummaryById } from './getMailSummaryById.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
@@ -34,7 +34,7 @@ export const addMailDraft = makeAsyncResultFunc(
     }
 
     const created = await createConflictFreeDocumentBundleAtPath(trace, userFs, draftIdPath.draft, {
-      newDocument: () => makeNewMailDraftDocument({ inReplyToMailId, subject })
+      newDocument: () => MailDraftDocument.newDocument({ inReplyToMailId, subject })
     });
     if (!created.ok) {
       return generalizeFailureResult(trace, created, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);

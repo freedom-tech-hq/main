@@ -9,20 +9,18 @@ import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
-import { expectOk } from 'freedom-testing-tools';
+import { expectEventually, expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
 import type { ConflictFreeDocumentEvaluator } from '../../types/ConflictFreeDocumentEvaluator.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { InMemorySyncableStoreBacking } from '../../types/in-memory-backing/InMemorySyncableStoreBacking.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
-import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { getConflictFreeDocumentFromBundleAtPath } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
-describe('createConflictFreeDocumentBundleAtPath', () => {
+describe('getConflictFreeDocumentBundleAtPath', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: CryptoService;
@@ -59,10 +57,13 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
     expectOk(await initializeRoot(trace, store));
   });
 
-  it('should work', async (t: TestContext) => {
-    const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
-    expectOk(testingFolder);
-    const testingPath = testingFolder.value.path;
+  it('watch mode should work', async (t: TestContext) => {
+    const docPath = store.path.append(uuidId('bundle'));
+    const createdDoc = await createConflictFreeDocumentBundleAtPath(trace, store, docPath, {
+      newDocument: () => new ConflictFreeDocument('TEST_'),
+      name: encName('doc')
+    });
+    expectOk(createdDoc);
 
     const documentEvaluator: ConflictFreeDocumentEvaluator<'TEST_', ConflictFreeDocument<'TEST_'>> = {
       loadDocument: (snapshot) => new ConflictFreeDocument('TEST_', snapshot),
@@ -70,26 +71,28 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
       isDeltaValidForDocument: async () => makeSuccess(true)
     };
 
-    const docPath = testingPath.append(uuidId('bundle'));
-    const createdDoc = await createConflictFreeDocumentBundleAtPath(trace, store, docPath, {
-      newDocument: () => new ConflictFreeDocument('TEST_'),
-      name: encName('doc')
-    });
-    expectOk(createdDoc);
+    const roDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, docPath, documentEvaluator, { watch: true });
+    expectOk(roDoc);
+    try {
+      const rwDoc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, docPath, documentEvaluator);
+      expectOk(rwDoc);
 
-    const doc2 = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, docPath, documentEvaluator);
-    expectOk(doc2);
+      const nameField = rwDoc.value.document.generic.getRestrictedTextField('name', '');
+      nameField.set('test user');
 
-    const nameField = doc2.value.document.generic.getRestrictedTextField('name', '');
-    nameField.set('test user');
+      const saved = await rwDoc.value.save(trace);
+      expectOk(saved);
 
-    const saved = await doc2.value.save(trace);
-    expectOk(saved);
+      const roNameField = roDoc.value.document.generic.getRestrictedTextField('name', '');
 
-    const loadedDoc = await getConflictFreeDocumentFromBundleAtPath(trace, store, docPath, documentEvaluator);
-    expectOk(loadedDoc);
+      // Shouldn't be equal right away (because the delay is 1000/60ms = ~16ms)
+      t.assert.notStrictEqual(roNameField.get(), 'test user');
 
-    const loadedNameField = loadedDoc.value.document.generic.getRestrictedTextField('name', '');
-    t.assert.strictEqual(loadedNameField.get(), 'test user');
+      await expectEventually(() => {
+        t.assert.strictEqual(roNameField.get(), 'test user');
+      });
+    } finally {
+      roDoc.value.stopWatching();
+    }
   });
 });

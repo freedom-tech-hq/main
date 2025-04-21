@@ -71,10 +71,10 @@ describe('DefaultSyncableStore', () => {
     expectOk(folder);
 
     // TODO: TEMP
-    console.log('NUM ENTRIES', store.devLogging.getLogEntries().length);
-    for (const entry of store.devLogging.getLogEntries()) {
-      console.log('FOO', JSON.stringify(entry));
-    }
+    // console.log('NUM ENTRIES', store.devLogging.getLogEntries().length);
+    // for (const entry of store.devLogging.getLogEntries()) {
+    //   console.log('FOO', JSON.stringify(entry));
+    // }
   });
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {

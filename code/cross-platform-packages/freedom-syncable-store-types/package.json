@@ -34,9 +34,9 @@
       "types": "./lib/exports.d.ts",
       "import": "./lib/exports.mjs"
     },
-    "./testing-tools": {
-      "types": "./lib/testing-tools/exports.d.ts",
-      "import": "./lib/testing-tools/exports.mjs"
+    "./tests": {
+      "types": "./lib/tests/exports.d.ts",
+      "import": "./lib/tests/exports.mjs"
     }
   },
   "type": "module",
@@ -64,16 +64,6 @@
     "deploy:extract": "../../poc/repo/deploy.extract.sh"
   },
   "types": "lib/exports.d.ts",
-  "exports": {
-    ".": {
-      "import": "./lib/exports.mjs",
-      "types": "./lib/exports.d.ts"
-    },
-    "./tests": {
-      "import": "./lib/tests/exports.mjs",
-      "types": "./lib/tests/exports.d.ts"
-    }
-  },
   "typesVersions": {
     "*": {
       "tests": [

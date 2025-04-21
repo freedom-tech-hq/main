@@ -12,15 +12,18 @@ import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from '../consts/spe
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
 import { getNearestFolderPath } from '../utils/get/getNearestFolderPath.ts';
 import { getSyncableAtPath } from '../utils/get/getSyncableAtPath.ts';
+import type { ConflictFreeDocumentEvaluator } from './ConflictFreeDocumentEvaluator.ts';
 import type { SyncableStore } from './SyncableStore.ts';
 import type { SyncableStoreChange } from './SyncableStoreChange.ts';
 import { syncableStoreChangeSchema } from './SyncableStoreChange.ts';
-import type { SyncableStoreRole } from './SyncableStoreRole.ts';
+import { adminAndAboveRoles, type SyncableStoreRole } from './SyncableStoreRole.ts';
 
 const signedStoreChangeSchema = makeSignedValueSchema<SyncableStoreChange>(syncableStoreChangeSchema, undefined);
 
 export const SYNCABLE_STORE_CHANGES_DOCUMENT_PREFIX = 'SYNC_STORE_CHANGES';
 export type SyncableStoreChangesDocumentPrefix = typeof SYNCABLE_STORE_CHANGES_DOCUMENT_PREFIX;
+
+type DocEval = ConflictFreeDocumentEvaluator<SyncableStoreChangesDocumentPrefix, SyncableStoreChangesDocument>;
 
 export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableStoreChangesDocumentPrefix> {
   private deletedPathStrings_: Set<string> = new Set();
@@ -30,6 +33,31 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
 
     this.rebuildState_();
   }
+
+  public static newDocument = () => new SyncableStoreChangesDocument();
+
+  // ConflictFreeDocumentEvaluator Methods
+
+  public static loadDocument: DocEval['loadDocument'] = (snapshot) => new SyncableStoreChangesDocument(snapshot);
+
+  public static isSnapshotValid: DocEval['isSnapshotValid'] = makeAsyncResultFunc(
+    [import.meta.filename, 'isSnapshotValid'],
+    async (_trace, { originRole }): PR<boolean> =>
+      // Only creators can create folders (and therefor store change bundles and snapshots)
+      makeSuccess(originRole === 'creator')
+  );
+
+  public static isDeltaValidForDocument: DocEval['isDeltaValidForDocument'] = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeltaValidForDocument'],
+    async (trace, document, { store, path, originRole, encodedDelta }): PR<boolean> => {
+      // Only admins and above can create store change deltas
+      if (!adminAndAboveRoles.has(originRole)) {
+        return makeSuccess(false);
+      }
+
+      return await document.isDeltaValidForRole(trace, { store, path, role: originRole, encodedDelta });
+    }
+  );
 
   // Overridden Public Methods
 
@@ -177,10 +205,3 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
     }
   };
 }
-
-export const makeNewSyncableStoreChangesDocument = () => new SyncableStoreChangesDocument();
-
-export const makeSyncableStoreChangesDocumentFromSnapshot = (snapshot: {
-  id: string;
-  encoded: EncodedConflictFreeDocumentSnapshot<SyncableStoreChangesDocumentPrefix>;
-}) => new SyncableStoreChangesDocument(snapshot);

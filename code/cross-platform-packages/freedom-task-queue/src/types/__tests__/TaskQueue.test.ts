@@ -149,6 +149,40 @@ describe('TaskQueue', () => {
     t.assert.deepStrictEqual(results, ['task1.0', 'task1.2']);
   });
 
+  it("should run the same task multiple times if they've each completed", async (t: TestContext) => {
+    const results: string[] = [];
+
+    taskQueue.start({ maxConcurrency: 1 });
+
+    taskQueue.add('task', async () => {
+      await sleep(50);
+      results.push('task.0');
+      return makeSuccess(undefined);
+    });
+
+    await sleep(100);
+
+    taskQueue.add('task', async () => {
+      await sleep(50);
+      results.push('task.1');
+      return makeSuccess(undefined);
+    });
+
+    await sleep(100);
+
+    taskQueue.add('task', async () => {
+      await sleep(50);
+      results.push('task.2');
+      return makeSuccess(undefined);
+    });
+
+    await sleep(100);
+
+    await taskQueue.wait();
+
+    t.assert.deepStrictEqual(results, ['task.0', 'task.1', 'task.2']);
+  });
+
   it('stopping while waiting should resolve after active tasks complete', async (t: TestContext) => {
     const results: string[] = [];
 
@@ -182,5 +216,57 @@ describe('TaskQueue', () => {
     taskQueue.start({ maxConcurrency: 1 });
 
     await taskQueue.wait();
+  });
+
+  it('delayWhenEmptyMSec should work', async (t: TestContext) => {
+    const results: string[] = [];
+
+    taskQueue.start({ maxConcurrency: 1, delayWhenEmptyMSec: 500 });
+
+    taskQueue.add('task1', async () => {
+      results.push('task1');
+      return makeSuccess(undefined);
+    });
+
+    taskQueue.add('task2', async () => {
+      results.push('task2');
+      return makeSuccess(undefined);
+    });
+
+    t.assert.deepStrictEqual(results, []);
+
+    await sleep(50);
+
+    t.assert.deepStrictEqual(results, []);
+
+    await sleep(450);
+
+    t.assert.deepStrictEqual(results, ['task1', 'task2']);
+  });
+
+  it('calling when when using delayWhenEmptyMSec should immediately kickstart processing', async (t: TestContext) => {
+    const results: string[] = [];
+
+    taskQueue.start({ maxConcurrency: 1, delayWhenEmptyMSec: 500 });
+
+    taskQueue.add('task1', async () => {
+      results.push('task1');
+      return makeSuccess(undefined);
+    });
+
+    taskQueue.add('task2', async () => {
+      results.push('task2');
+      return makeSuccess(undefined);
+    });
+
+    t.assert.deepStrictEqual(results, []);
+
+    await sleep(50);
+
+    t.assert.deepStrictEqual(results, []);
+
+    await taskQueue.wait();
+
+    t.assert.deepStrictEqual(results, ['task1', 'task2']);
   });
 });

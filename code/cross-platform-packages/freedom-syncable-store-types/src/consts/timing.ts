@@ -1,0 +1,1 @@
+export const APPLY_DELTAS_LIMIT_TIME_MSEC = 1000 / 60;
