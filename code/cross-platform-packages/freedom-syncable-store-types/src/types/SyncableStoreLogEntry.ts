@@ -38,11 +38,6 @@ export interface SyncableStoreLogEntryEncodeData {
   pathString: string;
 }
 
-export interface SyncableStoreLogEntryGet {
-  type: 'get';
-  pathString: string;
-}
-
 export interface SyncableStoreLogEntryGetData {
   type: 'get-data';
   pathString: string;
@@ -72,7 +67,6 @@ export type SyncableStoreLogEntry =
   | SyncableStoreLogEntryDecodeData
   | SyncableStoreLogEntryDelete
   | SyncableStoreLogEntryEncodeData
-  | SyncableStoreLogEntryGet
   | SyncableStoreLogEntryGetData
   | SyncableStoreLogEntryGetIds
   | SyncableStoreLogEntryGetMetadata

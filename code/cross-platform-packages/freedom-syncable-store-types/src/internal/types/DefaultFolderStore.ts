@@ -230,8 +230,6 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get', pathString: getPath.toString() });
-
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));

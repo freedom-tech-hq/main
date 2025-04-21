@@ -272,8 +272,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get', pathString: getPath.toString() });
-
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -283,11 +281,11 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       const guards = await allResults(trace, [
         this.guardNotDeleted_(trace, getPath, 'deleted'),
         guardIsExpectedType(
-          trace,
-          getPath,
-          itemType,
-          intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
-          'wrong-type'
+        trace,
+        getPath,
+        itemType,
+        intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
+        'wrong-type'
         )
       ]);
       if (!guards.ok) {
