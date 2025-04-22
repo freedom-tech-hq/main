@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
-import { expectOk, expectOk, expectStrictEqual } from 'freedom-testing-tools';
+import { expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { IndexedDbObjectStore } from '../../../types/IndexedDbObjectStore.ts';

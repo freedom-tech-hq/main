@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { createOrGetObject } from 'freedom-object-store-types';
-import { expectDeepStrictEqual, expectErrorCode, expectOk, expectOk } from 'freedom-testing-tools';
+import { expectDeepStrictEqual, expectErrorCode, expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { getIndexedDb } from '../../utils/getIndexedDb.ts';

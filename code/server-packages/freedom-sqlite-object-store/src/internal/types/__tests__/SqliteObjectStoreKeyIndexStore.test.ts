@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import sqlite3 from 'better-sqlite3';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
-import { expectOk, expectOk, expectStrictEqual } from 'freedom-testing-tools';
+import { expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { SqliteObjectStore } from '../../../types/SqliteObjectStore.ts';

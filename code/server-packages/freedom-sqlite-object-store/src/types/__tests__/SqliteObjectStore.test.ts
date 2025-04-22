@@ -5,7 +5,7 @@ import sqlite3 from 'better-sqlite3';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import { createOrGetObject } from 'freedom-object-store-types';
-import { expectDeepStrictEqual, expectErrorCode, expectOk, expectOk } from 'freedom-testing-tools';
+import { expectDeepStrictEqual, expectErrorCode, expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { SqliteObjectStore } from '../SqliteObjectStore.ts';
