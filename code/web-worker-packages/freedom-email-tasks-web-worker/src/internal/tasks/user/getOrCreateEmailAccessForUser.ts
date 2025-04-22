@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
 import type { EmailCredential } from 'freedom-email-user';
 import { storageRootIdInfo } from 'freedom-sync-types';
-import { DefaultSyncableStore } from 'freedom-syncable-store-types';
+import { DefaultSyncableStore } from 'freedom-syncable-store';
 
 import { makeCryptoServiceForUser } from '../../utils/makeCryptoServiceForUser.ts';
 import { getOrCreateSyncableStoreBackingForUserEmail } from '../storage/getOrCreateSyncableStoreBackingForUserEmail.ts';

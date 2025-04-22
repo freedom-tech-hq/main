@@ -5,12 +5,12 @@ import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
-import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import {
   createViaSyncPreEncodedBinaryFileAtPath,
   getOrCreateViaSyncBundleAtPath,
   getOrCreateViaSyncFolderAtPath
-} from 'freedom-syncable-store-types';
+} from 'freedom-syncable-store';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
 import { pushMissingSyncableContentToRemote } from './pushSyncableToRemote.ts';

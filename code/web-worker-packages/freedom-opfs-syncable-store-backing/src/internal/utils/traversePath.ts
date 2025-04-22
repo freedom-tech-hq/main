@@ -4,7 +4,7 @@ import { NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableId, SyncableItemType } from 'freedom-sync-types';
 import { extractSyncableItemTypeFromId, SyncablePath } from 'freedom-sync-types';
-import { guardIsExpectedType } from 'freedom-syncable-store-types';
+import { guardIsExpectedType } from 'freedom-syncable-store-backing-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { OpfsSyncableStoreBackingItem } from '../types/OpfsSyncableStoreBackingItem.ts';

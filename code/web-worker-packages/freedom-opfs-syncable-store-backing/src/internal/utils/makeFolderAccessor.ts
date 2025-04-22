@@ -1,5 +1,5 @@
 import { makeSyncFunc } from 'freedom-async';
-import type { SyncableStoreBackingFolderAccessor } from 'freedom-syncable-store-types';
+import type { SyncableStoreBackingFolderAccessor } from 'freedom-syncable-store-backing-types';
 
 import type { OpfsSyncableStoreBackingFolderItem } from '../types/OpfsSyncableStoreBackingFolderItem.ts';
 

@@ -8,7 +8,7 @@ import { mailIdInfo, storedMailSchema } from 'freedom-email-sync';
 import type { CollectionLikeId, MailThread } from 'freedom-email-user';
 import { getUserMailPaths } from 'freedom-email-user';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
-import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store-types';
+import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';

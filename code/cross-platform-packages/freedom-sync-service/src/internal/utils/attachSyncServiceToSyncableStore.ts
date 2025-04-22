@@ -7,8 +7,8 @@ import { addCoordinatedHashSaltChangeListener } from 'freedom-crypto';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import { doPeriodic } from 'freedom-periodic';
 import type { SyncablePath } from 'freedom-sync-types';
+import { getRecursiveFolderPaths, getSyncableHashAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
-import { getRecursiveFolderPaths, getSyncableHashAtPath } from 'freedom-syncable-store-types';
 
 import { MANUAL_SYNC_INTERVAL_MSEC } from '../../consts/syncing.ts';
 import type { SyncService } from '../../types/SyncService.ts';

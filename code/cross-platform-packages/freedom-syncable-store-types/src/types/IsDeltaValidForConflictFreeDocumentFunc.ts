@@ -3,7 +3,7 @@ import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta } from 'freedom-conflict-free-document-data';
 import type { SyncablePath, SyncableProvenance } from 'freedom-sync-types';
 
-import type { SyncableStore } from './SyncableStore.ts';
+import type { SyncableStore } from './immutable/SyncableStore.ts';
 import type { SyncableStoreRole } from './SyncableStoreRole.ts';
 
 export interface IsDeltaValidForConflictFreeDocumentArgs<PrefixT extends string> {

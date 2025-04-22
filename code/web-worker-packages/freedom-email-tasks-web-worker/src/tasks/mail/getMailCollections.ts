@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { MailCollection, MailCollectionGroup } from 'freedom-email-user';
 import { getCollectionIdsFromSaltedCollectionIds, getUserMailPaths, mailCollectionGroupIdInfo } from 'freedom-email-user';
-import { getBundleAtPath } from 'freedom-syncable-store-types';
+import { getBundleAtPath } from 'freedom-syncable-store';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';

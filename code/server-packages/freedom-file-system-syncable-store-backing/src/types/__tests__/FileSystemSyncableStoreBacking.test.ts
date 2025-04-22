@@ -21,9 +21,9 @@ import {
   getFolderAtPath,
   getMutableFolderAtPath,
   getStringFromFile,
-  initializeRoot,
-  saltedId
-} from 'freedom-syncable-store-types';
+  initializeRoot
+} from 'freedom-syncable-store';
+import { saltedId } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';

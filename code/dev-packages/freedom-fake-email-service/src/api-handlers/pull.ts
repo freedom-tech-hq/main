@@ -4,7 +4,7 @@ import { emailUserIdInfo } from 'freedom-email-sync';
 import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { storageRootIdInfo } from 'freedom-sync-types';
-import { pullPath } from 'freedom-syncable-store-types';
+import { pullPath } from 'freedom-syncable-store';
 
 import { getOrCreateEmailAccessForUser } from '../utils/getOrCreateEmailAccessForUser.ts';
 

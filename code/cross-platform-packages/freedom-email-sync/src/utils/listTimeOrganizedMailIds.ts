@@ -3,7 +3,7 @@ import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { type PageToken, pageTokenInfo, type Paginated, type PaginationOptions } from 'freedom-paginated-data';
 import { extractUnmarkedSyncableId, syncableItemTypes } from 'freedom-sync-types';
-import { getBundleAtPath, getSyncableAtPath } from 'freedom-syncable-store-types';
+import { getBundleAtPath, getSyncableAtPath } from 'freedom-syncable-store';
 import { DateTime } from 'luxon';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';

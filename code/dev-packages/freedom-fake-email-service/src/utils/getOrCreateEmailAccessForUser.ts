@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
 import { storageRootIdInfo } from 'freedom-sync-types';
-import { DefaultSyncableStore } from 'freedom-syncable-store-types';
+import { DefaultSyncableStore } from 'freedom-syncable-store';
 
 import { getCryptoService } from './getCryptoService.ts';
 import { getPublicKeysForUser } from './getPublicKeysForUser.ts';

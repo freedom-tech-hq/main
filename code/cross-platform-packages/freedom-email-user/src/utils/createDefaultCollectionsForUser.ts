@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
-import { createBundleAtPath } from 'freedom-syncable-store-types';
+import { createBundleAtPath } from 'freedom-syncable-store';
 
 import { mailCollectionTypes } from '../types/MailCollectionType.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';

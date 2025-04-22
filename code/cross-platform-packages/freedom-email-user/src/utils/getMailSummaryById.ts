@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { type EmailAccess, getMailPaths, type MailId, mailIdInfo, type MailSummary, mailSummarySchema } from 'freedom-email-sync';
-import { getJsonFromFile } from 'freedom-syncable-store-types';
+import { getJsonFromFile } from 'freedom-syncable-store';
 
 export const getMailSummaryById = makeAsyncResultFunc(
   [import.meta.filename],

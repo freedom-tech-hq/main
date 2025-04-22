@@ -2,8 +2,8 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
+import { getOrCreateBundleAtPath, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
 import type { SaveableDocument } from 'freedom-syncable-store-types';
-import { getOrCreateBundleAtPath, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store-types';
 
 import type { MailCollectionDocumentPrefix } from '../types/MailCollectionDocument.ts';
 import { MailCollectionDocument } from '../types/MailCollectionDocument.ts';

@@ -4,7 +4,8 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
-import { ACCESS_CONTROL_BUNDLE_ID, getSyncableAtPath, STORE_CHANGES_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
+import { getSyncableAtPath } from 'freedom-syncable-store';
+import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncService } from '../../types/SyncService.ts';
