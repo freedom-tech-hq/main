@@ -1,13 +1,15 @@
 import { strict as assert } from 'node:assert';
-import { describe, test } from 'node:test';
+import { afterEach, describe, test } from 'node:test';
 
 import { listOutboundMailIds } from 'freedom-email-sync';
-import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
+import { clearDocumentCache, createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
 
 import { createEmailStoreTestStack } from '../__test_dependency__/createEmailStoreTestStack.ts';
 import { addMailDraft, getMailDraftById, getUserMailPaths, moveMailDraftToOutbox } from '../utils/exports.ts';
 
 describe('Outbound email routes', () => {
+  afterEach(clearDocumentCache);
+
   test('Full external address outbound', async () => {
     // Arrange
     const { trace, store, access } = await createEmailStoreTestStack();
@@ -15,8 +17,8 @@ describe('Outbound email routes', () => {
     const paths = await getUserMailPaths(store);
 
     // Mail Storage Folder
-    const mailStorageBundle = await createFolderAtPath(trace, store, paths.storage.value);
-    assert.ok(mailStorageBundle.ok);
+    const mailStorageFolder = await createFolderAtPath(trace, store, paths.storage.value);
+    assert.ok(mailStorageFolder.ok);
 
     // Mail Out Folder
     const mailOutFolder = await createFolderAtPath(trace, store, paths.out.value);

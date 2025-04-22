@@ -3,6 +3,7 @@
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
+    "freedom-contexts": "0.0.0",
     "freedom-crypto-service": "0.0.0",
     "freedom-nest": "0.0.0",
     "freedom-paginated-data": "0.0.0",
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@types/luxon": "3.6.2",
     "freedom-build-tools": "0.0.0",
+    "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
   },
   "type": "module",
@@ -38,7 +40,7 @@
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
     "test:perf": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
-    "test:unit-tests": "echo tests-disabled # NODE_OPTIONS='--experimental-transform-types  --disable-warning=ExperimentalWarning' node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=300000 --test",
+    "test:unit-tests": "NODE_OPTIONS='--experimental-transform-types  --disable-warning=ExperimentalWarning' node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=300000 --test",
     "deploy:extract": "../../poc/repo/deploy.extract.sh"
   },
   "types": "lib/exports.d.ts",

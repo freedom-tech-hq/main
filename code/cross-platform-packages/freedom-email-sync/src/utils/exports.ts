@@ -4,4 +4,6 @@ export * from './getMailPaths.ts';
 export * from './getOutboundMailById.ts';
 export * from './listOutboundMailIds.ts';
 export * from './listTimeOrganizedMailIds.ts';
+export * from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
 export * from './moveOutboundMailToStorage.ts';
+export * from './traverseTimeOrganizedMailStorageFromTheBottomUp.ts';
