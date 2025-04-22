@@ -159,7 +159,6 @@ describe('listTimeOrganizedMailIds', () => {
     while (true) {
       const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedMailStorage: paths.storage, pageToken });
       expectOk(mailIds);
-      console.log('mailIds', mailIds.value);
 
       if (mailIds.value.nextPageToken === undefined || mailIds.value.items.length === 0) {
         break;

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { createOrGetObject } from 'freedom-object-store-types';
-import { expectDeepStrictEqual, expectErrorCode, expectOk } from 'freedom-testing-tools';
+import { expectDeepStrictEqual, expectErrorCode, expectOk, expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { getIndexedDb } from '../../utils/getIndexedDb.ts';
@@ -20,15 +20,12 @@ describe('IndexedDbObjectStore', () => {
   let objectStore: IndexedDbObjectStore<string, number>;
   beforeEach(async () => {
     trace = makeTrace('test');
-    try {
-      const newDb = await getIndexedDb(trace, { dbName: `test-${makeUuid()}`, dbVersion: 1, storeName: 'my_objects' });
-      expectOk(newDb);
-      db = newDb.value;
 
-      objectStore = new IndexedDbObjectStore({ db, schema: valueSchema, storeName: 'my_objects' });
-    } catch (e) {
-      console.log('BROKEN HERE', e);
-    }
+    const newDb = await getIndexedDb(trace, { dbName: `test-${makeUuid()}`, dbVersion: 1, storeName: 'my_objects' });
+    expectOk(newDb);
+    db = newDb.value;
+
+    objectStore = new IndexedDbObjectStore({ db, schema: valueSchema, storeName: 'my_objects' });
   });
 
   afterEach(async () => {

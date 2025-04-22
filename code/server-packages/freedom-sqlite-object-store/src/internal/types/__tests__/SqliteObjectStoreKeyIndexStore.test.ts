@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import sqlite3 from 'better-sqlite3';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
-import { expectOk, expectStrictEqual } from 'freedom-testing-tools';
+import { expectOk, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
 import { SqliteObjectStore } from '../../../types/SqliteObjectStore.ts';
@@ -17,13 +17,10 @@ describe('SqliteObjectStoreKeyIndexStore', () => {
   let objectStore: SqliteObjectStore<string, number>;
   beforeEach(async () => {
     trace = makeTrace('test');
-    try {
-      db = sqlite3(':memory:');
-      objectStore = new SqliteObjectStore({ db, schema: valueSchema, tableName: 'my_objects' });
-      expectOk(await objectStore.initializeDb(trace));
-    } catch (e) {
-      console.log('BROKEN HERE', e);
-    }
+
+    db = sqlite3(':memory:');
+    objectStore = new SqliteObjectStore({ db, schema: valueSchema, tableName: 'my_objects' });
+    expectOk(await objectStore.initializeDb(trace));
   });
 
   afterEach(async () => {
