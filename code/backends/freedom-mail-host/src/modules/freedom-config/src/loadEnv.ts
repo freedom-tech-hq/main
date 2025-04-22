@@ -7,6 +7,9 @@ import path from 'node:path';
 import { config as originalConfig, type DotenvConfigOptions } from '@dotenvx/dotenvx';
 import { from } from './from.ts';
 
+// Prevent esbuild from substituting process with build-time values
+const myProcess = process;
+
 /**
  * Fix dotenvx
  *
@@ -16,7 +19,7 @@ import { from } from './from.ts';
 function config(options: DotenvConfigOptions) {
   const env = {};
   originalConfig(options);
-  process.env = { ...env, ...process.env };
+  process.env = { ...env, ...myProcess.env };
 }
 
 /**
@@ -34,7 +37,7 @@ function config(options: DotenvConfigOptions) {
  * @returns True if at least one .env file was loaded, false otherwise
  */
 export function loadEnv(rootDir: string) {
-  const nodeEnv = process.env.NODE_ENV || 'development';
+  const nodeEnv = myProcess.env.NODE_ENV || 'development';
 
   if (nodeEnv === 'test') {
     // For test environment, only load .env.test to have deterministic results

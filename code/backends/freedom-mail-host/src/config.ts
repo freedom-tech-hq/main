@@ -4,7 +4,7 @@ import path from 'node:path';
 import { loadEnv } from './modules/freedom-config/exports.ts';
 
 // Load env settings
-const rootDir = import.meta.dirname.endsWith('/lib') ? `${import.meta.dirname}/../..` : `${import.meta.dirname}/..`;
+const rootDir = `${import.meta.dirname}/..`;
 const env = loadEnv(rootDir);
 
 /**
