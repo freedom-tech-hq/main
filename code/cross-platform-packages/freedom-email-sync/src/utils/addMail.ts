@@ -1,6 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeIsoDateTime } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { makeUuid } from 'freedom-contexts';
 import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
@@ -14,7 +16,7 @@ export const addMail = makeAsyncResultFunc(
     const userFs = access.userFs;
     const paths = await getMailPaths(userFs);
 
-    const mailId = mailIdInfo.make();
+    const mailId = mailIdInfo.make(`${makeIsoDateTime(new Date(mail.timeMSec))}-${makeUuid()}`);
     const mailDate = new Date(mailIdInfo.extractTimeMSec(mailId));
 
     const storageYearPath = paths.storage.year(mailDate);

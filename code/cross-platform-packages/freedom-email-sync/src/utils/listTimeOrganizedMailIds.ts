@@ -6,6 +6,7 @@ import { extractUnmarkedSyncableId, syncableItemTypes } from 'freedom-sync-types
 import { getBundleAtPath, getSyncableAtPath } from 'freedom-syncable-store';
 import { DateTime } from 'luxon';
 
+import { extractNumberFromPlainSyncableId } from '../internal/utils/extractNumberFromPlainSyncableId.ts';
 import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';
 import type { TimeOrganizedMailStorage } from './getMailPaths.ts';
@@ -22,16 +23,15 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
   ): PR<Paginated<MailId>> => {
     const userFs = access.userFs;
 
-    const cursor = new Date(pageToken !== undefined ? pageTokenInfo.removePrefix(pageToken) : Date.now());
-    let cursorYear = cursor.getUTCFullYear();
-    let cursorMonth = cursor.getUTCMonth() + 1;
-    let cursorDay = cursor.getUTCDate();
-    let cursorHour = cursor.getUTCHours();
+    const initialCursor = new Date(pageToken !== undefined ? pageTokenInfo.removePrefix(pageToken) : Date.now());
+    let cursorYear = initialCursor.getUTCFullYear();
+    let cursorMonth = initialCursor.getUTCMonth() + 1;
+    let cursorDay = initialCursor.getUTCDate();
+    let cursorHour = initialCursor.getUTCHours();
 
     const mailIds: MailId[] = [];
     let nextPageToken: PageToken | undefined;
     while (mailIds.length < TARGET_PAGE_SIZE) {
-      const basePath = timeOrganizedMailStorage.value;
       const baseYearPath = timeOrganizedMailStorage.year(makeDate(cursorYear, cursorMonth, cursorDay, cursorHour));
       const yearPath = baseYearPath.value;
       const monthPath = baseYearPath.month.value;
@@ -61,7 +61,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
         mailIds.push(...mailIdsInHour);
 
         if (mailIds.length >= TARGET_PAGE_SIZE) {
-          nextPageToken = pageTokenInfo.make(DateTime.fromJSDate(cursor).minus({ hour: 1 }).toISO()!);
+          nextPageToken = pageTokenInfo.make(DateTime.fromJSDate(initialCursor).minus({ hour: 1 }).toISO()!);
           break;
         }
       }
@@ -84,8 +84,8 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
 
           const previousHourWithContent = syncableIdsInDay.value
             .map((syncableId) => {
-              const hour = Number(extractUnmarkedSyncableId(syncableId));
-              if (Number.isInteger(hour) && hour >= 0 && hour < cursorHour) {
+              const hour = extractNumberFromPlainSyncableId(syncableId);
+              if (hour !== undefined && hour >= 0 && hour < cursorHour) {
                 return hour;
               } else {
                 return undefined;
@@ -125,8 +125,8 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
 
           const previousDayWithContent = syncableIdsInMonth.value
             .map((syncableId) => {
-              const day = Number(extractUnmarkedSyncableId(syncableId));
-              if (Number.isInteger(day) && day >= 0 && day < cursorDay) {
+              const day = extractNumberFromPlainSyncableId(syncableId);
+              if (day !== undefined && day >= 0 && day < cursorDay) {
                 return day;
               } else {
                 return undefined;
@@ -166,8 +166,8 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
 
           const previousMonthWithContent = syncableIdsInYear.value
             .map((syncableId) => {
-              const month = Number(extractUnmarkedSyncableId(syncableId));
-              if (Number.isInteger(month) && month >= 0 && month < cursorMonth) {
+              const month = extractNumberFromPlainSyncableId(syncableId);
+              if (month !== undefined && month >= 0 && month < cursorMonth) {
                 return month;
               } else {
                 return undefined;
@@ -188,7 +188,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
         }
       }
 
-      const baseFolderLike = await getSyncableAtPath(trace, userFs, basePath, syncableItemTypes.exclude('file'));
+      const baseFolderLike = await getSyncableAtPath(trace, userFs, timeOrganizedMailStorage.value, syncableItemTypes.exclude('file'));
       if (!baseFolderLike.ok) {
         if (baseFolderLike.value.errorCode !== 'deleted' && baseFolderLike.value.errorCode !== 'not-found') {
           return generalizeFailureResult(trace, excludeFailureResult(baseFolderLike, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
@@ -201,8 +201,8 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
 
         const previousYearWithContent = syncableIdsInBase.value
           .map((syncableId) => {
-            const year = Number(extractUnmarkedSyncableId(syncableId));
-            if (Number.isInteger(year) && year >= 0 && year < cursorYear) {
+            const year = extractNumberFromPlainSyncableId(syncableId);
+            if (year !== undefined && year >= 0 && year < cursorYear) {
               return year;
             } else {
               return undefined;

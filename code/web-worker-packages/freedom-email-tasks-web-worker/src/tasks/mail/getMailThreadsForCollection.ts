@@ -16,8 +16,6 @@ import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCr
 import type { GetMailThreadsForCollection_MailAddedPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollection_MailAddedPacket.ts';
 import type { GetMailThreadsForCollectionPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollectionPacket.ts';
 
-// const globalCache: Record<MailCollectionId, MailThread[]> = {};
-
 export const getMailThreadsForCollection = makeAsyncResultFunc(
   [import.meta.filename],
   async (
