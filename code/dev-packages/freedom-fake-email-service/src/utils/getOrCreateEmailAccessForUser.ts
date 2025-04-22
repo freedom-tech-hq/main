@@ -1,14 +1,11 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
-import { storageRootIdInfo } from 'freedom-sync-types';
-import { DefaultSyncableStore } from 'freedom-syncable-store';
 
-import { getCryptoService } from './getCryptoService.ts';
+import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
 import { getPublicKeysForUser } from './getPublicKeysForUser.ts';
 import { getSaltsForUser } from './getSaltsForUser.ts';
-import { getSyncableStoreBackingForUserEmail } from './getSyncableStoreBackingForUserEmail.ts';
 
 // TODO: TEMP
 const globalCache: Record<EmailUserId, EmailAccess> = {};
@@ -21,8 +18,6 @@ export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
       return makeSuccess(cached);
     }
 
-    const cryptoService = await uncheckedResult(getCryptoService(trace));
-
     const saltsById = await getSaltsForUser(trace, { userId });
     if (!saltsById.ok) {
       return generalizeFailureResult(trace, saltsById, 'not-found');
@@ -33,24 +28,17 @@ export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
       return generalizeFailureResult(trace, publicKeys, 'not-found');
     }
 
-    const backing = await getSyncableStoreBackingForUserEmail(trace, { userId });
-    if (!backing.ok) {
-      return backing;
+    const access = await getOrCreateEmailAccessForUserPure(trace, {
+      userId,
+      publicKeys: publicKeys.value,
+      saltsById: saltsById.value
+    });
+    if (!access.ok) {
+      return access;
     }
 
-    const storageRootId = storageRootIdInfo.make(userId);
+    globalCache[userId] = access.value;
 
-    const userFs = new DefaultSyncableStore({
-      storageRootId,
-      cryptoService,
-      saltsById: saltsById.value,
-      creatorPublicKeys: publicKeys.value,
-      backing: backing.value
-    });
-
-    const output: EmailAccess = { userId, cryptoService, saltsById: saltsById.value, userFs };
-    globalCache[userId] = output;
-
-    return makeSuccess(output);
+    return access;
   }
 );
