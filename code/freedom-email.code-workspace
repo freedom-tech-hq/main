@@ -10,6 +10,9 @@
             "path": "backends/freedom-mta-bridge"
         },
         {
+            "path": "backends/freedom-store-api-server"
+        },
+        {
             "path": "cross-platform-packages/freedom-access-control-types"
         },
         {
