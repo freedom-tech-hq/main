@@ -14,9 +14,9 @@ rm -rf \
   "${DEPLOY_WORKSPACE_DIR:?}/"*
 
 # Extract modules to the deployment workspace
-echo "Extracting built modules to $DEPLOY_WORKSPACE_DIR"
+echo "Rebuilding and extracting modules to $DEPLOY_WORKSPACE_DIR"
 mkdir -p "$DEPLOY_WORKSPACE_DIR/code"
-yarn deploy:extract
+NODE_ENV=production yarn deploy:extract --skip-nx-cache --no-cloud
 cp \
   package.json \
   yarn.lock \

@@ -10,6 +10,8 @@ import type { EmailUserId } from 'freedom-email-sync';
 
 import { getAllStorageRootPath } from './getAllStorageRootPath.ts';
 
+/* eslint-disable */
+
 export interface User {
   email: string;
   userId: EmailUserId;

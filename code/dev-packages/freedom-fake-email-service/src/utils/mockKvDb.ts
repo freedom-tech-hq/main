@@ -9,6 +9,8 @@ import type { Schema, schema } from 'yaschema';
 
 import { getAllStorageRootPath } from './getAllStorageRootPath.ts';
 
+/* eslint-disable */
+
 interface KvStore {
   [key: string]: any;
 }

@@ -15,6 +15,7 @@ variable "environment" {
 
 # Define local variables
 locals {
+  api_server_ip = "82.26.157.248"
   smtp_outbound_ip = "82.26.157.248"
   smtp_hostname    = "smtp1.dev.linefeedr.com"
 }
@@ -137,6 +138,15 @@ locals {
 #   rrdatas      = [google_compute_instance.vm.network_interface[0].access_config[0].nat_ip]
 # }
 
+# Create A record for the API endpoint
+resource "google_dns_record_set" "api" {
+  name         = "api.${data.google_dns_managed_zone.dev_zone.dns_name}"
+  managed_zone = data.google_dns_managed_zone.dev_zone.name
+  type         = "A"
+  ttl          = 300
+  rrdatas      = [local.api_server_ip]
+}
+
 # Create MX records for the mail-host subdomain
 resource "google_dns_record_set" "mail_mx" {
   name         = local.mail_domain
@@ -197,10 +207,14 @@ resource "google_dns_record_set" "dkim_record" {
   ]
 }
 
-output "domain_name" {
+output "mail_domain" {
   value = local.mail_domain
 }
 
 output "smtp_relay_domain" {
   value = trimsuffix(google_dns_record_set.smtp_relay.name, ".")
+}
+
+output "api_server_domain" {
+  value = trimsuffix(google_dns_record_set.api.name, ".")
 }

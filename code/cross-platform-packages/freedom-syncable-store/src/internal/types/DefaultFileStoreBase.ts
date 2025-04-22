@@ -16,7 +16,7 @@ import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableItemTypeFromId, isSyncableItemEncrypted, syncableItemTypes, uuidId } from 'freedom-sync-types';
-import { guardIsExpectedType, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
+import { guardIsExpectedType, type LocalItemMetadata, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   BundleManagement,
   GenerateNewSyncableItemNameFunc,
@@ -28,7 +28,6 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-types/lib/types/LocalItemMetadata';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';

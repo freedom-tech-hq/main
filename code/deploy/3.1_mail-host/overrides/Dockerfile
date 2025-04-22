@@ -11,7 +11,6 @@ COPY ./code /app/
 RUN --mount=type=cache,target=/root/.cache/yarn,rw \
     yarn install --frozen-lockfile --production
 
-WORKDIR /app/backends/freedom-mail-host
-
-# Start server
-CMD ["yarn", "start"]
+# The Dockerfile is shared, set workdir in the compose file
+# WORKDIR /app/backends/<SERVER-NAME>
+# CMD ["yarn", "start"]

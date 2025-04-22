@@ -22,7 +22,7 @@ import {
   type SyncablePath,
   uuidId
 } from 'freedom-sync-types';
-import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
+import type { LocalItemMetadata, SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import { guardIsExpectedType } from 'freedom-syncable-store-backing-types';
 import type {
   FolderManagement,
@@ -34,7 +34,6 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-types/lib/types/LocalItemMetadata';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';

@@ -20,12 +20,15 @@ services:
   freedom-host:
     build: .
 
-    env_file: .env
+    env_file: mail-host.env
+    environment:
+      - "FREEDOM_FAKE_EMAIL_SERVICE_ROOT_STORAGE_PATH=/app/data"
+    working_dir: /app/backends/freedom-mail-host
+    command: ["yarn", "start"]
 
     networks:
       - internal
     ports:
-      - "3000:3000" # HTTP
       - "25:25"
       - "465:465"
       - "587:587"
@@ -33,6 +36,33 @@ services:
     volumes:
       # Secrets
       - "${DEPLOY_LETSENCRYPT_DIR:-VALUE_REQUIRED}/:/etc/letsencrypt/:ro"
+
+      # Data
+      - syncable-store-data:/app/data/
+
+    restart: unless-stopped
+
+  store-api-server:
+    build: .
+
+    env_file: store-api-server.env
+    environment:
+      - "FREEDOM_FAKE_EMAIL_SERVICE_ROOT_STORAGE_PATH=/app/data"
+    working_dir: /app/backends/freedom-store-api-server
+    command: ["yarn", "start"]
+
+    networks:
+      - internal
+    ports:
+      - "443:443"
+      - "8443:443" # Temporary, for testing
+
+    volumes:
+      # Secrets
+      - "${DEPLOY_LETSENCRYPT_DIR:-VALUE_REQUIRED}/:/etc/letsencrypt/:ro"
+
+      # Data
+      - syncable-store-data:/app/data/
 
     restart: unless-stopped
 
@@ -78,6 +108,7 @@ services:
 
 volumes:
   delivery-host-mail-state:
+  syncable-store-data:
 
 networks:
   internal:

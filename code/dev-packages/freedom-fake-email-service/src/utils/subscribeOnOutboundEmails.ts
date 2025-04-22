@@ -13,7 +13,7 @@ import { getAllUsers } from './mockUserDb.ts';
  * for all users in the system. Will call the handler whenever new outbound
  * emails are found.
  *
- * @param handler Function to be called with the list of new mail IDs
+ * @param handler - Function to be called with the list of new mail IDs
  * @returns A function that can be called to stop the subscription
  */
 export async function subscribeOnOutboundEmails(handler: (args: OutboundEmailHandlerArgs) => void): Promise<() => void> {
