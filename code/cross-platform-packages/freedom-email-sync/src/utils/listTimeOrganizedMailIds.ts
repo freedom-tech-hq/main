@@ -61,7 +61,11 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
         mailIds.push(...mailIdsInHour);
 
         if (mailIds.length >= TARGET_PAGE_SIZE) {
-          nextPageToken = pageTokenInfo.make(DateTime.fromJSDate(initialCursor).minus({ hour: 1 }).toISO()!);
+          nextPageToken = pageTokenInfo.make(
+            DateTime.fromObject({ year: cursorYear, month: cursorMonth, day: cursorDay, hour: cursorHour }, { zone: 'UTC' })
+              .minus({ hour: 1 })
+              .toISO()!
+          );
           break;
         }
       }
