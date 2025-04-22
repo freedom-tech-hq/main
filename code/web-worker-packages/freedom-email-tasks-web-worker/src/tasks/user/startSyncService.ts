@@ -7,7 +7,7 @@ import { api as fakeEmailServiceApi } from 'freedom-fake-email-service-api';
 import { makeApiFetchTask } from 'freedom-fetching';
 import type { RemoteAccessor } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
-import { getMutableFolderAtPath } from 'freedom-syncable-store-types';
+import { getMutableFolderAtPath } from 'freedom-syncable-store';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';

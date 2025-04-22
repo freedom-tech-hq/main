@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store-types';
+import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';

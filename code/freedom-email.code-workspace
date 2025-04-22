@@ -67,6 +67,9 @@
             "path": "cross-platform-packages/freedom-indexing-types"
         },
         {
+            "path": "cross-platform-packages/freedom-in-memory-syncable-store-backing"
+        },
+        {
             "path": "cross-platform-packages/freedom-localization"
         },
         {
@@ -101,6 +104,12 @@
         },
         {
             "path": "cross-platform-packages/freedom-sync-types"
+        },
+        {
+            "path": "cross-platform-packages/freedom-syncable-store"
+        },
+        {
+            "path": "cross-platform-packages/freedom-syncable-store-backing-types"
         },
         {
             "path": "cross-platform-packages/freedom-syncable-store-types"

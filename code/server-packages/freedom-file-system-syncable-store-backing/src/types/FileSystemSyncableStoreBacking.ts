@@ -15,8 +15,8 @@ import type {
   SyncableStoreBackingFileAccessor,
   SyncableStoreBackingFolderAccessor,
   SyncableStoreBackingItemAccessor
-} from 'freedom-syncable-store-types';
-import { isExpectedType } from 'freedom-syncable-store-types';
+} from 'freedom-syncable-store-backing-types';
+import { isExpectedType } from 'freedom-syncable-store-backing-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { SingleOrArray } from 'yaschema';
 

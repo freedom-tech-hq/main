@@ -5,7 +5,8 @@ import type { EmailUserId } from 'freedom-email-sync';
 import type { EmailCredential } from 'freedom-email-user';
 import { OpfsSyncableStoreBacking } from 'freedom-opfs-syncable-store-backing';
 import { storageRootIdInfo, SyncablePath } from 'freedom-sync-types';
-import { generateProvenanceForNewSyncableStore, type SyncableStoreBacking } from 'freedom-syncable-store-types';
+import { generateProvenanceForNewSyncableStore } from 'freedom-syncable-store';
+import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 
 import { makeCryptoServiceForUser } from '../../utils/makeCryptoServiceForUser.ts';
 

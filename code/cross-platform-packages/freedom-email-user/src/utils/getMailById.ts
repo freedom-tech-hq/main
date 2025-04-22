@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess, MailId, StoredMail } from 'freedom-email-sync';
 import { getMailPaths, mailIdInfo, storedMailSchema } from 'freedom-email-sync';
-import { getJsonFromFile } from 'freedom-syncable-store-types';
+import { getJsonFromFile } from 'freedom-syncable-store';
 
 export const getMailById = makeAsyncResultFunc(
   [import.meta.filename],

@@ -8,7 +8,7 @@
     "freedom-locking-types": "0.0.0",
     "freedom-serialization": "0.0.0",
     "freedom-sync-types": "0.0.0",
-    "freedom-syncable-store-types": "0.0.0",
+    "freedom-syncable-store-backing-types": "0.0.0",
     "freedom-trace-logging-and-metrics": "0.0.0",
     "lodash-es": "4.17.21",
     "yaschema": "4.4.5"

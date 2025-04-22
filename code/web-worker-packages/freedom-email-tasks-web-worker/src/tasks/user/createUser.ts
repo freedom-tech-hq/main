@@ -8,7 +8,7 @@ import {
   createWelcomeContentForUser,
   encryptEmailCredentialWithPassword
 } from 'freedom-email-user';
-import { initializeRoot } from 'freedom-syncable-store-types';
+import { initializeRoot } from 'freedom-syncable-store';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';

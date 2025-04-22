@@ -1,7 +1,7 @@
 import { makeUuid } from 'freedom-contexts';
 import { type EmailAccess, emailUserIdInfo } from 'freedom-email-sync';
 import type { SaltsById } from 'freedom-sync-types';
-import { createStoreTestStack } from 'freedom-syncable-store-types/tests';
+import { createStoreTestStack } from 'freedom-syncable-store/tests';
 
 import { EMAIL_APP_SALT_ID } from '../consts/salt-ids.ts';
 

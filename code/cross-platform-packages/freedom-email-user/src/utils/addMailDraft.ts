@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess, MailId } from 'freedom-email-sync';
-import { createBundleAtPath, createConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store-types';
+import { createBundleAtPath, createConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
 
 import { MailDraftDocument } from '../types/MailDraftDocument.ts';
 import { type MailDraftId, mailDraftIdInfo } from '../types/MailDraftId.ts';

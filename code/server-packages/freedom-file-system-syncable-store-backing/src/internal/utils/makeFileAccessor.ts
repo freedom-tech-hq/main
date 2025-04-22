@@ -1,6 +1,6 @@
 import { makeSuccess, makeSyncFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableStoreBackingFileAccessor } from 'freedom-syncable-store-types';
+import type { SyncableStoreBackingFileAccessor } from 'freedom-syncable-store-backing-types';
 
 import type { FileSystemSyncableStoreBackingFileItem } from '../types/FileSystemSyncableStoreBackingFileItem.ts';
 

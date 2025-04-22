@@ -4,7 +4,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
 import type { Paginated, PaginationOptions } from 'freedom-paginated-data';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
-import { getBundleAtPath } from 'freedom-syncable-store-types';
+import { getBundleAtPath } from 'freedom-syncable-store';
 
 import { type MailDraftId, mailDraftIdInfo } from '../types/MailDraftId.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
