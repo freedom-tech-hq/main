@@ -10,6 +10,7 @@ export * from './callAsyncFunc.ts';
 export * from './callAsyncResultFunc.ts';
 export * from './callSyncFunc.ts';
 export * from './callSyncResultFunc.ts';
+export * from './callWithRetrySupport.ts';
 export * from './computeAsyncOnce.ts';
 export * from './computeOnce.ts';
 export * from './debugTopic.ts';

@@ -12,6 +12,7 @@ import { pullFolder } from './pullFolder.ts';
 export const pullPath = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore, args: SyncPullArgs): PR<SyncPullResponse, 'not-found'> => {
+    // This will commonly be not-found if the service doesn't yet have the data
     const syncableItem = await getSyncableAtPath(trace, store, args.path);
     if (!syncableItem.ok) {
       return generalizeFailureResult(trace, syncableItem, ['deleted', 'untrusted', 'wrong-type']);

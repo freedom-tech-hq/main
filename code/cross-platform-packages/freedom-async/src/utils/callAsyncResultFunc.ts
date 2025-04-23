@@ -19,7 +19,7 @@ import type { PR } from '../types/PR.ts';
 import type { PRFunc } from '../types/PRFunc.ts';
 import type { Result } from '../types/Result.ts';
 import type { TraceableError } from '../types/TraceableError.ts';
-import { sleep } from './sleep.ts';
+import { callWithRetrySupport } from './callWithRetrySupport.ts';
 
 /**
  * Calls an async function that produces a `Result`, potentially measuring its performance, tracking metrics, and/or logging state/results.
@@ -158,38 +158,5 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
     }
   };
 
-  const shouldRetry = options?.shouldRetry;
-  if (shouldRetry !== undefined) {
-    // If retrying is potentially supported
-
-    const firstAttemptStart = performance.now();
-    let attemptCount = 0;
-    let accumulatedDelayMSec = 0;
-    while (true) {
-      const result = await attempt(attemptCount);
-      if (result.ok) {
-        return result;
-      }
-
-      const { retry, delayMSec = 0 } = options?.shouldRetry?.(result, {
-        attemptCount,
-        accumulatedDelayMSec,
-        firstAttemptTimeAgoMSec: performance.now() - firstAttemptStart
-      }) ?? {
-        retry: false
-      };
-      if (!retry) {
-        return result;
-      }
-
-      await sleep(delayMSec);
-
-      attemptCount += 1;
-      accumulatedDelayMSec += delayMSec;
-    }
-  } else {
-    // If retrying isn't supported
-
-    return await attempt(0);
-  }
+  return await callWithRetrySupport<SuccessT, ErrorCodeT>(options?.shouldRetry, attempt);
 };

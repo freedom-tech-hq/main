@@ -1,5 +1,6 @@
 import { TraceableError } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
+import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import { StatusCodes } from 'http-status-codes';
 
 import { log } from '../../config/logging.ts';
@@ -19,7 +20,12 @@ export const httpError = <ErrorCodeT extends string>(
   cause: TraceableError<ErrorCodeT>
 ) => {
   if (cause instanceof TraceableError) {
-    log()[cause.logLevel]?.(trace, cause);
+    const lamControl = useLamControl(trace);
+
+    if (!shouldDisableErrorForLoggingAndMetrics(lamControl.disable, { error: cause, errorCode: cause.errorCode })) {
+      log()[cause.logLevel]?.(trace, cause);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     return output.failure(cause.httpStatusCode, { body: { message: cause.apiMessage, errorCode: cause.errorCode as any } });
   } /* node:coverage disable */ else {

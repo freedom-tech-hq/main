@@ -20,6 +20,8 @@
     "freedom-email-sync": "0.0.0",
     "freedom-fake-email-service-api": "0.0.0",
     "freedom-file-system-syncable-store-backing": "0.0.0",
+    "freedom-get-or-create": "0.0.0",
+    "freedom-json-file-object-store": "0.0.0",
     "freedom-object-store-types": "0.0.0",
     "freedom-server-api-handling": "0.0.0",
     "freedom-sync-types": "0.0.0",
