@@ -7,7 +7,7 @@ import { startSubscriptions } from './modules/syncable-store/utils/startSubscrip
 
 const main = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace): PR<void> => {
+  async (trace): PR<undefined> => {
     // Start SMTP server for receiving emails directly
     await startSmtpServer(trace);
 

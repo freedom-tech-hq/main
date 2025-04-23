@@ -12,7 +12,7 @@ import { parseEmail } from '../../formats/utils/parseEmail.ts';
  * @param pipedEmail - Raw email data as a string
  * @returns PR resolving when the email is processed
  */
-export const processInboundEmail = makeAsyncResultFunc([import.meta.filename], async (trace, pipedEmail: string): PR<void> => {
+export const processInboundEmail = makeAsyncResultFunc([import.meta.filename], async (trace, pipedEmail: string): PR<undefined> => {
   // Parse the email
   const parsedEmailResult = await parseEmail(trace, pipedEmail);
   if (!parsedEmailResult.ok) {

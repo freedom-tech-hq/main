@@ -10,7 +10,7 @@ import { processOutboundEmail } from './processOutboundEmail.ts';
  * @param trace - Trace for async operations
  * @returns PR resolving when subscriptions are started
  */
-export const startSubscriptions = makeAsyncResultFunc([import.meta.filename], async (trace): PR<void> => {
+export const startSubscriptions = makeAsyncResultFunc([import.meta.filename], async (trace): PR<undefined> => {
   // Subscribe to outbound emails
   const result = await subscribeOnOutboundEmails(trace, processOutboundEmail);
   if (!result.ok) {

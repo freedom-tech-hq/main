@@ -13,7 +13,7 @@ import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
  */
 export const onReceivedEmail: SmtpServerParams['onReceivedEmail'] = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, emailData: string): PR<void> => {
+  async (trace, emailData: string): PR<undefined> => {
     return await processInboundEmail(trace, emailData);
   }
 );

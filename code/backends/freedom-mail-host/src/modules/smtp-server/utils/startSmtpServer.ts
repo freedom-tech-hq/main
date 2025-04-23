@@ -11,7 +11,7 @@ import { assembleSmtpServer } from './assembleSmtpServer.ts';
  * @param trace - Trace for async operations
  * @returns PR resolving to void on success
  */
-export const startSmtpServer = makeAsyncResultFunc([import.meta.filename], async (trace: Trace): PR<void> => {
+export const startSmtpServer = makeAsyncResultFunc([import.meta.filename], async (trace: Trace): PR<undefined> => {
   // Start a server for each port
   for (const port of config.SMTP_PORTS) {
     // Port 25 is for inbound

@@ -13,34 +13,37 @@ import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
  * @param args - Arguments for outbound email handling
  * @returns PR resolving when all emails are processed
  */
-export const processOutboundEmail = makeAsyncResultFunc([import.meta.filename], async (trace, args: OutboundEmailHandlerArgs): PR<void> => {
-  const { access, emailIds } = args;
+export const processOutboundEmail = makeAsyncResultFunc(
+  [import.meta.filename],
+  async (trace, args: OutboundEmailHandlerArgs): PR<undefined> => {
+    const { access, emailIds } = args;
 
-  // Process each email ID
-  for (const mailId of emailIds) {
-    console.log('Sending outbound email', mailId);
+    // Process each email ID
+    for (const mailId of emailIds) {
+      console.log('Sending outbound email', mailId);
 
-    // Get the email content
-    const outboundMail = await getOutboundMailById(trace, access, mailId);
-    if (!outboundMail.ok) {
-      return generalizeFailureResult(trace, outboundMail, 'not-found');
+      // Get the email content
+      const outboundMail = await getOutboundMailById(trace, access, mailId);
+      if (!outboundMail.ok) {
+        return generalizeFailureResult(trace, outboundMail, 'not-found');
+      }
+
+      console.log('Before deliverOutboundEmail');
+
+      // Send via SMTP upstream
+      await deliverOutboundEmail(trace, outboundMail.value);
+
+      console.log('Before moveOutboundMailToStorage');
+
+      // Move to permanent storage after successful sending
+      const moved = await moveOutboundMailToStorage(trace, access, mailId);
+      if (!moved.ok) {
+        return generalizeFailureResult(trace, moved, 'not-found');
+      }
+
+      console.log('Sent outbound email', mailId);
     }
 
-    console.log('Before deliverOutboundEmail');
-
-    // Send via SMTP upstream
-    await deliverOutboundEmail(trace, outboundMail.value);
-
-    console.log('Before moveOutboundMailToStorage');
-
-    // Move to permanent storage after successful sending
-    const moved = await moveOutboundMailToStorage(trace, access, mailId);
-    if (!moved.ok) {
-      return generalizeFailureResult(trace, moved, 'not-found');
-    }
-
-    console.log('Sent outbound email', mailId);
+    return makeSuccess(undefined);
   }
-
-  return makeSuccess(undefined);
-});
+);

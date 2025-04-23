@@ -20,7 +20,7 @@ import type { User } from './getUserStore.ts';
  */
 export const subscribeOnOutboundEmails = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, handler: (trace: Trace, args: OutboundEmailHandlerArgs) => PR<void>): PR<() => void> => {
+  async (trace, handler: (trace: Trace, args: OutboundEmailHandlerArgs) => PR<undefined>): PR<() => void> => {
     let isActive = true;
 
     // Track last seen IDs for each user
