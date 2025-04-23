@@ -77,15 +77,13 @@ export const SMTP_UPSTREAM_PORT = env.get('SMTP_UPSTREAM_PORT').default('25').as
  * Storage
  */
 
-/** Google Cloud Storage credentials file contents (not name) */
-export const GOOGLE_APPLICATION_CREDENTIALS_RAW =
-  (env.get('GOOGLE_APPLICATION_CREDENTIALS_RAW').asCustom((value) => (value ? JSON.parse(value) : undefined)) as {} | undefined) ||
-  (env.get('GOOGLE_APPLICATION_CREDENTIALS').asCustom((value) =>
-    value ? JSON.parse(fs.readFileSync(path.resolve(rootDir, value), 'utf8')) : undefined // In GCP, we use machine-wise implicit credentials
-  ) as {} | undefined);
-
-/** Google Cloud Storage bucket for storing emails and user data */
-export const APP_BUCKET = env.get('APP_BUCKET').required().asString();
-
-/** Path to the users database file */
-export const USERS_FILE = 'users.json';
+// Temporary disabled in favor of File System Backing and a Docker volume
+// /** Google Cloud Storage credentials file contents (not name) */
+// export const GOOGLE_APPLICATION_CREDENTIALS_RAW =
+//   (env.get('GOOGLE_APPLICATION_CREDENTIALS_RAW').asCustom((value) => (value ? JSON.parse(value) : undefined)) as {} | undefined) ||
+//   (env.get('GOOGLE_APPLICATION_CREDENTIALS').asCustom((value) =>
+//     value ? JSON.parse(fs.readFileSync(path.resolve(rootDir, value), 'utf8')) : undefined // In GCP, we use machine-wise implicit credentials
+//   ) as {} | undefined);
+//
+// /** Google Cloud Storage bucket for storing emails and user data */
+// export const APP_BUCKET = env.get('APP_BUCKET').required().asString();
