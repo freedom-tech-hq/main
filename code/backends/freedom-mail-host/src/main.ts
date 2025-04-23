@@ -2,9 +2,6 @@ import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts'
 import { startSubscriptions } from './modules/email-encoder/utils/startSubscriptions.ts';
 
 async function main() {
-  // Start HTTP server for API endpoints
-  // await startHttpServer();
-
   // Start SMTP server for receiving emails directly
   await startSmtpServer();
 
