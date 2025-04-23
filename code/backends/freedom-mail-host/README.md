@@ -9,7 +9,7 @@ A backend service that receives incoming emails and stores them in user's vault.
 Before going production:
 
 + Implement unified error wrapping
-- Remove excessive console.log()
++ Remove excessive console.log()
 - Implement bounces on deliverOutboundEmail() failures
 - Implement retries on network errors in deliverOutboundEmail()
 - Get rid of `freedom-fake-email-service` dependency

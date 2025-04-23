@@ -1,4 +1,4 @@
-import type { PR } from 'freedom-async';
+import { log, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 import { startHttpRestServer, startHttpsRestServer } from 'freedom-fake-email-service';
@@ -21,7 +21,7 @@ const main = makeAsyncResultFunc(
   },
   {
     onFailure: (error) => {
-      console.error('Failed to start server:', error.cause ?? error);
+      log().error?.('Failed to start server:', error.cause ?? error);
       process.exit(1);
     }
   }

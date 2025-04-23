@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 
 import * as config from '../../../config.ts';
@@ -35,7 +35,9 @@ export const startSmtpServer = makeAsyncResultFunc([import.meta.filename], async
       // Start
       server.listen(port, config.SMTP_HOST, () => {
         // Announce
-        console.info(`SMTP Server (${secureOnly ? 'TLS only' : 'plain+TLS'}) listening on ${config.SMTP_HOST}:${port}`);
+        DEV: debugTopic('SMTP', (log) =>
+          log(`SMTP Server (${secureOnly ? 'TLS only' : 'plain+TLS'}) listening on ${config.SMTP_HOST}:${port}`)
+        );
 
         // Clean up the promise
         server.off('error', errorHandler);

@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { log, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 
 import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
@@ -18,7 +18,7 @@ const main = makeAsyncResultFunc(
   },
   {
     onFailure: (error) => {
-      console.error('Failed to start servers:', error.cause ?? error);
+      log().error?.('Failed to start servers:', error.cause ?? error);
       process.exit(1);
     }
   }
