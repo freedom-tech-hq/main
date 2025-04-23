@@ -1,12 +1,14 @@
-import { type PR } from 'freedom-async';
+import { type PR, uncheckedResult } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import { type PrivateCombinationCryptoKeySet, privateCombinationCryptoKeySetSchema } from 'freedom-crypto-data';
+import { type PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 
-import { kvGetValue } from './mockKvDb.ts';
+import { getPrivateKeyStore } from './getPrivateKeyStore.ts';
 
 export const getServerPrivateKeys = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
-    return await kvGetValue(trace, 'server-keys', privateCombinationCryptoKeySetSchema);
+    const privateKeyStore = await uncheckedResult(getPrivateKeyStore(trace));
+
+    return await privateKeyStore.object('server-keys').get(trace);
   }
 );

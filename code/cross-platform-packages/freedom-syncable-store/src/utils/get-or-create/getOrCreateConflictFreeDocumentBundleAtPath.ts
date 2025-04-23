@@ -3,13 +3,13 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { type Trace } from 'freedom-contexts';
+import { getOrCreate } from 'freedom-get-or-create';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 import type { ConflictFreeDocumentEvaluator, MutableSyncableStore, SaveableDocument } from 'freedom-syncable-store-types';
 
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import type { GetConflictFreeDocumentFromBundleAtPathArgs } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
-import { getOrCreate } from './getOrCreate.ts';
 
 export const getOrCreateConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
   [import.meta.filename],
