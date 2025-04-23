@@ -7,6 +7,7 @@ import { Cast } from 'freedom-cast';
 import { attachToTrace, makeTrace } from 'freedom-contexts';
 import { LogJson } from 'freedom-logging-types';
 import { authTokenProvider } from 'freedom-server-trace-auth-token';
+import { disableLam as disableLamProvider } from 'freedom-trace-logging-and-metrics';
 import { makeServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
 import { StatusCodes } from 'http-status-codes';
 import type { AnyBody, AnyHeaders, AnyParams, AnyQuery, AnyStatus, HttpApi, OptionalIfPossiblyUndefined } from 'yaschema-api';
@@ -106,7 +107,9 @@ export const makeHttpApiHandler =
             if (selectedAuthToken !== undefined && !selectedAuthToken.ok) {
               ok = false;
               express.res.setHeader('Cache-Control', 'no-store');
-              return httpError(trace, genericOutput, selectedAuthToken.value);
+              return disableLamProvider(trace, options.disableLam ?? [], (trace) =>
+                httpError(trace, genericOutput, selectedAuthToken.value)
+              );
             }
             /* node:coverage enable */
 
@@ -147,7 +150,7 @@ export const makeHttpApiHandler =
                 );
               } else {
                 ok = false;
-                httpError(trace, genericOutput, handlerResult.value);
+                disableLamProvider(trace, options.disableLam ?? [], (trace) => httpError(trace, genericOutput, handlerResult.value));
               }
             });
           } catch (e) {

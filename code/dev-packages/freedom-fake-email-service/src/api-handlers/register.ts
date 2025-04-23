@@ -4,14 +4,15 @@ import { emailUserIdInfo } from 'freedom-email-sync';
 import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
+import { addUser } from '../utils/addUser.ts';
 import { createSyncableStore } from '../utils/createSyncableStore.ts';
-import { addUser } from '../utils/mockUserDb.ts';
 import { setupKeyHandlers } from '../utils/setupKeyHandlers.ts';
 
 export default makeHttpApiHandler(
   [import.meta.filename],
-  { api: api.register.POST },
+  { api: api.register.POST, disableLam: 'conflict' },
   async (
     trace,
     {
@@ -33,14 +34,17 @@ export default makeHttpApiHandler(
     // Uses the most recently attempted registration of storageRootId
     await bestEffort(trace, setupKeyHandlers(trace, { userId }));
 
-    const created = await createSyncableStore(trace, {
-      userId,
-      metadata,
-      creatorPublicKeys,
-      saltsById
-    });
-    if (!created.ok) {
-      return created;
+    // Conflicts are expected to happen here sometimes because registration is attempted every time a client starts its sync service
+    // (because it can't otherwise knows the state of registration on the server)
+    const createdSyncableStore = await disableLam(trace, 'conflict', (trace) =>
+      createSyncableStore(trace, {
+        userId,
+        metadata,
+        creatorPublicKeys
+      })
+    );
+    if (!createdSyncableStore.ok) {
+      return createdSyncableStore;
     }
 
     // Add email

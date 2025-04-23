@@ -1,17 +1,27 @@
+import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { EmailUserId } from 'freedom-email-sync';
+import type { SaltsById } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID } from 'freedom-sync-types';
 
-import { getOrCreateSaltStoreForUser } from './getOrCreateSaltStoreForUser.ts';
-import { getSalt } from './getSalt.ts';
+import { findUserByEmail } from './findUserByEmail.ts';
+import { getEmailByUserIdStore } from './getEmailByUserIdStore.ts';
 
-export const getSaltsForUser = makeAsyncResultFunc([import.meta.filename], async (trace, { userId }: { userId: EmailUserId }) => {
-  const saltStore = await uncheckedResult(getOrCreateSaltStoreForUser(trace, { userId }));
+export const getSaltsForUser = makeAsyncResultFunc(
+  [import.meta.filename],
+  async (trace, { userId }: { userId: EmailUserId }): PR<SaltsById, 'not-found'> => {
+    const emailByUserIdStore = await uncheckedResult(getEmailByUserIdStore(trace));
 
-  const salt = await getSalt(trace, saltStore, DEFAULT_SALT_ID);
-  if (!salt.ok) {
-    return salt;
+    const email = await emailByUserIdStore.object(userId).get(trace);
+    if (!email.ok) {
+      return email;
+    }
+
+    const user = await findUserByEmail(trace, email.value);
+    if (!user.ok) {
+      return user;
+    }
+
+    return makeSuccess({ [DEFAULT_SALT_ID]: user.value.defaultSalt });
   }
-
-  return makeSuccess({ [DEFAULT_SALT_ID]: salt.value });
-});
+);

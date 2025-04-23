@@ -1,10 +1,10 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
-import { NotFoundError } from 'freedom-common-errors';
+import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { addMail } from 'freedom-email-sync';
 
+import { findUserByEmail } from './findUserByEmail.ts';
 import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
-import { findUserByEmail } from './mockUserDb.ts';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
@@ -28,10 +28,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
   ): PR<undefined> => {
     const userResult = await findUserByEmail(trace, rcpt);
     if (!userResult.ok) {
-      return userResult;
-    }
-    if (!userResult.value) {
-      return makeFailure(new NotFoundError(trace, { message: 'Email not found' }));
+      return generalizeFailureResult(trace, userResult, 'not-found');
     }
 
     const { userId, publicKeys, defaultSalt } = userResult.value;

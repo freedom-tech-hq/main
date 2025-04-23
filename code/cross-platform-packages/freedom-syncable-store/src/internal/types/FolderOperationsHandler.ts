@@ -8,6 +8,7 @@ import { generateSignedValue } from 'freedom-crypto';
 import type { DynamicSyncableItemName, SyncableItemName, SyncablePath } from 'freedom-sync-types';
 import { encName, syncableEncryptedItemNameInfo } from 'freedom-sync-types';
 import type { MutableSyncableStore, SaveableDocument } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import type { SyncableStoreChange } from '../../types/SyncableStoreChange.ts';
@@ -78,9 +79,11 @@ export class FolderOperationsHandler {
   public readonly isPathMarkedAsDeleted = makeAsyncResultFunc(
     [import.meta.filename, 'isPathMarkedAsDeleted'],
     async (trace, path: SyncablePath): PR<boolean> => {
-      const storeChangesDoc = await this.getMutableSyncableStoreChangesDocument_(trace);
+      const storeChangesDoc = await disableLam(trace, true, (trace) => this.getMutableSyncableStoreChangesDocument_(trace));
       if (!storeChangesDoc.ok) {
-        return storeChangesDoc;
+        // If there's an error loading the changes document (usually because it hasn't synced yet), assume the path is not deleted.  This is
+        // generally safe because it's only potentially extra data that will eventually be cleaned up
+        return makeSuccess(false);
       }
 
       return makeSuccess(storeChangesDoc.value.document.isDeletedPath(path));
