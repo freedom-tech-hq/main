@@ -12,11 +12,12 @@ export const getAllStorageRootPath = makeAsyncResultFunc(
   once(async (_trace): PR<string> => {
     const rootPath =
       getEnv('FREEDOM_FAKE_EMAIL_SERVICE_ROOT_STORAGE_PATH', process.env.FREEDOM_FAKE_EMAIL_SERVICE_ROOT_STORAGE_PATH) ?? 'TEMP';
-    console.log('rootPath', rootPath);
     if (rootPath === 'TEMP') {
       const tempPath = await fs.mkdtemp(path.join(os.tmpdir(), 'testing-'));
+      console.log('rootPath', tempPath);
       return makeSuccess(tempPath);
     } else {
+      console.log('rootPath', rootPath);
       return makeSuccess(rootPath);
     }
   })
