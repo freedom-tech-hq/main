@@ -8,10 +8,11 @@ A backend service that receives incoming emails and stores them in user's vault.
 
 Before going production:
 
-- Implement unified error wrapping
++ Implement unified error wrapping
 - Remove excessive console.log()
 - Implement bounces on deliverOutboundEmail() failures
 - Implement retries on network errors in deliverOutboundEmail()
+- Get rid of `freedom-fake-email-service` dependency
 
 ## Cloud Deployment
 
@@ -47,13 +48,4 @@ swaks --to nowhere@no-server.linefeedr.com \
       --auth-user user1@local.dev.freedommail.me \
       --auth-password password123 \
       --body "This is a test user email"
-```
-
-
-HTTP /incoming entry point. Use curl and fixtures:
-
-```bash
-curl -X POST http://127.0.0.1:3000/incoming \
-  --data-binary @src/__tests__/fixtures/sample.eml \
-  -H "Content-Type: text/plain"
 ```
