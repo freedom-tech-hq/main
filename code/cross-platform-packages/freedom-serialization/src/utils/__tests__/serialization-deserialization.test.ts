@@ -9,7 +9,7 @@ import { serialize } from '../serialize.ts';
 
 const theSchema = schema.object({ one: schema.number() });
 
-describe('serialization', () => {
+describe('serialization and deserialization', () => {
   it('should work', async (t) => {
     const trace = makeTrace('test');
 

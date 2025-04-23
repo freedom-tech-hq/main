@@ -144,7 +144,9 @@ export class TaskQueue {
     }
 
     while (this.numActive < this.maxConcurrency_ && this.entries_.getLength() > 0) {
-      this.runNext_();
+      if (!this.runNext_()) {
+        return;
+      }
     }
 
     if (this.isEmpty()) {
@@ -152,18 +154,27 @@ export class TaskQueue {
     }
   };
 
-  private readonly runNext_ = () => {
-    const next = this.entries_.getHead();
+  private readonly runNext_ = (): boolean => {
+    let next = this.entries_.getHead();
     /* node:coverage disable */
     if (next === undefined) {
-      return;
+      return false;
     }
     /* node:coverage enable */
 
+    // If we're already processing a task for this key, skip to the next one
+    while (this.inFlightVersionsByKey_[next.value.key] !== undefined) {
+      next = next.nextNode;
+
+      if (next === undefined) {
+        return false;
+      }
+    }
+
     const { key, version, run } = next.value;
 
-    this.entries_.remove(next);
     this.inFlightVersionsByKey_[key] = version;
+    this.entries_.remove(next);
     delete this.entryNodesByKey_[key];
 
     this.numActive += 1;
@@ -177,5 +188,7 @@ export class TaskQueue {
         this.runMore_();
       }
     });
+
+    return true;
   };
 }

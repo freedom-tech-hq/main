@@ -210,7 +210,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
                 if (event.path.startsWith(currentSnapshotDeltasBundlePath)) {
                   pendingDeltaPaths.push(event.path);
-                  pendingDeltasTaskQueue.add('apply-pending-deltas', applyPendingDeltasNow);
+                  pendingDeltasTaskQueue.add({ key: 'apply-pending-deltas', version: makeUuid() }, applyPendingDeltasNow);
                 }
               }
             })
