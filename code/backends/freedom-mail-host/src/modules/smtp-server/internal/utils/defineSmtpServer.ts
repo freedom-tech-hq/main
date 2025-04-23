@@ -58,7 +58,7 @@ export function defineSmtpServer({
     onAuth: async (auth, session, callback) => {
       // Only allow authentication over TLS
       if (!session.secure) {
-        return callback(new Error('Authentication requires TLS connection'));
+        return callback(new SmtpPublicError(538, 'Authentication requires TLS connection'));
       }
 
       // Use the provided auth handler

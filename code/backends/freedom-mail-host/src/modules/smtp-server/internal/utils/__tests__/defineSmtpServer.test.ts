@@ -15,13 +15,13 @@ let server: SMTPServer | undefined;
 async function spinOffServerStack({
   serverSecureOnly = false,
   authenticateSender = false,
-  clientSecure = false,
-  clientRequireTls = false,
+  clientStartSecure = false,
+  clientEnterTls = false,
 }: {
   serverSecureOnly?: boolean;
   authenticateSender?: boolean;
-  clientSecure?: boolean;
-  clientRequireTls?: boolean;
+  clientStartSecure?: boolean;
+  clientEnterTls?: boolean;
 } = {}) {
   // Assert values
   const sideEffects = {
@@ -104,12 +104,17 @@ async function spinOffServerStack({
     } : undefined,
 
     // TLS options
-    secure: clientSecure,
-    requireTLS: clientRequireTls,
+    secure: clientStartSecure,
+    ignoreTLS: !clientEnterTls,
+    requireTLS: clientEnterTls,
     tls: {
       // Accept self-signed certificates
       rejectUnauthorized: false
     },
+
+    // Uncomment to debug
+    // logger: true,
+    // debug: true
   });
 
   return {
@@ -393,6 +398,8 @@ describe('defineSmtpServer', () => {
         port: PORT,
         host: '127.0.0.1',
         secure: false,
+        ignoreTLS: true,
+        requireTLS: false
       });
       const stream = new PassThrough();
 
@@ -473,7 +480,7 @@ describe('defineSmtpServer', () => {
   // They work in contrast to inbound and ensure that the SMTP server protection is correctly configured.
   describe('[outbound] An email is sent by our user', () => {
     describe('[outbound.plain] Send a plain email to external user', () => {
-      for (const [serverSecureOnly, clientSecure, clientRequireTls, expectError] of [
+      for (const [serverSecureOnly, clientStartSecure, clientEnterTls, expectError] of [
         // TLS connection
         [true, true, true, null],
         [true, true, false, null],
@@ -490,21 +497,23 @@ describe('defineSmtpServer', () => {
         [false, false, true, null],
 
         // Plain connection
-        [false, false, false, 'Invalid login: 535 Authentication requires TLS connection'],
+        // On `allowInsecureAuth: true` it would be our exception: 'Invalid login: 538 Authentication requires TLS connection'
+        // With `allowInsecureAuth: false` it is this:
+        [false, false, false, 'Invalid login: 538 Error: Must issue a STARTTLS command first'],
       ] as const) {
         test(
           [
             `${serverSecureOnly ? 'serverSecureOnly' : '-'}`,
-            `${clientSecure ? 'clientSecure' : '-'}`,
-            `${clientRequireTls ? 'clientRequireTls' : '-'}`,
+            `${clientStartSecure ? 'clientStartSecure' : '-'}`,
+            `${clientEnterTls ? 'clientEnterTls' : '-'}`,
           ].join(' '),
           async () => {
           // Arrange
           const { client, sideEffects, onValidateReceiver } = await spinOffServerStack({
             serverSecureOnly,
             authenticateSender: true,
-            clientSecure,
-            clientRequireTls,
+            clientStartSecure,
+            clientEnterTls,
           });
           onValidateReceiver.mock.mockImplementationOnce(async () => 'external');
 
@@ -548,7 +557,7 @@ describe('defineSmtpServer', () => {
       // Arrange
       const { client, sideEffects, onAuth } = await spinOffServerStack({
         serverSecureOnly: true,
-        clientSecure: true,
+        clientStartSecure: true,
         authenticateSender: true
       });
 
