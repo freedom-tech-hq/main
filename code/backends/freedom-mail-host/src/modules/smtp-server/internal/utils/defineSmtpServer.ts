@@ -1,19 +1,22 @@
-import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeFailure, type PR, type Result } from 'freedom-async';
+import { GeneralError, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { ForbiddenError, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SMTPServerDataStream, SMTPServerOptions, SMTPServerSession } from 'smtp-server';
 import { SMTPServer } from 'smtp-server';
 
 import * as config from '../../../../config.ts';
-import { SmtpPublicError } from '../types/SmtpPublicError.ts';
-import { catchSmtpError } from './catchSmtpError.ts';
+import type { SmtpPublicErrorCodes } from '../types/SmtpPublicErrorCodes.ts';
+import { wrapSmtpHandler } from './wrapSmtpHandler.ts';
 
 export type SmtpServerParams = {
   secureOnly: boolean;
-  onAuth: (trace: Trace, username: string, password: string) => PR<{ userId: string }>;
-  onValidateReceiver: (trace: Trace, emailAddress: string) => PR<'our' | 'external' | 'wrong-user'>;
-  onReceivedEmail: (trace: Trace, emailData: string) => void;
-  onSentEmail: (trace: Trace, userId: string, emailData: string) => void;
+  onAuth: (trace: Trace, username: string, password: string) => PR<{ userId: string }, SmtpPublicErrorCodes>;
+  onValidateReceiver: (trace: Trace, emailAddress: string) => PR<'our' | 'external' | 'wrong-user', SmtpPublicErrorCodes>;
+
+  // TODO: check how we validate no promise here
+  onReceivedEmail: (trace: Trace, emailData: string) => PR<undefined>;
+  onSentEmail: (trace: Trace, userId: string, emailData: string) => PR<undefined>;
 
   // Test only. Use onReceivedEmail and onSentEmail instead
   onData?: () => void;
@@ -46,124 +49,159 @@ export const defineSmtpServer = makeAsyncResultFunc(
 
       // Called when a client connects to the server
       onConnect: (session: SMTPServerSession, callback) =>
-        catchSmtpError(callback, async () => {
+        wrapSmtpHandler(callback, async () => {
           console.log(`SMTP connection from [${session.remoteAddress}]`);
           // Accept all connections
-          callback();
+          return makeSuccess(undefined);
         }),
 
       // Authentication handler
-      onAuth: async (auth, session, callback) => {
-        // Only allow authentication over TLS
-        if (!session.secure) {
-          return callback(new SmtpPublicError(538, 'Authentication requires TLS connection'));
-        }
+      onAuth: async (auth, session, callback) =>
+        wrapSmtpHandler(callback, async () => {
+          // Only allow authentication over TLS
+          if (!session.secure) {
+            return makeFailure<SmtpPublicErrorCodes>(
+              new ForbiddenError(trace, {
+                errorCode: 'require-tls',
+                message: 'Authentication requires TLS connection'
+              })
+            );
+          }
 
-        // Use the provided auth handler
-        const result = await onAuth(trace, auth.username ?? '', auth.password ?? '');
-        if (!result.ok) {
-          return callback(result.value);
-        }
+          // Use the provided auth handler
+          const result = await onAuth(trace, auth.username ?? '', auth.password ?? '');
+          if (!result.ok) {
+            return result;
+          }
 
-        // Pass userId as session.user
-        return callback(null, { user: result.value.userId });
-      },
+          // Pass userId as session.user
+          return makeSuccess({ user: result.value.userId });
+        }),
 
       // Called when client issues MAIL FROM command
       onMailFrom: (address, _session, callback) =>
-        catchSmtpError(callback, async () => {
+        wrapSmtpHandler(callback, async () => {
           console.log(`MAIL FROM: ${address.address}`);
           // Accept any sender (validation will be done downstream)
-          callback();
+          return makeSuccess(undefined);
         }),
 
       // Called when client issues RCPT TO command
       onRcptTo: (address, session, callback) =>
-        catchSmtpError(callback, async () => {
+        wrapSmtpHandler(callback, async () => {
           console.log(`RCPT TO: ${address.address}`);
 
           // For unauthenticated (incoming email), validate local receiver
           const validationResult = await onValidateReceiver(trace, address.address);
           if (!validationResult.ok) {
-            return callback(validationResult.value);
+            return validationResult;
           }
 
           switch (validationResult.value) {
             case 'our':
               // Recipient is valid
-              callback();
-              break;
+              return makeSuccess(undefined);
 
             case 'external':
               // If authenticated, it is an outgoing email
               if (session.user !== undefined && session.user !== '') {
-                callback();
-                return;
+                return makeSuccess(undefined);
               }
 
               // Not our domain
-              callback(new SmtpPublicError(550, `Relay denied: ${address.address} is not our domain`));
-              break;
+              return makeFailure(
+                new ForbiddenError(trace, {
+                  errorCode: 'relay-denied',
+                  message: `Relay denied: ${address.address} is not our domain`
+                })
+              );
 
             case 'wrong-user':
               // Our domain but user doesn't exist
-              callback(new SmtpPublicError(550, `User unknown: ${address.address} not found`));
-              break;
+              return makeFailure(
+                new NotFoundError(trace, {
+                  errorCode: 'user-not-found',
+                  message: `User unknown: ${address.address} not found`
+                })
+              );
 
             default:
-              // Handle unexpected validation result
-              console.error(`Unexpected validation result: ${validationResult as any}`);
-              callback(new SmtpPublicError(451, 'Internal server error'));
+              // Should not happen
+              return makeFailure(
+                new InternalStateError(trace, {
+                  message: `Unexpected validation result: ${validationResult as any}`
+                })
+              );
           }
         }),
 
       // Called when the client streams message data
       onData: (stream: SMTPServerDataStream, session, callback) =>
-        catchSmtpError(callback, async () => {
-          console.log('Receiving message data');
-          onData?.();
+        wrapSmtpHandler(
+          callback,
+          () =>
+            new Promise<Result<undefined, SmtpPublicErrorCodes>>((resolve) => {
+              console.log('Receiving message data');
+              // Trigger test callback
+              onData?.();
 
-          // Collect email data
-          const chunks: Buffer[] = [];
+              // Collect email data
+              const chunks: Buffer[] = [];
 
-          stream.on('data', (chunk: Buffer) => {
-            chunks.push(chunk);
-          });
+              stream.on('data', (chunk: Buffer) => {
+                chunks.push(chunk);
+              });
 
-          stream.on('end', async () => {
-            if (stream.sizeExceeded) {
-              return callback(new SmtpPublicError(522, 'Message exceeds fixed maximum message size'));
-            }
+              stream.on('end', async () => {
+                try {
+                  if (stream.sizeExceeded) {
+                    resolve(
+                      makeFailure(
+                        new ForbiddenError(trace, {
+                          errorCode: 'message-too-long',
+                          message: 'Message exceeds fixed maximum message size'
+                        })
+                      )
+                    );
+                    return;
+                  }
 
-            try {
-              // Combine chunks into a single buffer and convert to string
-              const emailData = Buffer.concat(chunks).toString();
-              console.log(`Processing email`);
+                  // Combine chunks into a single buffer and convert to string
+                  const emailData = Buffer.concat(chunks).toString();
+                  console.log(`Processing email`);
 
-              // Dispatch the email type
-              if (session.user !== undefined && session.user !== '') {
-                // User is authenticated = sending
-                onSentEmail(trace, session.user, emailData);
-              } else {
-                // No authentication = receiving
-                onReceivedEmail(trace, emailData);
-              }
+                  // Dispatch the email type
+                  if (session.user !== undefined && session.user !== '') {
+                    // User is authenticated = sending
+                    const { user } = session;
+                    spawnAsyncThread(trace, () => onSentEmail(trace, user, emailData));
+                  } else {
+                    // No authentication = receiving
+                    spawnAsyncThread(trace, () => onReceivedEmail(trace, emailData));
+                  }
 
-              console.log('Email processed successfully');
-              // Success
-              callback();
-            } catch (error) {
-              console.error('Error processing email:', error);
-              // Error processing email
-              callback(new Error(`Error processing email: TODO: {stringify error}`));
-            }
-          });
+                  console.log('Email processed successfully');
+                  // Success
+                  resolve(makeSuccess(undefined));
+                } catch (error) {
+                  // Convert
+                  resolve(makeFailure(new GeneralError(trace, error)));
+                }
+              });
 
-          stream.on('error', (error) => {
-            console.error('Stream error:', error);
-            callback(new SmtpPublicError(451, 'Error during message transfer'));
-          });
-        })
+              stream.on('error', (error) => {
+                console.error('Stream error:', error);
+                resolve(
+                  makeFailure(
+                    new InternalStateError(trace, {
+                      errorCode: 'stream-error',
+                      message: 'Error during message transfer'
+                    })
+                  )
+                );
+              });
+            })
+        )
     };
 
     const server = new SMTPServer(serverOptions);
@@ -176,3 +214,16 @@ export const defineSmtpServer = makeAsyncResultFunc(
     return makeSuccess(server);
   }
 );
+
+// TODO: Extract to an utility package
+function spawnAsyncThread(trace: Trace, handler: () => PR<undefined>) {
+  handler()
+    .catch((error) => {
+      return makeFailure(new GeneralError(trace, error));
+    })
+    .then((value) => {
+      if (!value.ok) {
+        // TODO: Log or something
+      }
+    });
+}

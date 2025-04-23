@@ -3,6 +3,7 @@ import { afterEach, describe, mock, test } from 'node:test';
 import { promisify } from 'node:util';
 
 import { expect } from 'expect';
+import { makeFailure, makeSuccess } from 'freedom-async';
 import { ForbiddenError } from 'freedom-common-errors';
 import { makeTrace } from 'freedom-contexts';
 import nodemailer from 'nodemailer';
@@ -40,13 +41,17 @@ async function spinOffServerStack({
 
   // Mocks
   const onAuth = mock.fn<SmtpServerParams['onAuth']>(async () => {
-    return { ok: true, value: { userId: 'the-user-id' } };
+    return makeSuccess({ userId: 'the-user-id' });
   });
   const onValidateReceiver = mock.fn<SmtpServerParams['onValidateReceiver']>(async () => {
-    return { ok: true, value: 'our' };
+    return makeSuccess('our' as const);
   });
-  const onReceivedEmail = mock.fn<SmtpServerParams['onReceivedEmail']>();
-  const onSentEmail = mock.fn<SmtpServerParams['onSentEmail']>();
+  const onReceivedEmail = mock.fn<SmtpServerParams['onReceivedEmail']>(async () => {
+    return makeSuccess(undefined);
+  });
+  const onSentEmail = mock.fn<SmtpServerParams['onSentEmail']>(async () => {
+    return makeSuccess(undefined);
+  });
 
   // Stage promises
   let resolveOnData: (() => void) | undefined;
@@ -67,11 +72,11 @@ async function spinOffServerStack({
     },
     onReceivedEmail: (trace, emailData) => {
       sideEffects.received.push(emailData.split('\r\n'));
-      onReceivedEmail(trace, emailData);
+      return onReceivedEmail(trace, emailData);
     },
     onSentEmail: (trace, userId, emailData) => {
       sideEffects.sent.push(emailData.split('\r\n'));
-      onSentEmail(trace, userId, emailData);
+      return onSentEmail(trace, userId, emailData);
     },
     onData: () => {
       resolveOnData!();
@@ -257,7 +262,7 @@ describe('defineSmtpServer', () => {
     test('[inbound.negative.user] Reject email from outside to our domain but wrong user', async () => {
       // Arrange
       const { client, sideEffects, onValidateReceiver } = await spinOffServerStack();
-      onValidateReceiver.mock.mockImplementationOnce(async () => ({ ok: true, value: 'wrong-user' }));
+      onValidateReceiver.mock.mockImplementationOnce(async () => makeSuccess('wrong-user' as const));
 
       // Act
       const clientResult = client.sendMail({
@@ -283,7 +288,7 @@ describe('defineSmtpServer', () => {
     test('[inbound.negative.domain] Reject email from outside to non-our domain', async () => {
       // Arrange
       const { client, sideEffects, onValidateReceiver } = await spinOffServerStack();
-      onValidateReceiver.mock.mockImplementationOnce(async () => ({ ok: true, value: 'external' }));
+      onValidateReceiver.mock.mockImplementationOnce(async () => makeSuccess('external' as const));
 
       // Act
       const clientResult = client.sendMail({
@@ -329,7 +334,7 @@ describe('defineSmtpServer', () => {
         if (!result) {
           throw new Error(`Unexpected email address: ${email}`);
         }
-        return { ok: true, value: result };
+        return makeSuccess(result);
       });
 
       // Act
@@ -529,7 +534,7 @@ describe('defineSmtpServer', () => {
               clientStartSecure,
               clientEnterTls
             });
-            onValidateReceiver.mock.mockImplementationOnce(async () => ({ ok: true, value: 'external' }));
+            onValidateReceiver.mock.mockImplementationOnce(async () => makeSuccess('external' as const));
 
             // Act
             const clientResult = client.sendMail({
@@ -579,7 +584,12 @@ describe('defineSmtpServer', () => {
       });
 
       onAuth.mock.mockImplementationOnce(async (trace): ReturnType<SmtpServerParams['onAuth']> => {
-        return { ok: false, value: new ForbiddenError(trace, { message: 'Invalid authentication' }) };
+        return makeFailure(
+          new ForbiddenError(trace, {
+            errorCode: 'invalid-credentials',
+            message: 'Invalid authentication'
+          })
+        );
       });
 
       // Act

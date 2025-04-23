@@ -1,8 +1,9 @@
-import type { PR } from 'freedom-async';
+import { makeFailure, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { NotFoundError } from 'freedom-common-errors';
 
 import * as config from '../../../config.ts';
-import { SmtpPublicError } from '../internal/types/SmtpPublicError.ts';
+import type { SmtpPublicErrorCodes } from '../internal/types/SmtpPublicErrorCodes.ts';
 import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 
 /**
@@ -14,12 +15,17 @@ import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
  */
 export const onValidateReceiver: SmtpServerParams['onValidateReceiver'] = makeAsyncResultFunc(
   [import.meta.filename],
-  async (_trace, emailAddress: string): PR<'our' | 'external' | 'wrong-user'> => {
+  async (_trace, emailAddress: string): PR<'our' | 'external' | 'wrong-user', SmtpPublicErrorCodes> => {
     // Get the domain part of the email
     const [localPart, domain] = emailAddress.split('@');
 
     if (!domain) {
-      throw new SmtpPublicError(550, `Malformed email address: '${emailAddress}'`);
+      return makeFailure(
+        new NotFoundError(_trace, {
+          errorCode: 'malformed-email-address',
+          message: `Malformed email address: '${emailAddress}'`
+        })
+      );
     }
 
     // Not our domain

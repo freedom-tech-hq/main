@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure } from 'freedom-async';
 import { ForbiddenError } from 'freedom-common-errors';
 
+import type { SmtpPublicErrorCodes } from '../internal/types/SmtpPublicErrorCodes.ts';
 import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 
 /**
@@ -14,9 +15,10 @@ import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
  */
 export const onAuth: SmtpServerParams['onAuth'] = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, _username: string, _password: string): PR<{ userId: string }> => {
+  async (trace, _username: string, _password: string): PR<{ userId: string }, SmtpPublicErrorCodes> => {
     return makeFailure(
       new ForbiddenError(trace, {
+        errorCode: 'forbidden',
         message: 'This server only accepts inbound mail. To send an email use Freedom Email app over a Syncable Store'
       })
     );

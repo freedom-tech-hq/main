@@ -14,7 +14,7 @@ import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 export const onSentEmail: SmtpServerParams['onSentEmail'] = makeAsyncResultFunc(
   [import.meta.filename],
   async (_trace, _userId: string, _emailData: string): PR<undefined> => {
-    // Note: this should be aligned with onAuth
+    // Note: this should be aligned with onAuth and thus never called
     throw new Error("Not implemented. We probably don't need it as the outgoing emails should come only from the store");
   }
 );
