@@ -1,21 +1,8 @@
 name: mail-host
 
 services:
+  # To be implemented as a separate configuration of DMS like 'delivery-host' is.
   #inbound-smtp-server:
-  #  build:
-  #    context: ./code/backends/freedom-mta-bridge
-  #    args:
-  #      - "MAIL_DOMAIN=$MAIL_DOMAIN"
-  #  ports:
-  #    - "25:25"  # SMTP
-  #  environment:
-  #    # Note: These variables do not work yet.
-  #    # See the comment in bridge_incoming.js (need an intermediate file to pass them through)
-  #    - MAIL_SERVER_HOST=mail-host
-  #    - MAIL_SERVER_PORT=3000
-  #  depends_on:
-  #    - mail-host
-  #  restart: unless-stopped
 
   freedom-host:
     build: .

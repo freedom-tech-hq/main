@@ -4,22 +4,19 @@ This deploys functional backend for Freedom Mail.
 
 Includes:
 
-- [MTA + bridge script](../../../backends/freedom-mta-bridge/README.md)
-- [freedom-mail-host](../../../backends/freedom-mail-host/README.md) 
+- [freedom-store-api-server](../../backends/freedom-store-api-server/README.md)
+- [freedom-mail-host](../../backends/freedom-mail-host/README.md) 
 
 ## Envs
 
-- Local deployment is supported.
-  - Requires GCP credentials. See [some.secrets.env.sample](envs/some.secrets.env.sample)
-- Cloud deployments.
-  - No limits.
-  - GCP credentials must not be set. Apply machine role with Terraform instead.
+- Local & cloud deployments are supported.
+- Requires credentials and env-specific settings. See [secrets sample](../../secrets/sample/3.1_mail-host/)
 
 ## Testing
 
 ### Seed
 
-Put [users.json](../../../backends/freedom-mail-host/src/__tests__/fixtures/users.json) in the bucket.
+Put [users.json](../../backends/freedom-mail-host/src/__tests__/fixtures/users.json) in the bucket.
 
 ### Use Test
 
