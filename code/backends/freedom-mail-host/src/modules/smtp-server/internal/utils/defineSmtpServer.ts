@@ -1,8 +1,9 @@
+import type { SMTPServerDataStream, SMTPServerOptions, SMTPServerSession } from 'smtp-server';
 import { SMTPServer } from 'smtp-server';
-import type { SMTPServerOptions, SMTPServerSession, SMTPServerDataStream } from 'smtp-server';
+
 import * as config from '../../../../config.ts';
-import { catchSmtpError } from './catchSmtpError.ts';
 import { SmtpPublicError } from '../types/SmtpPublicError.ts';
+import { catchSmtpError } from './catchSmtpError.ts';
 
 export type SmtpServerParams = {
   secureOnly: boolean;
@@ -13,7 +14,7 @@ export type SmtpServerParams = {
 
   // Test only. Use onReceivedEmail and onSentEmail instead
   onData?: () => void;
-}
+};
 
 /**
  * Creates and configures an SMTP server that only receives emails.
@@ -45,14 +46,12 @@ export function defineSmtpServer({
     size: config.SMTP_MAX_EMAIL_SIZE,
 
     // Called when a client connects to the server
-    onConnect: (
-      session: SMTPServerSession,
-      callback
-    ) => catchSmtpError(callback, async () => {
-      console.log(`SMTP connection from [${session.remoteAddress}]`);
-      // Accept all connections
-      callback();
-    }),
+    onConnect: (session: SMTPServerSession, callback) =>
+      catchSmtpError(callback, async () => {
+        console.log(`SMTP connection from [${session.remoteAddress}]`);
+        // Accept all connections
+        callback();
+      }),
 
     // Authentication handler
     onAuth: async (auth, session, callback) => {
@@ -73,106 +72,97 @@ export function defineSmtpServer({
     },
 
     // Called when client issues MAIL FROM command
-    onMailFrom: (
-      address,
-      _session,
-      callback
-    ) => catchSmtpError(callback, async () => {
-      console.log(`MAIL FROM: ${address.address}`);
-      // Accept any sender (validation will be done downstream)
-      callback();
-    }),
+    onMailFrom: (address, _session, callback) =>
+      catchSmtpError(callback, async () => {
+        console.log(`MAIL FROM: ${address.address}`);
+        // Accept any sender (validation will be done downstream)
+        callback();
+      }),
 
     // Called when client issues RCPT TO command
-    onRcptTo: (
-      address,
-      session,
-      callback
-    ) => catchSmtpError(callback, async () => {
-      console.log(`RCPT TO: ${address.address}`);
+    onRcptTo: (address, session, callback) =>
+      catchSmtpError(callback, async () => {
+        console.log(`RCPT TO: ${address.address}`);
 
-      // For unauthenticated (incoming email), validate local receiver
-      const validationResult = await onValidateReceiver(address.address);
+        // For unauthenticated (incoming email), validate local receiver
+        const validationResult = await onValidateReceiver(address.address);
 
-      switch (validationResult) {
-        case 'our':
-          // Recipient is valid
-          callback();
-          break;
-
-        case 'external':
-          // If authenticated, it is an outgoing email
-          if (session.user) {
+        switch (validationResult) {
+          case 'our':
+            // Recipient is valid
             callback();
-            return;
-          }
+            break;
 
-          // Not our domain
-          callback(new SmtpPublicError(550, `Relay denied: ${address.address} is not our domain`));
-          break;
+          case 'external':
+            // If authenticated, it is an outgoing email
+            if (session.user) {
+              callback();
+              return;
+            }
 
-        case 'wrong-user':
-          // Our domain but user doesn't exist
-          callback(new SmtpPublicError(550, `User unknown: ${address.address} not found`));
-          break;
+            // Not our domain
+            callback(new SmtpPublicError(550, `Relay denied: ${address.address} is not our domain`));
+            break;
 
-        default:
-          // Handle unexpected validation result
-          console.error(`Unexpected validation result: ${validationResult}`);
-          callback(new SmtpPublicError(451, 'Internal server error'));
-      }
-    }),
+          case 'wrong-user':
+            // Our domain but user doesn't exist
+            callback(new SmtpPublicError(550, `User unknown: ${address.address} not found`));
+            break;
+
+          default:
+            // Handle unexpected validation result
+            console.error(`Unexpected validation result: ${validationResult}`);
+            callback(new SmtpPublicError(451, 'Internal server error'));
+        }
+      }),
 
     // Called when the client streams message data
-    onData: (
-      stream: SMTPServerDataStream,
-      session,
-      callback
-    ) => catchSmtpError(callback, async () => {
-      console.log('Receiving message data');
-      onData?.();
+    onData: (stream: SMTPServerDataStream, session, callback) =>
+      catchSmtpError(callback, async () => {
+        console.log('Receiving message data');
+        onData?.();
 
-      // Collect email data
-      const chunks: Buffer[] = [];
+        // Collect email data
+        const chunks: Buffer[] = [];
 
-      stream.on('data', (chunk) => {
-        chunks.push(chunk);
-      });
+        stream.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
 
-      stream.on('end', async () => {
-        if (stream.sizeExceeded) {
-          return callback(new SmtpPublicError(522, "Message exceeds fixed maximum message size"));
-        }
-
-        try {
-          // Combine chunks into a single buffer and convert to string
-          const emailData = Buffer.concat(chunks).toString();
-          console.log(`Processing email`);
-
-          // Dispatch the email type
-          if (session.user) {
-            // User is authenticated = sending
-            onSentEmail(session.user, emailData);
-          } else {
-            // No authentication = receiving
-            onReceivedEmail(emailData);
+        stream.on('end', async () => {
+          if (stream.sizeExceeded) {
+            return callback(new SmtpPublicError(522, 'Message exceeds fixed maximum message size'));
           }
 
-          console.log('Email processed successfully');
-          // Success
-          callback();
-        } catch (error) {
-          console.error('Error processing email:', error);
-          // Error processing email
-          callback(new Error(`Error processing email: ${error}`));
-        }
-      });
+          try {
+            // Combine chunks into a single buffer and convert to string
+            const emailData = Buffer.concat(chunks).toString();
+            console.log(`Processing email`);
 
-      stream.on('error', (error) => {
-        console.error('Stream error:', error);
-        callback(new SmtpPublicError(451, 'Error during message transfer'));
-      });
-    }),
+            // Dispatch the email type
+            if (session.user) {
+              // User is authenticated = sending
+              onSentEmail(session.user, emailData);
+            } else {
+              // No authentication = receiving
+              onReceivedEmail(emailData);
+            }
+
+            console.log('Email processed successfully');
+            // Success
+            callback();
+          } catch (error) {
+            console.error('Error processing email:', error);
+            // Error processing email
+            callback(new Error(`Error processing email: ${error}`));
+          }
+        });
+
+        stream.on('error', (error) => {
+          console.error('Stream error:', error);
+          callback(new SmtpPublicError(451, 'Error during message transfer'));
+        });
+      })
   };
 
   const server = new SMTPServer(serverOptions);

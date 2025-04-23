@@ -4,7 +4,9 @@
  */
 
 import path from 'node:path';
+
 import { config as originalConfig, type DotenvConfigOptions } from '@dotenvx/dotenvx';
+
 import { from } from './from.ts';
 
 // Prevent esbuild from substituting process with build-time values
@@ -44,7 +46,7 @@ export function loadEnv(rootDir: string) {
     config({
       path: [path.join(rootDir, '.env.test')],
       strict: true,
-      logLevel: 'warn',
+      logLevel: 'warn'
     });
   } else {
     // Loading .env files in order of priority (highest to lowest)
@@ -56,15 +58,15 @@ export function loadEnv(rootDir: string) {
 
       // Included in git
       `.env.${nodeEnv}.defaults`,
-      '.env.defaults',
+      '.env.defaults'
       // The schema is usually .env + .env.local, but `.env` is often used in deployments
       // So choosing .env.defaults and .env respectively
     ];
 
     config({
-      path: envFiles.map(value => path.join(rootDir, value)),
+      path: envFiles.map((value) => path.join(rootDir, value)),
       ignore: ['MISSING_ENV_FILE'],
-      logLevel: 'info',
+      logLevel: 'info'
     });
   }
 

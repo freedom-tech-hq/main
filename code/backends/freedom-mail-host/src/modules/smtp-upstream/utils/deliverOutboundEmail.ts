@@ -1,7 +1,6 @@
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
 import type { StoredMail } from 'freedom-email-sync';
-
+import type { Transporter } from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 import * as config from '../../../config.ts';
 
@@ -33,6 +32,6 @@ export async function deliverOutboundEmail(mail: StoredMail): Promise<void> {
     cc: mail.cc,
     bcc: mail.bcc,
     subject: mail.subject,
-    text: mail.body,
+    text: mail.body
   });
 }

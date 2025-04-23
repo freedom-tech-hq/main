@@ -12,7 +12,7 @@ export async function processEmail2(
 
   // Mock
   const recipients: string[] = [];
-  for (const toItem of (parsedEmail.to ? (Array.isArray(parsedEmail.to) ? parsedEmail.to : [parsedEmail.to]) : [])) {
+  for (const toItem of parsedEmail.to ? (Array.isArray(parsedEmail.to) ? parsedEmail.to : [parsedEmail.to]) : []) {
     for (const emailAddress of toItem.value ?? []) {
       if (emailAddress.address) {
         recipients.push(emailAddress.address);
@@ -26,7 +26,7 @@ export async function processEmail2(
     await addIncomingEmail(trace, {
       rcpt: recipient,
       from: parsedEmail.from?.text ?? '',
-      to: Array.isArray(parsedEmail.to) ? parsedEmail.to.map(addr => addr.text).join(', ') : parsedEmail.to?.text ?? '',
+      to: Array.isArray(parsedEmail.to) ? parsedEmail.to.map((addr) => addr.text).join(', ') : (parsedEmail.to?.text ?? ''),
       subject: parsedEmail.subject ?? '',
       body: parsedEmail.text ?? '',
       timeMSec: Date.now()

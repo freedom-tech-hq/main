@@ -1,5 +1,5 @@
-import envVar from 'env-var';
 import type { Extensions } from 'env-var';
+import envVar from 'env-var';
 
 /**
  * Extends the env-var variable with custom validators

@@ -8,5 +8,5 @@ import { type ParsedMail, simpleParser } from 'mailparser';
  */
 export async function parseEmail(emailData: string): Promise<ParsedMail> {
   // The function itself is a stable contract. The implementation is 3rd party.
-  return simpleParser(emailData);
+  return await simpleParser(emailData);
 }

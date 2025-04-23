@@ -1,4 +1,5 @@
 import { subscribeOnOutboundEmails } from 'freedom-fake-email-service';
+
 import { processOutboundEmail } from './processOutboundEmail.ts';
 
 /**

@@ -1,5 +1,6 @@
-import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert';
+import { afterEach, describe, it } from 'node:test';
+
 import { testLoadEnv } from './fixtures/testLoadEnv.ts';
 
 // Store original values

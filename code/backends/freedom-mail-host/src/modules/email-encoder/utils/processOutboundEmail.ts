@@ -1,15 +1,13 @@
 import { makeTrace } from 'freedom-contexts';
-import { getOutboundMailById } from 'freedom-email-sync';
-import { moveOutboundMailToStorage } from 'freedom-email-sync';
+import { getOutboundMailById, moveOutboundMailToStorage } from 'freedom-email-sync';
 import type { OutboundEmailHandlerArgs } from 'freedom-fake-email-service';
+
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 
 /**
  * Pub/sub handler for outbound emails
  */
-export async function processOutboundEmail(
-  args: OutboundEmailHandlerArgs
-): Promise<void> {
+export async function processOutboundEmail(args: OutboundEmailHandlerArgs): Promise<void> {
   const trace = makeTrace('freedom-mail-host');
   const { access, emailIds } = args;
 

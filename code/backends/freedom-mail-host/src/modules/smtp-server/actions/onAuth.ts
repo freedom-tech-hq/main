@@ -9,8 +9,8 @@ import * as config from '../../../config.ts';
 export async function onAuth(username: string, _password: string): Promise<{ userId: string } | { error: string }> {
   // This is a mock implementation - we're only checking the domain, not the password
   // Check if the username ends with one of our domains
-  const isFromOurDomain = config.SMTP_OUR_DOMAINS.some(domain => username.endsWith('@' + domain));
-  
+  const isFromOurDomain = config.SMTP_OUR_DOMAINS.some((domain) => username.endsWith('@' + domain));
+
   if (isFromOurDomain) {
     return { userId: username };
   } else {

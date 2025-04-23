@@ -1,13 +1,15 @@
 import { afterEach, describe, mock, test } from 'node:test';
-import { SMTPServer } from 'smtp-server';
-import { PassThrough } from 'stream';
-import { defineSmtpServer } from '../defineSmtpServer.ts';
-import type { SmtpServerParams } from '../defineSmtpServer.ts';
-import nodemailer from 'nodemailer';
-import { expect } from 'expect';
-import * as config from '../../../../../config.ts';
-import SMTPConnection from 'nodemailer/lib/smtp-connection/index.js';
 import { promisify } from 'node:util';
+
+import { expect } from 'expect';
+import nodemailer from 'nodemailer';
+import SMTPConnection from 'nodemailer/lib/smtp-connection/index.js';
+import type { SMTPServer } from 'smtp-server';
+import { PassThrough } from 'stream';
+
+import * as config from '../../../../../config.ts';
+import type { SmtpServerParams } from '../defineSmtpServer.ts';
+import { defineSmtpServer } from '../defineSmtpServer.ts';
 
 const PORT = 3025; // Use a non-standard port for testing. TODO: consider also a runner ID
 let server: SMTPServer | undefined;
@@ -16,7 +18,7 @@ async function spinOffServerStack({
   serverSecureOnly = false,
   authenticateSender = false,
   clientStartSecure = false,
-  clientEnterTls = false,
+  clientEnterTls = false
 }: {
   serverSecureOnly?: boolean;
   authenticateSender?: boolean;
@@ -31,15 +33,15 @@ async function spinOffServerStack({
     // Emails are split into lines for granular control in expect().toStrictEqual()
     received: [] as string[][],
     sent: [] as string[][]
-  }
+  };
 
   // Mocks
   const onAuth = mock.fn<SmtpServerParams['onAuth']>(async () => {
     return { userId: 'the-user-id' };
-  })
+  });
   const onValidateReceiver = mock.fn<SmtpServerParams['onValidateReceiver']>(async () => {
     return 'our';
-  })
+  });
   const onReceivedEmail = mock.fn<SmtpServerParams['onReceivedEmail']>();
   const onSentEmail = mock.fn<SmtpServerParams['onSentEmail']>();
 
@@ -47,7 +49,7 @@ async function spinOffServerStack({
   let resolveOnData: (() => void) | undefined;
   const onDataPromise = new Promise<void>((resolve) => {
     resolveOnData = resolve;
-  })
+  });
 
   // Server
   server = defineSmtpServer({
@@ -98,10 +100,12 @@ async function spinOffServerStack({
     port: PORT,
     host: '127.0.0.1',
 
-    auth: authenticateSender ? {
-      user: 'sender@example.com',
-      pass: 'the-password'
-    } : undefined,
+    auth: authenticateSender
+      ? {
+          user: 'sender@example.com',
+          pass: 'the-password'
+        }
+      : undefined,
 
     // TLS options
     secure: clientStartSecure,
@@ -110,7 +114,7 @@ async function spinOffServerStack({
     tls: {
       // Accept self-signed certificates
       rejectUnauthorized: false
-    },
+    }
 
     // Uncomment to debug
     // logger: true,
@@ -129,8 +133,8 @@ async function spinOffServerStack({
     onDataPromise,
 
     // Assert
-    sideEffects,
-  }
+    sideEffects
+  };
 }
 
 describe('defineSmtpServer', () => {
@@ -156,19 +160,21 @@ describe('defineSmtpServer', () => {
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 0,
         validateReceiverCalledTimes: 1,
-        received: [[
-          'From: sender@example.com',
-          'To: recipient@example.com',
-          'Subject: Test Email',
-          expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
-          'Content-Transfer-Encoding: 7bit',
-          expect.stringMatching(/^Date: .+? \+0000$/),
-          'MIME-Version: 1.0',
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          'This is a test email to verify SMTP server functionality',
-          '',
-        ]],
+        received: [
+          [
+            'From: sender@example.com',
+            'To: recipient@example.com',
+            'Subject: Test Email',
+            expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
+            'Content-Transfer-Encoding: 7bit',
+            expect.stringMatching(/^Date: .+? \+0000$/),
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            'This is a test email to verify SMTP server functionality',
+            ''
+          ]
+        ],
         sent: []
       });
     });
@@ -189,19 +195,21 @@ describe('defineSmtpServer', () => {
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 0,
         validateReceiverCalledTimes: 1,
-        received: [[
-          'From: sender@example.com',
-          'Cc: recipient@example.com',
-          'Subject: Test Email',
-          expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
-          'Content-Transfer-Encoding: 7bit',
-          expect.stringMatching(/^Date: .+? \+0000$/),
-          'MIME-Version: 1.0',
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          'This is a test email to verify SMTP server functionality',
-          '',
-        ]],
+        received: [
+          [
+            'From: sender@example.com',
+            'Cc: recipient@example.com',
+            'Subject: Test Email',
+            expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
+            'Content-Transfer-Encoding: 7bit',
+            expect.stringMatching(/^Date: .+? \+0000$/),
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            'This is a test email to verify SMTP server functionality',
+            ''
+          ]
+        ],
         sent: []
       });
     });
@@ -222,19 +230,21 @@ describe('defineSmtpServer', () => {
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 0,
         validateReceiverCalledTimes: 1,
-        received: [[
-          'From: sender@example.com',
-          // Not visible in the email // 'Bcc: recipient@example.com',
-          'Subject: Test Email',
-          expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
-          'Content-Transfer-Encoding: 7bit',
-          expect.stringMatching(/^Date: .+? \+0000$/),
-          'MIME-Version: 1.0',
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          'This is a test email to verify SMTP server functionality',
-          '',
-        ]],
+        received: [
+          [
+            'From: sender@example.com',
+            // Not visible in the email // 'Bcc: recipient@example.com',
+            'Subject: Test Email',
+            expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
+            'Content-Transfer-Encoding: 7bit',
+            expect.stringMatching(/^Date: .+? \+0000$/),
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            'This is a test email to verify SMTP server functionality',
+            ''
+          ]
+        ],
         sent: []
       });
     });
@@ -250,7 +260,7 @@ describe('defineSmtpServer', () => {
         to: 'nonexistent@ourdomain.com',
         subject: 'Test Email',
         text: 'This is a test email to a non-existent user'
-      })
+      });
 
       // Assert
       await expect(clientResult).rejects.toThrow(
@@ -321,19 +331,19 @@ describe('defineSmtpServer', () => {
       await client.sendMail({
         from: 'sender@external-source.com',
         to: [
-          'valid-user@example.com',          // Our user
-          'invalid-user@example.com',        // Our domain, not a user
-          'user@external-domain.com'         // Not our domain
+          'valid-user@example.com', // Our user
+          'invalid-user@example.com', // Our domain, not a user
+          'user@external-domain.com' // Not our domain
         ],
         cc: [
-          'valid-cc-user@example.com',       // Our user
-          'invalid-cc-user@example.com',     // Our domain, not a user
-          'cc-user@external-domain.com'      // Not our domain
+          'valid-cc-user@example.com', // Our user
+          'invalid-cc-user@example.com', // Our domain, not a user
+          'cc-user@external-domain.com' // Not our domain
         ],
         bcc: [
-          'valid-bcc-user@example.com',      // Our user
-          'invalid-bcc-user@example.com',    // Our domain, not a user
-          'bcc-user@external-domain.com'     // Not our domain
+          'valid-bcc-user@example.com', // Our user
+          'invalid-bcc-user@example.com', // Our domain, not a user
+          'bcc-user@external-domain.com' // Not our domain
         ],
         subject: 'Mixed Recipients Test',
         text: 'This email has both valid and invalid recipients'
@@ -343,22 +353,24 @@ describe('defineSmtpServer', () => {
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 0,
         validateReceiverCalledTimes: 9,
-        received: [[
-          'From: sender@external-source.com',
-          "To: valid-user@example.com, invalid-user@example.com,",
-          " user@external-domain.com", // formatting, sic!
-          "Cc: valid-cc-user@example.com, invalid-cc-user@example.com,",
-          " cc-user@external-domain.com", // same here
-          'Subject: Mixed Recipients Test',
-          expect.stringMatching(/^Message-ID: <[0-9a-f-]+@external-source.com>$/),
-          'Content-Transfer-Encoding: 7bit',
-          expect.stringMatching(/^Date: .+? \+0000$/),
-          'MIME-Version: 1.0',
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          'This email has both valid and invalid recipients',
-          '',
-        ]],
+        received: [
+          [
+            'From: sender@external-source.com',
+            'To: valid-user@example.com, invalid-user@example.com,',
+            ' user@external-domain.com', // formatting, sic!
+            'Cc: valid-cc-user@example.com, invalid-cc-user@example.com,',
+            ' cc-user@external-domain.com', // same here
+            'Subject: Mixed Recipients Test',
+            expect.stringMatching(/^Message-ID: <[0-9a-f-]+@external-source.com>$/),
+            'Content-Transfer-Encoding: 7bit',
+            expect.stringMatching(/^Date: .+? \+0000$/),
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            'This email has both valid and invalid recipients',
+            ''
+          ]
+        ],
         sent: []
       });
     });
@@ -378,9 +390,7 @@ describe('defineSmtpServer', () => {
       });
 
       // Assert
-      await expect(clientResult).rejects.toThrow(
-        "Message failed: 522 Message exceeds fixed maximum message size"
-      );
+      await expect(clientResult).rejects.toThrow('Message failed: 522 Message exceeds fixed maximum message size');
 
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 0,
@@ -420,7 +430,7 @@ describe('defineSmtpServer', () => {
           to: ['recipient@example.com']
         },
         stream,
-        () => { }
+        () => {}
       );
 
       // Write partial data
@@ -461,9 +471,7 @@ describe('defineSmtpServer', () => {
       });
 
       // Assert
-      await expect(clientResult).rejects.toThrow(
-        "Can't send mail - all recipients were rejected: 451 Internal server error"
-      );
+      await expect(clientResult).rejects.toThrow("Can't send mail - all recipients were rejected: 451 Internal server error");
 
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 0,
@@ -499,57 +507,60 @@ describe('defineSmtpServer', () => {
         // Plain connection
         // On `allowInsecureAuth: true` it would be our exception: 'Invalid login: 538 Authentication requires TLS connection'
         // With `allowInsecureAuth: false` it is this:
-        [false, false, false, 'Invalid login: 538 Error: Must issue a STARTTLS command first'],
+        [false, false, false, 'Invalid login: 538 Error: Must issue a STARTTLS command first']
       ] as const) {
         test(
           [
             `${serverSecureOnly ? 'serverSecureOnly' : '-'}`,
             `${clientStartSecure ? 'clientStartSecure' : '-'}`,
-            `${clientEnterTls ? 'clientEnterTls' : '-'}`,
+            `${clientEnterTls ? 'clientEnterTls' : '-'}`
           ].join(' '),
           async () => {
-          // Arrange
-          const { client, sideEffects, onValidateReceiver } = await spinOffServerStack({
-            serverSecureOnly,
-            authenticateSender: true,
-            clientStartSecure,
-            clientEnterTls,
-          });
-          onValidateReceiver.mock.mockImplementationOnce(async () => 'external');
-
-          // Act
-          const clientResult = client.sendMail({
-            from: 'sender@example.com',
-            to: 'recipient@external-domain.com',
-            subject: 'Test Email',
-            text: 'This is a test email to an external domain'
-          });
-
-          // Assert
-          if (expectError) {
-            await expect(clientResult).rejects.toThrow(expectError);
-          } else {
-            await clientResult;
-            expect(sideEffects).toStrictEqual({
-              authCalledTimes: 1,
-              validateReceiverCalledTimes: 1,
-              received: [],
-              sent: [[
-                'From: sender@example.com',
-                'To: recipient@external-domain.com',
-                'Subject: Test Email',
-                expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
-                'Content-Transfer-Encoding: 7bit',
-                expect.stringMatching(/^Date: .+? \+0000$/),
-                'MIME-Version: 1.0',
-                'Content-Type: text/plain; charset=utf-8',
-                '',
-                'This is a test email to an external domain',
-                '',
-              ]]
+            // Arrange
+            const { client, sideEffects, onValidateReceiver } = await spinOffServerStack({
+              serverSecureOnly,
+              authenticateSender: true,
+              clientStartSecure,
+              clientEnterTls
             });
+            onValidateReceiver.mock.mockImplementationOnce(async () => 'external');
+
+            // Act
+            const clientResult = client.sendMail({
+              from: 'sender@example.com',
+              to: 'recipient@external-domain.com',
+              subject: 'Test Email',
+              text: 'This is a test email to an external domain'
+            });
+
+            // Assert
+            if (expectError) {
+              await expect(clientResult).rejects.toThrow(expectError);
+            } else {
+              await clientResult;
+              expect(sideEffects).toStrictEqual({
+                authCalledTimes: 1,
+                validateReceiverCalledTimes: 1,
+                received: [],
+                sent: [
+                  [
+                    'From: sender@example.com',
+                    'To: recipient@external-domain.com',
+                    'Subject: Test Email',
+                    expect.stringMatching(/^Message-ID: <[0-9a-f-]+@example.com>$/),
+                    'Content-Transfer-Encoding: 7bit',
+                    expect.stringMatching(/^Date: .+? \+0000$/),
+                    'MIME-Version: 1.0',
+                    'Content-Type: text/plain; charset=utf-8',
+                    '',
+                    'This is a test email to an external domain',
+                    ''
+                  ]
+                ]
+              });
+            }
           }
-        });
+        );
       }
     });
 
@@ -574,9 +585,7 @@ describe('defineSmtpServer', () => {
       });
 
       // Assert
-      await expect(clientResult).rejects.toThrow(
-        "Invalid login: 535 Invalid authentication"
-      );
+      await expect(clientResult).rejects.toThrow('Invalid login: 535 Invalid authentication');
 
       expect(sideEffects).toStrictEqual({
         authCalledTimes: 1,
