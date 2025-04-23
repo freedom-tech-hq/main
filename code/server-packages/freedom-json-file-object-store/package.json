@@ -1,12 +1,13 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
-    "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
-    "freedom-indexing-types": "0.0.0",
+    "freedom-object-store-types": "0.0.0",
     "freedom-paginated-data": "0.0.0",
+    "freedom-serialization": "0.0.0",
+    "freedom-task-queue": "0.0.0",
     "lodash-es": "4.17.21",
     "yaschema": "4.4.5"
   },
@@ -18,12 +19,11 @@
   },
   "type": "module",
   "main": "lib/exports.mjs",
-  "name": "freedom-object-store-types",
+  "name": "freedom-json-file-object-store",
   "nx": {
     "tags": [
       "type:lib",
-      "platform:server",
-      "platform:web"
+      "platform:server"
     ]
   },
   "private": true,
@@ -32,7 +32,7 @@
     "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
     "build:tests": "tsc",
     "clean": "rimraf ./coverage ./lib",
-    "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
+    "depcheck": "depcheck --ignores=freedom-build-tools,@types/multer || (code ./package.json && exit 1)",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",

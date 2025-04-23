@@ -160,6 +160,9 @@
             "path": "server-packages/freedom-file-system-syncable-store-backing"
         },
         {
+            "path": "server-packages/freedom-json-file-object-store"
+        },
+        {
             "path": "server-packages/freedom-server-api-handling"
         },
         {
@@ -170,6 +173,9 @@
         },
         {
             "path": "server-packages/freedom-server-trace-auth-token"
+        },
+        {
+            "path": "server-packages/freedom-sqlite-object-store"
         },
         {
             "path": "web-packages/freedom-indexeddb-object-store"
@@ -185,9 +191,6 @@
         },
         {
             "path": "web-worker-packages/freedom-email-tasks-web-worker"
-        },
-        {
-            "path": "server-packages/freedom-sqlite-object-store"
         }
     ],
     "settings": {},
