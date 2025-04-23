@@ -1,16 +1,28 @@
-import { startSubscriptions } from './modules/email-encoder/utils/startSubscriptions.ts';
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeTrace } from 'freedom-contexts';
+
 import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
+import { startSubscriptions } from './modules/syncable-store/utils/startSubscriptions.ts';
 
-async function main() {
-  // Start SMTP server for receiving emails directly
-  await startSmtpServer();
+const main = makeAsyncResultFunc(
+  [import.meta.filename],
+  async (trace): PR<void> => {
+    // Start SMTP server for receiving emails directly
+    await startSmtpServer(trace);
 
-  // Start subscriptions for processing outbound emails
-  await startSubscriptions();
-}
+    // Start subscriptions for processing outbound emails
+    await startSubscriptions(trace);
+
+    return makeSuccess(undefined);
+  },
+  {
+    onFailure: (error) => {
+      console.error('Failed to start servers:', error.cause ?? error);
+      process.exit(1);
+    }
+  }
+);
 
 // Entrypoint
-main().catch((error) => {
-  console.error('Failed to start servers:', error);
-  process.exit(1);
-});
+main(makeTrace('freedom-mail-host'));

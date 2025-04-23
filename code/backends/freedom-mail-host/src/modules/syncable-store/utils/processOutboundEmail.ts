@@ -1,4 +1,6 @@
-import { makeTrace } from 'freedom-contexts';
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { getOutboundMailById, moveOutboundMailToStorage } from 'freedom-email-sync';
 import type { OutboundEmailHandlerArgs } from 'freedom-fake-email-service';
 
@@ -6,9 +8,12 @@ import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 
 /**
  * Pub/sub handler for outbound emails
+ *
+ * @param trace - Trace for async operations
+ * @param args - Arguments for outbound email handling
+ * @returns PR resolving when all emails are processed
  */
-export async function processOutboundEmail(args: OutboundEmailHandlerArgs): Promise<void> {
-  const trace = makeTrace('freedom-mail-host');
+export const processOutboundEmail = makeAsyncResultFunc([import.meta.filename], async (trace, args: OutboundEmailHandlerArgs): PR<void> => {
   const { access, emailIds } = args;
 
   // Process each email ID
@@ -18,23 +23,24 @@ export async function processOutboundEmail(args: OutboundEmailHandlerArgs): Prom
     // Get the email content
     const outboundMail = await getOutboundMailById(trace, access, mailId);
     if (!outboundMail.ok) {
-      // Let errors propagate up
-      throw new Error(`Failed to get outbound mail ${mailId}: ${outboundMail.value}`);
+      return generalizeFailureResult(trace, outboundMail, 'not-found');
     }
 
     console.log('Before deliverOutboundEmail');
 
     // Send via SMTP upstream
-    await deliverOutboundEmail(outboundMail.value);
+    await deliverOutboundEmail(trace, outboundMail.value);
 
     console.log('Before moveOutboundMailToStorage');
 
     // Move to permanent storage after successful sending
     const moved = await moveOutboundMailToStorage(trace, access, mailId);
     if (!moved.ok) {
-      throw new Error(`Failed to move outbound mail ${mailId} to storage: ${moved.value}`);
+      return generalizeFailureResult(trace, moved, 'not-found');
     }
 
     console.log('Sent outbound email', mailId);
   }
-}
+
+  return makeSuccess(undefined);
+});

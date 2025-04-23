@@ -1,7 +1,10 @@
+import assert from 'node:assert';
 import { afterEach, describe, mock, test } from 'node:test';
 import { promisify } from 'node:util';
 
 import { expect } from 'expect';
+import { ForbiddenError } from 'freedom-common-errors';
+import { makeTrace } from 'freedom-contexts';
 import nodemailer from 'nodemailer';
 import SMTPConnection from 'nodemailer/lib/smtp-connection/index.js';
 import type { SMTPServer } from 'smtp-server';
@@ -37,10 +40,10 @@ async function spinOffServerStack({
 
   // Mocks
   const onAuth = mock.fn<SmtpServerParams['onAuth']>(async () => {
-    return { userId: 'the-user-id' };
+    return { ok: true, value: { userId: 'the-user-id' } };
   });
   const onValidateReceiver = mock.fn<SmtpServerParams['onValidateReceiver']>(async () => {
-    return 'our';
+    return { ok: true, value: 'our' };
   });
   const onReceivedEmail = mock.fn<SmtpServerParams['onReceivedEmail']>();
   const onSentEmail = mock.fn<SmtpServerParams['onSentEmail']>();
@@ -52,28 +55,30 @@ async function spinOffServerStack({
   });
 
   // Server
-  server = defineSmtpServer({
+  const serverResult = await defineSmtpServer(makeTrace(), {
     secureOnly: serverSecureOnly,
-    onAuth: (username, password) => {
+    onAuth: (trace, username, password) => {
       sideEffects.authCalledTimes++;
-      return onAuth(username, password);
+      return onAuth(trace, username, password);
     },
-    onValidateReceiver: (emailAddress) => {
+    onValidateReceiver: (trace, emailAddress) => {
       sideEffects.validateReceiverCalledTimes++;
-      return onValidateReceiver(emailAddress);
+      return onValidateReceiver(trace, emailAddress);
     },
-    onReceivedEmail: (emailData) => {
+    onReceivedEmail: (trace, emailData) => {
       sideEffects.received.push(emailData.split('\r\n'));
-      onReceivedEmail(emailData);
+      onReceivedEmail(trace, emailData);
     },
-    onSentEmail: (userId, emailData) => {
+    onSentEmail: (trace, userId, emailData) => {
       sideEffects.sent.push(emailData.split('\r\n'));
-      onSentEmail(userId, emailData);
+      onSentEmail(trace, userId, emailData);
     },
     onData: () => {
       resolveOnData!();
     }
   });
+  assert.ok(serverResult.ok);
+  server = serverResult.value;
 
   // Define a completion marker
   // Note: no need so far, because the connection is handled in real time.
@@ -252,7 +257,7 @@ describe('defineSmtpServer', () => {
     test('[inbound.negative.user] Reject email from outside to our domain but wrong user', async () => {
       // Arrange
       const { client, sideEffects, onValidateReceiver } = await spinOffServerStack();
-      onValidateReceiver.mock.mockImplementationOnce(async () => 'wrong-user');
+      onValidateReceiver.mock.mockImplementationOnce(async () => ({ ok: true, value: 'wrong-user' }));
 
       // Act
       const clientResult = client.sendMail({
@@ -278,7 +283,7 @@ describe('defineSmtpServer', () => {
     test('[inbound.negative.domain] Reject email from outside to non-our domain', async () => {
       // Arrange
       const { client, sideEffects, onValidateReceiver } = await spinOffServerStack();
-      onValidateReceiver.mock.mockImplementationOnce(async () => 'external');
+      onValidateReceiver.mock.mockImplementationOnce(async () => ({ ok: true, value: 'external' }));
 
       // Act
       const clientResult = client.sendMail({
@@ -319,12 +324,12 @@ describe('defineSmtpServer', () => {
       ]);
 
       // Mock the validation function to return appropriate responses
-      onValidateReceiver.mock.mockImplementation(async (email): Promise<'our' | 'external' | 'wrong-user'> => {
+      onValidateReceiver.mock.mockImplementation(async (_trace, email) => {
         const result = addressResponses.get(email);
         if (!result) {
           throw new Error(`Unexpected email address: ${email}`);
         }
-        return result;
+        return { ok: true, value: result };
       });
 
       // Act
@@ -423,6 +428,7 @@ describe('defineSmtpServer', () => {
 
       // Act
       // Connect and start sending the email
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- false positive
       await promisify(connection.connect).call(connection);
       connection.send(
         {
@@ -523,7 +529,7 @@ describe('defineSmtpServer', () => {
               clientStartSecure,
               clientEnterTls
             });
-            onValidateReceiver.mock.mockImplementationOnce(async () => 'external');
+            onValidateReceiver.mock.mockImplementationOnce(async () => ({ ok: true, value: 'external' }));
 
             // Act
             const clientResult = client.sendMail({
@@ -572,8 +578,8 @@ describe('defineSmtpServer', () => {
         authenticateSender: true
       });
 
-      onAuth.mock.mockImplementationOnce(async () => {
-        return { error: 'Invalid authentication' };
+      onAuth.mock.mockImplementationOnce(async (trace): ReturnType<SmtpServerParams['onAuth']> => {
+        return { ok: false, value: new ForbiddenError(trace, { message: 'Invalid authentication' }) };
       });
 
       // Act

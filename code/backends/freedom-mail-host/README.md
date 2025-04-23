@@ -10,6 +10,8 @@ Before going production:
 
 - Implement unified error wrapping
 - Remove excessive console.log()
+- Implement bounces on deliverOutboundEmail() failures
+- Implement retries on network errors in deliverOutboundEmail()
 
 ## Cloud Deployment
 

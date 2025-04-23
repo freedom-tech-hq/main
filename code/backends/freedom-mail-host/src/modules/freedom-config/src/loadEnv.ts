@@ -35,11 +35,11 @@ function config(options: DotenvConfigOptions) {
  *
  * For test environment, only .env.test is loaded
  *
- * @param rootDir The root directory where .env files are located
+ * @param rootDir - The root directory where .env files are located
  * @returns True if at least one .env file was loaded, false otherwise
  */
 export function loadEnv(rootDir: string) {
-  const nodeEnv = myProcess.env.NODE_ENV || 'development';
+  const nodeEnv = (myProcess.env.NODE_ENV ?? '') || 'development';
 
   if (nodeEnv === 'test') {
     // For test environment, only load .env.test to have deterministic results

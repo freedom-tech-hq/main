@@ -1,20 +1,30 @@
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 import { addIncomingEmail } from 'freedom-fake-email-service';
 
 import { parseEmail } from '../../formats/utils/parseEmail.ts';
 
-export async function processEmail2(
-  // TODO: recipients: string[],
-  pipedEmail: string
-): Promise<void> {
+/**
+ * Process an inbound email by parsing it and delivering to recipients
+ *
+ * @param trace - Trace for async operations
+ * @param pipedEmail - Raw email data as a string
+ * @returns PR resolving when the email is processed
+ */
+export const processInboundEmail = makeAsyncResultFunc([import.meta.filename], async (trace, pipedEmail: string): PR<void> => {
   // Parse the email
-  const parsedEmail = await parseEmail(pipedEmail);
+  const parsedEmailResult = await parseEmail(trace, pipedEmail);
+  if (!parsedEmailResult.ok) {
+    return parsedEmailResult;
+  }
+  const parsedEmail = parsedEmailResult.value;
 
   // Mock
   const recipients: string[] = [];
   for (const toItem of parsedEmail.to ? (Array.isArray(parsedEmail.to) ? parsedEmail.to : [parsedEmail.to]) : []) {
     for (const emailAddress of toItem.value ?? []) {
-      if (emailAddress.address) {
+      if (emailAddress.address !== undefined && emailAddress.address !== '') {
         recipients.push(emailAddress.address);
       }
     }
@@ -32,4 +42,6 @@ export async function processEmail2(
       timeMSec: Date.now()
     });
   }
-}
+
+  return makeSuccess(undefined);
+});

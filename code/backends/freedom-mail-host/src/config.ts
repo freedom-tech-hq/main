@@ -40,7 +40,7 @@ export const SMTP_HOST = env.get('SMTP_HOST').required().asString();
 
 /** TLS certificate path for SMTP server */
 export const SMTP_TLS_CERT_RAW =
-  env.get('SMTP_TLS_CERT_RAW').asString() ||
+  (env.get('SMTP_TLS_CERT_RAW').asString() ?? '') ||
   (env
     .get('SMTP_TLS_CERT')
     .required()
@@ -48,7 +48,7 @@ export const SMTP_TLS_CERT_RAW =
 
 /** TLS key path for SMTP server */
 export const SMTP_TLS_KEY_RAW =
-  env.get('SMTP_TLS_KEY_RAW').asString() ||
+  (env.get('SMTP_TLS_KEY_RAW').asString() ?? '') ||
   (env
     .get('SMTP_TLS_KEY')
     .required()

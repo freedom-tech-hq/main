@@ -1,19 +1,24 @@
-import * as config from '../../../config.ts';
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure } from 'freedom-async';
+import { ForbiddenError } from 'freedom-common-errors';
+
+import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 
 /**
  * Authentication handler for SMTP server
+ *
+ * @param trace - Trace for async operations
  * @param username - SMTP auth username
- * @param _password - SMTP auth password (unused in current implementation)
- * @returns Authentication result with userId or error
+ * @param password - SMTP auth password (unused in current implementation)
+ * @returns PR resolving to authentication result with userId
  */
-export async function onAuth(username: string, _password: string): Promise<{ userId: string } | { error: string }> {
-  // This is a mock implementation - we're only checking the domain, not the password
-  // Check if the username ends with one of our domains
-  const isFromOurDomain = config.SMTP_OUR_DOMAINS.some((domain) => username.endsWith('@' + domain));
-
-  if (isFromOurDomain) {
-    return { userId: username };
-  } else {
-    return { error: 'Authentication failed: Only users from our domains can authenticate' };
+export const onAuth: SmtpServerParams['onAuth'] = makeAsyncResultFunc(
+  [import.meta.filename],
+  async (trace, _username: string, _password: string): PR<{ userId: string }> => {
+    return makeFailure(
+      new ForbiddenError(trace, {
+        message: 'This server only accepts inbound mail. To send an email use Freedom Email app over a Syncable Store'
+      })
+    );
   }
-}
+);

@@ -1,3 +1,5 @@
+import type { PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { StoredMail } from 'freedom-email-sync';
 import type { Transporter } from 'nodemailer';
 import nodemailer from 'nodemailer';
@@ -20,12 +22,14 @@ const transporter: Transporter = nodemailer.createTransport({
 
 /**
  * Deliver an email to an external server.
- * Returns sucessfully if the email is accepted by the upstream server. In our setup this means that our delivery
+ * Returns successfully if the email is accepted by the upstream server. In our setup this means that our delivery
  * server has validated and queued it internally.
+ *
+ * @param _trace - Trace for async operations
  * @param mail - The stored mail object containing email data
- * @returns Promise that resolves when the email is sent
+ * @returns PR resolving when the email is accepted
  */
-export async function deliverOutboundEmail(mail: StoredMail): Promise<void> {
+export const deliverOutboundEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, mail: StoredMail): PR<undefined> => {
   await transporter.sendMail({
     from: mail.from,
     to: mail.to,
@@ -34,4 +38,5 @@ export async function deliverOutboundEmail(mail: StoredMail): Promise<void> {
     subject: mail.subject,
     text: mail.body
   });
-}
+  return makeSuccess(undefined);
+});

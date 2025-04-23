@@ -1,7 +1,7 @@
 import assert from 'node:assert';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, describe, it, mock } from 'node:test';
 
-import { testLoadEnv } from './fixtures/testLoadEnv.ts';
+import { loadEnv } from '../loadEnv.ts';
 
 // Store original values
 const originalEnv = { ...process.env };
@@ -27,11 +27,12 @@ describe('loadEnv', () => {
     };
 
     // Act
-    const result = testLoadEnv(testEnvDir);
+    const result = loadEnv(testEnvDir);
 
     // Assert
-    assert.strictEqual(result, true);
+    assert.strictEqual(typeof result.get, 'function'); // from() DSL constructor
     assert.strictEqual(process.env.TEST_VAR, 'test_value');
+    assert.strictEqual(process.env.NON_TEST_VAR, undefined);
   });
 
   it('should load .env files in correct priority order in non-test environment', () => {
@@ -41,10 +42,10 @@ describe('loadEnv', () => {
     };
 
     // Act
-    const result = testLoadEnv(devEnvDir);
+    const result = loadEnv(devEnvDir);
 
     // Assert
-    assert.strictEqual(result, true);
+    assert.strictEqual(typeof result.get, 'function'); // from() DSL constructor
 
     // The highest priority file should win for common variables
     assert.strictEqual(process.env.COMMON_VAR, 'from_env_local');
@@ -57,21 +58,23 @@ describe('loadEnv', () => {
 
   it('should return false and log warning when no .env files are found', () => {
     // Arrange
-    process.env = {
+    const arrangedEnv = {
       NODE_ENV: 'production'
+    };
+    process.env = {
+      ...arrangedEnv
     };
 
     // Capture console.warn output
-    let warningMessage = '';
-    console.warn = (message) => {
-      warningMessage = message;
-    };
+    const consoleWarnMock = mock.fn();
+    console.warn = consoleWarnMock;
 
     // Act
-    const result = testLoadEnv(emptyEnvDir);
+    const result = loadEnv(emptyEnvDir);
 
     // Assert
-    assert.strictEqual(result, false);
-    assert.strictEqual(warningMessage, "Env file hasn't been loaded");
+    assert.strictEqual(typeof result.get, 'function'); // from() DSL constructor
+    assert.deepStrictEqual(process.env, arrangedEnv); // Unchanged
+    assert.strictEqual(consoleWarnMock.mock.calls.length, 0);
   });
 });
