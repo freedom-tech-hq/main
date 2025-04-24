@@ -6,6 +6,8 @@ if [ "$(basename "$0")" = "deploy.sh" ]; then
   DEPLOY_SCRIPTS_DIR="$(realpath "$(dirname "$0")")"
 elif [ "$(basename "$0")" = "1_vars.sh" ]; then
   DEPLOY_SCRIPTS_DIR="$(realpath "$(dirname "$0")/..")"
+elif [ -n "$DEPLOY_SCRIPTS_DIR" ]; then
+  true # Calling in another context, but this var is already prepared
 else
   echo "Error: 1_vars.sh should be sourced from either deploy.sh or a user shell session"
   exit 1
