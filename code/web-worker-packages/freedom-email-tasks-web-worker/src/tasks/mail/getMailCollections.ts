@@ -2,7 +2,7 @@ import type { PR, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { MailCollection, MailCollectionGroup } from 'freedom-email-user';
-import { getCollectionIdsFromSaltedCollectionIds, getUserMailPaths, mailCollectionGroupIdInfo } from 'freedom-email-user';
+import { getUserMailPaths, mailCollectionGroupIdInfo } from 'freedom-email-user';
 import { getBundleAtPath } from 'freedom-syncable-store';
 import type { TypeOrPromisedType } from 'yaschema';
 
@@ -28,7 +28,7 @@ export const getMailCollections = makeAsyncResultFunc(
 
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);
-    const collectionIdsFromSaltedCollectionIds = getCollectionIdsFromSaltedCollectionIds(paths);
+    // const collectionIdsFromSaltedCollectionIds = getCollectionIdsFromSaltedCollectionIds(paths);
 
     const mailCollectionsBundle = await getBundleAtPath(trace, userFs, paths.collections.value);
     if (!mailCollectionsBundle.ok) {
@@ -40,21 +40,27 @@ export const getMailCollections = makeAsyncResultFunc(
       return collectionIds;
     }
 
-    const collections: MailCollection[] = [];
+    const collections: MailCollection[] = [
+      { collectionType: 'inbox', title: '', unreadCount: 0, customId: undefined },
+      { collectionType: 'sent', title: '', unreadCount: 0, customId: undefined },
+      { collectionType: 'archive', title: '', unreadCount: 0, customId: undefined },
+      { collectionType: 'spam', title: '', unreadCount: 0, customId: undefined },
+      { collectionType: 'trash', title: '', unreadCount: 0, customId: undefined }
+    ];
 
-    for (const collectionId of collectionIds.value) {
-      const collectionType = collectionIdsFromSaltedCollectionIds[collectionId];
-      if (collectionType === undefined) {
-        continue;
-      }
+    // for (const collectionId of collectionIds.value) {
+    //   const collectionType = collectionIdsFromSaltedCollectionIds[collectionId];
+    //   if (collectionType === undefined) {
+    //     continue;
+    //   }
 
-      collections.push({
-        collectionType,
-        title: '',
-        unreadCount: 0, // TODO: TEMP,
-        customId: undefined // TODO: TEMP
-      });
-    }
+    //   collections.push({
+    //     collectionType,
+    //     title: '',
+    //     unreadCount: 0, // TODO: TEMP,
+    //     customId: undefined // TODO: TEMP
+    //   });
+    // }
 
     // TODO: put custom collections into a separate group
     const groups: MailCollectionGroup[] = [];

@@ -18,7 +18,7 @@ export const pushBundle = makeAsyncResultFunc(
       path: SyncablePath;
       metadata: SyncableItemMetadata;
     }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const bundle = await createViaSyncBundleAtPath(trace, store, path, metadata);
     if (!bundle.ok) {
       if (bundle.value.errorCode === 'deleted') {
@@ -28,7 +28,7 @@ export const pushBundle = makeAsyncResultFunc(
       return generalizeFailureResult(
         trace,
         excludeFailureResult(bundle, 'deleted'),
-        ['conflict', 'not-found', 'untrusted', 'wrong-type'],
+        ['conflict', 'untrusted', 'wrong-type'],
         `Failed to push bundle file: ${path.toString()}`
       );
     }

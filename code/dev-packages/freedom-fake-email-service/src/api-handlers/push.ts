@@ -8,23 +8,27 @@ import { pushPath } from 'freedom-syncable-store';
 
 import { getOrCreateEmailAccessForUser } from '../utils/getOrCreateEmailAccessForUser.ts';
 
-export default makeHttpApiHandler([import.meta.filename], { api: api.push.POST }, async (trace, { input: { body: args } }) => {
-  const userId = emailUserIdInfo.checked(storageRootIdInfo.removePrefix(args.path.storageRootId));
-  if (userId === undefined) {
-    return makeFailure(new InputSchemaValidationError(trace, { message: 'Expected a valid EmailUserId' }));
+export default makeHttpApiHandler(
+  [import.meta.filename],
+  { api: api.push.POST, disableLam: 'not-found' },
+  async (trace, { input: { body: args } }) => {
+    const userId = emailUserIdInfo.checked(storageRootIdInfo.removePrefix(args.path.storageRootId));
+    if (userId === undefined) {
+      return makeFailure(new InputSchemaValidationError(trace, { message: 'Expected a valid EmailUserId' }));
+    }
+
+    const access = await getOrCreateEmailAccessForUser(trace, { userId });
+    if (!access.ok) {
+      return access;
+    }
+
+    const userFs = access.value.userFs;
+
+    const pushed = await pushPath(trace, userFs, args);
+    if (!pushed.ok) {
+      return pushed;
+    }
+
+    return makeSuccess({});
   }
-
-  const access = await getOrCreateEmailAccessForUser(trace, { userId });
-  if (!access.ok) {
-    return access;
-  }
-
-  const userFs = access.value.userFs;
-
-  const pushed = await pushPath(trace, userFs, args);
-  if (!pushed.ok) {
-    return pushed;
-  }
-
-  return makeSuccess({});
-});
+);

@@ -3,7 +3,6 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import type { MailId } from 'freedom-email-sync';
-import { mailIdInfo } from 'freedom-email-sync';
 import type { ConflictFreeDocumentEvaluator } from 'freedom-syncable-store-types';
 
 export const MAIL_COLLECTION_DOCUMENT_PREFIX = 'MAILCOLLECTION';
@@ -42,7 +41,8 @@ export class MailCollectionDocument extends ConflictFreeDocument<MailCollectionD
 
   // Field Access Methods
 
+  /** The IDs of the mail items that belong to this collection */
   public get mailIds() {
-    return this.generic.getArrayField<MailId>('mailIds', mailIdInfo.schema);
+    return this.generic.getSetField<MailId>('mailIds');
   }
 }

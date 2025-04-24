@@ -3,6 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncPullArgs, SyncPullResponse } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
 import { pullBundle } from './pullBundle.ts';
@@ -12,8 +13,7 @@ import { pullFolder } from './pullFolder.ts';
 export const pullPath = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore, args: SyncPullArgs): PR<SyncPullResponse, 'not-found'> => {
-    // This will commonly be not-found if the service doesn't yet have the data
-    const syncableItem = await getSyncableAtPath(trace, store, args.path);
+    const syncableItem = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, store, args.path));
     if (!syncableItem.ok) {
       return generalizeFailureResult(trace, syncableItem, ['deleted', 'untrusted', 'wrong-type']);
     }
@@ -28,5 +28,7 @@ export const pullPath = makeAsyncResultFunc(
       case 'bundle':
         return await pullBundle(trace, store, args);
     }
-  }
+  },
+  // This will commonly be not-found if the service doesn't yet have the data
+  { disableLam: 'not-found' }
 );

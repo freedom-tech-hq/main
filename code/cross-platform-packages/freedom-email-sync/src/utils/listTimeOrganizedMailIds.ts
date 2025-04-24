@@ -8,8 +8,8 @@ import { DateTime } from 'luxon';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';
-import type { TimeOrganizedMailStorage } from './getMailPaths.ts';
-import type { TimeOrganizedMailStorageUnitValue } from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
+import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
+import type { HourTimeObject } from './HourPrecisionTimeUnitValue.ts';
 import type { BottomUpMailStorageTraversalResult } from './traverseTimeOrganizedMailStorageFromTheBottomUp.ts';
 import { traverseTimeOrganizedMailStorageFromTheBottomUp } from './traverseTimeOrganizedMailStorageFromTheBottomUp.ts';
 
@@ -21,12 +21,12 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
   async (
     trace,
     access: EmailAccess,
-    { timeOrganizedMailStorage, pageToken }: PaginationOptions & { timeOrganizedMailStorage: TimeOrganizedMailStorage }
+    { timeOrganizedMailStorage, pageToken }: PaginationOptions & { timeOrganizedMailStorage: TimeOrganizedMailPaths }
   ): PR<Paginated<MailId>> => {
     const userFs = access.userFs;
 
     const offsetDate = new Date(pageToken !== undefined ? pageTokenInfo.removePrefix(pageToken) : Date.now());
-    const offset: TimeOrganizedMailStorageUnitValue['value'] = {
+    const offset: HourTimeObject = {
       year: offsetDate.getUTCFullYear(),
       month: offsetDate.getUTCMonth() + 1,
       day: offsetDate.getUTCDate(),

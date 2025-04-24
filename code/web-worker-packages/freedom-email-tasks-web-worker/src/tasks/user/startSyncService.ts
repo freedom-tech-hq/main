@@ -1,5 +1,13 @@
 import type { PR } from 'freedom-async';
-import { excludeFailureResult, makeAsyncResultFunc, makeFailure, uncheckedResult } from 'freedom-async';
+import {
+  allResults,
+  bestEffort,
+  excludeFailureResult,
+  makeAsyncResultFunc,
+  makeFailure,
+  makeSuccess,
+  uncheckedResult
+} from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import { getMailPaths } from 'freedom-email-sync';
@@ -8,16 +16,18 @@ import { makeApiFetchTask } from 'freedom-fetching';
 import type { RemoteAccessor } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
 import { getMutableFolderAtPath } from 'freedom-syncable-store';
+import type { TypeOrPromisedType } from 'yaschema';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
+import { routeMail } from '../../internal/tasks/mail/routeMail.ts';
 import { makeSyncServiceForUserSyncables } from '../../internal/tasks/storage/makeSyncServiceForUserSyncables.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
-import { startLocalFakeEmailServiceSyncing } from '../../internal/utils/startLocalFakeEmailServiceSyncing.ts';
+import { makeLocalFakeEmailServiceRemoteConnection } from '../../internal/utils/makeLocalFakeEmailServiceRemoteConnection.ts';
 
-const getPublicKeysForRemote = makeApiFetchTask([import.meta.filename], fakeEmailServiceApi.publicKeys.GET);
+const getPublicKeysForRemote = makeApiFetchTask([import.meta.filename, 'getPublicKeysForRemote'], fakeEmailServiceApi.publicKeys.GET);
 
-export const startSyncService = makeAsyncResultFunc([import.meta.filename], async (trace): PR<undefined> => {
+export const startSyncService = makeAsyncResultFunc([import.meta.filename], async (trace): PR<{ stop: () => TypeOrPromisedType<void> }> => {
   const credential = useActiveCredential(trace).credential;
 
   if (credential === undefined) {
@@ -30,19 +40,19 @@ export const startSyncService = makeAsyncResultFunc([import.meta.filename], asyn
   const mailPaths = await getMailPaths(userFs);
 
   // TODO: remove once real services are ready
-  const started = await startLocalFakeEmailServiceSyncing(trace);
-  if (!started.ok) {
-    return started;
+  const remoteConnection = await makeLocalFakeEmailServiceRemoteConnection(trace);
+  if (!remoteConnection.ok) {
+    return remoteConnection;
   }
 
-  const mockRemotes: { deviceNotificationClient: DeviceNotificationClient; remoteAccessor: RemoteAccessor } = started.value;
+  const mockRemotes: { deviceNotificationClient: DeviceNotificationClient; remoteAccessor: RemoteAccessor } = remoteConnection.value;
 
   const rootMetadata = await userFs.getMetadata(trace);
   if (!rootMetadata.ok) {
     return rootMetadata;
   }
 
-  const registered = await started.value.register(trace, {
+  const registered = await remoteConnection.value.register(trace, {
     creatorPublicKeys: credential.privateKeys.publicOnly(),
     storageRootId: storageRootIdInfo.make(credential.userId),
     metadata: { provenance: rootMetadata.value.provenance },
@@ -115,6 +125,11 @@ export const startSyncService = makeAsyncResultFunc([import.meta.filename], asyn
     }
   }
 
+  const startedRoutingMail = await routeMail(trace, credential);
+  if (!startedRoutingMail.ok) {
+    return startedRoutingMail;
+  }
+
   const syncService = await makeSyncServiceForUserSyncables(trace, {
     credential,
     shouldRecordLogs: false,
@@ -125,5 +140,26 @@ export const startSyncService = makeAsyncResultFunc([import.meta.filename], asyn
     return syncService;
   }
 
-  return await syncService.value.start(trace);
+  const startedRemoteConnectionContentChangeNotifications = await remoteConnection.value.start(trace);
+  if (!startedRemoteConnectionContentChangeNotifications.ok) {
+    return startedRemoteConnectionContentChangeNotifications;
+  }
+
+  const startedSyncService = await syncService.value.start(trace);
+  if (!startedSyncService.ok) {
+    return startedSyncService;
+  }
+
+  const stop = async () => {
+    await bestEffort(
+      trace,
+      allResults(trace, [
+        startedRoutingMail.value.stop(trace),
+        startedRemoteConnectionContentChangeNotifications.value.stop(trace),
+        syncService.value.stop(trace)
+      ])
+    );
+  };
+
+  return makeSuccess({ stop });
 });

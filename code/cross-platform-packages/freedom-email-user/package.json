@@ -15,6 +15,7 @@
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",
+    "luxon": "3.6.1",
     "yaschema": "4.4.5"
   },
   "devDependencies": {

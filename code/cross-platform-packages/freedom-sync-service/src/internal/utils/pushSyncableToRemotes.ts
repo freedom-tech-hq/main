@@ -1,7 +1,7 @@
-import type { PR } from 'freedom-async';
+import type { PR, TraceableError } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { objectKeys } from 'freedom-cast';
+import { Cast, objectKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
@@ -15,7 +15,7 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
     trace,
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
     { path, hash }: { path: SyncablePath; hash: Sha256Hash }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const remoteIds = objectKeys(syncService.getRemotesAccessors());
 
     if (remoteIds.length === 0) {
@@ -30,13 +30,22 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
 
     const onSuccess = shouldSyncWithAllRemotes.value ? 'continue' : 'stop';
 
+    let lastNotFoundError: TraceableError<'not-found'> | undefined;
     const pushed = await allResultsMappedSkipFailures(
       trace,
       remoteIds,
-      { maxConcurrency: 1, onSuccess, skipErrorCodes: ['generic'] },
-      async (trace, remoteId): PR<'ok'> => {
+      {
+        _errorCodeType: Cast<'not-found'>(),
+        maxConcurrency: 1,
+        onSuccess,
+        skipErrorCodes: ['generic', 'not-found']
+      },
+      async (trace, remoteId): PR<'ok', 'not-found'> => {
         const pushed = await pushSyncableToRemote(trace, { store, syncService }, { remoteId, path, hash });
         if (!pushed.ok) {
+          if (pushed.value.errorCode === 'not-found') {
+            lastNotFoundError = pushed.value;
+          }
           return pushed;
         }
 
@@ -48,10 +57,16 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
     }
 
     if (!pushed.value.includes('ok')) {
-      // If there are remotes setup and syncing fails for all of them, that's not ok
-      return makeFailure(new InternalStateError(trace, { message: `Failed to push ${path.toString()} to any remotes` }));
+      if (lastNotFoundError !== undefined) {
+        // If one of the syncable's parents aren't found on at least one remote, we'll assume it doesn't exist on any remotes
+        return makeFailure(lastNotFoundError);
+      } else {
+        // If there are remotes setup and syncing fails for all of them, that's not ok
+        return makeFailure(new InternalStateError(trace, { message: `Failed to push ${path.toString()} to any remotes` }));
+      }
     }
 
     return makeSuccess(undefined);
-  }
+  },
+  { disableLam: 'not-found' }
 );

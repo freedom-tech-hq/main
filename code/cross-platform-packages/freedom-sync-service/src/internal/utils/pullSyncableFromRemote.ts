@@ -73,7 +73,8 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
     }
 
     return makeSuccess(undefined);
-  }
+  },
+  { disableLam: 'not-found' }
 );
 
 // Helpers
@@ -117,7 +118,12 @@ const onBundlePulled = makeAsyncResultFunc(
     }
 
     // Pushing any missing content to the remote
-    return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, fwd);
+    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, fwd);
+    if (!pushed.ok) {
+      return generalizeFailureResult(trace, pushed, 'not-found');
+    }
+
+    return makeSuccess(undefined);
   }
 );
 
@@ -153,7 +159,12 @@ const onFolderPulled = makeAsyncResultFunc(
     }
 
     // Pushing any missing content to the remote
-    return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: folder }, fwd);
+    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: folder }, fwd);
+    if (!pushed.ok) {
+      return generalizeFailureResult(trace, pushed, 'not-found');
+    }
+
+    return makeSuccess(undefined);
   }
 );
 

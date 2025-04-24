@@ -1,14 +1,10 @@
 import type { PR, Result } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { allResultsMappedSkipFailures, excludeFailureResult, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { MailId, StoredMail } from 'freedom-email-sync';
-import { mailIdInfo, storedMailSchema } from 'freedom-email-sync';
-import type { CollectionLikeId, MailThread } from 'freedom-email-user';
-import { getUserMailPaths } from 'freedom-email-user';
-import { extractUnmarkedSyncableId } from 'freedom-sync-types';
-import { getBundleAtPath, getJsonFromFile } from 'freedom-syncable-store';
+import type { MailId } from 'freedom-email-sync';
+import type { CollectionLikeId, EmailCredential, MailThread } from 'freedom-email-user';
+import { getCollectionDoc, getMailById, mailCollectionTypes } from 'freedom-email-user';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -20,8 +16,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    // TODO: TEMP
-    _collectionId: CollectionLikeId,
+    collectionId: CollectionLikeId,
     isConnected: () => TypeOrPromisedType<boolean>,
     onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
@@ -33,103 +28,115 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
-
-    const nowDate = new Date();
-    // TODO: temp this should load progressively backwards
-    const mailStorageBundlePath = paths.storage.year(nowDate).month.day.hour;
-    const mailStorageBundle = await getBundleAtPath(trace, userFs, mailStorageBundlePath.value);
-    if (!mailStorageBundle.ok) {
-      return generalizeFailureResult(trace, mailStorageBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
+    const collectionType = mailCollectionTypes.checked(collectionId);
+    if (collectionType === undefined || collectionType === 'custom') {
+      // TODO: TEMP
+      return makeSuccess({ type: 'mail-added' as const, threads: [] });
     }
 
-    const removeItemAddedListener = userFs.addListener('itemAdded', async ({ path }) => {
-      // TODO: TEMP
-      if (path.startsWith(mailStorageBundle.value.path)) {
-        const mailId = mailIdInfo.checked(path.ids.map(extractUnmarkedSyncableId).find((id) => mailIdInfo.is(id)) ?? '');
-        if (mailId === undefined) {
-          return;
-        }
-
-        const mailPath = (await mailStorageBundlePath.mailId(mailId)).detailed;
-        const storedMail = await getJsonFromFile(trace, userFs, mailPath, storedMailSchema);
-        if (!storedMail.ok) {
-          return;
-        }
-
-        await onData(
-          makeSuccess({
-            type: 'mail-added' as const,
-            threads: [
-              {
-                id: mailId,
-                from: storedMail.value.from,
-                to: storedMail.value.to,
-                subject: storedMail.value.subject,
-                body: storedMail.value.body,
-                timeMSec: storedMail.value.timeMSec,
-                numMessages: 1,
-                numUnread: 1
-              } satisfies MailThread
-            ]
-          })
-        );
+    // TODO: traverse backwards also
+    const collectionDoc = await getCollectionDoc(trace, access, { collectionType, date: new Date(), watch: true });
+    if (!collectionDoc.ok) {
+      if (collectionDoc.value.errorCode === 'deleted' || collectionDoc.value.errorCode === 'not-found') {
+        // TODO: TEMP
+        return makeSuccess({ type: 'mail-added' as const, threads: [] });
       }
+
+      return generalizeFailureResult(trace, excludeFailureResult(collectionDoc, 'deleted', 'not-found'), [
+        'format-error',
+        'untrusted',
+        'wrong-type'
+      ]);
+    }
+
+    // TODO: also need to monitor the storage system in case new collection docs are created
+
+    let mailIds = Array.from(collectionDoc.value.document.mailIds.iterator()).sort().reverse();
+
+    const removeDidApplyDeltasListener = collectionDoc.value.addListener('didApplyDeltas', async () => {
+      const unusedOldMailIds = new Set(mailIds);
+
+      const newMailIds = Array.from(collectionDoc.value.document.mailIds.iterator()).sort().reverse();
+
+      const addedMailIds = new Set<MailId>();
+      for (const mailId of newMailIds) {
+        if (unusedOldMailIds.has(mailId)) {
+          unusedOldMailIds.delete(mailId);
+        } else {
+          addedMailIds.add(mailId);
+        }
+      }
+
+      if (unusedOldMailIds.size > 0) {
+        onData({ ok: true, value: { type: 'mail-removed' as const, ids: Array.from(unusedOldMailIds) } });
+      }
+
+      if (addedMailIds.size > 0) {
+        const threads = await getThreadsForMailIds(trace, credential, Array.from(addedMailIds));
+        if (!threads.ok) {
+          return;
+        }
+
+        onData({ ok: true, value: { type: 'mail-added' as const, threads: threads.value } });
+      }
+
+      mailIds = newMailIds;
     });
 
     // Periodically checking if the connection is still active
     const checkConnectionInterval = setInterval(async () => {
       if (!(await isConnected())) {
         clearInterval(checkConnectionInterval);
-        removeItemAddedListener();
+        removeDidApplyDeltasListener();
+        collectionDoc.value.stopWatching();
       }
     }, ONE_SEC_MSEC);
 
-    const mailIds = await mailStorageBundle.value.getIds(trace, { type: 'bundle' });
-    if (!mailIds.ok) {
-      return mailIds;
+    const threads = await getThreadsForMailIds(trace, credential, mailIds);
+    if (!threads.ok) {
+      return threads;
     }
 
-    const storedMailById: Partial<Record<MailId, StoredMail>> = {};
-    const storedMails = await allResultsMapped(trace, mailIds.value, {}, async (trace, id): PR<undefined> => {
-      const mailId = extractUnmarkedSyncableId(id);
-      if (!mailIdInfo.is(mailId)) {
+    return makeSuccess({ type: 'mail-added' as const, threads: threads.value });
+  }
+);
+
+// Helpers
+
+const getThreadsForMailIds = makeAsyncResultFunc(
+  [import.meta.filename, 'getThreadsForMailIds'],
+  async (trace, credential: EmailCredential, mailIds: MailId[]): PR<MailThread[]> => {
+    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+
+    const threads: MailThread[] = [];
+    const storedMails = await allResultsMappedSkipFailures(
+      trace,
+      mailIds,
+      { skipErrorCodes: ['not-found'] },
+      async (trace, mailId): PR<undefined, 'not-found'> => {
+        const storedMail = await getMailById(trace, access, mailId);
+        if (!storedMail.ok) {
+          return generalizeFailureResult(trace, storedMail, 'not-found');
+        }
+
+        threads.push({
+          id: mailId,
+          from: storedMail.value.from,
+          to: storedMail.value.to,
+          subject: storedMail.value.subject,
+          body: storedMail.value.body,
+          timeMSec: storedMail.value.timeMSec,
+          numMessages: 1,
+          numUnread: 1
+        });
+
         return makeSuccess(undefined);
       }
-
-      const storedMail = await getJsonFromFile(trace, userFs, (await mailStorageBundlePath.mailId(mailId)).detailed, storedMailSchema);
-      if (!storedMail.ok) {
-        return generalizeFailureResult(trace, storedMail, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
-      }
-
-      storedMailById[mailId] = storedMail.value;
-
-      return makeSuccess(undefined);
-    });
+    );
     if (!storedMails.ok) {
       return storedMails;
     }
 
-    const threads: MailThread[] = [];
-
-    for (const [mailId, storedMail] of objectEntries(storedMailById)) {
-      if (storedMail === undefined) {
-        continue;
-      }
-
-      threads.push({
-        id: mailId,
-        from: storedMail.from,
-        to: storedMail.to,
-        subject: storedMail.subject,
-        body: storedMail.body,
-        timeMSec: storedMail.timeMSec,
-        numMessages: 1,
-        numUnread: 1
-      });
-    }
-
-    return makeSuccess({ type: 'mail-added' as const, threads });
+    return makeSuccess(threads);
   }
 );

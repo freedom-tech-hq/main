@@ -27,4 +27,4 @@ export const syncPushArgsSchema = schema.allOf(
 );
 export type SyncPushArgs = typeof syncPushArgsSchema.valueType;
 
-export type SyncPusher = PRFunc<undefined, never, [SyncPushArgs]>;
+export type SyncPusher = PRFunc<undefined, 'not-found', [SyncPushArgs]>;
