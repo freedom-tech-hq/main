@@ -2,8 +2,9 @@ import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { getOutboundMailById, moveOutboundMailToStorage } from 'freedom-email-sync';
-import type { OutboundEmailHandlerArgs } from 'freedom-fake-email-service';
+import { addIncomingEmail, type OutboundEmailHandlerArgs } from 'freedom-fake-email-service';
 
+import * as config from '../../../config.ts';
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 
 /**
@@ -27,11 +28,47 @@ export const processOutboundEmail = makeAsyncResultFunc(
       if (!outboundMail.ok) {
         return generalizeFailureResult(trace, outboundMail, 'not-found');
       }
+      const mail = outboundMail.value;
 
-      DEV: debugTopic('SMTP', (log) => log(`Before deliverOutboundEmail`));
+      // TODO: Validate the email, ensure our users do not forge their 'From' and other
 
-      // Send via SMTP upstream
-      await deliverOutboundEmail(trace, outboundMail.value);
+      // Separate internal and external recipients
+      const allRecipients = new Set<string>([
+        // TODO: Revise the format. 'TO' is not an array of strings in the mail itself,
+        //  but it should be an array of plain email addresses in the envelope
+        ...(mail.to ?? []),
+        ...(mail.cc ?? []),
+        ...(mail.bcc ?? [])
+      ]);
+
+      const internalRecipients: string[] = [];
+      const externalRecipients: string[] = [];
+      for (const recipient of allRecipients) {
+        const [, domain] = recipient.split('@');
+        if (domain && config.SMTP_OUR_DOMAINS.includes(domain)) {
+          internalRecipients.push(recipient);
+        } else {
+          externalRecipients.push(recipient);
+        }
+      }
+
+      // Internal recipients
+      for (const recipient of internalRecipients) {
+        DEV: debugTopic('SMTP', (log) => log(`Processing internal recipient: ${recipient}`));
+
+        await addIncomingEmail(trace, recipient, mail);
+      }
+
+      // External recipients
+      if (externalRecipients.length > 0) {
+        DEV: debugTopic('SMTP', (log) => log(`Processing ${externalRecipients.length} external recipients`));
+
+        // Post to SMTP upstream
+        await deliverOutboundEmail(trace, mail, {
+          from: mail.from,
+          to: externalRecipients.join(',')
+        });
+      }
 
       DEV: debugTopic('SMTP', (log) => log(`Before moveOutboundMailToStorage`));
 

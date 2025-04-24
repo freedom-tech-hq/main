@@ -8,11 +8,7 @@ import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUs
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    recipientEmail: string,
-    mail: StoredMail
-  ): PR<undefined> => {
+  async (trace, recipientEmail: string, mail: StoredMail): PR<undefined> => {
     const userResult = await findUserByEmail(trace, recipientEmail);
     if (!userResult.ok) {
       return generalizeFailureResult(trace, userResult, 'not-found');

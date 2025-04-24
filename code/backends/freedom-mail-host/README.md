@@ -10,9 +10,11 @@ Before going production:
 
 + Implement unified error wrapping
 + Remove excessive console.log()
-- Implement bounces on deliverOutboundEmail() failures
+- Find unhandled async results
+- Do not crash the process on processOutboundEmail() exceptions
 - Implement retries on network errors in deliverOutboundEmail()
 - Get rid of `freedom-fake-email-service` dependency
+- Implement bounces on deliverOutboundEmail() failures
 
 ## Cloud Deployment
 
