@@ -5,16 +5,20 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import expressWs from 'express-ws';
-import { finalizeApiHandlerRegistrations } from 'express-yaschema-api-handler';
+import {
+  addYaschemaApiExpressContextAccessorToExpress,
+  finalizeApiHandlerRegistrations,
+  makeYaschemaApiExpressContext
+} from 'express-yaschema-api-handler';
 import { inline, log, makeAsyncFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import { StatusCodes } from 'http-status-codes';
 
 import registerDefaultApiHandlers from './api-handlers/index.ts';
-import type { ExpressWithWS } from './types/ExpressWithWs.ts';
+import type { MailServiceExpress } from './types/MailServiceExpress.ts';
 
-export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace: Trace): Promise<ExpressWithWS> => {
-  const app = express();
+export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace: Trace): Promise<MailServiceExpress> => {
+  const app = addYaschemaApiExpressContextAccessorToExpress(express() as MailServiceExpress, makeYaschemaApiExpressContext());
 
   const CORS_ORIGINS = process.env.CORS_ORIGINS;
 
@@ -26,24 +30,23 @@ export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace
   app.use(bodyParser.urlencoded({ extended: true }));
 
   expressWs(app);
-  const appWithWs = app as ExpressWithWS;
 
-  const registerApiHandlers = inline((): ((app: ExpressWithWS) => Promise<any>) => {
+  const registerApiHandlers = inline((): ((app: MailServiceExpress) => Promise<any>) => {
     log().info?.(trace, 'Registering API handlers');
 
-    return (appWithWs: ExpressWithWS) => registerDefaultApiHandlers(appWithWs);
+    return (appWithWs: MailServiceExpress) => registerDefaultApiHandlers(appWithWs);
   });
 
-  await registerApiHandlers(appWithWs);
+  await registerApiHandlers(app);
 
   log().info?.(trace, 'Finalizing API handlers');
 
-  finalizeApiHandlerRegistrations();
+  finalizeApiHandlerRegistrations({ context: app.getYaschemaApiExpressContext?.() });
 
   app.all(/.*/, (req, res, _next) => {
     log().debug?.(trace, `Unhandled request encountered for path: ${req.path}`);
     res.status(StatusCodes.NOT_FOUND).send('Not found');
   });
 
-  return appWithWs;
+  return app;
 });

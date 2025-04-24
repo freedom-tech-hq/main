@@ -5,6 +5,7 @@ import https from 'node:https';
 import process from 'node:process';
 
 import { log, makeAsyncFunc } from 'freedom-async';
+import { getOrCreateServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
 
 import { makeExpressApp } from './makeExpressApp.ts';
 import { startServer } from './startServer.ts';
@@ -22,5 +23,9 @@ export const startHttpsRestServer = makeAsyncFunc([import.meta.filename], async 
 
   const app = await makeExpressApp(trace);
 
-  return await startServer(trace, https.createServer({ key, cert }, app));
+  const httpApiHandlerServiceContext = getOrCreateServiceContext(app.getYaschemaApiExpressContext?.());
+
+  return await traceServiceContextProvider(trace, httpApiHandlerServiceContext, (trace) =>
+    startServer(trace, https.createServer({ key, cert }, app))
+  );
 });

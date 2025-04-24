@@ -8,7 +8,7 @@ import { attachToTrace, makeTrace } from 'freedom-contexts';
 import { LogJson } from 'freedom-logging-types';
 import { authTokenProvider } from 'freedom-server-trace-auth-token';
 import { disableLam as disableLamProvider } from 'freedom-trace-logging-and-metrics';
-import { makeServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
+import { getOrCreateServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
 import { StatusCodes } from 'http-status-codes';
 import type { AnyBody, AnyHeaders, AnyParams, AnyQuery, AnyStatus, HttpApi, OptionalIfPossiblyUndefined } from 'yaschema-api';
 
@@ -92,8 +92,10 @@ export const makeHttpApiHandler =
       const start = performance.now();
       const resolveDurationTracking = metricsCollector()?.trackDuration({ id: `server:api:${api.name}` });
 
+      const httpApiHandlerServiceContext = getOrCreateServiceContext(app.getYaschemaApiExpressContext?.());
+
       const trace = makeTrace(...idStack);
-      await traceServiceContextProvider(trace, makeServiceContext(app.getYaschemaApiExpressContext?.()), (trace) =>
+      await traceServiceContextProvider(trace, httpApiHandlerServiceContext, (trace) =>
         callAsyncFunc(trace, options, async (trace) => {
           express.res.setHeader('X-Trace-Id', trace.traceId);
 

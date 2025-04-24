@@ -3,9 +3,10 @@ import 'dotenv/config';
 import type http from 'node:http';
 
 import { shutdownWsHandlers } from 'express-yaschema-ws-api-handler';
-import { callAsyncFunc, log, makeAsyncFunc } from 'freedom-async';
-import { makeSubTrace } from 'freedom-contexts';
-import { hasMoreToDoSoon, waitForDoSoons } from 'freedom-do-soon';
+import type { PR } from 'freedom-async';
+import { log, makeAsyncFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { doSoon, hasMoreToDoSoon, waitForDoSoons } from 'freedom-do-soon';
+import { startExpressServer } from 'freedom-server-api-handling';
 import { defaultServiceContext } from 'freedom-trace-service-context';
 import { once } from 'lodash-es';
 
@@ -13,60 +14,39 @@ import { createServerPrivateKeysIfNeeded } from './utils/createServerPrivateKeys
 
 export const startServer = makeAsyncFunc(
   [import.meta.filename],
-  async (trace, server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>) => {
-    const PORT = Number(process.env.PORT);
+  async (
+    trace,
+    server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
+    { port = Number(process.env.PORT) }: { port?: number } = {}
+  ): PR<{ shutDown: () => Promise<void> }> => {
+    await uncheckedResult(createServerPrivateKeysIfNeeded(trace));
 
-    // eslint-disable-next-line no-async-promise-executor
-    return await new Promise<() => Promise<void>>(async (resolveServerStartUp, rejectServerStartUp) => {
-      try {
-        const createdPrivateKeys = await createServerPrivateKeysIfNeeded(trace);
-        if (!createdPrivateKeys.ok) {
-          rejectServerStartUp(createdPrivateKeys.value);
-          return;
-        }
-
-        const startedServer = server.listen(PORT, () => {
-          log().info?.(trace, `Server now listening on port ${PORT}`);
-
-          const shutDown = once(async () => {
-            log().info?.(trace, 'SIGTERM - stopping server');
-
-            const shutdownWsHandlersPromise = shutdownWsHandlers();
-
-            return await new Promise<void>((resolveServerShutDown) => {
-              startedServer.close(() =>
-                callAsyncFunc(makeSubTrace(trace, ['shutDown']), {}, async (trace) => {
-                  log().info?.(trace, 'Incoming HTTP connections are no longer being accepted');
-
-                  await shutdownWsHandlersPromise;
-                  log().info?.(trace, 'WebSocket handlers are stopped');
-
-                  do {
-                    log().info?.(trace, 'Waiting for async work to wrap up');
-                    await waitForDoSoons({ shutdown: true, serviceContext: defaultServiceContext });
-                  } while (hasMoreToDoSoon({ serviceContext: defaultServiceContext }));
-                  log().info?.(trace, 'All async work is complete');
-
-                  resolveServerShutDown();
-                })
-              );
-            });
-          });
-
-          const shutdownThenExitProcess = once(async () => {
-            await shutDown();
-            process.exit(0);
-          });
-          process.on('SIGINT', shutdownThenExitProcess);
-          process.on('SIGTERM', shutdownThenExitProcess);
-
-          resolveServerStartUp(shutDown);
-        });
-      } catch (e) {
-        log().error?.(trace, `Error starting server`, e);
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-        rejectServerStartUp(e);
+    const expressServer = await startExpressServer(trace, server, {
+      port,
+      onShutdown: async () => {
+        await shutdownWsHandlers();
+        log().info?.(trace, 'WebSocket handlers are stopped');
       }
     });
+    if (!expressServer.ok) {
+      return expressServer;
+    }
+
+    const shutdownThenExitProcess = once(async () => {
+      // Using the default service context in case there are multiple services running in the same node process.  Giving each a chance to
+      // shutdown cleanly.
+      doSoon(trace, async () => await expressServer.value.shutDown(), { serviceContext: defaultServiceContext });
+
+      do {
+        log().info?.(trace, `Waiting for async work to wrap up in service context: ${defaultServiceContext.id}`);
+        await waitForDoSoons(trace, { shutdown: true, serviceContext: defaultServiceContext });
+      } while (hasMoreToDoSoon(trace, { serviceContext: defaultServiceContext }));
+
+      process.exit(0);
+    });
+    process.on('SIGINT', shutdownThenExitProcess);
+    process.on('SIGTERM', shutdownThenExitProcess);
+
+    return makeSuccess(expressServer.value);
   }
 );
