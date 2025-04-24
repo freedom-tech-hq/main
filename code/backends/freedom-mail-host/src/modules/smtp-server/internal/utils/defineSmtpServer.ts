@@ -2,7 +2,7 @@ import { log, makeFailure, type PR, type Result } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ForbiddenError, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { SMTPServerDataStream, SMTPServerOptions, SMTPServerSession } from 'smtp-server';
+import type { SMTPServerDataStream, SMTPServerEnvelope, SMTPServerOptions, SMTPServerSession } from 'smtp-server';
 import { SMTPServer } from 'smtp-server';
 
 import * as config from '../../../../config.ts';
@@ -15,7 +15,7 @@ export type SmtpServerParams = {
   onValidateReceiver: (trace: Trace, emailAddress: string) => PR<'our' | 'external' | 'wrong-user', SmtpPublicErrorCodes>;
 
   // TODO: check how we validate no promise here
-  onReceivedEmail: (trace: Trace, emailData: string) => PR<undefined>;
+  onReceivedEmail: (trace: Trace, emailData: string, envelope: SMTPServerEnvelope) => PR<undefined>;
   onSentEmail: (trace: Trace, userId: string, emailData: string) => PR<undefined>;
 
   // Test only. Use onReceivedEmail and onSentEmail instead
@@ -177,7 +177,8 @@ export const defineSmtpServer = makeAsyncResultFunc(
                     spawnAsyncThread(trace, () => onSentEmail(trace, user, emailData));
                   } else {
                     // No authentication = receiving
-                    spawnAsyncThread(trace, () => onReceivedEmail(trace, emailData));
+                    const { envelope } = session;
+                    spawnAsyncThread(trace, () => onReceivedEmail(trace, emailData, envelope));
                   }
 
                   log().info?.(trace, `${session.id} Email is passed to processing`);

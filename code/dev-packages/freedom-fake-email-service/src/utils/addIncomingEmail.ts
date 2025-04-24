@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { addMail } from 'freedom-email-sync';
+import { addMail, type StoredMail } from 'freedom-email-sync';
 
 import { findUserByEmail } from './findUserByEmail.ts';
 import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
@@ -10,23 +10,10 @@ export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    {
-      rcpt,
-      from,
-      to,
-      subject,
-      body,
-      timeMSec
-    }: {
-      rcpt: string; // user's email
-      from: string;
-      to: string;
-      subject: string;
-      body: string;
-      timeMSec: number;
-    }
+    recipientEmail: string,
+    mail: StoredMail
   ): PR<undefined> => {
-    const userResult = await findUserByEmail(trace, rcpt);
+    const userResult = await findUserByEmail(trace, recipientEmail);
     if (!userResult.ok) {
       return generalizeFailureResult(trace, userResult, 'not-found');
     }
@@ -41,13 +28,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
       })
     );
 
-    const added = await addMail(trace, access, {
-      from,
-      to: [to],
-      subject,
-      body,
-      timeMSec
-    });
+    const added = await addMail(trace, access, mail);
     if (!added.ok) {
       return added;
     }

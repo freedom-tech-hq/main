@@ -27,6 +27,7 @@
   "nx": {
     "projectType": "application",
     "tags": [
+      "skip:test",
       "type:app",
       "platform:server"
     ]

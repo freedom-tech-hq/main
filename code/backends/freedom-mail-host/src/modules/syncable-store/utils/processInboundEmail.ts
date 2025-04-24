@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { makeTrace } from 'freedom-contexts';
 import { addIncomingEmail } from 'freedom-fake-email-service';
+import type { SMTPServerEnvelope } from 'smtp-server';
 
 import { parseEmail } from '../../formats/utils/parseEmail.ts';
 
@@ -10,38 +10,26 @@ import { parseEmail } from '../../formats/utils/parseEmail.ts';
  *
  * @param trace - Trace for async operations
  * @param pipedEmail - Raw email data as a string
+ * @param envelope - SMTP server envelope (i.e. metadata from connection)
  * @returns PR resolving when the email is processed
  */
-export const processInboundEmail = makeAsyncResultFunc([import.meta.filename], async (trace, pipedEmail: string): PR<undefined> => {
-  // Parse the email
-  const parsedEmailResult = await parseEmail(trace, pipedEmail);
-  if (!parsedEmailResult.ok) {
-    return parsedEmailResult;
-  }
-  const parsedEmail = parsedEmailResult.value;
-
-  // Mock
-  const recipients: string[] = [];
-  for (const toItem of parsedEmail.to ? (Array.isArray(parsedEmail.to) ? parsedEmail.to : [parsedEmail.to]) : []) {
-    for (const emailAddress of toItem.value ?? []) {
-      if (emailAddress.address !== undefined && emailAddress.address !== '') {
-        recipients.push(emailAddress.address);
-      }
+export const processInboundEmail = makeAsyncResultFunc(
+  [import.meta.filename],
+  async (trace, pipedEmail: string, envelope: SMTPServerEnvelope): PR<undefined> => {
+    // Parse the email
+    const parsedEmailResult = await parseEmail(trace, pipedEmail);
+    if (!parsedEmailResult.ok) {
+      return parsedEmailResult;
     }
-  }
+    const parsedMail = parsedEmailResult.value;
 
-  for (const recipient of recipients) {
-    // Handle
-    const trace = makeTrace('freedom-mail-host');
-    await addIncomingEmail(trace, {
-      rcpt: recipient,
-      from: parsedEmail.from?.text ?? '',
-      to: Array.isArray(parsedEmail.to) ? parsedEmail.to.map((addr) => addr.text).join(', ') : (parsedEmail.to?.text ?? ''),
-      subject: parsedEmail.subject ?? '',
-      body: parsedEmail.text ?? '',
-      timeMSec: Date.now()
-    });
-  }
+    // TODO: Validate envelope and parsed email to match each other
 
-  return makeSuccess(undefined);
-});
+    // Deliver to each recipient
+    for (const recipient of envelope.rcptTo) {
+      await addIncomingEmail(trace, recipient.address, parsedMail);
+    }
+
+    return makeSuccess(undefined);
+  }
+);

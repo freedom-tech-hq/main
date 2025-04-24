@@ -1,0 +1,21 @@
+{
+  "from": "sender@my-test.com",
+  "to": [
+    "user1@my-test.com",
+    "user2@my-test.com",
+    "user3@my-test.com",
+    "user4@my-test.com",
+    "user5@my-test.com",
+    "user6@my-test.com",
+    "user7@my-test.com"
+  ],
+  "subject": "test Thu, 20 Mar 2025 20:28:34 +0100",
+  "body": "This is a synthetic test email\n",
+  "timeMSec": 1745530356478,
+  "cc": [
+    "user-cc@my-test.com"
+  ],
+  "bcc": [
+    "user-bcc@my-test.com"
+  ]
+}

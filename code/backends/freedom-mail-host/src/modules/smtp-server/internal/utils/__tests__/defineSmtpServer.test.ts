@@ -70,9 +70,9 @@ async function spinOffServerStack({
       sideEffects.validateReceiverCalledTimes++;
       return onValidateReceiver(trace, emailAddress);
     },
-    onReceivedEmail: (trace, emailData) => {
+    onReceivedEmail: (trace, emailData, envelope) => {
       sideEffects.received.push(emailData.split('\r\n'));
-      return onReceivedEmail(trace, emailData);
+      return onReceivedEmail(trace, emailData, envelope);
     },
     onSentEmail: (trace, userId, emailData) => {
       sideEffects.sent.push(emailData.split('\r\n'));

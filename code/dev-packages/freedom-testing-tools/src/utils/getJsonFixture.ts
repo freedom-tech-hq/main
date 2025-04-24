@@ -2,6 +2,6 @@ import type { JsonValue } from 'yaschema';
 
 import { getStringFixture } from './getStringFixture.ts';
 
-export function getJsonFixture(dirname: string, filePath: string): JsonValue {
-  return JSON.parse(getStringFixture(dirname, filePath)) as JsonValue;
+export function getJsonFixture<T extends JsonValue>(dirname: string, filePath: string): T {
+  return JSON.parse(getStringFixture(dirname, filePath));
 }

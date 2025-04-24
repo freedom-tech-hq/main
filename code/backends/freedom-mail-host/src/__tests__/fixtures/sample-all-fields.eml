@@ -1,0 +1,8 @@
+From sender@my-test.com Thu Mar 20 19:28:34 2025
+To: "Some User" <user1@my-test.com>, user2@my-test.com, "Dream Team": Alex <user3@my-test.com>, user4@my-test.com; user5@my-test.com, Sales: user6@my-test.com, user7@my-test.com;
+CC: user-cc@my-test.com
+BCC: user-bcc@my-test.com
+From: sender@my-test.com
+Subject: test Thu, 20 Mar 2025 20:28:34 +0100
+
+This is a synthetic test email

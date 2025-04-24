@@ -1,0 +1,9 @@
+{
+  "from": "sender@my-test.com",
+  "to": [
+    "user1@my-test.com"
+  ],
+  "subject": "test Thu, 20 Mar 2025 20:28:34 +0100",
+  "body": "This is a test email\n\n\n\n",
+  "timeMSec": 1745527001171
+}
