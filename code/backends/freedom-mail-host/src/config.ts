@@ -8,16 +8,6 @@ const rootDir = `${import.meta.dirname}/..`;
 const env = loadEnv(rootDir);
 
 /**
- * HTTP server
- */
-
-/** Port to run the HTTP server on */
-export const HTTP_PORT = env.get('HTTP_PORT').required().asPortNumber();
-
-/** Host to bind the HTTP server to */
-export const HTTP_HOST = env.get('HTTP_HOST').required().asString();
-
-/**
  * SMTP server
  */
 
