@@ -7,42 +7,10 @@ import { DateTime } from 'luxon';
 
 import { extractNumberFromPlainSyncableId } from '../internal/utils/extractNumberFromPlainSyncableId.ts';
 import type { EmailAccess } from '../types/EmailAccess.ts';
-import type { TimeOrganizedMailStorage } from './getMailPaths.ts';
+import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
+import type { HourOrLessPrecisionValue, HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
 
-export interface TimeUnitValue {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-}
-
-export interface TimeOrganizedMailStorageYearValue {
-  type: 'year';
-  value: Partial<TimeUnitValue> & { year: number };
-}
-
-export interface TimeOrganizedMailStorageMonthValue {
-  type: 'month';
-  value: Partial<TimeUnitValue> & { year: number; month: number };
-}
-
-export interface TimeOrganizedMailStorageDayValue {
-  type: 'day';
-  value: Partial<TimeUnitValue> & { year: number; month: number; day: number };
-}
-
-export interface TimeOrganizedMailStorageHourValue {
-  type: 'hour';
-  value: TimeUnitValue;
-}
-
-export type TimeOrganizedMailStorageUnitValue =
-  | TimeOrganizedMailStorageYearValue
-  | TimeOrganizedMailStorageMonthValue
-  | TimeOrganizedMailStorageDayValue
-  | TimeOrganizedMailStorageHourValue;
-
-export type TimeOrganizedMailStorageTraverserAccessor = TimeOrganizedMailStorageUnitValue & {
+export type TimeOrganizedMailStorageTraverserAccessor = HourOrLessPrecisionValue & {
   previous: PRFunc<TimeOrganizedMailStorageTraverserAccessor | undefined>;
   inside: PRFunc<TimeOrganizedMailStorageTraverserAccessor | undefined>;
 };
@@ -61,10 +29,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
   async (
     trace,
     access: EmailAccess,
-    {
-      timeOrganizedMailStorage,
-      offset
-    }: { timeOrganizedMailStorage: TimeOrganizedMailStorage; offset?: TimeOrganizedMailStorageUnitValue['value'] }
+    { timeOrganizedMailStorage, offset }: { timeOrganizedMailStorage: TimeOrganizedMailPaths; offset?: HourOrLessTimeObject }
   ): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
     const userFs = access.userFs;
 

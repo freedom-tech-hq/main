@@ -20,7 +20,7 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
       path: SyncablePath;
       hash: Sha256Hash;
     }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const pullFromRemote = syncService.getRemotesAccessors()[args.remoteId]?.puller;
     if (pullFromRemote === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${args.remoteId}` }));
@@ -44,7 +44,8 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
       log(`Pulled ${args.path.toString()}: local and remote are out of sync.  Will try to push missing content`)
     );
     return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: pulled.value }, args);
-  }
+  },
+  { disableLam: 'not-found' }
 );
 
 export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
@@ -61,7 +62,7 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
       pulled: OutOfSyncFolder | OutOfSyncFile | OutOfSyncBundle;
     },
     { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     switch (pulled.type) {
       case 'folder':
         return await pushFolder(trace, {
@@ -77,7 +78,8 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
       case 'bundle':
         return await pushBundle(trace, { store, syncService, path, pulledHashesById: pulled.hashesById });
     }
-  }
+  },
+  { disableLam: 'not-found' }
 );
 
 // Helpers
@@ -88,7 +90,7 @@ const pushEverything = makeAsyncResultFunc(
     trace,
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
     { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const pushToRemote = syncService.getRemotesAccessors()[remoteId]?.pusher;
     if (pushToRemote === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
@@ -133,7 +135,8 @@ const pushEverything = makeAsyncResultFunc(
         return await pushBundle(trace, { store, syncService, path });
       }
     }
-  }
+  },
+  { disableLam: 'not-found' }
 );
 
 const pushBundle = makeAsyncResultFunc(
@@ -151,7 +154,7 @@ const pushBundle = makeAsyncResultFunc(
       path: SyncablePath;
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const localBundle = await getSyncableAtPath(trace, store, path, 'bundle');
     if (!localBundle.ok) {
       return generalizeFailureResult(trace, localBundle, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
@@ -171,7 +174,8 @@ const pushBundle = makeAsyncResultFunc(
     }
 
     return makeSuccess(undefined);
-  }
+  },
+  { disableLam: 'not-found' }
 );
 
 const pushFolder = makeAsyncResultFunc(
@@ -189,7 +193,7 @@ const pushFolder = makeAsyncResultFunc(
       path: SyncablePath;
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const localFolder = await getSyncableAtPath(trace, store, path, 'folder');
     if (!localFolder.ok) {
       return generalizeFailureResult(trace, localFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
@@ -230,7 +234,8 @@ const pushFolder = makeAsyncResultFunc(
     }
 
     return makeSuccess(undefined);
-  }
+  },
+  { disableLam: 'not-found' }
 );
 
 const pushFile = makeAsyncResultFunc(
@@ -238,7 +243,7 @@ const pushFile = makeAsyncResultFunc(
   async (
     trace,
     { remoteId, store, syncService, path }: { remoteId: RemoteId; store: SyncableStore; syncService: SyncService; path: SyncablePath }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const pushToRemote = syncService.getRemotesAccessors()[remoteId]?.pusher;
     if (pushToRemote === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
@@ -266,5 +271,6 @@ const pushFile = makeAsyncResultFunc(
     DEV: syncService.devLogging.appendLogEntry?.({ type: 'push', remoteId, itemType: 'file', pathString: path.toString() });
 
     return makeSuccess(undefined);
-  }
+  },
+  { disableLam: 'not-found' }
 );

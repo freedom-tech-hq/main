@@ -1,8 +1,9 @@
 import { Box, CssBaseline } from '@mui/material';
 import { log } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
+import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
@@ -31,6 +32,7 @@ const BootstrappedWebApp = () => {
   const uuid = useMemo(() => makeUuid(), []);
   const sideMenuWidth = useSideMenuWidth();
   const tasks = useTasks();
+  const lastSyncService = useRef<{ stop: () => TypeOrPromisedType<void> } | undefined>(undefined);
 
   useBindingEffect(
     activeUserId,
@@ -44,9 +46,15 @@ const BootstrappedWebApp = () => {
         log().error?.('Failed to start sync service', startedSyncService.value);
         return;
       }
+
+      lastSyncService.current = startedSyncService.value;
     },
-    { deps: [tasks] }
+    { deps: [tasks], triggerOnMount: true }
   );
+
+  useEffect(() => () => {
+    lastSyncService.current?.stop();
+  });
 
   useBindingEffect(
     sideMenuWidth,

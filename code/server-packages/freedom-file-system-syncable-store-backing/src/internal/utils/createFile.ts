@@ -1,5 +1,3 @@
-import fs from 'node:fs/promises';
-
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
@@ -7,6 +5,7 @@ import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
 import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { createMetadataFile } from './createMetadataFile.ts';
 import { getFsPath } from './getFsPath.ts';
+import { writeFile } from './writeFile.ts';
 
 export const createFile = makeAsyncResultFunc(
   [import.meta.filename],
@@ -19,7 +18,10 @@ export const createFile = makeAsyncResultFunc(
   ): PR<undefined> => {
     const filePath = getFsPath(rootPath, ids);
 
-    await fs.writeFile(filePath, data);
+    const wrote = await writeFile(trace, filePath, data);
+    if (!wrote.ok) {
+      return wrote;
+    }
 
     const savedMetadata = await createMetadataFile(trace, rootPath, ids, metadata);
     if (!savedMetadata.ok) {

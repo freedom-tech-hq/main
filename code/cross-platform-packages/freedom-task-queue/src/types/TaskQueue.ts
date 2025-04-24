@@ -8,7 +8,7 @@ import { makeSubTrace } from 'freedom-contexts';
 interface Entry {
   key: string;
   version: string;
-  run: PRFunc<undefined>;
+  run: PRFunc<undefined, any>;
 }
 
 export class TaskQueue {
@@ -34,7 +34,7 @@ export class TaskQueue {
    * If `keyAndVersion` is a string, the version is assumed to be an empty string.  If `keyAndVersion` is an object, but version is
    * `undefined`, the version is assumed to be an empty string.
    */
-  public readonly add = (keyAndVersion: { key: string; version?: string } | string, run: PRFunc<undefined>) => {
+  public readonly add = (keyAndVersion: { key: string; version?: string } | string, run: PRFunc<undefined, any>) => {
     const { key, version } =
       typeof keyAndVersion === 'string'
         ? { key: keyAndVersion, version: '' }

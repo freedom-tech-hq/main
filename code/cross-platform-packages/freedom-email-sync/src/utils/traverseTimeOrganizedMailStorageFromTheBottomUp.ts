@@ -2,11 +2,9 @@ import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
-import type { TimeOrganizedMailStorage } from './getMailPaths.ts';
-import type {
-  TimeOrganizedMailStorageTraverserAccessor,
-  TimeOrganizedMailStorageUnitValue
-} from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
+import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
+import type { HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
+import type { TimeOrganizedMailStorageTraverserAccessor } from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
 import { makeBottomUpTimeOrganizedMailStorageTraverser } from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
 
 export type BottomUpMailStorageTraversalResult = 'inspect' | 'skip' | 'stop';
@@ -32,10 +30,7 @@ export const traverseTimeOrganizedMailStorageFromTheBottomUp = makeAsyncResultFu
   async (
     trace,
     access: EmailAccess,
-    {
-      timeOrganizedMailStorage,
-      offset
-    }: { timeOrganizedMailStorage: TimeOrganizedMailStorage; offset?: TimeOrganizedMailStorageUnitValue['value'] },
+    { timeOrganizedMailStorage, offset }: { timeOrganizedMailStorage: TimeOrganizedMailPaths; offset?: HourOrLessTimeObject },
     callback: BottomUpMailStorageTraversalCallback
   ): PR<undefined> => {
     const cursor = await makeBottomUpTimeOrganizedMailStorageTraverser(trace, access, { timeOrganizedMailStorage, offset });
@@ -59,7 +54,7 @@ const handleLevel = makeAsyncResultFunc(
   async (
     trace,
     cursor: TimeOrganizedMailStorageTraverserAccessor | undefined,
-    { offset }: { offset: TimeOrganizedMailStorageUnitValue['value'] | undefined },
+    { offset }: { offset: HourOrLessTimeObject | undefined },
     callback: BottomUpMailStorageTraversalCallback
   ): PR<'stop' | undefined> => {
     while (cursor !== undefined) {
@@ -103,10 +98,7 @@ const handleLevel = makeAsyncResultFunc(
   }
 );
 
-const shouldIgnoreForOffset = (
-  cursor: TimeOrganizedMailStorageTraverserAccessor['value'],
-  offset: TimeOrganizedMailStorageUnitValue['value'] | undefined
-): boolean => {
+const shouldIgnoreForOffset = (cursor: HourOrLessTimeObject, offset: HourOrLessTimeObject | undefined): boolean => {
   if (offset === undefined) {
     return false;
   }

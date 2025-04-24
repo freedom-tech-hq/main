@@ -18,7 +18,7 @@ export const pushFolder = makeAsyncResultFunc(
       path: SyncablePath;
       metadata: SyncableItemMetadata;
     }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     if (path.ids.length === 0) {
       // Nothing to do for root
       return makeSuccess(undefined);
@@ -33,7 +33,7 @@ export const pushFolder = makeAsyncResultFunc(
       return generalizeFailureResult(
         trace,
         excludeFailureResult(folder, 'deleted'),
-        ['conflict', 'not-found', 'untrusted', 'wrong-type'],
+        ['conflict', 'untrusted', 'wrong-type'],
         `Failed to push folder: ${path.toString()}`
       );
     }

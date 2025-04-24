@@ -7,20 +7,21 @@ import type { SaveableDocument } from 'freedom-syncable-store-types';
 
 import type { MailCollectionDocumentPrefix } from '../types/MailCollectionDocument.ts';
 import { MailCollectionDocument } from '../types/MailCollectionDocument.ts';
+import type { MailCollectionType } from '../types/MailCollectionType.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
-export const getInboxDoc = makeAsyncResultFunc(
+export const getCollectionDoc = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    access: EmailAccess
+    access: EmailAccess,
+    { collectionType, date = new Date() }: { collectionType: Exclude<MailCollectionType, 'custom'>; date?: Date }
   ): PR<SaveableDocument<MailCollectionDocument>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);
 
-    const nowDate = new Date();
-
-    const currentYearBundle = await getOrCreateBundleAtPath(trace, userFs, paths.collections.inbox.year(nowDate).value);
+    const collectionYearPath = paths.collections[collectionType].year(date);
+    const currentYearBundle = await getOrCreateBundleAtPath(trace, userFs, collectionYearPath.value);
     if (!currentYearBundle.ok) {
       return generalizeFailureResult(trace, currentYearBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
@@ -28,7 +29,7 @@ export const getInboxDoc = makeAsyncResultFunc(
     return await getOrCreateConflictFreeDocumentBundleAtPath<MailCollectionDocumentPrefix, MailCollectionDocument>(
       trace,
       userFs,
-      paths.collections.inbox.year(nowDate).month,
+      collectionYearPath.month,
       MailCollectionDocument,
       { newDocument: () => MailCollectionDocument.newDocument() }
     );

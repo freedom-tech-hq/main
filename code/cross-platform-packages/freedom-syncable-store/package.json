@@ -13,6 +13,7 @@
     "freedom-crypto-service": "0.0.0",
     "freedom-crypto": "0.0.0",
     "freedom-dev-logging-support": "0.0.0",
+    "freedom-do-soon": "0.0.0",
     "freedom-get-or-create": "0.0.0",
     "freedom-in-memory-syncable-store-backing": "0.0.0",
     "freedom-locking-types": "0.0.0",

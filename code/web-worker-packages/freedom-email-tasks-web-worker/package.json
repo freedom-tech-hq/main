@@ -20,9 +20,12 @@
     "freedom-sync-service": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-backing-types": "0.0.0",
+    "freedom-syncable-store-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",
+    "freedom-task-queue": "0.0.0",
     "freedom-trace-logging-and-metrics": "0.0.0",
     "lodash-es": "4.17.21",
+    "luxon": "3.6.1",
     "yaschema-api": "4.1.10",
     "yaschema": "4.4.5"
   },

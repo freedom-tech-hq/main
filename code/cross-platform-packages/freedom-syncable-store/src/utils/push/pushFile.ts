@@ -20,7 +20,7 @@ export const pushFile = makeAsyncResultFunc(
       data: Uint8Array;
       metadata: SyncableItemMetadata;
     }
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const file = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, data, metadata);
     if (!file.ok) {
       if (file.value.errorCode === 'deleted') {
@@ -30,7 +30,7 @@ export const pushFile = makeAsyncResultFunc(
       return generalizeFailureResult(
         trace,
         excludeFailureResult(file, 'deleted'),
-        ['conflict', 'not-found', 'untrusted', 'wrong-type'],
+        ['conflict', 'untrusted', 'wrong-type'],
         `Failed to push flat file: ${path.toString()}`
       );
     }

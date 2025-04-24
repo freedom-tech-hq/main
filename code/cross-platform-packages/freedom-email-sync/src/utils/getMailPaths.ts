@@ -12,16 +12,16 @@ export const getMailPaths = async (userFs: SyncableStore) =>
     storage: await nest(
       [mailSyncableIds.storage],
       async (id) => rootPath.append(await id.value(userFs)),
-      timeOrganizedCollectionStorage(userFs)
+      makeTimeOrganizedMailPaths(userFs)
     ),
-    out: await nest([mailSyncableIds.out], async (id) => rootPath.append(await id.value(userFs)), timeOrganizedCollectionStorage(userFs))
+    out: await nest([mailSyncableIds.out], async (id) => rootPath.append(await id.value(userFs)), makeTimeOrganizedMailPaths(userFs))
   }));
 
-export type TimeOrganizedMailStorage = Nested<SyncablePath, ReturnType<ReturnType<typeof timeOrganizedCollectionStorage>>>;
+export type TimeOrganizedMailPaths = Nested<SyncablePath, ReturnType<ReturnType<typeof makeTimeOrganizedMailPaths>>>;
 
 // Helpers
 
-const timeOrganizedCollectionStorage =
+const makeTimeOrganizedMailPaths =
   (userFs: SyncableStore) => (parentPath: SyncablePath, parentId: typeof mailSyncableIds.storage | typeof mailSyncableIds.out) => ({
     year: (date: Date) =>
       nest(

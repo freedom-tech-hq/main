@@ -13,4 +13,6 @@ export * from './MailDraftId.ts';
 export * from './MailLikeId.ts';
 export * from './MailThread.ts';
 export * from './MailThreadId.ts';
+export * from './ProcessedHashesTrackingDocument.ts';
+export * from './ProcessedMailIdsTrackingDocument.ts';
 export * from './ThreadLikeId.ts';
