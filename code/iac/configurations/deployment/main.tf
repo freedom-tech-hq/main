@@ -153,7 +153,7 @@ resource "google_dns_record_set" "mail_mx" {
   managed_zone = data.google_dns_managed_zone.dev_zone.name
   type         = "MX"
   ttl          = 300
-  rrdatas      = ["10 ${local.mail_domain}"]
+  rrdatas      = ["10 ${local.smtp_hostname}."]
 }
 
 # Create SPF record to authorize the mail server to send emails
