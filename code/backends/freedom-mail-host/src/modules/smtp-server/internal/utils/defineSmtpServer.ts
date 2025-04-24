@@ -1,5 +1,5 @@
-import { makeFailure, type PR, type Result } from 'freedom-async';
-import { debugTopic, GeneralError, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { log, makeFailure, type PR, type Result } from 'freedom-async';
+import { GeneralError, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ForbiddenError, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SMTPServerDataStream, SMTPServerOptions, SMTPServerSession } from 'smtp-server';
@@ -50,7 +50,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
       // Called when a client connects to the server
       onConnect: (session: SMTPServerSession, callback) =>
         wrapSmtpHandler(callback, async () => {
-          DEV: debugTopic('SMTP', (log) => log(`SMTP connection from [${session.remoteAddress}]`));
+          log().info?.(trace, `${session.id} SMTP connection from [${session.remoteAddress}]`);
           // Accept all connections
           return makeSuccess(undefined);
         }),
@@ -79,9 +79,9 @@ export const defineSmtpServer = makeAsyncResultFunc(
         }),
 
       // Called when client issues MAIL FROM command
-      onMailFrom: (address, _session, callback) =>
+      onMailFrom: (address, session, callback) =>
         wrapSmtpHandler(callback, async () => {
-          DEV: debugTopic('SMTP', (log) => log(`MAIL FROM: ${address.address}`));
+          log().info?.(trace, `${session.id} MAIL FROM: ${address.address}`);
           // Accept any sender (validation will be done downstream)
           return makeSuccess(undefined);
         }),
@@ -89,7 +89,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
       // Called when client issues RCPT TO command
       onRcptTo: (address, session, callback) =>
         wrapSmtpHandler(callback, async () => {
-          DEV: debugTopic('SMTP', (log) => log(`RCPT TO: ${address.address}`));
+          log().info?.(trace, `${session.id} RCPT TO: ${address.address}`);
 
           // For unauthenticated (incoming email), validate local receiver
           const validationResult = await onValidateReceiver(trace, address.address);
@@ -141,7 +141,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
           callback,
           () =>
             new Promise<Result<undefined, SmtpPublicErrorCodes>>((resolve) => {
-              DEV: debugTopic('SMTP', (log) => log('Receiving message data'));
+              log().info?.(trace, `${session.id} Receiving message data`);
               // Trigger test callback
               onData?.();
 
@@ -168,7 +168,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
 
                   // Combine chunks into a single buffer and convert to string
                   const emailData = Buffer.concat(chunks).toString();
-                  DEV: debugTopic('SMTP', (log) => log('Processing email'));
+                  log().info?.(trace, `${session.id} Email received, starting processing`);
 
                   // Dispatch the email type
                   if (session.user !== undefined && session.user !== '') {
@@ -180,7 +180,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
                     spawnAsyncThread(trace, () => onReceivedEmail(trace, emailData));
                   }
 
-                  DEV: debugTopic('SMTP', (log) => log('Email processed successfully'));
+                  log().info?.(trace, `${session.id} Email is passed to processing`);
                   // Success
                   resolve(makeSuccess(undefined));
                 } catch (error) {
@@ -190,7 +190,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
               });
 
               stream.on('error', (error) => {
-                DEV: debugTopic('SMTP', (log) => log(`Stream error: ${error}`));
+                log().error?.(trace, `${session.id} Stream error: ${error}`);
                 resolve(
                   makeFailure(
                     new InternalStateError(trace, {
@@ -208,7 +208,7 @@ export const defineSmtpServer = makeAsyncResultFunc(
 
     // Set up error handling
     server.on('error', (err) => {
-      DEV: debugTopic('SMTP', (log) => log(`SMTP Server error: ${err}`));
+      log().error?.(trace, `SMTP Server error: ${err}`);
     });
 
     return makeSuccess(server);
