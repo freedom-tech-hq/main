@@ -1,6 +1,6 @@
 import { callAsyncFunc, log } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { ServiceContext } from 'freedom-trace-service-context';
+import { type ServiceContext, useTraceServiceContext } from 'freedom-trace-service-context';
 
 interface State {
   queueIndex: number;
@@ -10,7 +10,11 @@ interface State {
 
 const globalContextualState = new Map<ServiceContext, State>();
 
-export const hasMoreToDoSoon = ({ serviceContext }: { serviceContext: ServiceContext }) => {
+export const hasMoreToDoSoon = (trace: Trace, { serviceContext }: { serviceContext?: ServiceContext } = {}) => {
+  if (serviceContext === undefined) {
+    serviceContext = useTraceServiceContext(trace);
+  }
+
   const state = globalContextualState.get(serviceContext);
   if (state === undefined) {
     return false;
@@ -19,7 +23,14 @@ export const hasMoreToDoSoon = ({ serviceContext }: { serviceContext: ServiceCon
   return state.queue.size > 0;
 };
 
-export const waitForDoSoons = async ({ shutdown = false, serviceContext }: { shutdown?: boolean; serviceContext: ServiceContext }) => {
+export const waitForDoSoons = async (
+  trace: Trace,
+  { shutdown = false, serviceContext }: { shutdown?: boolean; serviceContext?: ServiceContext } = {}
+) => {
+  if (serviceContext === undefined) {
+    serviceContext = useTraceServiceContext(trace);
+  }
+
   const state = globalContextualState.get(serviceContext);
   if (state === undefined) {
     return; // Nothing to do
@@ -49,8 +60,12 @@ export const waitForDoSoons = async ({ shutdown = false, serviceContext }: { shu
 export const doSoon = (
   trace: Trace,
   func: (trace: Trace) => Promise<void> | void,
-  { skipOnShutdown = false, serviceContext }: { skipOnShutdown?: boolean; serviceContext: ServiceContext }
+  { skipOnShutdown = false, serviceContext }: { skipOnShutdown?: boolean; serviceContext?: ServiceContext } = {}
 ) => {
+  if (serviceContext === undefined) {
+    serviceContext = useTraceServiceContext(trace);
+  }
+
   let state = globalContextualState.get(serviceContext);
   if (state === undefined) {
     state = {

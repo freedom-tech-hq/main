@@ -4,6 +4,6 @@ import { makeHttpApiHandler } from 'freedom-server-api-handling';
 
 import { startedAt, version } from '../version.ts';
 
-export default makeHttpApiHandler([import.meta.filename], { api: api.health.GET }, async () =>
+export default makeHttpApiHandler([import.meta.filename], { api: api.health.GET }, async (trace) =>
   makeSuccess({ body: { version, startedAt: new Date(startedAt), healthy: true } })
 );
