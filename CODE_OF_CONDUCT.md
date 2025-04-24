@@ -1,17 +1,17 @@
 # Contributor Code of Conduct
 
-Welcome to the **Freedom** codebase. This project builds technology for freedom in the AI age. We expect all contributors to uphold a high standard of integrity, respect, and technical excellence.
+Welcome to the **Freedom** codebase. This project builds technology for freedom in the AI age. We expect all contributors to uphold a high standard of integrity and technical excellence.
 
 ## Purpose
 
-This Code of Conduct outlines expectations for behavior in our development community and guides the enforcement process. Its goal is to ensure productive, inclusive, and truth-driven collaboration—without ideological policing.
+This Code of Conduct outlines expectations for behavior in our development community and guides the enforcement process. Its goal is to ensure productive collaboration.
 
 ## Ground Rules
 
 ### ✅ Expected Behavior
 
 - **Be Direct. Be Respectful.** Disagree with ideas, not people. We encourage radical candor—honesty without hostility.
-- **Focus on the Code.** Merit wins. Contributions are evaluated on technical value, not identity or ideology.
+- **Focus on the Code.** Merit wins. Contributions are evaluated on technical value.
 - **Protect Privacy.** Do not post personal information of others (e.g., doxing, screenshots from private spaces).
 - **Use Secure Channels.** Report security issues privately via `security@FreedomTechHQ.com`.
 
