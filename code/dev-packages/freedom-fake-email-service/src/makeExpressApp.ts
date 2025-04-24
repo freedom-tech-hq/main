@@ -23,7 +23,8 @@ export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace
   const CORS_ORIGINS = process.env.CORS_ORIGINS;
 
   if (CORS_ORIGINS !== undefined) {
-    app.use(cors({ origin: CORS_ORIGINS, credentials: true }));
+    const origin = CORS_ORIGINS.split(',').map((origin) => origin.trim());
+    app.use(cors({ origin, credentials: true }));
   }
   app.use(cookieParser());
   app.use(bodyParser.json());
