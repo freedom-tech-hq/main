@@ -47,9 +47,12 @@ export default makeHttpApiHandler(
       return createdSyncableStore;
     }
 
+    // Generate email TODO: Get from the outside
+    const email = `user${Math.random()}@${process.env.EMAIL_DOMAIN ?? 'local.dev.freedommail.me'}`;
+
     // Add email
     const usedAdded = await addUser(trace, {
-      email: `user${Math.random()}@local.dev.freedommail.me`, // TODO: Get from the outside
+      email,
       userId,
       publicKeys: creatorPublicKeys,
       defaultSalt: saltsById[DEFAULT_SALT_ID]! // TODO: Require presence
