@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
+import type { GetConflictFreeDocumentFromBundleAtPathArgs } from 'freedom-syncable-store';
 import { getOrCreateBundlesAtPaths, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
 import type { SaveableDocument } from 'freedom-syncable-store-types';
 
@@ -14,7 +15,8 @@ export const getProcessedMailIdsTrackingDoc = makeAsyncResultFunc(
   async (
     trace,
     access: EmailAccess,
-    date: Date
+    date: Date,
+    fwd: GetConflictFreeDocumentFromBundleAtPathArgs = {}
   ): PR<SaveableDocument<ProcessedMailIdsTrackingDocument>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);
@@ -40,7 +42,7 @@ export const getProcessedMailIdsTrackingDoc = makeAsyncResultFunc(
       userFs,
       docPath,
       ProcessedMailIdsTrackingDocument,
-      { newDocument: () => ProcessedMailIdsTrackingDocument.newDocument() }
+      { ...fwd, newDocument: () => ProcessedMailIdsTrackingDocument.newDocument() }
     );
   }
 );

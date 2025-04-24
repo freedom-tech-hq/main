@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
+import type { GetConflictFreeDocumentFromBundleAtPathArgs } from 'freedom-syncable-store';
 import { getOrCreateBundleAtPath, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
 import type { SaveableDocument } from 'freedom-syncable-store-types';
 
@@ -15,7 +16,11 @@ export const getCollectionDoc = makeAsyncResultFunc(
   async (
     trace,
     access: EmailAccess,
-    { collectionType, date = new Date() }: { collectionType: Exclude<MailCollectionType, 'custom'>; date?: Date }
+    {
+      collectionType,
+      date = new Date(),
+      ...fwd
+    }: GetConflictFreeDocumentFromBundleAtPathArgs & { collectionType: Exclude<MailCollectionType, 'custom'>; date?: Date }
   ): PR<SaveableDocument<MailCollectionDocument>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);
@@ -31,7 +36,7 @@ export const getCollectionDoc = makeAsyncResultFunc(
       userFs,
       collectionYearPath.month,
       MailCollectionDocument,
-      { newDocument: () => MailCollectionDocument.newDocument() }
+      { ...fwd, newDocument: () => MailCollectionDocument.newDocument() }
     );
   }
 );

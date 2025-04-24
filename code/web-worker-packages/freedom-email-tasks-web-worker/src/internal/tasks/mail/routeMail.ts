@@ -36,7 +36,7 @@ export const routeMail = makeAsyncResultFunc(
         return;
       }
 
-      const mailId = path.ids.filter(extractUnmarkedSyncableId).find((id) => mailIdInfo.is(id));
+      const mailId = path.ids.map(extractUnmarkedSyncableId).find(mailIdInfo.is);
       if (mailId === undefined) {
         // Couldn't determine mail ID
         log().debug?.(trace, `Failed to determine mail ID for path: ${path.toString()}`);

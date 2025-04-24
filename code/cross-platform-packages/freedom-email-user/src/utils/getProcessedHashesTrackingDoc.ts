@@ -4,6 +4,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
 import type { HourOrLessPrecisionValue, HourValue } from 'freedom-email-sync/lib/utils/HourPrecisionTimeUnitValue';
 import type { SyncablePath } from 'freedom-sync-types';
+import type { GetConflictFreeDocumentFromBundleAtPathArgs } from 'freedom-syncable-store';
 import { getOrCreateBundlesAtPaths, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
 import type { SaveableDocument } from 'freedom-syncable-store-types';
 import { DateTime } from 'luxon';
@@ -17,7 +18,8 @@ export const getProcessedHashesTrackingDoc = makeAsyncResultFunc(
   async (
     trace,
     access: EmailAccess,
-    level: Exclude<HourOrLessPrecisionValue, HourValue>
+    level: Exclude<HourOrLessPrecisionValue, HourValue>,
+    fwd: GetConflictFreeDocumentFromBundleAtPathArgs = {}
   ): PR<SaveableDocument<ProcessedHashesTrackingDocument>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const userFs = access.userFs;
     const paths = await getUserMailPaths(userFs);
@@ -52,7 +54,7 @@ export const getProcessedHashesTrackingDoc = makeAsyncResultFunc(
       userFs,
       docPath,
       ProcessedHashesTrackingDocument,
-      { newDocument: () => ProcessedHashesTrackingDocument.newDocument() }
+      { ...fwd, newDocument: () => ProcessedHashesTrackingDocument.newDocument() }
     );
   }
 );
