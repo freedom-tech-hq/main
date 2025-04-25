@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import type { Base64String, Uuid } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailUserId } from 'freedom-email-sync';
 import {
@@ -40,7 +41,7 @@ export const createUser = makeAsyncResultFunc(
       };
       password: string;
     }
-  ): PR<{ userId: EmailUserId; encryptedEmailCredential: string }> => {
+  ): PR<{ userId: EmailUserId; encryptedEmailCredential: Base64String; locallyStoredCredentialUuid?: Uuid }> => {
     const activeCredential = useActiveCredential(trace);
 
     const credential = await createEmailCredential(trace);
@@ -55,6 +56,7 @@ export const createUser = makeAsyncResultFunc(
       return encryptedEmailCredential;
     }
 
+    let locallyStoredCredentialUuid: Uuid | undefined;
     if (install) {
       const storedEncryptedEmailCredential = await storeEncryptedEmailCredentialLocally(trace, {
         description: install.description,
@@ -63,6 +65,8 @@ export const createUser = makeAsyncResultFunc(
       if (!storedEncryptedEmailCredential.ok) {
         return storedEncryptedEmailCredential;
       }
+
+      locallyStoredCredentialUuid = storedEncryptedEmailCredential.value.locallyStoredCredentialUuid;
     }
 
     const access = await getOrCreateEmailAccessForUser(trace, credential.value);
@@ -89,6 +93,10 @@ export const createUser = makeAsyncResultFunc(
 
     activeCredential.credential = credential.value;
 
-    return makeSuccess({ userId, encryptedEmailCredential: encryptedEmailCredential.value });
+    return makeSuccess({
+      userId,
+      encryptedEmailCredential: encryptedEmailCredential.value,
+      locallyStoredCredentialUuid
+    });
   }
 );
