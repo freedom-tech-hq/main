@@ -1,8 +1,7 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
-import type { Binding } from 'react-bindings';
-import { BC, useBinding, useCallbackRef } from 'react-bindings';
+import { useBinding, useCallbackRef } from 'react-bindings';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { ControlledTextField } from '../form/ControlledTextField.tsx';
@@ -17,16 +16,14 @@ const $newAccountInstructions = LOCALIZE(
 )({ ns });
 
 export interface NewAccountMasterPasswordDialogProps {
-  show: Binding<boolean>;
+  dismiss: () => void;
   onSubmit: ({ masterPassword }: { masterPassword: string }) => TypeOrPromisedType<void>;
 }
 
-export const NewAccountMasterPasswordDialog = ({ show, onSubmit }: NewAccountMasterPasswordDialogProps) => {
+export const NewAccountMasterPasswordDialog = ({ dismiss, onSubmit }: NewAccountMasterPasswordDialogProps) => {
   const t = useT();
 
   const masterPassword = useBinding(() => '', { id: 'masterPassword', detectChanges: true });
-
-  const dismiss = useCallbackRef(() => show.set(false));
 
   const wrappedOnSubmit = useCallbackRef(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,31 +38,28 @@ export const NewAccountMasterPasswordDialog = ({ show, onSubmit }: NewAccountMas
   });
 
   return (
-    <>
-      {BC(show, (show) => (
-        <Dialog open={show} onClose={dismiss} slotProps={{ paper: { component: 'form', onSubmit: wrappedOnSubmit } }}>
-          <DialogTitle>{$newAccount(t)}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>{$newAccountInstructions(t)}</DialogContentText>
-            <ControlledTextField
-              type="password"
-              value={masterPassword}
-              autoFocus
-              required
-              margin="dense"
-              id="password"
-              name="master-password"
-              label={$masterPassword(t)}
-              fullWidth
-              variant="standard"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={dismiss}>{$cancel(t)}</Button>
-            <Button type="submit">{$createAccount(t)}</Button>
-          </DialogActions>
-        </Dialog>
-      ))}
-    </>
+    <Dialog open={true} onClose={dismiss} slotProps={{ paper: { component: 'form', onSubmit: wrappedOnSubmit } }}>
+      <DialogTitle>{$newAccount(t)}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{$newAccountInstructions(t)}</DialogContentText>
+        <ControlledTextField
+          type="password"
+          value={masterPassword}
+          autoFocus
+          autoComplete="new-password"
+          required
+          margin="dense"
+          id="password"
+          name="master-password"
+          label={$masterPassword(t)}
+          fullWidth
+          variant="standard"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={dismiss}>{$cancel(t)}</Button>
+        <Button type="submit">{$createAccount(t)}</Button>
+      </DialogActions>
+    </Dialog>
   );
 };

@@ -1,6 +1,7 @@
 import { Box, CssBaseline } from '@mui/material';
 import { log } from 'freedom-async';
 import { makeUuid } from 'freedom-contexts';
+import { HistoryProvider, useCreateBrowserHistory } from 'freedom-web-navigation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -8,6 +9,7 @@ import type { TypeOrPromisedType } from 'yaschema';
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { TasksProvider, useTasks } from '../contexts/tasks.tsx';
+import { TransientContentProvider } from '../contexts/transient-content.tsx';
 import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
 import { AppGlobalStyles } from './AppGlobalStyles.tsx';
 import { AppMainContent } from './AppMainContent.tsx';
@@ -15,15 +17,21 @@ import { AppNavbar } from './AppNavbar.tsx';
 import { AppTheme } from './AppTheme.tsx';
 import { SideMenu } from './SideMenu.tsx';
 
-export const WebApp = () => (
-  <TasksProvider>
-    <AppTheme>
-      <AppGlobalStyles />
-      <CssBaseline enableColorScheme={true} />
-      <BootstrappedWebApp />
-    </AppTheme>
-  </TasksProvider>
-);
+export const WebApp = () => {
+  const history = useCreateBrowserHistory();
+
+  return (
+    <HistoryProvider history={history}>
+      <TasksProvider>
+        <AppTheme>
+          <AppGlobalStyles />
+          <CssBaseline enableColorScheme={true} />
+          <BootstrappedWebApp />
+        </AppTheme>
+      </TasksProvider>
+    </HistoryProvider>
+  );
+};
 
 // Helpers
 
@@ -70,7 +78,7 @@ const BootstrappedWebApp = () => {
   );
 
   return (
-    <>
+    <TransientContentProvider>
       <AppNavbar />
       <SideMenu />
       <Box
@@ -87,6 +95,6 @@ const BootstrappedWebApp = () => {
           <AppMainContent scrollParent={`${uuid}-main`} />
         </Box>
       </Box>
-    </>
+    </TransientContentProvider>
   );
 };

@@ -20,6 +20,7 @@ export const AuxSearchField = () => {
       size="small"
       placeholder={$searchFieldPlaceholder(t)}
       type="search"
+      autoComplete="off"
       startAdornment={<SearchIcon sx={searchIconStyle} />}
       disableUnderline={true}
       sx={searchFieldStyle}

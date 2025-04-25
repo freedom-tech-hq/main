@@ -40,12 +40,12 @@ export const MailDraftListItem = <TagT,>({ isFirst, mail }: MailDraftListItemPro
             </Typography>
             <Stack direction="row" gap={1}>
               <Typography variant="body2">{$toLabel(t)}</Typography>
-              <ControlledTextField size="small" value={to} />
+              <ControlledTextField size="small" value={to} autoComplete="off" />
             </Stack>
           </Stack>
         </Stack>
 
-        <ControlledTextField size="small" value={subject} sx={{ mt: 1 }} />
+        <ControlledTextField size="small" value={subject} autoComplete="off" sx={{ mt: 1 }} />
 
         <Divider sx={{ mx: -2, my: 1 }} />
 

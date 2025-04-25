@@ -184,7 +184,13 @@
             "path": "web-packages/freedom-logical-web-components"
         },
         {
+            "path": "web-packages/freedom-react-binding-persistence"
+        },
+        {
             "path": "web-packages/freedom-react-localization"
+        },
+        {
+            "path": "web-packages/freedom-web-navigation"
         },
         {
             "path": "web-worker-packages/freedom-opfs-syncable-store-backing"

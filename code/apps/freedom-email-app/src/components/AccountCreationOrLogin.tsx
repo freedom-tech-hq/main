@@ -7,13 +7,16 @@ import { makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
-import { useMemo } from 'react';
+import { useHistory } from 'freedom-web-navigation';
+import { noop } from 'lodash-es';
+import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable, WC } from 'react-waitables';
 
 import { useActiveLocallyStoredCredentialUuid } from '../contexts/active-locally-stored-credential-uuid.tsx';
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useTasks } from '../contexts/tasks.tsx';
+import { useTransientContent } from '../contexts/transient-content.tsx';
 import { useTaskWaitable } from '../hooks/useTaskWaitable.ts';
 import type { AppTheme } from './AppTheme.tsx';
 import { NewAccountMasterPasswordDialog } from './new-account/NewAccountMasterPasswordDialog.tsx';
@@ -28,19 +31,15 @@ const $untitled = LOCALIZE('untitled')({ ns });
 export const AccountCreationOrLogin = () => {
   const activeLocallyStoredCredentialUuid = useActiveLocallyStoredCredentialUuid();
   const activeUserId = useActiveUserId();
+  const history = useHistory();
   const t = useT();
   const tasks = useTasks();
   const theme = useTheme<AppTheme>();
+  const transientContent = useTransientContent();
   const uuid = useMemo(() => makeUuid(), []);
 
-  const showNewAccountDialog = useBinding(() => false, { id: 'showNewAccountDialog', detectChanges: true });
   const busyWith = useBinding<undefined | 'creating-account' | 'unlocking-account'>(() => undefined, {
     id: 'busyWith',
-    detectChanges: true
-  });
-
-  const unlockAccountDialogConfig = useBinding<{ localCredentialUuid: Uuid } | undefined>(() => undefined, {
-    id: 'unlockAccountDialogConfig',
     detectChanges: true
   });
 
@@ -53,6 +52,10 @@ export const AccountCreationOrLogin = () => {
     (locallyStoredCredentialInfo) => locallyStoredCredentialInfo.length > 0,
     { id: 'hasLocallyStoredCredentials' }
   );
+
+  useEffect(() => {
+    history.replace('/');
+  });
 
   const onFileChange = useCallbackRef(() => {
     if (tasks === undefined) {
@@ -101,16 +104,19 @@ export const AccountCreationOrLogin = () => {
     elem.click();
   });
 
+  const dismissNewAccountDialog = useRef<() => void>(noop);
   const onNewAccountButtonClick = useCallbackRef(() => {
     if (tasks === undefined) {
       return; // Not ready
     }
 
-    showNewAccountDialog.set(true);
+    dismissNewAccountDialog.current = transientContent.present(({ dismiss }) => (
+      <NewAccountMasterPasswordDialog dismiss={dismiss} onSubmit={onSubmitNewAccountDialog} />
+    ));
   });
 
   const onSubmitNewAccountDialog = useCallbackRef(async ({ masterPassword }: { masterPassword: string }) => {
-    showNewAccountDialog.set(false);
+    dismissNewAccountDialog.current();
 
     busyWith.set('creating-account');
     try {
@@ -124,6 +130,8 @@ export const AccountCreationOrLogin = () => {
         return;
       }
 
+      history.replace('/mail');
+
       activeLocallyStoredCredentialUuid.set(created.value.locallyStoredCredentialUuid);
       activeUserId.set(created.value.userId);
     } finally {
@@ -131,17 +139,24 @@ export const AccountCreationOrLogin = () => {
     }
   });
 
+  const dismissUnlockAccountMasterPasswordDialog = useRef<() => void>(noop);
   const onOpenAccountButtonClick = useCallbackRef((localCredentialUuid: Uuid) => {
     if (tasks === undefined) {
       return; // Not ready
     }
 
-    unlockAccountDialogConfig.set({ localCredentialUuid });
+    dismissUnlockAccountMasterPasswordDialog.current = transientContent.present(({ dismiss }) => (
+      <UnlockAccountMasterPasswordDialog
+        dismiss={dismiss}
+        localCredentialUuid={localCredentialUuid}
+        onSubmit={onSubmitUnlockAccountDialog}
+      />
+    ));
   });
 
   const onSubmitUnlockAccountDialog = useCallbackRef(
     async ({ localCredentialUuid, masterPassword }: { localCredentialUuid: Uuid; masterPassword: string }) => {
-      unlockAccountDialogConfig.set(undefined);
+      dismissUnlockAccountMasterPasswordDialog.current();
 
       busyWith.set('unlocking-account');
       try {
@@ -155,6 +170,8 @@ export const AccountCreationOrLogin = () => {
           return;
         }
 
+        history.replace('/mail');
+
         activeLocallyStoredCredentialUuid.set(localCredentialUuid);
         activeUserId.set(unlocked.value.userId);
       } finally {
@@ -167,8 +184,6 @@ export const AccountCreationOrLogin = () => {
     <>
       <input id={`${uuid}-file-input`} type="file" accept=".credential" onChange={onFileChange} style={{ display: 'none' }} />
 
-      <NewAccountMasterPasswordDialog show={showNewAccountDialog} onSubmit={onSubmitNewAccountDialog} />
-      <UnlockAccountMasterPasswordDialog config={unlockAccountDialogConfig} onSubmit={onSubmitUnlockAccountDialog} />
       {IF(
         busyWith,
         () => (
