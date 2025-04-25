@@ -44,6 +44,7 @@ export const makeLocalFakeEmailServiceRemoteConnection = makeAsyncResultFunc(
   async (_trace): PR<RemoteConnection> => {
     // TODO: TEMP
     setDefaultUrlBase('https://mail.local.dev.freedommail.me:8443');
+    // setDefaultUrlBase('https://api.dev.linefeedr.com');
 
     let storageRootId: StorageRootId | undefined = undefined;
     const register = makeAsyncResultFunc(

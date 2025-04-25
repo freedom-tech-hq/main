@@ -1,13 +1,10 @@
 import type { PR, Result } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import { generalizeFailureResult } from 'freedom-common-errors';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { MailCollection, MailCollectionGroup } from 'freedom-email-user';
-import { getUserMailPaths, mailCollectionGroupIdInfo } from 'freedom-email-user';
-import { getBundleAtPath } from 'freedom-syncable-store';
+import { mailCollectionGroupIdInfo } from 'freedom-email-user';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 import type { GetMailCollection_GroupsAddedPacket } from '../../types/mail/getMailCollection/GetMailCollection_GroupsAddedPacket.ts';
 import type { GetMailCollectionPacket } from '../../types/mail/getMailCollection/GetMailCollectionPacket.ts';
 
@@ -24,21 +21,21 @@ export const getMailCollections = makeAsyncResultFunc(
       return makeSuccess({ type: 'groups-added' as const, groups: [] });
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    // const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    // const userFs = access.userFs;
+    // const paths = await getUserMailPaths(userFs);
     // const collectionIdsFromSaltedCollectionIds = getCollectionIdsFromSaltedCollectionIds(paths);
 
-    const mailCollectionsBundle = await getBundleAtPath(trace, userFs, paths.collections.value);
-    if (!mailCollectionsBundle.ok) {
-      return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
-    }
+    // const mailCollectionsBundle = await getBundleAtPath(trace, userFs, paths.collections.value);
+    // if (!mailCollectionsBundle.ok) {
+    //   return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
+    // }
 
-    const collectionIds = await mailCollectionsBundle.value.getIds(trace, { type: 'bundle' });
-    if (!collectionIds.ok) {
-      return collectionIds;
-    }
+    // const collectionIds = await mailCollectionsBundle.value.getIds(trace, { type: 'bundle' });
+    // if (!collectionIds.ok) {
+    //   return collectionIds;
+    // }
 
     const collections: MailCollection[] = [
       { collectionType: 'inbox', title: '', unreadCount: 0, customId: undefined },

@@ -8,19 +8,19 @@ import {
   makeSuccess,
   uncheckedResult
 } from 'freedom-async';
-import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
+import { InternalStateError } from 'freedom-common-errors';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
-import { getMailPaths } from 'freedom-email-sync';
 import { api as fakeEmailServiceApi } from 'freedom-fake-email-service-api';
 import { makeApiFetchTask } from 'freedom-fetching';
 import type { RemoteAccessor } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
-import { getMutableFolderAtPath } from 'freedom-syncable-store';
 import type { TypeOrPromisedType } from 'yaschema';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { routeMail } from '../../internal/tasks/mail/routeMail.ts';
+import { grantAppenderAccessOnStorageFolderToRemote } from '../../internal/tasks/storage/grantAppenderAccessOnStorageFolderToRemote.ts';
+import { grantEditorAccessOnOutFolderToRemote } from '../../internal/tasks/storage/grantEditorAccessOnOutFolderToRemote.ts';
 import { makeSyncServiceForUserSyncables } from '../../internal/tasks/storage/makeSyncServiceForUserSyncables.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 import { makeLocalFakeEmailServiceRemoteConnection } from '../../internal/utils/makeLocalFakeEmailServiceRemoteConnection.ts';
@@ -37,7 +37,6 @@ export const startSyncService = makeAsyncResultFunc([import.meta.filename], asyn
   const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
   const userFs = access.userFs;
-  const mailPaths = await getMailPaths(userFs);
 
   // TODO: remove once real services are ready
   const remoteConnection = await makeLocalFakeEmailServiceRemoteConnection(trace);
@@ -71,59 +70,12 @@ export const startSyncService = makeAsyncResultFunc([import.meta.filename], asyn
   }
   const remotePublicKeys = gotRemotePublicKeys.value.body;
 
+  // These will typically fail if we're recovering an account from the remote -- because the storage folder won't exist locally yet, but
+  // that's ok, it means the remote already has the access it needs.
   // Giving Appender Access on the Storage Folder to the Server
-  {
-    const storageFolderPath = mailPaths.storage.value;
-    const storageFolder = await getMutableFolderAtPath(trace, userFs, storageFolderPath);
-    if (!storageFolder.ok) {
-      return generalizeFailureResult(trace, storageFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const remoteCurrentStorageFolderRoles = await storageFolder.value.getRolesByCryptoKeySetId(trace, {
-      cryptoKeySetIds: [remotePublicKeys.id]
-    });
-    if (!remoteCurrentStorageFolderRoles.ok) {
-      return remoteCurrentStorageFolderRoles;
-    }
-
-    if (remoteCurrentStorageFolderRoles.value[remotePublicKeys.id] === undefined) {
-      const addedRemoteAppenderAccess = await storageFolder.value.updateAccess(trace, {
-        type: 'add-access',
-        publicKeys: remotePublicKeys,
-        role: 'appender'
-      });
-      if (!addedRemoteAppenderAccess.ok) {
-        return generalizeFailureResult(trace, addedRemoteAppenderAccess, 'conflict');
-      }
-    }
-  }
-
+  await bestEffort(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }));
   // Giving Editor Access on the Out Folder to the Server
-  {
-    const outFolderPath = mailPaths.out.value;
-    const outFolder = await getMutableFolderAtPath(trace, userFs, outFolderPath);
-    if (!outFolder.ok) {
-      return generalizeFailureResult(trace, outFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const remoteCurrentOutFolderRoles = await outFolder.value.getRolesByCryptoKeySetId(trace, {
-      cryptoKeySetIds: [remotePublicKeys.id]
-    });
-    if (!remoteCurrentOutFolderRoles.ok) {
-      return remoteCurrentOutFolderRoles;
-    }
-
-    if (remoteCurrentOutFolderRoles.value[remotePublicKeys.id] === undefined) {
-      const addedRemoteEditorAccess = await outFolder.value.updateAccess(trace, {
-        type: 'add-access',
-        publicKeys: remotePublicKeys,
-        role: 'editor'
-      });
-      if (!addedRemoteEditorAccess.ok) {
-        return generalizeFailureResult(trace, addedRemoteEditorAccess, 'conflict');
-      }
-    }
-  }
+  await bestEffort(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
 
   const startedRoutingMail = await routeMail(trace, credential);
   if (!startedRoutingMail.ok) {
