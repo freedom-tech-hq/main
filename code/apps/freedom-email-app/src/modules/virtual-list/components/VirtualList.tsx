@@ -437,7 +437,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     const currentPrototypeSizes = prototypeSizes.get();
 
     const currentItemSizes = itemSizes.get();
-    for (const index of indices.sort().reverse()) {
+    for (const index of indices.sort((a, b) => b - a)) {
       const templateId = delegate.getTemplateIdForItemAtIndex(index);
       const newItemSize = currentPrototypeSizes[templateId];
       currentItemSizes.splice(index, 0, [false, newItemSize]);
@@ -498,7 +498,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
   const onItemsRemoved = useCallbackRef(({ indices }: { indices: number[] }) => {
     const currentItemSizes = itemSizes.get();
-    for (const index of indices.sort().reverse()) {
+    for (const index of indices.sort((a, b) => b - a)) {
       const rendered = lastRenderedItemsByItemIndex.get(index);
       if (rendered !== undefined) {
         const [key, renderedItem, topPx] = rendered;
@@ -521,7 +521,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     const currentPrototypeSizes = prototypeSizes.get();
 
     const currentItemSizes = itemSizes.get();
-    for (const index of indices.sort().reverse()) {
+    for (const index of indices.sort((a, b) => b - a)) {
       const newKey = dataSource.getKeyForItemAtIndex(index);
       const rendered = lastRenderedItemsByItemIndex.get(index);
       if (rendered !== undefined) {

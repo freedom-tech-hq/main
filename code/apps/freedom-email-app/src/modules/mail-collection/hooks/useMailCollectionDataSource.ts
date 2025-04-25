@@ -4,9 +4,10 @@ import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import type { GetMailThreadsForCollectionPacket } from 'freedom-email-tasks-web-worker';
-import type { ThreadLikeId } from 'freedom-email-user';
+import type { MailThread, ThreadLikeId } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
+import { SortedArray } from 'yasorted-array';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
@@ -19,15 +20,18 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
   const selectedCollectionId = useSelectedMailCollectionId();
   const tasks = useTasks();
 
-  const items = useRef<MailCollectionDataSourceItem[]>([]);
+  const items = useMemo(
+    () => new SortedArray<MailCollectionDataSourceItem>((a, b) => compareThreadsDescendingTimeOrder(a.thread, b.thread)),
+    []
+  );
 
   const dataSource = useMemo(() => {
-    const out = new ArrayDataSource(items.current, {
-      getKeyForItemAtIndex: (index) => items.current[index].id
+    const out = new ArrayDataSource(items, {
+      getKeyForItemAtIndex: (index) => items[index].id
     });
     out.setIsLoading('end');
     return out;
-  }, []);
+  }, [items]);
 
   const mountId = useRef<Uuid | undefined>(undefined);
   useEffect(() => {
@@ -59,9 +63,9 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
         switch (packet.value.type) {
           case 'mail-added': {
             const addedIndices: number[] = [];
+
             for (const newThread of packet.value.threads) {
-              addedIndices.push(items.current.length);
-              items.current.push({ type: 'mail-thread', id: newThread.id, thread: newThread });
+              addedIndices.push(items.add({ type: 'mail-thread', id: newThread.id, thread: newThread }));
             }
 
             dataSource.itemsAdded({ indices: addedIndices });
@@ -87,7 +91,7 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
             }
             didClearOldData = true;
 
-            items.current.length = 0;
+            items.clear();
             dataSource.itemsCleared();
           };
 
@@ -102,7 +106,7 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
             }
           }
         } else {
-          items.current.length = 0;
+          items.clear();
           dataSource.itemsCleared();
         }
       });
@@ -111,4 +115,15 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
   );
 
   return dataSource;
+};
+
+// Helpers
+
+const compareThreadsDescendingTimeOrder = (a: MailThread, b: MailThread) => {
+  const comparedTimeMSecs = b.timeMSec - a.timeMSec;
+  if (comparedTimeMSecs !== 0) {
+    return comparedTimeMSecs;
+  }
+
+  return b.id.localeCompare(a.id);
 };

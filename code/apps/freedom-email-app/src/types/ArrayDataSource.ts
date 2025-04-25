@@ -11,7 +11,7 @@ export class ArrayDataSource<T, KeyT extends string> implements DataSource<T, Ke
   private isLoading_: IsDataSourceLoading = [false];
 
   constructor(
-    private readonly array: T[],
+    private readonly array: ArrayLike<T>,
     { getKeyForItemAtIndex }: { getKeyForItemAtIndex: (index: number) => KeyT }
   ) {
     this.getKeyForItemAtIndex_ = getKeyForItemAtIndex;

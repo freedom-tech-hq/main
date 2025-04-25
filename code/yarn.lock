@@ -6442,6 +6442,11 @@ yaschema@4.4.5, yaschema@^4.4.5:
     lodash "^4.17.21"
     lodash-es "^4.17.21"
 
+yasorted-array@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/yasorted-array/-/yasorted-array-1.0.1.tgz#3b40cd2f7658194f67236441ff5ba6cbbc55506d"
+  integrity sha512-aXMwsBr1yzdvPGBPUaJBZflGFMEgLNJnQPa+1CrH1YIKwJhXwuEP3eHeeuafVBwGxQBCPGdFUU5FVF6ORI6h1A==
+
 yjs@13.6.26:
   version "13.6.26"
   resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.26.tgz#ab0928484f20249bcbe01a73e911b57d918f1bae"

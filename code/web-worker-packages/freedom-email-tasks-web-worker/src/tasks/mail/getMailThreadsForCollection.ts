@@ -51,12 +51,12 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     // TODO: also need to monitor the storage system in case new collection docs are created
 
-    let mailIds = Array.from(collectionDoc.value.document.mailIds.iterator()).sort().reverse();
+    let mailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
 
     const removeDidApplyDeltasListener = collectionDoc.value.addListener('didApplyDeltas', async () => {
       const unusedOldMailIds = new Set(mailIds);
 
-      const newMailIds = Array.from(collectionDoc.value.document.mailIds.iterator()).sort().reverse();
+      const newMailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
 
       const addedMailIds = new Set<MailId>();
       for (const mailId of newMailIds) {
@@ -68,7 +68,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       }
 
       if (unusedOldMailIds.size > 0) {
-        onData({ ok: true, value: { type: 'mail-removed' as const, ids: Array.from(unusedOldMailIds) } });
+        await onData({ ok: true, value: { type: 'mail-removed' as const, ids: Array.from(unusedOldMailIds) } });
       }
 
       if (addedMailIds.size > 0) {
@@ -77,7 +77,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
           return;
         }
 
-        onData({ ok: true, value: { type: 'mail-added' as const, threads: threads.value } });
+        await onData({ ok: true, value: { type: 'mail-added' as const, threads: threads.value } });
       }
 
       mailIds = newMailIds;
