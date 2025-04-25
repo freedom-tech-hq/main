@@ -19,7 +19,7 @@ import {
 } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { InferHttpRequestBodyType } from 'yaschema-api';
-import { getDefaultApiRoutingContext, setDefaultUrlBase } from 'yaschema-api';
+import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 const registerWithRemote = makeApiFetchTask([import.meta.filename, 'registerWithRemote'], api.register.POST);
 const pullFromRemote = makeApiFetchTask([import.meta.filename, 'pullFromRemote'], api.pull.POST);
@@ -42,10 +42,6 @@ export interface RemoteConnection {
 export const makeLocalFakeEmailServiceRemoteConnection = makeAsyncResultFunc(
   [import.meta.filename],
   async (_trace): PR<RemoteConnection> => {
-    // TODO: TEMP
-    setDefaultUrlBase('https://mail.local.dev.freedommail.me:8443');
-    // setDefaultUrlBase('https://api.dev.linefeedr.com');
-
     let storageRootId: StorageRootId | undefined = undefined;
     const register = makeAsyncResultFunc(
       [import.meta.filename, 'register'],

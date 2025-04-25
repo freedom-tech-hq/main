@@ -3,6 +3,7 @@ import '../internal/polyfills.ts';
 import { expose } from 'comlink';
 import { makeTrace } from 'freedom-contexts';
 
+import type { setConfig } from './config/setConfig.ts';
 import type { devFwdEnv } from './dev/devFwdEnv.ts';
 import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './email-credential/activateUserWithLocallyStoredEncryptedEmailCredential.ts';
 import type { getLocallyStoredEncryptedEmailCredential } from './email-credential/getLocallyStoredEncryptedEmailCredential.ts';
@@ -23,6 +24,11 @@ type ParametersExceptFirst<T extends (...args: any) => any> = Rest<Parameters<T>
 
 class TasksImpl {
   readonly #trace = makeTrace('worker');
+
+  // Config
+
+  public readonly setConfig = async (...args: ParametersExceptFirst<typeof setConfig>) =>
+    await (await import('./config/setConfig.ts')).setConfig(this.#trace, ...args);
 
   // Dev
 

@@ -66,7 +66,7 @@
     "generate-https-key-and-cert": "mkdir -p ./.ssl && openssl req -x509 -newkey rsa:4096 -keyout ./.ssl/key.pem -out ./.ssl/cert.pem -sha256 -days 365 -nodes -config ./openssl.local.conf",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
     "prep:build-dir": "rimraf ./build && mkdir -p ./build && node ../../dev-packages/freedom-build-tools/bin/copy-template.mjs --include './public/**/*' --drop-prefixes 'public/' --outdir ./build",
-    "start": "export FREEDOM_BUILD_UUID=$(uuidgen) && yarn prep:build-dir && yarn build:workers && HOST=www.local.dev.freedommail.me node ../../dev-packages/freedom-build-tools/bin/freedom-serve.mjs --tsconfig tsconfig.mjs.json",
+    "start": "export FREEDOM_BUILD_UUID=$(uuidgen) && export REACT_APP_ENV=${REACT_APP_ENV:-local} && yarn prep:build-dir && yarn build:workers && HOST=www.local.dev.freedommail.me node ../../dev-packages/freedom-build-tools/bin/freedom-serve.mjs --tsconfig tsconfig.mjs.json",
     "start:https": "PORT=3443 CERTFILE=./.ssl/cert.pem KEYFILE=./.ssl/key.pem yarn start",
     "start:https:debug": "FREEDOM_BUILD_MODE=DEV FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} yarn start:https",
     "test": "yarn test:localizations && yarn test:unit-tests",
