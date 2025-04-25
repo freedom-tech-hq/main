@@ -209,7 +209,7 @@
                     "$tsc"
                 ],
                 "presentation": {
-                    "reveal": "always"
+                    "reveal": "silent"
                 },
                 "group": "build"
             },
@@ -225,7 +225,7 @@
                     "$tsc"
                 ],
                 "presentation": {
-                    "reveal": "always"
+                    "reveal": "silent"
                 },
                 "group": "build"
             }
