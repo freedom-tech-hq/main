@@ -10,6 +10,7 @@ coverage
 *.tsbuildinfo
 .ssl
 !.gitkeep
+.firebase
 
 # Dev-time storage
 /data
