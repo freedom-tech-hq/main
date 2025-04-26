@@ -16,9 +16,9 @@ services:
     networks:
       - internal
     ports:
-      - "25:25"
-      - "465:465"
-      - "587:587"
+      - "${DEPLOY_LISTEN_IP:-0.0.0.0}:25:25"
+      - "${DEPLOY_LISTEN_IP:-0.0.0.0}:465:465"
+      - "${DEPLOY_LISTEN_IP:-0.0.0.0}:587:587"
 
     volumes:
       # Secrets
@@ -41,8 +41,7 @@ services:
     networks:
       - internal
     ports:
-      - "443:443"
-      - "8443:443" # Temporary, for testing
+      - "${DEPLOY_LISTEN_IP:-0.0.0.0}:443:443"
 
     volumes:
       # Secrets

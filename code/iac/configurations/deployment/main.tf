@@ -15,6 +15,7 @@ variable "environment" {
 
 # Define local variables
 locals {
+  # IPs: https://docs.google.com/spreadsheets/d/17e-5nwrVJ55u-JOIm4LDL9at8fGGpc0MjAmWqIejgjs/edit
   api_server_ip = "82.26.157.248"
   smtp_outbound_ip = "82.26.157.248"
   smtp_hostname    = "smtp1.dev.linefeedr.com"
@@ -118,7 +119,7 @@ output "bucket_name" {
   value = google_storage_bucket.user_files.name
 }
 
-# Reference the existing DNS zone for dev.my-test.com
+# Reference the existing dev DNS zone
 data "google_dns_managed_zone" "dev_zone" {
   name = "dev-linefeedr-com"
 }
