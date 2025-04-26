@@ -1,9 +1,9 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { findUserByEmail } from 'freedom-db';
 import { addMail, type StoredMail } from 'freedom-email-sync';
 
-import { findUserByEmail } from './findUserByEmail.ts';
 import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
 
 export const addIncomingEmail = makeAsyncResultFunc(

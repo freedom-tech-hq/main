@@ -1,13 +1,13 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
+import type { User } from 'freedom-db';
+import { getAllUsers } from 'freedom-db';
 import type { EmailAccess } from 'freedom-email-sync';
 import { listOutboundMailIds } from 'freedom-email-sync';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
-import { getAllUsers } from './getAllUsers.ts';
 import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
-import type { User } from './getUserStore.ts';
 
 /**
  * Subscribes to outbound emails by polling the listOutboundMailIds function

@@ -3,9 +3,8 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { type CryptoService } from 'freedom-crypto-service';
+import { getServerPrivateKeys } from 'freedom-db';
 import { once } from 'lodash-es';
-
-import { getServerPrivateKeys } from './getServerPrivateKeys.ts';
 
 export const getCryptoService = makeAsyncResultFunc(
   [import.meta.filename],

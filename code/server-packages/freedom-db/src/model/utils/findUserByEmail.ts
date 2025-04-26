@@ -1,7 +1,7 @@
 import { makeAsyncResultFunc, type PR, uncheckedResult } from 'freedom-async';
 
-import type { User } from './getUserStore.ts';
-import { getUserStore } from './getUserStore.ts';
+import { getUserStore } from '../internal/utils/getUserStore.ts';
+import type { User } from '../types/exports.ts';
 
 export const findUserByEmail = makeAsyncResultFunc(
   [import.meta.filename, 'findUserByEmail'],

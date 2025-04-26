@@ -169,6 +169,9 @@
             "path": "server-packages/freedom-server-auth"
         },
         {
+            "path": "server-packages/freedom-db"
+        },
+        {
             "path": "server-packages/freedom-server-localization"
         },
         {

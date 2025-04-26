@@ -3,11 +3,8 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
+import { getPrivateKeyStore, getPublicKeyStore, getServerPrivateKeys } from 'freedom-db';
 import { getOrCreate } from 'freedom-get-or-create';
-
-import { getPrivateKeyStore } from './getPrivateKeyStore.ts';
-import { getPublicKeyStore } from './getPublicKeyStore.ts';
-import { getServerPrivateKeys } from './getServerPrivateKeys.ts';
 
 export const createServerPrivateKeysIfNeeded = makeAsyncResultFunc(
   [import.meta.filename],

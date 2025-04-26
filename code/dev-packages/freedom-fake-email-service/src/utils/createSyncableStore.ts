@@ -4,13 +4,13 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
+import { getPublicKeyStore } from 'freedom-db';
 import type { EmailUserId } from 'freedom-email-sync';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { storageRootIdInfo, type SyncableItemMetadata } from 'freedom-sync-types';
 
 import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
 import { getFsStatsAtPath } from './getFsStatsAtPath.ts';
-import { getPublicKeyStore } from './getPublicKeyStore.ts';
 
 export const createSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],

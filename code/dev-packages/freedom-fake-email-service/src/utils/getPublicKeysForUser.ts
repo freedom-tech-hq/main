@@ -4,12 +4,12 @@ import { base64String } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractKeyIdFromSignature } from 'freedom-crypto';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
+import { getPublicKeyStore } from 'freedom-db';
 import type { EmailUserId } from 'freedom-email-sync';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { storageRootIdInfo, SyncablePath } from 'freedom-sync-types';
 
 import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
-import { getPublicKeyStore } from './getPublicKeyStore.ts';
 
 export const getPublicKeysForUser = makeAsyncResultFunc(
   [import.meta.filename],

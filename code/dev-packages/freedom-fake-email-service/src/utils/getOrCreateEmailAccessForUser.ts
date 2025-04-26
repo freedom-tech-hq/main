@@ -1,11 +1,11 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { getSaltsForUser } from 'freedom-db';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
 
 import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
 import { getPublicKeysForUser } from './getPublicKeysForUser.ts';
-import { getSaltsForUser } from './getSaltsForUser.ts';
 
 // TODO: TEMP
 const globalCache: Record<EmailUserId, EmailAccess> = {};
