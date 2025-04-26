@@ -19,6 +19,7 @@
     "buffer": "6.0.3",
     "comlink": "4.4.2",
     "doublell": "1.1.6",
+    "email-addresses": "5.0.0",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
@@ -42,6 +43,7 @@
     "yasorted-array": "1.0.2"
   },
   "devDependencies": {
+    "@types/email-addresses": "3.0.0",
     "@types/lodash-es": "4.17.12",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",

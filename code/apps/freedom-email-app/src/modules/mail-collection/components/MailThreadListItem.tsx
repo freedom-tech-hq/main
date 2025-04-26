@@ -1,5 +1,6 @@
 import type { ListItemTextSlotsAndSlotProps, SxProps, Theme } from '@mui/material';
 import { Avatar, ListItemAvatar, ListItemButton, ListItemText, Stack, Typography, useTheme } from '@mui/material';
+import { parseFrom } from 'email-addresses';
 import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
@@ -42,6 +43,16 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
     };
   }, [theme]);
 
+  const parsedFrom = parseFrom(thread.from) ?? [];
+  const fromStrings = parsedFrom.map((parsed) => {
+    switch (parsed.type) {
+      case 'group':
+        return parsed.name;
+      case 'mailbox':
+        return parsed.name ?? parsed.address;
+    }
+  });
+
   return (
     <>
       {BC(isSelected, (isSelected) => (
@@ -58,9 +69,13 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
           </ListItemAvatar>
           <Stack alignItems="stretch" sx={overflowHiddenStyle}>
             <Stack direction="row" justifyContent="space-between" gap={1} sx={overflowHiddenStyle}>
-              <Typography fontWeight="bold" sx={ellipsizeStyle}>
-                {thread.from}
-              </Typography>
+              <span>
+                {fromStrings.map((from, index) => (
+                  <Typography key={index} fontWeight="bold" sx={ellipsizeStyle}>
+                    {`${index > 0 ? ', ' : ''}${from}`}
+                  </Typography>
+                ))}
+              </span>
               <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
                 {formatTimeIfSameDateOrFormatDate(thread.timeMSec)}
               </Typography>
