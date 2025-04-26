@@ -1,10 +1,11 @@
 import type { PR, Result } from 'freedom-async';
 import { allResultsMappedSkipFailures, excludeFailureResult, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { generalizeFailureResult } from 'freedom-common-errors';
-import type { MailId } from 'freedom-email-sync';
+import { autoGeneralizeFailureResults, generalizeFailureResult } from 'freedom-common-errors';
+import { type MailId } from 'freedom-email-sync';
 import type { CollectionLikeId, EmailCredential, MailThread } from 'freedom-email-user';
 import { getCollectionDoc, getMailById, mailCollectionTypes } from 'freedom-email-user';
+import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -21,6 +22,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
     const credential = useActiveCredential(trace).credential;
+    const lockStore = new InMemoryLockStore();
 
     if (credential === undefined) {
       return makeSuccess({ type: 'mail-added' as const, threads: [] });
@@ -51,37 +53,39 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     // TODO: also need to monitor the storage system in case new collection docs are created
 
-    let mailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
+    const removeDidApplyDeltasListener = collectionDoc.value.addListener('didApplyDeltas', () =>
+      withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<undefined> => {
+        const unusedOldMailIds = new Set(mailIds);
 
-    const removeDidApplyDeltasListener = collectionDoc.value.addListener('didApplyDeltas', async () => {
-      const unusedOldMailIds = new Set(mailIds);
+        const newMailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
 
-      const newMailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
-
-      const addedMailIds = new Set<MailId>();
-      for (const mailId of newMailIds) {
-        if (unusedOldMailIds.has(mailId)) {
-          unusedOldMailIds.delete(mailId);
-        } else {
-          addedMailIds.add(mailId);
-        }
-      }
-
-      if (unusedOldMailIds.size > 0) {
-        await onData({ ok: true, value: { type: 'mail-removed' as const, ids: Array.from(unusedOldMailIds) } });
-      }
-
-      if (addedMailIds.size > 0) {
-        const threads = await getThreadsForMailIds(trace, credential, Array.from(addedMailIds));
-        if (!threads.ok) {
-          return;
+        const addedMailIds = new Set<MailId>();
+        for (const mailId of newMailIds) {
+          if (unusedOldMailIds.has(mailId)) {
+            unusedOldMailIds.delete(mailId);
+          } else {
+            addedMailIds.add(mailId);
+          }
         }
 
-        await onData({ ok: true, value: { type: 'mail-added' as const, threads: threads.value } });
-      }
+        if (unusedOldMailIds.size > 0) {
+          await onData({ ok: true, value: { type: 'mail-removed' as const, ids: Array.from(unusedOldMailIds) } });
+        }
 
-      mailIds = newMailIds;
-    });
+        if (addedMailIds.size > 0) {
+          const threads = await getThreadsForMailIds(trace, credential, Array.from(addedMailIds));
+          if (!threads.ok) {
+            return threads;
+          }
+
+          await onData({ ok: true, value: { type: 'mail-added' as const, threads: threads.value } });
+        }
+
+        mailIds = newMailIds;
+
+        return makeSuccess(undefined);
+      })
+    );
 
     // Periodically checking if the connection is still active
     const checkConnectionInterval = setInterval(async () => {
@@ -92,12 +96,22 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       }
     }, ONE_SEC_MSEC);
 
-    const threads = await getThreadsForMailIds(trace, credential, mailIds);
-    if (!threads.ok) {
-      return threads;
-    }
+    let mailIds: MailId[];
 
-    return makeSuccess({ type: 'mail-added' as const, threads: threads.value });
+    return await autoGeneralizeFailureResults(
+      trace,
+      'lock-timeout',
+      withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<GetMailThreadsForCollection_MailAddedPacket> => {
+        mailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
+
+        const threads = await getThreadsForMailIds(trace, credential, mailIds);
+        if (!threads.ok) {
+          return threads;
+        }
+
+        return makeSuccess({ type: 'mail-added' as const, threads: threads.value });
+      })
+    );
   }
 );
 
@@ -116,7 +130,7 @@ const getThreadsForMailIds = makeAsyncResultFunc(
       async (trace, mailId): PR<undefined, 'not-found'> => {
         const storedMail = await getMailById(trace, access, mailId);
         if (!storedMail.ok) {
-          return generalizeFailureResult(trace, storedMail, 'not-found');
+          return storedMail;
         }
 
         threads.push({

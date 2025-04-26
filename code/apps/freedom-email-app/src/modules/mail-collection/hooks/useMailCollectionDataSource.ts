@@ -15,6 +15,7 @@ import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
 import type { DataSource } from '../../../types/DataSource.ts';
 import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionDataSourceItem } from '../types/MailCollectionDataSourceItem.ts';
+import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 
 export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSourceItem, ThreadLikeId> => {
   const selectedCollectionId = useSelectedMailCollectionId();
@@ -62,13 +63,11 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
 
         switch (packet.value.type) {
           case 'mail-added': {
-            const addedIndices: number[] = [];
-
-            for (const newThread of packet.value.threads) {
-              addedIndices.push(items.add({ type: 'mail-thread', id: newThread.id, thread: newThread }));
-            }
-
-            dataSource.itemsAdded({ indices: addedIndices });
+            dataSource.itemsAdded({
+              indices: items.addMultiple(
+                ...packet.value.threads.map((thread): MailThreadDataSourceItem => ({ type: 'mail-thread', id: thread.id, thread }))
+              )
+            });
 
             break;
           }

@@ -15,6 +15,7 @@
     "freedom-fake-email-service-api": "0.0.0",
     "freedom-fetching": "0.0.0",
     "freedom-indexeddb-object-store": "0.0.0",
+    "freedom-locking-types": "0.0.0",
     "freedom-notification-types": "0.0.0",
     "freedom-opfs-syncable-store-backing": "0.0.0",
     "freedom-sync-service": "0.0.0",
