@@ -6,6 +6,7 @@
     "freedom-async": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-email-server": "0.0.0",
     "freedom-fake-email-service": "0.0.0"
   },
   "devDependencies": {
