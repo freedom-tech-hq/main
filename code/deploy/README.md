@@ -1,6 +1,25 @@
-# CI/CD System
+# Continuous Deployment System
 
-This directory contains scripts for deploying.
+This directory contains deployment configurations and scripts.
+
+## Architecture
+
+Layers are:
+
+1. **Account** - IaC setup to host multiple related environments. Should be two: `prod` and `dev`.
+2. **Environment** - IaC setup to host a particular environment in an account.
+3. **Deployment** - A set of applications to be deployed to an environment.
+   For testing, a deployment should work the same with a local host docker/kubernetes.
+
+## Directory Structure
+
+- `x.y_deployment-name` - contains a deployment configuration. `x` - layer, `y` - index.
+  - `deploy-this.sh` - an interactive wrapper to start the deployment.
+  - `tear-down-this.sh` - an interactive wrapper to tear down the deployment.
+- TODO
+
+
+TODO: revise the part below
 
 ## Usage
 

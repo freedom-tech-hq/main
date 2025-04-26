@@ -1,0 +1,13 @@
+name: mock-smtp-server
+
+services:
+  smtp:
+    build: .
+
+    environment:
+      # Enable samples collection
+      # Do not persist, drop on container recreate
+      - SAMPLES_DIR=/app/samples
+
+    ports:
+      - "${DEPLOY_LISTEN_IP:-0.0.0.0}:25:25"

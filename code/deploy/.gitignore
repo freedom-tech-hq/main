@@ -1,2 +1,7 @@
 # Deploy build workspace
 /workspace/
+
+# Terraform parts inside configuration dirs
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup

@@ -1,0 +1,19 @@
+{
+  "name": "freedom-mock-smtp-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node mock-smtp.mjs"
+  },
+  "dependencies": {
+    "smtp-server": "3.13.6"
+  },
+  "nx": {
+    "projectType": "application",
+    "tags": [
+      "type:app",
+      "platform:server"
+    ]
+  }
+}
