@@ -2,12 +2,12 @@ import { bestEffort, makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { addUser } from 'freedom-db';
 import { emailUserIdInfo } from 'freedom-email-sync';
+import { createSyncableStore } from 'freedom-fake-email-service';
 import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
-import { createSyncableStore } from '../utils/createSyncableStore.ts';
 import { setupKeyHandlers } from '../utils/setupKeyHandlers.ts';
 
 export default makeHttpApiHandler(

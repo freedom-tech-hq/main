@@ -1,7 +1,10 @@
 import { type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { buildMode, log, makeTrace, setLogger, wrapLogger } from 'freedom-contexts';
-import { initServer, startHttpRestServer, startHttpsRestServer } from 'freedom-fake-email-service';
+import { initServer } from 'freedom-fake-email-service';
+
+import { startHttpRestServer } from './startHttpRestServer.ts';
+import { startHttpsRestServer } from './startHttpsRestServer.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
 DEV: expectedBuildMode = 'DEV';

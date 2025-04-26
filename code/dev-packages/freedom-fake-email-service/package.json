@@ -16,6 +16,7 @@
     "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
+    "freedom-db": "0.0.0",
     "freedom-do-soon": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "freedom-fake-email-service-api": "0.0.0",

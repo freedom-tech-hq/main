@@ -1,12 +1,11 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { emailUserIdInfo } from 'freedom-email-sync';
+import { getOrCreateEmailAccessForUser } from 'freedom-fake-email-service';
 import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { pullPath } from 'freedom-syncable-store';
-
-import { getOrCreateEmailAccessForUser } from '../utils/getOrCreateEmailAccessForUser.ts';
 
 export default makeHttpApiHandler(
   [import.meta.filename],

@@ -2,8 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { EmailUserId } from 'freedom-email-sync';
 import { addMail } from 'freedom-email-sync';
-
-import { getOrCreateEmailAccessForUser } from './getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailAccessForUser } from 'freedom-fake-email-service';
 
 export const addDemoEmail = makeAsyncResultFunc(
   [import.meta.filename],
