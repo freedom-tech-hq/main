@@ -12,8 +12,6 @@ import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCr
 import type { GetMailForThread_MailAddedPacket } from '../../types/mail/getMailForThread/GetMailForThread_MailAddedPacket.ts';
 import type { GetMailForThreadPacket } from '../../types/mail/getMailForThread/GetMailForThreadPacket.ts';
 
-// const globalCache: Record<MailThreadId, Mail[]> = {};
-
 export const getMailForThread = makeAsyncResultFunc(
   [import.meta.filename],
   async (

@@ -39,7 +39,7 @@
     "react-dom": "19.1.0",
     "react-waitables": "2.3.10",
     "yaschema": "4.4.5",
-    "yasorted-array": "1.0.1"
+    "yasorted-array": "1.0.2"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",
