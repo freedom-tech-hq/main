@@ -66,6 +66,7 @@
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-email-tasks-web-worker/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-opfs-syncable-store-backing/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/backends/freedom-store-api-server/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-utils/lib" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

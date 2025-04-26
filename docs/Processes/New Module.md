@@ -20,6 +20,7 @@ Do this step by step. Use `code/cross-platform-packages/freedom-syncable-store-t
   - [ ] `src/types/exports.ts`
 - [ ] Create `README.md`, fill it with reasonable description of the module, if you have one. One short paragraph with the purpose.
 - [ ] Add the module to `code/freedom-email.code-workspace` in the "folders" array
+- [ ] Add module's `lib` folder as `excludeFolder` to `.idea/freedom.iml`
 
 ## Custom Implementation
 

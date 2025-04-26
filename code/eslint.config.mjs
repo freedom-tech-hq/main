@@ -127,7 +127,7 @@ const baseConfig = [
       'import/no-duplicates': 'error',
       // Manually ignoring submodule imports (which we shouldn't overdo) due to
       // https://github.com/import-js/eslint-plugin-import/issues/1810
-      'import/no-unresolved': ['error', { ignore: ['/tests'] }],
+      'import/no-unresolved': ['error', { ignore: ['/tests$', '^freedom-utils/[\\w]+$'] }],
       'import-extensions/require-extensions': ['error', { expectedExtensions: ['ts', 'tsx', 'mjs', 'cjs', 'js'] }],
       'import-extensions/require-index': ['error', { expectedExtensions: ['ts', 'tsx', 'mjs', 'cjs', 'js'] }],
 
