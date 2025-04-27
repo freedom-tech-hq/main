@@ -17,6 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Components use React functional style with hooks
 - Use the `parseFrom` function from 'email-addresses' to handle email addresses
 
+## API Registration System
+- New API endpoints must follow the established pattern:
+  1. Define the API in `/dev-packages/freedom-fake-email-service-api/src/api/{endpoint}.ts` using `makeHttpApi`
+  2. Add your export to `/dev-packages/freedom-fake-email-service-api/src/api/exports.ts`
+  3. Implement handlers in `/dev-packages/freedom-fake-email-service/src/api-handlers/{endpoint}.ts` using `makeHttpApiHandler`
+  4. Register in `/dev-packages/freedom-fake-email-service/src/api-handlers/index.ts` with `makeRegisterAllWithExpress`
+- Use schema validation with yaschema for request/response types
+- Do not create separate Express routes or servers outside this system
+
 ## Test Standards
 - Follow AAA pattern: Arrange-Act-Assert
 - Tests in `__tests__` folders adjacent to code
