@@ -6,6 +6,27 @@ const API_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:3001/api/credentials';
 
 /**
+ * Creates a lookup key derived from both username and password
+ * This ensures credentials can only be retrieved if both values are known
+ */
+export const createLookupKeyHash = async (username: string, password: string): Promise<string> => {
+  // Create a composite value
+  const composite = `${username}:${password}`;
+  
+  // Convert the composite to a byte array
+  const encoder = new TextEncoder();
+  const data = encoder.encode(composite);
+  
+  // Hash the composite value using SHA-256
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // Convert to hex string
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
+/**
  * Securely derives an encryption key from a password
  */
 export const deriveKeyFromPassword = async (
@@ -99,19 +120,23 @@ export const decryptCredential = async (
  */
 export const storeCredentialOnServer = async (
   username: string,
+  password: string,
   encryptedCredential: Base64String,
   description: string,
   salt: Uint8Array,
   iv: Uint8Array
 ): Promise<boolean> => {
   try {
+    // Generate a lookup key hash from both username and password
+    const lookupKeyHash = await createLookupKeyHash(username, password);
+    
     const response = await fetch(`${API_URL}/store`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        username,
+        lookupKeyHash,
         encryptedCredential,
         description,
         salt: Array.from(salt), // Convert to array for JSON serialization
@@ -136,7 +161,8 @@ export const storeCredentialOnServer = async (
  * Retrieves an encrypted credential from the server
  */
 export const retrieveCredentialFromServer = async (
-  username: string
+  username: string,
+  password: string
 ): Promise<{ 
   encryptedCredential: Base64String, 
   description: string,
@@ -144,17 +170,20 @@ export const retrieveCredentialFromServer = async (
   iv: Uint8Array 
 } | null> => {
   try {
+    // Generate a lookup key hash from both username and password
+    const lookupKeyHash = await createLookupKeyHash(username, password);
+    
     const response = await fetch(`${API_URL}/retrieve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ lookupKeyHash })
     });
     
     if (!response.ok) {
       if (response.status === 404) {
-        log().info?.('No credential found for this username');
+        log().info?.('No credential found for this username/password combination');
       } else {
         const error = await response.json();
         log().error?.('Failed to retrieve credential from server:', error);

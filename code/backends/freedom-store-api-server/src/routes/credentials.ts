@@ -1,46 +1,72 @@
 import { log, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Base64String, Uuid } from 'freedom-basic-data';
-import { generalizeFailureResult } from 'freedom-common-errors';
+import { makeUuid } from 'freedom-contexts';
+import { makeTrace } from 'freedom-contexts';
 import express from 'express';
-import crypto from 'crypto';
 
-// In-memory storage for credentials (this would be a database in production)
-// Key: Store key derived from username, Value: { encryptedCredential, salt, iv }
-const credentialsStore = new Map<string, { 
-  encryptedCredential: Base64String, 
-  description: string,
-  salt: string,
-  iv: string 
-}>();
+import { getCredentialObjectStore } from '../utils/getCredentialObjectStore.ts';
 
 const router = express.Router();
 
 // Store an encrypted credential
 router.post('/store', express.json(), async (req, res) => {
+  const trace = makeTrace('store-credential');
+  
   try {
-    const { username, encryptedCredential, description, salt, iv } = req.body;
+    const { lookupKeyHash, encryptedCredential, description, salt, iv } = req.body;
     
-    if (!username || !encryptedCredential || !salt || !iv) {
+    if (!lookupKeyHash || !encryptedCredential || !salt || !iv) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    // Create a server-side key that depends on the username to prevent unauthorized access
-    // This is a simple example - in production we would use a more sophisticated approach
-    const storeKey = crypto
-      .createHash('sha256')
-      .update(username)
-      .digest('hex');
+    // Get credential store
+    const credentialStoreResult = await getCredentialObjectStore(trace);
+    if (!credentialStoreResult.ok) {
+      log().error?.('Failed to get credential store:', credentialStoreResult.value);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
     
-    // Store the encrypted credential
-    credentialsStore.set(storeKey, {
+    const credentialStore = credentialStoreResult.value;
+    
+    // Use lookupKeyHash (derived from username+password) as the key
+    // This ensures credentials can only be retrieved if both username and password are known
+    const createResult = await credentialStore.mutableObject(lookupKeyHash as Uuid).create(trace, {
       encryptedCredential,
       description: description || 'Freedom Email Account',
       salt,
       iv
     });
     
-    log().info?.(`Stored credential for user: ${username}`);
+    // Handle existing key (update instead of error)
+    if (!createResult.ok && createResult.value.errorCode === 'conflict') {
+      // Get the existing credential to update it
+      const existing = await credentialStore.mutableObject(lookupKeyHash as Uuid).getMutable(trace);
+      if (!existing.ok) {
+        log().error?.('Failed to get existing credential:', existing.value);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      
+      // Update with new values
+      existing.value.storedValue = {
+        encryptedCredential,
+        description: description || 'Freedom Email Account',
+        salt,
+        iv  
+      };
+      
+      // Save the update
+      const updateResult = await credentialStore.mutableObject(lookupKeyHash as Uuid).update(trace, existing.value);
+      if (!updateResult.ok) {
+        log().error?.('Failed to update credential:', updateResult.value);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    } else if (!createResult.ok) {
+      log().error?.('Failed to create credential:', createResult.value);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    
+    log().info?.(`Stored credential with lookup key hash: ${lookupKeyHash.substring(0, 8)}...`);
     return res.status(200).json({ success: true });
   } catch (error) {
     log().error?.('Error storing credential:', error);
@@ -50,27 +76,37 @@ router.post('/store', express.json(), async (req, res) => {
 
 // Retrieve an encrypted credential
 router.post('/retrieve', express.json(), async (req, res) => {
+  const trace = makeTrace('retrieve-credential');
+  
   try {
-    const { username } = req.body;
+    const { lookupKeyHash } = req.body;
     
-    if (!username) {
-      return res.status(400).json({ error: 'Missing username' });
+    if (!lookupKeyHash) {
+      return res.status(400).json({ error: 'Missing lookup key hash' });
     }
     
-    // Derive the store key from the username
-    const storeKey = crypto
-      .createHash('sha256')
-      .update(username)
-      .digest('hex');
-    
-    // Get the credential
-    const credential = credentialsStore.get(storeKey);
-    
-    if (!credential) {
-      return res.status(404).json({ error: 'Credential not found' });
+    // Get credential store
+    const credentialStoreResult = await getCredentialObjectStore(trace);
+    if (!credentialStoreResult.ok) {
+      log().error?.('Failed to get credential store:', credentialStoreResult.value);
+      return res.status(500).json({ error: 'Internal server error' });
     }
     
-    return res.status(200).json(credential);
+    const credentialStore = credentialStoreResult.value;
+    
+    // Get the credential using the lookup key hash
+    const credentialResult = await credentialStore.object(lookupKeyHash as Uuid).get(trace);
+    if (!credentialResult.ok) {
+      if (credentialResult.value.errorCode === 'not-found') {
+        return res.status(404).json({ error: 'Credential not found' });
+      }
+      
+      log().error?.('Failed to retrieve credential:', credentialResult.value);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    
+    // Return the credential data
+    return res.status(200).json(credentialResult.value);
   } catch (error) {
     log().error?.('Error retrieving credential:', error);
     return res.status(500).json({ error: 'Internal server error' });

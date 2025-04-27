@@ -4,13 +4,15 @@ import { makeTrace } from 'freedom-contexts';
 import { startHttpRestServer, startHttpsRestServer } from 'freedom-fake-email-service';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import credentialsRoutes from './routes/credentials.ts';
 
 const setupServer = () => {
   const app = express();
   
   // Middleware
-  app.use(cors());
+  app.use(helmet());  // Security headers
+  app.use(cors());    // CORS support
   app.use(express.json());
   
   // Routes

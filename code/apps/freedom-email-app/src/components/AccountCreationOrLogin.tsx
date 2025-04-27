@@ -154,9 +154,10 @@ export const AccountCreationOrLogin = () => {
         // Encrypt the credential with the derived key
         const { encryptedData, iv } = await encryptCredential(created.value.encryptedEmailCredential, key);
         
-        // Store on server
+        // Store on server using both username and password for the lookup key
         await storeCredentialOnServer(
-          username, 
+          username,
+          masterPassword,
           encryptedData,
           `${username}@freedommail.me - ${new Date().toISOString()}`,
           salt,
@@ -188,11 +189,11 @@ export const AccountCreationOrLogin = () => {
     busyWith.set('retrieving-from-server');
     
     try {
-      // Retrieve the encrypted credential from the server
-      const serverCredential = await retrieveCredentialFromServer(serverLoginUsername);
+      // Retrieve the encrypted credential from the server using both username and password
+      const serverCredential = await retrieveCredentialFromServer(serverLoginUsername, serverLoginPassword);
       
       if (!serverCredential) {
-        log().error?.('No credential found for username:', serverLoginUsername);
+        log().error?.('No credential found for username/password combination');
         return;
       }
       
