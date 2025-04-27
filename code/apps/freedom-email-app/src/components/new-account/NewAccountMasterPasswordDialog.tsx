@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useBinding, useCallbackRef } from 'react-bindings';
@@ -11,30 +11,34 @@ const $cancel = LOCALIZE('Cancel')({ ns });
 const $createAccount = LOCALIZE('Create Account')({ ns });
 const $masterPassword = LOCALIZE('Master Password')({ ns });
 const $newAccount = LOCALIZE('New Account')({ ns });
+const $username = LOCALIZE('Username')({ ns });
 const $newAccountInstructions = LOCALIZE(
-  'To begin setting up your account, enter a new master password.  Consider using a password manager and a very complex password.'
+  'To begin setting up your account, enter a username and master password. Consider using a password manager and a very complex password.'
 )({ ns });
 
 export interface NewAccountMasterPasswordDialogProps {
   dismiss: () => void;
-  onSubmit: ({ masterPassword }: { masterPassword: string }) => TypeOrPromisedType<void>;
+  onSubmit: ({ username, masterPassword }: { username: string; masterPassword: string }) => TypeOrPromisedType<void>;
 }
 
 export const NewAccountMasterPasswordDialog = ({ dismiss, onSubmit }: NewAccountMasterPasswordDialogProps) => {
   const t = useT();
 
+  const username = useBinding(() => '', { id: 'username', detectChanges: true });
   const masterPassword = useBinding(() => '', { id: 'masterPassword', detectChanges: true });
 
   const wrappedOnSubmit = useCallbackRef(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const theUsername = username.get();
     const theMasterPassword = masterPassword.get();
-    if (theMasterPassword.length === 0) {
+    
+    if (theUsername.length === 0 || theMasterPassword.length === 0) {
       // TODO: show an error -- also better validation
       return;
     }
 
-    onSubmit({ masterPassword: theMasterPassword });
+    onSubmit({ username: theUsername, masterPassword: theMasterPassword });
   });
 
   return (
@@ -43,9 +47,20 @@ export const NewAccountMasterPasswordDialog = ({ dismiss, onSubmit }: NewAccount
       <DialogContent>
         <DialogContentText>{$newAccountInstructions(t)}</DialogContentText>
         <ControlledTextField
+          value={username}
+          autoFocus
+          autoComplete="username"
+          required
+          margin="dense"
+          id="username"
+          name="username"
+          label={$username(t)}
+          fullWidth
+          variant="standard"
+        />
+        <ControlledTextField
           type="password"
           value={masterPassword}
-          autoFocus
           autoComplete="new-password"
           required
           margin="dense"
