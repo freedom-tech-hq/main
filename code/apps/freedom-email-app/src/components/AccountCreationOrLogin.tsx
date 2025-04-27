@@ -12,6 +12,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable, WC } from 'react-waitables';
 
+import { registerWebAuthnCredential } from '../utils/webauthn.ts';
+
 import { useActiveLocallyStoredCredentialUuid } from '../contexts/active-locally-stored-credential-uuid.tsx';
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useTasks } from '../contexts/tasks.tsx';
@@ -133,6 +135,13 @@ export const AccountCreationOrLogin = () => {
 
       activeLocallyStoredCredentialUuid.set(created.value.locallyStoredCredentialUuid);
       activeUserId.set(created.value.userId);
+      
+      // After successful account creation, try to register a WebAuthn credential
+      try {
+        await registerWebAuthnCredential(created.value.locallyStoredCredentialUuid);
+      } catch (e) {
+        log().warn?.('Could not register WebAuthn credential', e);
+      }
     } finally {
       busyWith.set(undefined);
     }
@@ -173,6 +182,16 @@ export const AccountCreationOrLogin = () => {
 
         activeLocallyStoredCredentialUuid.set(localCredentialUuid);
         activeUserId.set(unlocked.value.userId);
+        
+        // After successful unlock, try to register a WebAuthn credential
+        // This only happens for password-based authentication, not WebAuthn-based
+        if (!masterPassword.startsWith('webauthn:')) {
+          try {
+            await registerWebAuthnCredential(localCredentialUuid);
+          } catch (e) {
+            log().warn?.('Could not register WebAuthn credential', e);
+          }
+        }
       } finally {
         busyWith.set(undefined);
       }
