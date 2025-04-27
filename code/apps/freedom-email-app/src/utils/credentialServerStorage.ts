@@ -1,9 +1,10 @@
 import { log } from 'freedom-async';
 import type { Base64String } from 'freedom-basic-data';
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.freedommail.me/api/credentials' 
-  : 'http://localhost:3001/api/credentials';
+// URL for credential API endpoints (follows the yaschema-api pattern)
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://api.freedommail.me' 
+  : 'http://localhost:3001';
 
 /**
  * Creates a lookup key derived from both username and password
@@ -130,7 +131,7 @@ export const storeCredentialOnServer = async (
     // Generate a lookup key hash from both username and password
     const lookupKeyHash = await createLookupKeyHash(username, password);
     
-    const response = await fetch(`${API_URL}/store`, {
+    const response = await fetch(`${API_BASE_URL}/api/credentials/store`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -173,7 +174,7 @@ export const retrieveCredentialFromServer = async (
     // Generate a lookup key hash from both username and password
     const lookupKeyHash = await createLookupKeyHash(username, password);
     
-    const response = await fetch(`${API_URL}/retrieve`, {
+    const response = await fetch(`${API_BASE_URL}/api/credentials/retrieve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

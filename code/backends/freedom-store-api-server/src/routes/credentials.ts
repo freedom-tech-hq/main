@@ -4,10 +4,16 @@ import type { Base64String, Uuid } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 
 import { getCredentialObjectStore } from '../utils/getCredentialObjectStore.ts';
 
 const router = express.Router();
+
+// Apply security middleware specifically for credential routes
+router.use(helmet());
+router.use(cors());
 
 // Store an encrypted credential
 router.post('/store', express.json(), async (req, res) => {
