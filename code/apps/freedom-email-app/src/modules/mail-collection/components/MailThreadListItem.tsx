@@ -69,14 +69,14 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
           </ListItemAvatar>
           <Stack alignItems="stretch" sx={overflowHiddenStyle}>
             <Stack direction="row" justifyContent="space-between" gap={1} sx={overflowHiddenStyle}>
-              <span>
+              <Stack sx={{ overflow: 'hidden', flexGrow: 1, flexShrink: 1 }}>
                 {fromStrings.map((from, index) => (
                   <Typography key={index} fontWeight="bold" sx={ellipsizeStyle}>
                     {`${index > 0 ? ', ' : ''}${from}`}
                   </Typography>
                 ))}
-              </span>
-              <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
+              </Stack>
+              <Typography variant="body2" color="textSecondary" sx={{ ...noWrapStyle, flexShrink: 0, minWidth: '5rem' }}>
                 {formatTimeIfSameDateOrFormatDate(thread.timeMSec)}
               </Typography>
             </Stack>
