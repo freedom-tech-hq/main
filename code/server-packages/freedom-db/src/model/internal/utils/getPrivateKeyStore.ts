@@ -12,7 +12,7 @@ import { getConfig } from '../../../config.ts';
 export const getPrivateKeyStore = makeAsyncResultFunc(
   [import.meta.filename],
   once(async (_trace): PR<MutableObjectStore<string, PrivateCombinationCryptoKeySet>> => {
-    const storageRootPath = getConfig('allStorageRootPath');
+    const storageRootPath = getConfig('STORAGE_ROOT_PATH');
 
     const jsonPath = path.join(storageRootPath, 'mock-kv-db.json');
 

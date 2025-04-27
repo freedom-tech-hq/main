@@ -15,17 +15,14 @@ import { log, type Trace } from 'freedom-contexts';
 import { StatusCodes } from 'http-status-codes';
 
 import registerDefaultApiHandlers from './api-handlers/index.ts';
+import * as config from './config.ts';
 import type { MailServiceExpress } from './types/MailServiceExpress.ts';
 
 export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace: Trace): Promise<MailServiceExpress> => {
   const app = addYaschemaApiExpressContextAccessorToExpress(express() as MailServiceExpress, makeYaschemaApiExpressContext());
 
-  const CORS_ORIGINS = process.env.CORS_ORIGINS;
+  app.use(cors({ origin: config.CORS_ORIGINS, credentials: true }));
 
-  if (CORS_ORIGINS !== undefined) {
-    const origin = CORS_ORIGINS.split(',').map((origin) => origin.trim());
-    app.use(cors({ origin, credentials: true }));
-  }
   app.use(cookieParser());
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));

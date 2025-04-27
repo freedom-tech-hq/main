@@ -181,6 +181,9 @@
             "path": "server-packages/freedom-sqlite-object-store"
         },
         {
+            "path": "server-packages/freedom-config"
+        },
+        {
             "path": "web-packages/freedom-indexeddb-object-store"
         },
         {

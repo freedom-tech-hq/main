@@ -13,7 +13,7 @@ import { userSchema } from '../../types/User.ts';
 export const getUserStore = makeAsyncResultFunc(
   [import.meta.filename],
   once(async (_trace): PR<MutableObjectStore<string, User>> => {
-    const storageRootPath = getConfig('allStorageRootPath');
+    const storageRootPath = getConfig('STORAGE_ROOT_PATH');
 
     const jsonPath = path.join(storageRootPath, 'mock-db.json');
 

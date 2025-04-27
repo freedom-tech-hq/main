@@ -1,8 +1,9 @@
 import { type PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { buildMode, log, makeTrace, setLogger, wrapLogger } from 'freedom-contexts';
-import { initServer } from 'freedom-fake-email-service';
 
+import * as config from './config.ts';
+import { initApp } from './initApp.ts';
 import { startHttpRestServer } from './startHttpRestServer.ts';
 import { startHttpsRestServer } from './startHttpsRestServer.ts';
 
@@ -17,16 +18,14 @@ const main = makeAsyncResultFunc(
   async (trace): PR<undefined> => {
     // Setup
     setLogger(wrapLogger(console));
-    const keyPath = process.env.HTTPS_SERVER_KEY_PATH;
-    const certPath = process.env.HTTPS_SERVER_CERT_PATH;
-    const shouldUseHttps = keyPath !== undefined && certPath !== undefined;
-    await initServer();
+    await uncheckedResult(initApp(trace));
 
     // Start the HTTP REST server
+    const shouldUseHttps = config.HTTPS_SERVER_KEY !== undefined && config.HTTPS_SERVER_CERT !== undefined;
     if (shouldUseHttps) {
-      await startHttpsRestServer(trace);
+      await uncheckedResult(startHttpsRestServer(trace));
     } else {
-      await startHttpRestServer(trace);
+      await uncheckedResult(startHttpRestServer(trace));
     }
 
     return makeSuccess(undefined);

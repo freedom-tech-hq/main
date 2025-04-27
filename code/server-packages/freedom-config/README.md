@@ -1,7 +1,5 @@
 # Freedom Config Module
 
-TODO: Extract to a package in the future.
-
 A configuration framework that wraps the `env-var` package and adds more validation capabilities.
 
 **Note:** The `loadEnv` function is only compatible with Node.js environments and will not work in frontend applications. However, the `from` function is compatible with both frontend and backend environments.
@@ -44,9 +42,9 @@ loadEnv('/path/to/project/root');
 
 For non-test environments, .env files are loaded in the following order (highest to lowest priority):
 
-1. `.env.[NODE_ENV].local`
-2. `.env.local`
-3. `.env.[NODE_ENV]`
-4. `.env`
+1. `.env.[NODE_ENV]`
+2. `.env`
+3. `.env.[NODE_ENV].defaults`
+4. `.env.defaults`
 
 For test environments, only `.env.test` is loaded.

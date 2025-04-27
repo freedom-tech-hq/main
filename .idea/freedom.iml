@@ -62,6 +62,7 @@
       <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-server-auth/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-server-localization/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-server-trace-auth-token/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-config/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/web-packages/freedom-react-localization/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-email-tasks-web-worker/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-opfs-syncable-store-backing/lib" />

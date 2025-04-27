@@ -11,12 +11,14 @@ import { log, startExpressServer } from 'freedom-server-api-handling';
 import { defaultServiceContext } from 'freedom-trace-service-context';
 import { once } from 'lodash-es';
 
+import * as config from './config.ts';
+
 export const startServer = makeAsyncFunc(
   [import.meta.filename],
   async (
     trace,
     server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
-    { port = Number(process.env.PORT) }: { port?: number } = {}
+    { port = config.PORT }: { port?: number } = {}
   ): PR<{ shutDown: () => Promise<void> }> => {
     await uncheckedResult(createServerPrivateKeysIfNeeded(trace));
 

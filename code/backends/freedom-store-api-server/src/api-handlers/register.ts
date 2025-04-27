@@ -8,6 +8,7 @@ import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
+import * as config from '../config.ts';
 import { setupKeyHandlers } from '../utils/setupKeyHandlers.ts';
 
 export default makeHttpApiHandler(
@@ -48,7 +49,7 @@ export default makeHttpApiHandler(
     }
 
     // Generate email TODO: Get from the outside
-    const email = `user${Math.random()}@${process.env.EMAIL_DOMAIN ?? 'local.dev.freedommail.me'}`;
+    const email = `user${Math.random()}@${config.EMAIL_DOMAIN}`;
 
     // Add email
     const usedAdded = await addUser(trace, {

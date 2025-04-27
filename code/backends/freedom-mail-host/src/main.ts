@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { buildMode, log, makeTrace, setLogger, wrapLogger } from 'freedom-contexts';
-import { initServer } from 'freedom-fake-email-service';
 
+import { initApp } from './initApp.ts';
 import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
 import { startSubscriptions } from './modules/syncable-store/utils/startSubscriptions.ts';
 
@@ -17,13 +17,13 @@ const main = makeAsyncResultFunc(
   async (trace): PR<undefined> => {
     // Setup
     setLogger(wrapLogger(console));
-    await initServer();
+    await uncheckedResult(initApp(trace));
 
     // Start SMTP server for receiving emails directly
-    await startSmtpServer(trace);
+    await uncheckedResult(startSmtpServer(trace));
 
     // Start subscriptions for processing outbound emails
-    await startSubscriptions(trace);
+    await uncheckedResult(startSubscriptions(trace));
 
     return makeSuccess(undefined);
   },

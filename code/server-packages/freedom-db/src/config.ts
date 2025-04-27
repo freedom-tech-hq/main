@@ -1,7 +1,7 @@
 import { defineConfig } from 'freedom-utils/defineConfig';
 
 const testDefaults = {
-  allStorageRootPath: ''
+  STORAGE_ROOT_PATH: ''
 };
 
 export type Config = typeof testDefaults;

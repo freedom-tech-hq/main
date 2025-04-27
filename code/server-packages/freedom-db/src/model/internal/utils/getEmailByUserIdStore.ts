@@ -13,7 +13,7 @@ import { getConfig } from '../../../config.ts';
 export const getEmailByUserIdStore = makeAsyncResultFunc(
   [import.meta.filename],
   once(async (_trace): PR<MutableObjectStore<EmailUserId, string>> => {
-    const storageRootPath = getConfig('allStorageRootPath');
+    const storageRootPath = getConfig('STORAGE_ROOT_PATH');
 
     const jsonPath = path.join(storageRootPath, 'mock-email-by-user-id-db.json');
 

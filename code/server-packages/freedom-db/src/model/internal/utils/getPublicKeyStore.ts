@@ -13,7 +13,7 @@ import { getConfig } from '../../../config.ts';
 export const getPublicKeyStore = makeAsyncResultFunc(
   [import.meta.filename],
   once(async (_trace): PR<MutableObjectStore<CryptoKeySetId, CombinationCryptoKeySet>> => {
-    const storageRootPath = getConfig('allStorageRootPath');
+    const storageRootPath = getConfig('STORAGE_ROOT_PATH');
 
     const jsonPath = path.join(storageRootPath, 'mock-user-public-keys-db.json');
 

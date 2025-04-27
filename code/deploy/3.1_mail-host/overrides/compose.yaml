@@ -9,7 +9,7 @@ services:
 
     env_file: mail-host.env
     environment:
-      - "FREEDOM_FAKE_EMAIL_SERVICE_ROOT_STORAGE_PATH=/app/data"
+      - "STORAGE_ROOT_PATH=/app/data"
     working_dir: /app/backends/freedom-mail-host
     command: ["yarn", "start"]
 
@@ -34,7 +34,7 @@ services:
 
     env_file: store-api-server.env
     environment:
-      - "FREEDOM_FAKE_EMAIL_SERVICE_ROOT_STORAGE_PATH=/app/data"
+      - "STORAGE_ROOT_PATH=/app/data"
     working_dir: /app/backends/freedom-store-api-server
     command: ["yarn", "start"]
 

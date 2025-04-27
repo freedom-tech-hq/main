@@ -1,15 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { loadEnv } from './modules/freedom-config/exports.ts';
+import { loadEnv, resolveConfigPath } from 'freedom-config';
 
 // Load env settings
 const rootDir = `${import.meta.dirname}/..`;
 const env = loadEnv(rootDir);
 
-/**
- * SMTP server
- */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SMTP server
 
 /** Ports to run the SMTP server on (comma-separated list) */
 export const SMTP_PORTS = env
@@ -53,9 +52,8 @@ export const SMTP_OUR_DOMAINS = env
   .required()
   .asCustom((value) => value.split(',').map((domain) => domain.trim())) as string[];
 
-/**
- * SMTP Upstream (should be on internal network within the same physical machine, thus no auth)
- */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SMTP Upstream (should be on internal network within the same physical machine, thus no auth)
 
 /** Mail upstream SMTP host */
 export const SMTP_UPSTREAM_HOST = env.get('SMTP_UPSTREAM_HOST').required().asString();
@@ -63,9 +61,13 @@ export const SMTP_UPSTREAM_HOST = env.get('SMTP_UPSTREAM_HOST').required().asStr
 /** Mail upstream SMTP port */
 export const SMTP_UPSTREAM_PORT = env.get('SMTP_UPSTREAM_PORT').default('25').asPortNumber();
 
-/**
- * Storage
- */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Storage
+
+export const STORAGE_ROOT_PATH = env
+  .get('STORAGE_ROOT_PATH')
+  .required()
+  .asCustom((value) => resolveConfigPath(rootDir, value)) as string;
 
 // Temporary disabled in favor of File System Backing and a Docker volume
 // /** Google Cloud Storage credentials file contents (not name) */
