@@ -26,6 +26,6 @@ Open the folder with Obsidian. Recommended plugins:
 
 We use MDX format (Markdown with YAML metadata).
 
-### Supporters
+## Supporters
 
 Thank you to [GitBook](https://www.gitbook.com/) for hosting our docs at [https://docs.FreedomTechHQ.com](https://docs.freedomtechhq.com)!
