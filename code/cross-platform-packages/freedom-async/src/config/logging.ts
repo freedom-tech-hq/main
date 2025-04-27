@@ -24,7 +24,7 @@ DEV: {
   let lastLogger: Logger = globalLogger;
 
   devOnEnvChange('FREEDOM_VERBOSE_LOGGING', process.env.FREEDOM_VERBOSE_LOGGING, async (envValue) => {
-    if (globalLogger !== lastLogger) {
+    if (globalLogger === lastLogger) {
       return;
     }
 
