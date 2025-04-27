@@ -1,5 +1,6 @@
 import type { ListItemTextSlotsAndSlotProps, SxProps, Theme } from '@mui/material';
 import { Avatar, Divider, ListItem, ListItemAvatar, ListItemText, Paper, Stack, Typography } from '@mui/material';
+import { parseFrom } from 'email-addresses';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 
@@ -19,6 +20,16 @@ export interface MailListItemProps<TagT> extends Omit<MailDataSourceMailItem, 't
 
 export const MailListItem = <TagT,>({ isFirst, mail }: MailListItemProps<TagT>) => {
   const t = useT();
+  
+  const parsedFrom = parseFrom(mail.from) ?? [];
+  const fromStrings = parsedFrom.map((parsed) => {
+    switch (parsed.type) {
+      case 'group':
+        return parsed.name;
+      case 'mailbox':
+        return parsed.name ?? parsed.address;
+    }
+  });
 
   return (
     <Paper elevation={4} sx={{ position: 'relative', mx: 3, mt: isFirst ? 0 : 3, mb: 3 }}>
@@ -33,7 +44,7 @@ export const MailListItem = <TagT,>({ isFirst, mail }: MailListItemProps<TagT>) 
           <Stack alignItems="stretch" sx={headerContentStyle}>
             <Stack direction="row" justifyContent="space-between" gap={1}>
               <Typography fontWeight="bold" sx={ellipsizeStyle}>
-                {mail.from}
+                {fromStrings.map((from, index) => `${index > 0 ? ', ' : ''}${from}`)}
               </Typography>
               <Stack direction="row" gap={1}>
                 <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>

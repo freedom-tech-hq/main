@@ -1,5 +1,6 @@
 import type { SxProps, Theme } from '@mui/material';
 import { Avatar, Divider, ListItem, ListItemAvatar, ListItemText, Paper, Stack, Typography } from '@mui/material';
+import { parseFrom } from 'email-addresses';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useBinding } from 'react-bindings';
@@ -23,6 +24,16 @@ export const MailDraftListItem = <TagT,>({ isFirst, mail }: MailDraftListItemPro
   // TODO: support array
   const to = useBinding(() => mail.to[0] ?? '', { id: 'to', detectChanges: true });
   const subject = useBinding(() => mail.subject, { id: 'subject', detectChanges: true });
+  
+  const parsedFrom = parseFrom(mail.from) ?? [];
+  const fromStrings = parsedFrom.map((parsed) => {
+    switch (parsed.type) {
+      case 'group':
+        return parsed.name;
+      case 'mailbox':
+        return parsed.name ?? parsed.address;
+    }
+  });
 
   return (
     <Paper elevation={4} sx={{ position: 'relative', mx: 3, mt: isFirst ? 0 : 3, mb: 3 }}>
@@ -36,7 +47,7 @@ export const MailDraftListItem = <TagT,>({ isFirst, mail }: MailDraftListItemPro
           </ListItemAvatar>
           <Stack alignItems="stretch" sx={headerContentStyle}>
             <Typography fontWeight="bold" sx={ellipsizeStyle}>
-              {mail.from}
+              {fromStrings.map((from, index) => `${index > 0 ? ', ' : ''}${from}`)}
             </Typography>
             <Stack direction="row" gap={1}>
               <Typography variant="body2">{$toLabel(t)}</Typography>
