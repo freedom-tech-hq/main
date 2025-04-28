@@ -34,6 +34,9 @@ jobs:
       - name: 🔸 Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: 🔸 Build Libraries
+        run: yarn build-libs
+
       - name: 🔸 Type Check
         run: yarn build:tests
 
@@ -63,6 +66,8 @@ jobs:
       - name: 🔸 Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: 🔸 Build Libraries
+        run: yarn build-libs
+
       - name: 🔸 Test
         run: yarn test
-        continue-on-error: true # Tests are not ready
