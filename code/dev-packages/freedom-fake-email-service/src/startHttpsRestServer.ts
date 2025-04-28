@@ -4,7 +4,8 @@ import fs from 'node:fs/promises';
 import https from 'node:https';
 import process from 'node:process';
 
-import { log, makeAsyncFunc } from 'freedom-async';
+import { makeAsyncFunc } from 'freedom-async';
+import { log } from 'freedom-contexts';
 import { getOrCreateServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
 
 import { makeExpressApp } from './makeExpressApp.ts';

@@ -1,6 +1,5 @@
-import type { LoggingMode } from 'freedom-logging-types';
-import { loggingModes } from 'freedom-logging-types';
-
+import type { LoggingMode } from '../types/LoggingMode.ts';
+import { loggingModes } from '../types/LoggingMode.ts';
 import { devOnEnvChange, getEnv } from '../utils/getEnv.ts';
 
 const computeDefaultLoggingModeFromEnv = (envValue: string | undefined) => loggingModes.checked(envValue ?? '') ?? 'structured';

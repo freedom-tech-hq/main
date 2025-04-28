@@ -79,9 +79,6 @@
             "path": "cross-platform-packages/freedom-locking-types"
         },
         {
-            "path": "cross-platform-packages/freedom-logging-types"
-        },
-        {
             "path": "cross-platform-packages/freedom-metrics-types"
         },
         {

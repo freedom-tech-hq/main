@@ -10,8 +10,8 @@ import {
   finalizeApiHandlerRegistrations,
   makeYaschemaApiExpressContext
 } from 'express-yaschema-api-handler';
-import { inline, log, makeAsyncFunc } from 'freedom-async';
-import type { Trace } from 'freedom-contexts';
+import { inline, makeAsyncFunc } from 'freedom-async';
+import { log, type Trace } from 'freedom-contexts';
 import { StatusCodes } from 'http-status-codes';
 
 import registerDefaultApiHandlers from './api-handlers/index.ts';

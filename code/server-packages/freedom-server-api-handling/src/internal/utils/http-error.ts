@@ -1,9 +1,8 @@
 import { TraceableError } from 'freedom-async';
-import type { Trace } from 'freedom-contexts';
+import { log, type Trace } from 'freedom-contexts';
 import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import { StatusCodes } from 'http-status-codes';
 
-import { log } from '../../config/logging.ts';
 import { metricsCollector } from '../../config/metrics.ts';
 import type { FailableWithCodeHttpOutput } from '../types/FailableWithCodeHttpOutput.ts';
 import type { GenericallyFailableHttpOutput } from '../types/GenericallyFailableHttpOutput.ts';

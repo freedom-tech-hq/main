@@ -1,10 +1,9 @@
 /* node:coverage disable */
 
-import { devOnEnvChange } from 'freedom-contexts';
+import { devOnEnvChange, log } from 'freedom-contexts';
 
 import { makeShouldIncludeTraceForDebuggingFunc } from '../internal/debugging/makeShouldIncludeTraceForDebuggingFunc.ts';
 import type { MetricsTracker } from '../types/MetricsTracker.ts';
-import { log } from './logging.ts';
 
 let globalMetricsTracker: MetricsTracker | undefined = undefined;
 let globalIsDefaultMetricsTracker = true;

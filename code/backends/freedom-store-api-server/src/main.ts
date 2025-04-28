@@ -1,7 +1,13 @@
-import { log, type PR, setLogger } from 'freedom-async';
+import { type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { makeTrace, wrapLogger } from 'freedom-contexts';
+import { buildMode, log, makeTrace, setLogger, wrapLogger } from 'freedom-contexts';
 import { startHttpRestServer, startHttpsRestServer } from 'freedom-fake-email-service';
+
+let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
+DEV: expectedBuildMode = 'DEV';
+if (expectedBuildMode !== buildMode) {
+  throw new Error(`Build mode mismatch: ${buildMode} !== ${expectedBuildMode}`);
+}
 
 const main = makeAsyncResultFunc(
   [import.meta.filename],

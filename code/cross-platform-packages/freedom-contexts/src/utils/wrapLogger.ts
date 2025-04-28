@@ -1,7 +1,7 @@
-import type { LoggingMode } from 'freedom-logging-types';
-import { LogJson } from 'freedom-logging-types';
 import type { Logger } from 'yaschema';
 
+import type { LoggingMode } from '../types/LoggingMode.ts';
+import { LogJson } from '../types/LogJson.ts';
 import { wrapLoggingFunc } from './wrapLoggingFunc.ts';
 
 const debugSeverity = new LogJson('severity', 'DEBUG');

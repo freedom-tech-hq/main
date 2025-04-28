@@ -1,8 +1,8 @@
 import { proxy } from 'comlink';
 import type { Result } from 'freedom-async';
-import { inline, log } from 'freedom-async';
+import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
-import { makeUuid } from 'freedom-contexts';
+import { log, makeUuid } from 'freedom-contexts';
 import { mailIdInfo } from 'freedom-email-sync';
 import type { GetMailForThreadPacket } from 'freedom-email-tasks-web-worker';
 import type { MailLikeId } from 'freedom-email-user';

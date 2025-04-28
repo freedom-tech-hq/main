@@ -1,8 +1,9 @@
-import type { LoggingFunc, LoggingMode } from 'freedom-logging-types';
-import { LogJson } from 'freedom-logging-types';
 import type { JsonValue } from 'yaschema';
 
 import { defaultLoggingMode } from '../consts/logging.ts';
+import type { LoggingFunc } from '../types/LoggingFunc.ts';
+import type { LoggingMode } from '../types/LoggingMode.ts';
+import { LogJson } from '../types/LogJson.ts';
 import { isTrace } from '../types/Trace.ts';
 import { getTraceStack } from './getTraceStack.ts';
 import { getTraceStackWithAttachments } from './getTraceStackWithAttachments.ts';

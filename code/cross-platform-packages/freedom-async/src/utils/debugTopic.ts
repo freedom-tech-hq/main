@@ -1,9 +1,8 @@
-import { devMakeEnvDerivative } from 'freedom-contexts';
-import type { LoggingFunc } from 'freedom-logging-types';
+import type { LoggingFunc } from 'freedom-contexts';
+import { devMakeEnvDerivative, log } from 'freedom-contexts';
 import isPromise from 'is-promise';
 import type { TypeOrPromisedType } from 'yaschema';
 
-import { log } from '../config/logging.ts';
 import { inline } from './inline.ts';
 
 let shouldDebugTopic: (topic: string) => boolean = () => false;

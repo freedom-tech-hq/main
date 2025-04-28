@@ -1,6 +1,5 @@
+import { log } from 'freedom-contexts';
 import isPromise from 'is-promise';
-
-import { log } from '../config/logging.ts';
 
 /** Runs the specified function and returns the result.  This supports sync and async functions.  Errors are logged. */
 export const inline = <ReturnT>(func: () => ReturnT) => {

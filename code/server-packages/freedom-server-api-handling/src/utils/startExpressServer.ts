@@ -2,12 +2,10 @@ import type http from 'node:http';
 
 import type { PR } from 'freedom-async';
 import { callAsyncFunc, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { makeSubTrace } from 'freedom-contexts';
+import { log, makeSubTrace } from 'freedom-contexts';
 import { hasMoreToDoSoon, waitForDoSoons } from 'freedom-do-soon';
 import { type ServiceContext, useTraceServiceContext } from 'freedom-trace-service-context';
 import { once } from 'lodash-es';
-
-import { log } from '../config/logging.ts';
 
 export const startExpressServer = makeAsyncResultFunc(
   [import.meta.filename],

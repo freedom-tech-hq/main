@@ -1,6 +1,6 @@
-import { inline, log, makeAsyncFunc } from 'freedom-async';
+import { inline, makeAsyncFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import { makeTrace } from 'freedom-contexts';
+import { log, makeTrace } from 'freedom-contexts';
 
 export type PeriodicEdge = 'leading' | 'trailing';
 

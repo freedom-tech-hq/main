@@ -4,7 +4,7 @@ import {
   getLogger as getExpressYaschemaApiHandlerLogger,
   setLogger as setExpressYaschemaApiHandlerLogger
 } from 'express-yaschema-api-handler';
-import { log as defaultLog } from 'freedom-async';
+import { log as defaultLog } from 'freedom-contexts';
 import { isEqual } from 'lodash-es';
 import type { Logger } from 'yaschema';
 

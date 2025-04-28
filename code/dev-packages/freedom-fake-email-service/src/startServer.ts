@@ -4,9 +4,9 @@ import type http from 'node:http';
 
 import { shutdownWsHandlers } from 'express-yaschema-ws-api-handler';
 import type { PR } from 'freedom-async';
-import { log, makeAsyncFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { makeAsyncFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { doSoon, hasMoreToDoSoon, waitForDoSoons } from 'freedom-do-soon';
-import { startExpressServer } from 'freedom-server-api-handling';
+import { log, startExpressServer } from 'freedom-server-api-handling';
 import { defaultServiceContext } from 'freedom-trace-service-context';
 import { once } from 'lodash-es';
 

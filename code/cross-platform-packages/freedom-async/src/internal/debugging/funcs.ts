@@ -12,7 +12,7 @@ DEV: {
   shouldLogFunc = devMakeEnvDerivative(
     'FREEDOM_LOG_FUNCS',
     process.env.FREEDOM_LOG_FUNCS,
-    (envValue) => (trace) => useProbeSettings(trace).enabled || makeShouldIncludeTraceForDebuggingFunc(envValue ?? 'all')(trace)
+    (envValue) => (trace) => useProbeSettings(trace).enabled || makeShouldIncludeTraceForDebuggingFunc(envValue)(trace)
   );
   shouldLogFailures = devMakeEnvDerivative('FREEDOM_LOG_FAILURES', process.env.FREEDOM_LOG_FAILURES, (envValue) =>
     makeShouldIncludeTraceForDebuggingFunc(envValue ?? 'all')

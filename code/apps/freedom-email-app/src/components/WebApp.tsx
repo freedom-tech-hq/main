@@ -1,6 +1,5 @@
 import { Box, CssBaseline } from '@mui/material';
-import { log } from 'freedom-async';
-import { makeUuid } from 'freedom-contexts';
+import { log, makeUuid } from 'freedom-contexts';
 import { HistoryProvider, useCreateBrowserHistory } from 'freedom-web-navigation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';

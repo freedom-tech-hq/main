@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncFunc, makeSuccess } from 'freedom-async';
-import type { LoggingFunc } from 'freedom-logging-types';
+import type { LoggingFunc } from 'freedom-contexts';
 import type { StoreBase } from 'freedom-syncable-store-types';
 
 export const logLs = makeAsyncFunc(
