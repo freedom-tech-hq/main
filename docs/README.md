@@ -9,7 +9,7 @@ Welcome to the Freedom docs! This guide helps you navigate our documentation str
 * **Architecture/** - System design, component relationships, and technical decisions
 * **Processes/** - Business-process guidelines. Written for both people and AI-agents
 * **\[Feature Name]/** - Documentation for a specific feature
-  * [**Store**](<Store/README.md>) - Encrypted synchronized file store, the core of our system
+  * [**Store**](<Store/! Start Here.md>) - Encrypted synchronized file store, the core of our system
   * **Email** - Encrypted email service
 
 ### Key Documents
