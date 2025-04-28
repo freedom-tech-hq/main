@@ -6423,10 +6423,10 @@ yaschema@4.4.5, yaschema@^4.4.5:
     lodash "^4.17.21"
     lodash-es "^4.17.21"
 
-yasorted-array@1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/yasorted-array/-/yasorted-array-1.0.2.tgz#1d0568ebed331efab86575f6c2f7b2025e93bc02"
-  integrity sha512-vPUmxXJDiqZr8h/XEXhIoHg2lcnCMHywLa6R/hCm22+ZfBpgxk2UKgRh0YBVHmc/bji1nkY0R3UUW3YcKkKolw==
+yasorted-array@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/yasorted-array/-/yasorted-array-1.0.3.tgz#cc92d2f14fb4152cb072361d41416b8a6c3ea143"
+  integrity sha512-/vNcUX+zOWPlnPt5ixUyC7FjKFnTdB16LElGyDe27D7WOFTCINGQup0t/NHVJAFbKOt2tsDhXxX+/ou366RLpw==
 
 yjs@13.6.26:
   version "13.6.26"
