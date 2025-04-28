@@ -17,7 +17,7 @@
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-backing-types": "0.0.0",
     "freedom-trusted-time-source": "0.0.0",
-    "freedom-utils": "0.0.0",
+    "freedom-config": "0.0.0",
     "yaschema": "4.4.5"
   },
   "devDependencies": {

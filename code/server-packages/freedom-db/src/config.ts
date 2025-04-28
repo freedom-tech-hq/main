@@ -1,4 +1,4 @@
-import { defineConfig } from 'freedom-utils/defineConfig';
+import { defineConfig } from 'freedom-config';
 
 const testDefaults = {
   STORAGE_ROOT_PATH: ''
