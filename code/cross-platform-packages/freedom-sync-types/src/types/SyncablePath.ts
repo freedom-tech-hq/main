@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash-es';
+import type { DeserializationResult, SerializationResult } from 'yaschema';
 import { schema } from 'yaschema';
 
 import type { StorageRootId } from './StorageRootId.ts';
@@ -71,7 +72,7 @@ export const syncablePathSchema = schema.custom<SyncablePath, Serialized>({
   serDes: {
     isValueType: (value): value is SyncablePath => value instanceof SyncablePath,
     serializedSchema: () => serializedSchema,
-    serialize: (value) => serializedSchema.serializeAsync({ storageRootId: value.storageRootId, ids: [...value.ids] }),
-    deserialize: (value) => ({ deserialized: new SyncablePath(value.storageRootId, ...value.ids) })
+    serialize: (value): SerializationResult => serializedSchema.serialize({ storageRootId: value.storageRootId, ids: [...value.ids] }),
+    deserialize: (value): DeserializationResult<SyncablePath> => ({ deserialized: new SyncablePath(value.storageRootId, ...value.ids) })
   }
 }) as schema.CustomSchema<SyncablePath, Serialized>;
