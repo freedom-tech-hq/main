@@ -44,12 +44,22 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
   }, [theme]);
 
   const parsedFrom = parseFrom(thread.from) ?? [];
-  const fromStrings = parsedFrom.map((parsed) => {
+  const fromTags = parsedFrom.map((parsed, index) => {
     switch (parsed.type) {
       case 'group':
-        return parsed.name;
+        return (
+          <Typography key={index} fontWeight="bold" sx={emailStyle}>
+            {parsed.name}
+            {index < parsedFrom.length - 1 ? <span style={commaReactStyle}>,</span> : null}
+          </Typography>
+        );
       case 'mailbox':
-        return parsed.name ?? parsed.address;
+        return (
+          <Typography key={index} fontWeight="bold" sx={emailStyle}>
+            {parsed.name ?? parsed.address}
+            {index < parsedFrom.length - 1 ? <span style={commaReactStyle}>,</span> : null}
+          </Typography>
+        );
     }
   });
 
@@ -67,19 +77,13 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
               <Avatar {...makeStringAvatarProps(thread.from)} />
             </Stack>
           </ListItemAvatar>
-          <Stack alignItems="stretch" sx={overflowHiddenStyle}>
-            <Stack direction="row" justifyContent="space-between" gap={1} sx={overflowHiddenStyle}>
-              <span>
-                {fromStrings.map((from, index) => (
-                  <Typography key={index} fontWeight="bold" sx={ellipsizeStyle}>
-                    {`${index > 0 ? ', ' : ''}${from}`}
-                  </Typography>
-                ))}
-              </span>
-              <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
+          <Stack alignItems="stretch" sx={{ ...overflowHiddenStyle, flexGrow: 1 }}>
+            <div>
+              <Typography variant="body2" color="textSecondary" sx={{ ...noWrapStyle, float: 'right', ml: 1 }}>
                 {formatTimeIfSameDateOrFormatDate(thread.timeMSec)}
               </Typography>
-            </Stack>
+              <div>{fromTags}</div>
+            </div>
             <ListItemText primary={thread.subject} slotProps={subjectSlotProps} sx={noVerticalMarginStyle} />
             <ListItemText
               secondary={thread.body}
@@ -98,7 +102,15 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
 // Helpers
 
 const avatarStyle: SxProps<Theme> = { minWidth: '48px' };
-const ellipsizeStyle: SxProps<Theme> = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
+const emailStyle: SxProps<Theme> = {
+  display: 'inline-block',
+  maxWidth: '100%',
+  lineHeight: 1,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis'
+};
+const commaReactStyle: CSSProperties = { marginRight: '0.25em' };
 const overflowHiddenStyle: SxProps<Theme> = { overflow: 'hidden' };
 const noWrapStyle: SxProps<Theme> = { whiteSpace: 'nowrap' };
 const noVerticalMarginStyle: SxProps<Theme> = { my: 0 };
