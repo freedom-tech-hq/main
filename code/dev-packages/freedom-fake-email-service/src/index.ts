@@ -1,5 +1,5 @@
 import { makeAsyncFunc } from 'freedom-async';
-import { buildMode, makeTrace } from 'freedom-contexts';
+import { buildMode, makeTrace, setLogger, wrapLogger } from 'freedom-contexts';
 
 import { startHttpRestServer } from './startHttpRestServer.ts';
 import { startHttpsRestServer } from './startHttpsRestServer.ts';
@@ -11,6 +11,8 @@ if (expectedBuildMode !== buildMode) {
 }
 
 const main = makeAsyncFunc([import.meta.filename], async (trace) => {
+  setLogger(wrapLogger(console));
+
   const keyPath = process.env.HTTPS_SERVER_KEY_PATH;
   const certPath = process.env.HTTPS_SERVER_CERT_PATH;
   const shouldUseHttps = keyPath !== undefined && certPath !== undefined;
