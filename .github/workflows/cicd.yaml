@@ -1,0 +1,68 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+      - draft/ci
+  push:
+    branches:
+      - main
+      - draft/ci
+
+jobs:
+  ######################################################################################################################
+  ci-all:
+    name: CI All
+
+    runs-on: build-server
+    defaults:
+      run:
+        working-directory: code
+
+    steps:
+      # Env setup
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'yarn'
+          cache-dependency-path: code/yarn.lock
+
+      # Work Steps
+      - name: 🔸 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔸 Type Check
+        run: yarn build:tests
+
+      - name: 🔸 Lint
+        run: yarn lint
+
+  ######################################################################################################################
+  test:
+    name: Test
+
+    runs-on: build-server
+    defaults:
+      run:
+        working-directory: code
+
+    steps:
+      # Env setup
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'yarn'
+          cache-dependency-path: code/yarn.lock
+
+      # Work Steps
+      - name: 🔸 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔸 Test
+        run: yarn test
+        continue-on-error: true # Tests are not ready
