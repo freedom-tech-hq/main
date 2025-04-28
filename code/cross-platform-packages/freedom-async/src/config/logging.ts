@@ -21,10 +21,11 @@ export const resetLogger = () => {
 };
 
 DEV: {
-  let lastLogger: Logger = globalLogger;
+  let loggerByEnvConfig: Logger = globalLogger;
 
   devOnEnvChange('FREEDOM_VERBOSE_LOGGING', process.env.FREEDOM_VERBOSE_LOGGING, async (envValue) => {
-    if (globalLogger !== lastLogger) {
+    // Only override own logger. Do not override anything set by an explicit call of setLogger()
+    if (globalLogger !== loggerByEnvConfig) {
       return;
     }
 
@@ -35,6 +36,6 @@ DEV: {
       resetLogger();
     }
 
-    lastLogger = globalLogger;
+    loggerByEnvConfig = globalLogger;
   });
 }
