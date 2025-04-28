@@ -10,7 +10,7 @@ const main = makeAsyncResultFunc(
     const certPath = process.env.HTTPS_SERVER_CERT_PATH;
     const shouldUseHttps = keyPath !== undefined && certPath !== undefined;
 
-    // Start the HTTP REST server
+    // Start the HTTP REST server - our credential handlers are registered via the API handlers system
     if (shouldUseHttps) {
       await startHttpsRestServer(trace);
     } else {
