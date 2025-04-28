@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
-import { log, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { makeTrace } from 'freedom-contexts';
+import { log, makeAsyncResultFunc, makeSuccess, setLogger } from 'freedom-async';
+import { makeTrace, wrapLogger } from 'freedom-contexts';
 
 import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
 import { startSubscriptions } from './modules/syncable-store/utils/startSubscriptions.ts';
@@ -8,6 +8,8 @@ import { startSubscriptions } from './modules/syncable-store/utils/startSubscrip
 const main = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<undefined> => {
+    setLogger(wrapLogger(console));
+
     // Start SMTP server for receiving emails directly
     await startSmtpServer(trace);
 
@@ -25,4 +27,4 @@ const main = makeAsyncResultFunc(
 );
 
 // Entrypoint
-main(makeTrace('freedom-mail-host'));
+main(makeTrace());

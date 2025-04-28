@@ -1,11 +1,13 @@
-import { log, type PR } from 'freedom-async';
+import { log, type PR, setLogger } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { makeTrace } from 'freedom-contexts';
+import { makeTrace, wrapLogger } from 'freedom-contexts';
 import { startHttpRestServer, startHttpsRestServer } from 'freedom-fake-email-service';
 
 const main = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<undefined> => {
+    setLogger(wrapLogger(console));
+
     const keyPath = process.env.HTTPS_SERVER_KEY_PATH;
     const certPath = process.env.HTTPS_SERVER_CERT_PATH;
     const shouldUseHttps = keyPath !== undefined && certPath !== undefined;
@@ -28,4 +30,4 @@ const main = makeAsyncResultFunc(
 );
 
 // Entrypoint
-main(makeTrace('freedom-store-api-server'));
+main(makeTrace());
