@@ -1,4 +1,5 @@
-import { log } from '../config/logging.ts';
+import { log } from 'freedom-contexts';
+
 import type { PR } from '../types/PR.ts';
 
 /**

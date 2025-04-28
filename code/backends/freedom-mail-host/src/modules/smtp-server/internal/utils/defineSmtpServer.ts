@@ -1,7 +1,7 @@
-import { log, makeFailure, type PR, type Result } from 'freedom-async';
+import { makeFailure, type PR, type Result } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ForbiddenError, InternalStateError, NotFoundError } from 'freedom-common-errors';
-import type { Trace } from 'freedom-contexts';
+import { log, type Trace } from 'freedom-contexts';
 import type { SMTPServerDataStream, SMTPServerEnvelope, SMTPServerOptions, SMTPServerSession } from 'smtp-server';
 import { SMTPServer } from 'smtp-server';
 

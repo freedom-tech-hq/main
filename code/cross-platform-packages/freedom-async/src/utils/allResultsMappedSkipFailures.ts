@@ -1,7 +1,6 @@
-import type { Trace } from 'freedom-contexts';
+import { log, type Trace } from 'freedom-contexts';
 import { default as pLimit } from 'p-limit';
 
-import { log } from '../config/logging.ts';
 import { FREEDOM_MAX_CONCURRENCY_DEFAULT } from '../consts/concurrency.ts';
 import type { PR } from '../types/PR.ts';
 import type { PRFunc } from '../types/PRFunc.ts';

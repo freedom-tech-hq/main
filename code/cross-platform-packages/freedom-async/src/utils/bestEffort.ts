@@ -1,6 +1,5 @@
-import type { Trace } from 'freedom-contexts';
+import { log, type Trace } from 'freedom-contexts';
 
-import { log } from '../config/logging.ts';
 import type { PR } from '../types/PR.ts';
 import type { PRFunc } from '../types/PRFunc.ts';
 import { callAsyncResultFunc } from './callAsyncResultFunc.ts';

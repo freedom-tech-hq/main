@@ -1,11 +1,9 @@
 import type { Trace } from 'freedom-contexts';
-import { getTraceStackTop } from 'freedom-contexts';
-import { LogJson } from 'freedom-logging-types';
+import { getTraceStackTop, log, LogJson } from 'freedom-contexts';
 import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import { once } from 'lodash-es';
 
 import { shouldDebugPerfIssues } from '../config/debug.ts';
-import { log } from '../config/logging.ts';
 import { trackMetrics } from '../config/metrics.ts';
 import { ONE_SEC_MSEC } from '../internal/consts/time.ts';
 import { argsToStrings, shouldLogFuncArgs } from '../internal/debugging/args.ts';

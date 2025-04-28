@@ -1,5 +1,5 @@
-import { callAsyncFunc, log } from 'freedom-async';
-import type { Trace } from 'freedom-contexts';
+import { callAsyncFunc } from 'freedom-async';
+import { log, type Trace } from 'freedom-contexts';
 import { type ServiceContext, useTraceServiceContext } from 'freedom-trace-service-context';
 
 interface State {

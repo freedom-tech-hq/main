@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
-import { log, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { log } from 'freedom-contexts';
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableIdParts } from 'freedom-sync-types';
 

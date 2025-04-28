@@ -4,17 +4,23 @@ const globalEnvOverrides: Partial<Record<string, string>> = {};
 const globalEnvVersions: Partial<Record<string, number>> = {};
 const globalOnEnvChange: Partial<Record<string, Array<() => TypeOrPromisedType<void>>>> = {};
 
-export const getEnv = (name: string, defaultValue: string | undefined): string | undefined => {
-  DEV: if (globalEnvOverrides[name] !== undefined) {
-    return globalEnvOverrides[name];
-  }
-
-  try {
-    return process.env[name] ?? defaultValue;
-  } catch (_e) {
-    return defaultValue;
-  }
+export let getEnv = (_name: string, defaultValue: string | undefined): string | undefined => {
+  return defaultValue;
 };
+
+DEV: {
+  getEnv = (name, defaultValue) => {
+    if (globalEnvOverrides[name] !== undefined) {
+      return globalEnvOverrides[name];
+    }
+
+    try {
+      return process.env[name] ?? defaultValue;
+    } catch (_e) {
+      return defaultValue;
+    }
+  };
+}
 
 /**
  * In DEV build mode, this sets an override for the specified environment variable

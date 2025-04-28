@@ -1,9 +1,8 @@
 import { ArrowForwardIosOutlined } from '@mui/icons-material';
 import type { ListItemTextSlotsAndSlotProps } from '@mui/material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, Typography, useTheme } from '@mui/material';
-import { log } from 'freedom-async';
 import { base64String, type Uuid } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
+import { log, makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';

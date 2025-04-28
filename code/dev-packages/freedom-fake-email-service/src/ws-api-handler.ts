@@ -5,7 +5,8 @@ import {
   setOnRequestValidationErrorHandler,
   setWsApiHandlerWrapper
 } from 'express-yaschema-ws-api-handler';
-import { log, makeAsyncFunc } from 'freedom-async';
+import { makeAsyncFunc } from 'freedom-async';
+import { log } from 'freedom-contexts';
 import { once } from 'lodash-es';
 
 export const init = once(
