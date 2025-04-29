@@ -11,7 +11,7 @@ import {
 } from 'freedom-crypto';
 import type { CryptoService } from 'freedom-crypto-service';
 import { decryptOneEncryptedValue } from 'freedom-crypto-service';
-import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types/lib/types/ISyncableStoreAccessControlDocument';
+import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types';
 
 export const verifyAndDecryptBinary = makeAsyncResultFunc(
   [import.meta.filename],

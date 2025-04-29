@@ -1,3 +1,4 @@
+import './polyfills.ts';
 import './utils/fwd-env.ts';
 
 import { init } from 'freedom-react-localization';

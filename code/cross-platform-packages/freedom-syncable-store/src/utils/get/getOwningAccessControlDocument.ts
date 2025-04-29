@@ -2,8 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import { extractSyncableItemTypeFromId, type SyncablePath } from 'freedom-sync-types';
-import type { SyncableStore } from 'freedom-syncable-store-types';
-import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types/lib/types/ISyncableStoreAccessControlDocument';
+import type { ISyncableStoreAccessControlDocument, SyncableStore } from 'freedom-syncable-store-types';
 
 import { getNearestFolder } from './getNearestFolder.ts';
 

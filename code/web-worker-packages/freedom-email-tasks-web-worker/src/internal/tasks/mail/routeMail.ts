@@ -2,9 +2,13 @@ import type { PR, PRFunc } from 'freedom-async';
 import { bestEffort, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { log } from 'freedom-contexts';
-import type { BottomUpMailStorageTraversalResult, MailId, TimeOrganizedMailStorageTraverserAccessor } from 'freedom-email-sync';
+import type {
+  BottomUpMailStorageTraversalResult,
+  HourTimeObject,
+  MailId,
+  TimeOrganizedMailStorageTraverserAccessor
+} from 'freedom-email-sync';
 import { listTimeOrganizedMailIdsForHour, mailIdInfo, traverseTimeOrganizedMailStorageFromTheBottomUp } from 'freedom-email-sync';
-import type { HourTimeObject } from 'freedom-email-sync/lib/utils/HourPrecisionTimeUnitValue';
 import type { EmailCredential } from 'freedom-email-user';
 import { getCollectionDoc, getProcessedHashesTrackingDoc, getProcessedMailIdsTrackingDoc, getUserMailPaths } from 'freedom-email-user';
 import type { SyncablePath } from 'freedom-sync-types';

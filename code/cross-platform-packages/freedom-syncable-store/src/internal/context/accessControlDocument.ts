@@ -1,6 +1,6 @@
 import type { Trace } from 'freedom-contexts';
 import { createTraceContext, useTraceContext } from 'freedom-contexts';
-import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types/lib/types/ISyncableStoreAccessControlDocument';
+import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types';
 
 const AccessControlDocumentContext = createTraceContext<{ accessControlDoc?: ISyncableStoreAccessControlDocument }>(() => ({}));
 
