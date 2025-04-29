@@ -130,9 +130,6 @@
             "path": "cross-platform-packages/freedom-trusted-time-source"
         },
         {
-            "path": "cross-platform-packages/freedom-utils"
-        },
-        {
             "path": "dev-packages/freedom-build-tools"
         },
         {
