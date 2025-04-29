@@ -1,8 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { EmailAccess } from 'freedom-email-sync';
-import type { HourOrLessPrecisionValue, HourValue } from 'freedom-email-sync/lib/utils/HourPrecisionTimeUnitValue';
+import type { EmailAccess, HourOrLessPrecisionValue, HourValue } from 'freedom-email-sync';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { GetConflictFreeDocumentFromBundleAtPathArgs } from 'freedom-syncable-store';
 import { getOrCreateBundlesAtPaths, getOrCreateConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';

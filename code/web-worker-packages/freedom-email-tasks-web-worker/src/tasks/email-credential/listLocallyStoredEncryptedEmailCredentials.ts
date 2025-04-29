@@ -1,18 +1,13 @@
 import type { PR } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import type { Uuid } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
-
-export interface EmailCredentialInfo {
-  description?: string;
-  localUuid: Uuid;
-}
+import type { LocallyStoredEncryptedEmailCredentialInfo } from '../../types/email-credential/LocallyStoredEncryptedEmailCredentialInfo.ts';
 
 export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace): PR<EmailCredentialInfo[]> => {
+  async (trace): PR<LocallyStoredEncryptedEmailCredentialInfo[]> => {
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
 
     const keys = await emailCredentialStore.keys.asc().keys(trace);
@@ -20,13 +15,17 @@ export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
       return keys;
     }
 
-    return await allResultsMapped(trace, keys.value, {}, async (trace, key) => {
+    return await allResultsMapped(trace, keys.value, {}, async (trace, key): PR<LocallyStoredEncryptedEmailCredentialInfo> => {
       const storedCredential = await emailCredentialStore.object(key).get(trace);
       if (!storedCredential.ok) {
         return generalizeFailureResult(trace, storedCredential, 'not-found');
       }
 
-      return makeSuccess({ description: storedCredential.value.description, localUuid: key });
+      return makeSuccess({
+        localUuid: key,
+        description: storedCredential.value.description,
+        hasBiometricEncryption: storedCredential.value.pwEncryptedForBiometrics !== undefined
+      });
     });
   }
 );

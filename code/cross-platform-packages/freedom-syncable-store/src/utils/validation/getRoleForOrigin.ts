@@ -2,8 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { extractKeyIdFromSignedValue } from 'freedom-crypto';
 import type { SignedSyncableOrigin } from 'freedom-sync-types';
-import type { SyncableStore, SyncableStoreRole } from 'freedom-syncable-store-types';
-import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types/lib/types/ISyncableStoreAccessControlDocument';
+import type { ISyncableStoreAccessControlDocument, SyncableStore, SyncableStoreRole } from 'freedom-syncable-store-types';
 
 export const getRoleForOrigin = makeAsyncResultFunc(
   [import.meta.filename],

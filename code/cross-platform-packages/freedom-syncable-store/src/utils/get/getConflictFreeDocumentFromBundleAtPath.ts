@@ -13,11 +13,11 @@ import { isSyncableItemEncrypted } from 'freedom-sync-types';
 import type {
   ConflictFreeDocumentBundleNotifications,
   ConflictFreeDocumentEvaluator,
+  ISyncableStoreAccessControlDocument,
   SyncableStore,
   WatchableDocument
 } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
-import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types/lib/types/ISyncableStoreAccessControlDocument';
 import { TaskQueue } from 'freedom-task-queue';
 
 import { APPLY_DELTAS_LIMIT_TIME_MSEC, DOCUMENT_CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';

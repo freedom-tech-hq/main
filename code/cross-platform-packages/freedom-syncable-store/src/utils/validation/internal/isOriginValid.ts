@@ -4,9 +4,8 @@ import { timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractKeyIdFromSignedValue, isSignedValueValid } from 'freedom-crypto';
 import { extractUnmarkedSyncableId, type SignedSyncableOrigin } from 'freedom-sync-types';
-import type { SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
+import type { ISyncableStoreAccessControlDocument, SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
 import { rolesWithWriteAccess } from 'freedom-syncable-store-types';
-import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types/lib/types/ISyncableStoreAccessControlDocument';
 
 import { getSha256HashForItemProvenance } from '../../getSha256HashForItemProvenance.ts';
 import { getRoleForOrigin } from '../getRoleForOrigin.ts';
