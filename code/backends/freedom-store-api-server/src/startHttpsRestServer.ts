@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import https from 'node:https';
 import process from 'node:process';
 

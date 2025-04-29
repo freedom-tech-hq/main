@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import type http from 'node:http';
 
 import { shutdownWsHandlers } from 'express-yaschema-ws-api-handler';

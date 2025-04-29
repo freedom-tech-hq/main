@@ -64,13 +64,13 @@ for USER in "${ADMIN_USERS[@]}"; do
       echo 'Creating user $USER...'
 
       # Create user
-      useradd -m -s /bin/bash '$USER'
+      useradd -m -s /bin/bash "$USER"
 
       # Add user to docker group
-      usermod -aG docker '$USER'
+      usermod -aG docker "$USER"
 
       # Add user to sudoers with NOPASSWD
-      echo '$USER ALL=(ALL) NOPASSWD:ALL' > '/etc/sudoers.d/$USER'
+      echo "$USER ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$USER"
       chmod 440 "/etc/sudoers.d/$USER"
       mkdir -p "/home/$USER/.ssh"
 
