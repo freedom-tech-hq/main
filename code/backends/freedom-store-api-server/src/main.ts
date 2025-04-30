@@ -17,7 +17,7 @@ const main = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<undefined> => {
     // Setup
-    setLogger(wrapLogger(console));
+    setLogger(wrapLogger(console, 'pretty-print'));
     await uncheckedResult(initApp(trace));
 
     // Start the HTTP REST server
