@@ -1,6 +1,7 @@
-import type { PR, PRFunc } from 'freedom-async';
+import { excludeFailureResult, type PR, type PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ONE_SEC_MSEC, sha256HashInfo } from 'freedom-basic-data';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { DeviceNotificationClient, DeviceNotifications } from 'freedom-device-notification-types';
@@ -26,6 +27,7 @@ const pullFromRemote = makeApiFetchTask([import.meta.filename, 'pullFromRemote']
 const pushToRemote = makeApiFetchTask([import.meta.filename, 'pushToRemote'], api.push.POST);
 
 interface RegisterArgs {
+  name: string;
   storageRootId: StorageRootId;
   metadata: Omit<SyncableItemMetadata, 'name'>;
   creatorPublicKeys: CombinationCryptoKeySet;
@@ -33,7 +35,7 @@ interface RegisterArgs {
 }
 
 export interface RemoteConnection {
-  readonly register: PRFunc<undefined, 'conflict', [RegisterArgs]>;
+  readonly register: PRFunc<undefined, 'email-is-unavailable', [RegisterArgs]>;
   readonly remoteAccessor: RemoteAccessor;
   readonly deviceNotificationClient: DeviceNotificationClient;
   readonly start: PRFunc<{ stop: PRFunc<undefined> }>;
@@ -45,18 +47,19 @@ export const makeLocalFakeEmailServiceRemoteConnection = makeAsyncResultFunc(
     let storageRootId: StorageRootId | undefined = undefined;
     const register = makeAsyncResultFunc(
       [import.meta.filename, 'register'],
-      async (trace, args: RegisterArgs): PR<undefined, 'conflict'> => {
+      async (trace, args: RegisterArgs): PR<undefined, 'email-is-unavailable'> => {
         storageRootId = args.storageRootId;
 
-        const registered = await disableLam(trace, 'conflict', (trace) =>
+        const registered = await disableLam(trace, ['already-created', 'conflict', 'email-is-unavailable'], (trace) =>
           registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() })
         );
         if (!registered.ok) {
-          if (registered.value.errorCode === 'conflict') {
+          if (registered.value.errorCode === 'already-created') {
             // If there's a conflict, the account was probably already registered
             return makeSuccess(undefined);
           }
-          return registered;
+          // Pass through validation and not-found errors
+          return generalizeFailureResult(trace, excludeFailureResult(registered, 'already-created'), 'conflict');
         }
 
         return makeSuccess(undefined);

@@ -40,7 +40,7 @@
     "clean": "rimraf ./coverage ./lib",
     "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
     "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
-    "start": "yarn build && HTTPS_SERVER_KEY_PATH=./.ssl/key.pem HTTPS_SERVER_CERT_PATH=./.ssl/cert.pem PORT=8443 CORS_ORIGINS='https://www.local.dev.freedommail.me:3443' node ./lib/main.mjs",
+    "start": "FREEDOM_BUILD_MODE=DEV yarn build && FREEDOM_BUILD_MODE=DEV HTTPS_SERVER_KEY_PATH=./.ssl/key.pem HTTPS_SERVER_CERT_PATH=./.ssl/cert.pem PORT=8443 CORS_ORIGINS='https://www.local.dev.freedommail.me:3443' node ./lib/main.mjs",
     "start:debug": "FREEDOM_BUILD_MODE=DEV FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} yarn start",
     "start:prod": "node ./lib/main.mjs",
     "test": "yarn test:unit-tests",

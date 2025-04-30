@@ -1,6 +1,6 @@
-import { bestEffort, makeFailure, makeSuccess } from 'freedom-async';
+import { bestEffort, callAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import { addUser } from 'freedom-db';
+import { addUser, deleteUserByUserId } from 'freedom-db';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import { createSyncableStore } from 'freedom-fake-email-service';
 import { api } from 'freedom-fake-email-service-api';
@@ -19,6 +19,7 @@ export default makeHttpApiHandler(
     {
       input: {
         body: {
+          name, // User's chosen username
           storageRootId, // It emerges on the client and it is globally unique
           metadata, // Provenance (origin - signature, acceptance)
           creatorPublicKeys, // 2 public keys: verification and encryption
@@ -27,41 +28,55 @@ export default makeHttpApiHandler(
       }
     }
   ) => {
+    // Extract userId from inputs
     const userId = emailUserIdInfo.checked(storageRootIdInfo.removePrefix(storageRootId));
     if (userId === undefined) {
       return makeFailure(new InputSchemaValidationError(trace, { message: 'Expected a valid EmailUserId' }));
     }
 
+    // Emulate 3rd-party events in dev mode
     // Uses the most recently attempted registration of storageRootId
-    await bestEffort(trace, setupKeyHandlers(trace, { userId }));
+    DEV: await bestEffort(trace, setupKeyHandlers(trace, { userId }));
 
-    // Conflicts are expected to happen here sometimes because registration is attempted every time a client starts its sync service
-    // (because it can't otherwise knows the state of registration on the server)
-    const createdSyncableStore = await disableLam(trace, 'conflict', (trace) =>
-      createSyncableStore(trace, {
-        userId,
-        metadata,
-        creatorPublicKeys
-      })
-    );
-    if (!createdSyncableStore.ok) {
-      return createdSyncableStore;
-    }
-
-    // Generate email TODO: Get from the outside
-    const email = `user${Math.random()}@${config.EMAIL_DOMAIN}`;
-
-    // Add email
-    const usedAdded = await addUser(trace, {
+    // Add user to database, lock the name or fail on collision
+    const email = `${name}@${config.EMAIL_DOMAIN}`;
+    const userAdded = await addUser(trace, {
       email,
       userId,
       publicKeys: creatorPublicKeys,
       defaultSalt: saltsById[DEFAULT_SALT_ID]! // TODO: Require presence
     });
-    if (!usedAdded.ok) {
-      return usedAdded;
+    if (!userAdded.ok) {
+      return userAdded;
     }
 
-    return makeSuccess({});
+    // Tear down on failure
+    return await callAsyncResultFunc(
+      trace,
+      {
+        // Tear down
+        onError: () => {
+          bestEffort(trace, deleteUserByUserId(trace, userId));
+        }
+      },
+      async (trace) => {
+        // Create user's syncable store
+        // Conflicts are expected to happen here sometimes because registration is attempted every time a client starts its sync service
+        // (because it can't otherwise knows the state of registration on the server)
+        const createSyncableStoreResult = await disableLam(trace, 'conflict', (trace) =>
+          createSyncableStore(trace, {
+            userId,
+            metadata,
+            creatorPublicKeys
+          })
+        );
+        if (!createSyncableStoreResult.ok) {
+          return createSyncableStoreResult;
+        }
+
+        // Complete
+        return makeSuccess({});
+      }
+    );
   }
 );
