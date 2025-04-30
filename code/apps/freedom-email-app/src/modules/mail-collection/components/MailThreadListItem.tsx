@@ -104,20 +104,45 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
               <Typography variant="body2" color="textSecondary" sx={{ ...noWrapStyle, float: 'right', ml: 1 }}>
                 {formatTimeIfSameDateOrFormatDate(timeMSec)}
               </Typography>
-              <div>{WC(fromTags, (fromTags) => fromTags)}</div>
+              <div>
+                {WC(
+                  fromTags,
+                  (fromTags) => fromTags,
+                  () => (
+                    <Typography fontWeight="bold" sx={emailStyle}>
+                      {' '}
+                    </Typography>
+                  )
+                )}
+              </div>
             </div>
-            {WC(thread, (thread) => (
-              <>
-                <ListItemText primary={thread.subject} slotProps={subjectSlotProps} sx={noVerticalMarginStyle} />
-                <ListItemText
-                  secondary={thread.body}
-                  sx={{
-                    overflow: 'hidden',
-                    height: `calc(${theme.typography.body2.fontSize} * ${theme.typography.body2.lineHeight} * 2)`
-                  }}
-                />
-              </>
-            ))}
+            {WC(
+              thread,
+              (thread) => (
+                <>
+                  <ListItemText primary={thread.subject} slotProps={subjectSlotProps} sx={noVerticalMarginStyle} />
+                  <ListItemText
+                    secondary={thread.body}
+                    sx={{
+                      overflow: 'hidden',
+                      height: `calc(${theme.typography.body2.fontSize} * ${theme.typography.body2.lineHeight} * 2)`
+                    }}
+                  />
+                </>
+              ),
+              () => (
+                <>
+                  <ListItemText primary=" " slotProps={subjectSlotProps} sx={noVerticalMarginStyle} />
+                  <ListItemText
+                    secondary=" "
+                    sx={{
+                      overflow: 'hidden',
+                      height: `calc(${theme.typography.body2.fontSize} * ${theme.typography.body2.lineHeight} * 2)`
+                    }}
+                  />
+                </>
+              )
+            )}
           </Stack>
         </ListItemButton>
       ))}
