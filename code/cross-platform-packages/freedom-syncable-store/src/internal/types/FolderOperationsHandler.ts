@@ -27,11 +27,11 @@ export class FolderOperationsHandler {
     getAccessControlDocument,
     getMutableSyncableStoreChangesDocument
   }: {
-    store: WeakRef<MutableSyncableStore>;
+    store: MutableSyncableStore;
     getAccessControlDocument: PRFunc<SyncableStoreAccessControlDocument>;
     getMutableSyncableStoreChangesDocument: PRFunc<SaveableDocument<SyncableStoreChangesDocument>>;
   }) {
-    this.weakStore_ = store;
+    this.weakStore_ = new WeakRef(store);
     this.getAccessControlDocument_ = getAccessControlDocument;
     this.getMutableSyncableStoreChangesDocument_ = getMutableSyncableStoreChangesDocument;
   }

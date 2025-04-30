@@ -8,7 +8,7 @@ import { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableStore, SyncableStoreLogEntry, SyncTrackerNotifications } from 'freedom-syncable-store-types';
 
-import { DefaultMutableSyncableFolderAccessor } from '../internal/types/DefaultMutableSyncableFolderAccessor.ts';
+import { getOrCreateDefaultMutableSyncableFolderAccessor } from '../internal/types/DefaultMutableSyncableFolderAccessor.ts';
 import { DefaultMutableSyncableFolderAccessorBase } from '../internal/types/DefaultMutableSyncableFolderAccessorBase.ts';
 import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 
@@ -40,7 +40,7 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
 
     this.deferredInit_({
       store: this,
-      makeFolderAccessor: ({ path }) => new DefaultMutableSyncableFolderAccessor({ store: this, backing, path, syncTracker })
+      makeFolderAccessor: ({ path }) => getOrCreateDefaultMutableSyncableFolderAccessor({ store: this, backing, path, syncTracker })
     });
   }
 

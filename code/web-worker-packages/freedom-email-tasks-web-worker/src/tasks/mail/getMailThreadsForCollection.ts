@@ -1,7 +1,15 @@
 import type { PR, Result } from 'freedom-async';
-import { allResultsMappedSkipFailures, excludeFailureResult, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import {
+  allResultsMappedSkipFailures,
+  excludeFailureResult,
+  flushMetrics,
+  makeAsyncResultFunc,
+  makeSuccess,
+  uncheckedResult
+} from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { autoGeneralizeFailureResults, generalizeFailureResult } from 'freedom-common-errors';
+import { devSetEnv } from 'freedom-contexts';
 import { type MailId } from 'freedom-email-sync';
 import type { CollectionLikeId, EmailCredential, MailThread } from 'freedom-email-user';
 import { getCollectionDoc, getMailById, mailCollectionTypes } from 'freedom-email-user';
@@ -21,6 +29,8 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     isConnected: () => TypeOrPromisedType<boolean>,
     onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
+    devSetEnv('FREEDOM_PROFILE', 'freedom-email-user/utils/getCollectionDoc>**');
+
     const credential = useActiveCredential(trace).credential;
     const lockStore = new InMemoryLockStore();
 
@@ -108,6 +118,8 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
         if (!threads.ok) {
           return threads;
         }
+
+        flushMetrics()?.();
 
         return makeSuccess({ type: 'mail-added' as const, threads: threads.value });
       })

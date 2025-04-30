@@ -6,19 +6,23 @@ import { makeShouldIncludeTraceForDebuggingFunc } from '../internal/debugging/ma
 import type { MetricsTracker } from '../types/MetricsTracker.ts';
 
 let globalMetricsTracker: MetricsTracker | undefined = undefined;
+let globalMetricsFlusher: (() => void) | undefined = undefined;
 let globalIsDefaultMetricsTracker = true;
 
 export const trackMetrics = () => globalMetricsTracker;
+export const flushMetrics = () => globalMetricsFlusher;
 
-export const setMetricsTracker = (tracker: MetricsTracker | undefined) => {
+export const setMetricsTracker = ({ track, flush }: { track: MetricsTracker | undefined; flush: () => void }) => {
   globalIsDefaultMetricsTracker = false;
-  globalMetricsTracker = tracker;
+  globalMetricsTracker = track;
+  globalMetricsFlusher = flush;
 };
 
 export const isDefaultMetricsTracker = () => globalIsDefaultMetricsTracker;
 
 export const resetMetricsTracker = () => {
   globalMetricsTracker = undefined;
+  globalMetricsFlusher = undefined;
   globalIsDefaultMetricsTracker = true;
 };
 
@@ -33,9 +37,8 @@ DEV: {
     if (envValue !== '') {
       const freedomProfiler = await import('freedom-profiler');
       const shouldTrackFunc = makeShouldIncludeTraceForDebuggingFunc(envValue);
-      const newMetricsTracker = freedomProfiler.makeDebugProfiler(log, shouldTrackFunc);
 
-      setMetricsTracker(newMetricsTracker);
+      setMetricsTracker(freedomProfiler.makeDebugProfiler(log, shouldTrackFunc));
     } else {
       resetMetricsTracker();
     }

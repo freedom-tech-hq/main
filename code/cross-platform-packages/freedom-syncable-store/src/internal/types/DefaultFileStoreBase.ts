@@ -40,7 +40,7 @@ import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export interface DefaultFileStoreBaseConstructorArgs {
-  store: WeakRef<MutableSyncableStore>;
+  store: MutableSyncableStore;
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
@@ -63,7 +63,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   constructor({ store, backing, syncTracker, folderOperationsHandler, path, supportsDeletion }: DefaultFileStoreBaseConstructorArgs) {
     this.supportsDeletion = supportsDeletion;
-    this.weakStore_ = store;
+    this.weakStore_ = new WeakRef(store);
     this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.folderOperationsHandler_ = folderOperationsHandler;

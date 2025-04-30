@@ -1,12 +1,21 @@
 import type { PR } from 'freedom-async';
 import { makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
+import { InMemoryCache } from 'freedom-in-memory-cache';
 import type { SyncablePath } from 'freedom-sync-types';
-import type { MutableSyncableBundleAccessor, MutableSyncableFileAccessor } from 'freedom-syncable-store-types';
+import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
+import type {
+  MutableSyncableBundleAccessor,
+  MutableSyncableFileAccessor,
+  MutableSyncableStore,
+  SyncTracker
+} from 'freedom-syncable-store-types';
 
+import { CACHE_DURATION_MSEC } from '../consts/timing.ts';
 import type { DefaultFileStoreBaseConstructorArgs } from './DefaultFileStoreBase.ts';
 import { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
+import { getOrCreateDefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
+import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export type DefaultPlainFileStoreConstructorArgs = DefaultFileStoreBaseConstructorArgs;
 
@@ -30,8 +39,13 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
   }
 
   protected override makeBundleAccessor_({ path }: { path: SyncablePath }): MutableSyncableBundleAccessor {
-    return new DefaultPlainFileStore({
-      store: this.weakStore_,
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      throw new Error('store was released');
+    }
+
+    return getOrCreateDefaultPlainFileStore({
+      store,
       backing: this.backing_,
       syncTracker: this.syncTracker_,
       path,
@@ -41,8 +55,13 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
   }
 
   protected override makeFileAccessor_({ path }: { path: SyncablePath }): MutableSyncableFileAccessor {
-    return new DefaultMutableSyncableFileAccessor({
-      store: this.weakStore_,
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      throw new Error('store was released');
+    }
+
+    return getOrCreateDefaultMutableSyncableFileAccessor({
+      store,
       backing: this.backing_,
       path,
       decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
@@ -53,3 +72,29 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
     return false;
   }
 }
+
+const globalCache = new InMemoryCache<string, DefaultPlainFileStore, MutableSyncableStore>({
+  cacheDurationMSec: CACHE_DURATION_MSEC,
+  shouldResetIntervalOnGet: true
+});
+
+export const getOrCreateDefaultPlainFileStore = ({
+  store,
+  backing,
+  syncTracker,
+  path,
+  folderOperationsHandler,
+  supportsDeletion
+}: {
+  store: MutableSyncableStore;
+  backing: SyncableStoreBacking;
+  syncTracker: SyncTracker;
+  path: SyncablePath;
+  folderOperationsHandler: FolderOperationsHandler;
+  supportsDeletion: boolean;
+}) =>
+  globalCache.getOrCreate(
+    store,
+    path.toString(),
+    () => new DefaultPlainFileStore({ store, backing, syncTracker, path, folderOperationsHandler, supportsDeletion })
+  );

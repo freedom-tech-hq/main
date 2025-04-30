@@ -67,14 +67,14 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     path,
     makeFolderAccessor
   }: {
-    store: WeakRef<MutableSyncableStore>;
+    store: MutableSyncableStore;
     backing: SyncableStoreBacking;
     syncTracker: SyncTracker;
     folderOperationsHandler: FolderOperationsHandler;
     path: SyncablePath;
     makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
-    this.weakStore_ = store;
+    this.weakStore_ = new WeakRef(store);
     this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.folderOperationsHandler_ = folderOperationsHandler;
