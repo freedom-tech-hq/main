@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "lodash-es": "4.17.21",
-    "yaschema": "4.4.5"
+    "yaschema": "5.0.0"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

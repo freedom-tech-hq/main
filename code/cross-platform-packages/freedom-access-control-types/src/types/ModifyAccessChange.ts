@@ -7,7 +7,7 @@ import { sharedKeysSchema } from './SharedKeys.ts';
 import { sharedSecretKeysSchema } from './SharedSecretKeys.ts';
 
 export const makeModifyAccessChangeParamsSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
-  schema.object<ModifyAccessChangeParams<RoleT>, 'no-infer'>({
+  schema.object_noAutoOptional<ModifyAccessChangeParams<RoleT>>({
     type: schema.string('modify-access'),
     publicKeyId: cryptoKeySetIdInfo.schema,
     oldRole: roleSchema,
@@ -31,7 +31,7 @@ const computedFieldsSchema = schema.object({
 type ComputedFields = typeof computedFieldsSchema.valueType;
 
 export const makeModifyAccessChangeSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
-  schema.extendsObject<ModifyAccessChangeParams<RoleT>, ComputedFields, 'no-infer', 'infer', 'no-infer'>(
+  schema.extendsObject_noAutoOptional<ModifyAccessChangeParams<RoleT>, ComputedFields>(
     makeModifyAccessChangeParamsSchema({ roleSchema }),
     computedFieldsSchema
   );

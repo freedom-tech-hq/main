@@ -61,9 +61,7 @@ export const serve = async (args: ServeArgs) => {
       fallback: 'build/index.html'
     });
 
-    // For esbuild 0.25+
-    // console.log(`Serving app at ${serveResult.hosts.map((host) => `${host}:${serveResult.port}`).join(', ')}`);
-    console.log(`Serving app at ${serveResult.host}:${serveResult.port}`);
+    console.log(`Serving app at ${serveResult.hosts.map((host) => `${host}:${serveResult.port}`).join(', ')}`);
   } catch (e) {
     console.error(e);
     process.exit(1);

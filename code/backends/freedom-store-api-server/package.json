@@ -6,7 +6,7 @@
     "freedom-fake-email-service": "0.0.0"
   },
   "devDependencies": {
-    "@types/node": "22.14.1",
+    "@types/node": "22.15.3",
     "expect": "^29.7.0",
     "freedom-build-tools": "0.0.0",
     "freedom-testing-tools": "0.0.0",

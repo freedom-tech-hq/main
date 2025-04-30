@@ -3,7 +3,7 @@ import type { Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
 export const makeStorableObjectSchema = <T>(storedValueSchema: Schema<T>) =>
-  schema.object<StorableObject<T>, 'no-infer'>({
+  schema.object_noAutoOptional<StorableObject<T>>({
     storedValue: storedValueSchema,
     updateCount: nonNegativeIntegerSchema
   });

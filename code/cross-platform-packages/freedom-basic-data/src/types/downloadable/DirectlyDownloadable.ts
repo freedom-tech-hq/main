@@ -2,7 +2,7 @@ import type { Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
 export const makeDirectlyDownloadableSchema = <T>(contentSchema: Schema<T>) =>
-  schema.object<DirectlyDownloadable<T>, 'no-infer'>({
+  schema.object_noAutoOptional<DirectlyDownloadable<T>>({
     direct: schema.boolean(true),
     content: contentSchema
   });

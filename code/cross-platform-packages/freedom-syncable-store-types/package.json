@@ -3,18 +3,18 @@
     "freedom-access-control-types": "0.0.0",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
-    "freedom-conflict-free-document-data": "0.0.0",
     "freedom-conflict-free-document": "0.0.0",
+    "freedom-conflict-free-document-data": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
-    "freedom-crypto": "0.0.0",
     "freedom-dev-logging-support": "0.0.0",
     "freedom-notification-types": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-backing-types": "0.0.0",
     "freedom-trusted-time-source": "0.0.0",
-    "yaschema": "4.4.5"
+    "yaschema": "5.0.0"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

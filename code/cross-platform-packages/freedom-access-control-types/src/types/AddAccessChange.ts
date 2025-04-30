@@ -6,7 +6,7 @@ import { schema } from 'yaschema';
 import { sharedSecretKeysSchema } from './SharedSecretKeys.ts';
 
 export const makeAddAccessChangeParamsSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
-  schema.object<AddAccessChangeParams<RoleT>, 'no-infer'>({
+  schema.object_noAutoOptional<AddAccessChangeParams<RoleT>>({
     type: schema.string('add-access'),
     publicKeys: combinationCryptoKeySetSchema,
     role: roleSchema
@@ -24,7 +24,7 @@ const computedFieldsSchema = schema.object({
 type ComputedFields = typeof computedFieldsSchema.valueType;
 
 export const makeAddAccessChangeSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
-  schema.extendsObject<AddAccessChangeParams<RoleT>, ComputedFields, 'no-infer', 'infer', 'no-infer'>(
+  schema.extendsObject_noAutoOptional<AddAccessChangeParams<RoleT>, ComputedFields>(
     makeAddAccessChangeParamsSchema({ roleSchema }),
     computedFieldsSchema
   );

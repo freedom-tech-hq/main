@@ -7,7 +7,7 @@ import type { SharedKeys } from './SharedKeys.ts';
 import { sharedKeysSchema } from './SharedKeys.ts';
 
 export const makeRemoveAccessChangeParamsSchema = <RoleT extends string>({ roleSchema }: { roleSchema: Schema<RoleT> }) =>
-  schema.object<RemoveAccessChangeParams<RoleT>, 'no-infer'>({
+  schema.object_noAutoOptional<RemoveAccessChangeParams<RoleT>>({
     type: schema.string('remove-access'),
     publicKeyId: cryptoKeySetIdInfo.schema,
     newSharedKeys: sharedKeysSchema,

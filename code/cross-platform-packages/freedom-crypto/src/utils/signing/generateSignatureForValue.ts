@@ -44,7 +44,7 @@ export const generateSignatureForValue = makeAsyncResultFunc(
         const serialization = await serialize(
           trace,
           { value, extras: signatureExtras },
-          schema.object<{ value: T; extras: SignatureExtrasT }, 'no-infer'>({
+          schema.object_noAutoOptional<{ value: T; extras: SignatureExtrasT }>({
             value: valueSchema,
             extras: signatureExtrasSchema
           })

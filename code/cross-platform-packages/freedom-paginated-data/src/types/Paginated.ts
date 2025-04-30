@@ -6,7 +6,7 @@ import type { PageToken } from './PageToken.ts';
 import { pageTokenInfo } from './PageToken.ts';
 
 export const makePaginatedSchema = <T>(itemSchema: Schema<T>) =>
-  schema.object<Paginated<T>, 'no-infer'>({
+  schema.object_noAutoOptional<Paginated<T>>({
     estCount: nonNegativeIntegerSchema.optional(),
     items: schema.array({ items: itemSchema }),
     nextPageToken: pageTokenInfo.schema.optional()

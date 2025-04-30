@@ -47,7 +47,7 @@ export class IndexedDbObjectStore<KeyT extends string, T> implements MutableObje
   private readonly storedSchema_: Schema<StoredObject<T>>;
 
   constructor({ db, storeName, schema: valueSchema }: IndexedDbObjectStoreConstructorArgs<KeyT, T>) {
-    this.storedSchema_ = schema.object<StoredObject<T>, 'no-infer'>({
+    this.storedSchema_ = schema.object_noAutoOptional<StoredObject<T>>({
       storedValue: valueSchema,
       updateCount: schema.number()
     });

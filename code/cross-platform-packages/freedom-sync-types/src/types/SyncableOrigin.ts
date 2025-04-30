@@ -8,7 +8,7 @@ import { syncableItemTypeSchema } from './SyncableItemType.ts';
 import { syncablePathSchema } from './SyncablePath.ts';
 
 // Forcing type so users have to specify the values even if they're undefined
-export const syncableOriginOptionsSchema = schema.object<SyncableOriginOptions, 'no-infer'>({
+export const syncableOriginOptionsSchema = schema.object_noAutoOptional<SyncableOriginOptions>({
   /** For use when the `SyncableId` is a `TimeId` that requires trust, ex. with an access control change */
   trustedTimeSignature: base64String.schema.optional()
 });
