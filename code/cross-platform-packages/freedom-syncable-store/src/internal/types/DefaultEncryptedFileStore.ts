@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
+import { InMemoryCache } from 'freedom-in-memory-cache';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
@@ -9,12 +10,13 @@ import type {
   SyncTracker
 } from 'freedom-syncable-store-types';
 
+import { CACHE_DURATION_MSEC } from '../consts/timing.ts';
 import { DefaultFileStoreBase } from './DefaultFileStoreBase.ts';
-import { DefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
+import { getOrCreateDefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export interface DefaultEncryptedFileStoreConstructorArgs {
-  store: WeakRef<MutableSyncableStore>;
+  store: MutableSyncableStore;
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
@@ -41,6 +43,7 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
 
   // DefaultBundleBase Abstract Method Implementations
 
+  // TODO: should cache
   protected override decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array> {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'decode-data', pathString: this.path.toString() });
 
@@ -54,18 +57,28 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
   }
 
   protected override makeBundleAccessor_({ path }: { path: SyncablePath }): MutableSyncableBundleAccessor {
-    return new DefaultEncryptedFileStore({
-      store: this.weakStore_,
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      throw new Error('store was released');
+    }
+
+    return getOrCreateDefaultEncryptedFileStore({
+      store,
       backing: this.backing_,
       syncTracker: this.syncTracker_,
-      folderOperationsHandler: this.folderOperationsHandler_,
-      path
+      path,
+      folderOperationsHandler: this.folderOperationsHandler_
     });
   }
 
   protected override makeFileAccessor_({ path }: { path: SyncablePath }): MutableSyncableFileAccessor {
-    return new DefaultMutableSyncableFileAccessor({
-      store: this.weakStore_,
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      throw new Error('store was released');
+    }
+
+    return getOrCreateDefaultMutableSyncableFileAccessor({
+      store,
       backing: this.backing_,
       path,
       decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
@@ -76,3 +89,27 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
     return true;
   }
 }
+
+const globalCache = new InMemoryCache<string, DefaultEncryptedFileStore, MutableSyncableStore>({
+  cacheDurationMSec: CACHE_DURATION_MSEC,
+  shouldResetIntervalOnGet: true
+});
+
+export const getOrCreateDefaultEncryptedFileStore = ({
+  store,
+  backing,
+  syncTracker,
+  path,
+  folderOperationsHandler
+}: {
+  store: MutableSyncableStore;
+  backing: SyncableStoreBacking;
+  syncTracker: SyncTracker;
+  path: SyncablePath;
+  folderOperationsHandler: FolderOperationsHandler;
+}) =>
+  globalCache.getOrCreate(
+    store,
+    path.toString(),
+    () => new DefaultEncryptedFileStore({ store, backing, syncTracker, path, folderOperationsHandler })
+  );

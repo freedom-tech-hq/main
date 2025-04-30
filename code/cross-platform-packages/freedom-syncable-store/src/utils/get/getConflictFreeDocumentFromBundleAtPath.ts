@@ -1,6 +1,6 @@
 import type { AccessControlDocumentPrefix } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
-import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { objectValues } from 'freedom-cast';
 import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
@@ -20,9 +20,9 @@ import type {
 import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
 
-import { APPLY_DELTAS_LIMIT_TIME_MSEC, DOCUMENT_CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';
+import { APPLY_DELTAS_LIMIT_TIME_MSEC, CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';
 import { accessControlDocumentProvider } from '../../internal/context/accessControlDocument.ts';
-import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { isSyncableValidationEnabledProvider, useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import { getRoleForOrigin } from '../validation/getRoleForOrigin.ts';
 import { getBundleAtPath } from './getBundleAtPath.ts';
@@ -38,6 +38,7 @@ interface DocumentCacheValue {
   deletionTimeout?: ReturnType<typeof setTimeout>;
 }
 
+// TODO: switch to inmemory cache
 const globalDocumentCache = new Map<string, Partial<Record<string, DocumentCacheValue>>>();
 
 const globalLockStore = new InMemoryLockStore();
@@ -332,6 +333,28 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
               trace,
               deltaPaths: SyncablePath[]
             ): PR<undefined, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+              const encodedDataByPathString: Partial<Record<string, string>> = {};
+              const loaded = await allResultsMapped(
+                trace,
+                deltaPaths,
+                {},
+                async (trace, deltaPath): PR<undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type' | 'format-error'> => {
+                  const encodedDelta = await isSyncableValidationEnabledProvider(trace, false, (trace) =>
+                    getStringFromFile(trace, store, deltaPath)
+                  );
+                  if (!encodedDelta.ok) {
+                    return encodedDelta;
+                  }
+
+                  encodedDataByPathString[deltaPath.toString()] = encodedDelta.value;
+
+                  return makeSuccess(undefined);
+                }
+              );
+              if (!loaded.ok) {
+                return loaded;
+              }
+
               let numAppliedDeltas = 0;
               for (const deltaPath of deltaPaths) {
                 // Using a potentially progressively loaded access control document for validating deltas.  If this bundle is itself an access
@@ -349,10 +372,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                   return deltaProvenance;
                 }
 
-                const encodedDelta = await getStringFromFile(trace, store, deltaFile.value);
-                if (!encodedDelta.ok) {
-                  return encodedDelta;
-                }
+                const encodedDelta = encodedDataByPathString[deltaPath.toString()] as EncodedConflictFreeDocumentDelta<PrefixT>;
 
                 // For not-yet-accepted values, performing additional checks
                 if (isSyncableValidationEnabled && deltaProvenance.value.acceptance === undefined) {
@@ -369,7 +389,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                     path: deltaFile.value.path,
                     validatedProvenance: deltaProvenance.value,
                     originRole: originRole.value,
-                    encodedDelta: encodedDelta.value as EncodedConflictFreeDocumentDelta<PrefixT>
+                    encodedDelta
                   });
                   if (!deltaValid.ok) {
                     return deltaValid;
@@ -380,7 +400,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                 }
 
                 // If this is an access control bundle, this is also how it will progressively load
-                document.applyDeltas([encodedDelta.value as EncodedConflictFreeDocumentDelta<PrefixT>], { updateDeltaBasis: false });
+                document.applyDeltas([encodedDelta], { updateDeltaBasis: false });
                 numAppliedDeltas += 1;
               }
 
@@ -470,7 +490,7 @@ const addWatcher = (cached: DocumentCacheValue, watch: true | 'auto') => {
     cached.numWatchers -= 1;
 
     if (cached.numWatchers === 0) {
-      cached.deletionTimeout = setTimeout(cached.deleteFromCache, DOCUMENT_CACHE_DURATION_MSEC);
+      cached.deletionTimeout = setTimeout(cached.deleteFromCache, CACHE_DURATION_MSEC);
     }
   };
 

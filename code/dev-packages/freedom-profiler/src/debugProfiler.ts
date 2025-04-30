@@ -3,10 +3,10 @@ import { getTraceStackTop } from 'freedom-contexts';
 import type { Logger } from 'yaschema';
 
 export const makeDebugProfiler = (log: () => Logger, shouldTrackFunc: (trace: Trace) => boolean) => {
-  const totalDurationById: Record<string, number> = {};
-  const numCallsById: Record<string, number> = {};
+  let totalDurationById: Record<string, number> = {};
+  let numCallsById: Record<string, number> = {};
 
-  process.on('beforeExit', () => {
+  const flush = () => {
     const top10TotalDurationKeys = Object.keys(totalDurationById)
       .sort((a, b) => totalDurationById[b] - totalDurationById[a])
       .slice(0, 10);
@@ -50,9 +50,20 @@ export const makeDebugProfiler = (log: () => Logger, shouldTrackFunc: (trace: Tr
       );
     }
     log().info?.('----------');
-  });
 
-  return (trace: Trace, { durationMSec }: { durationMSec: number; timeMSec: number; errorCode: string | undefined }) => {
+    totalDurationById = {};
+    numCallsById = {};
+  };
+
+  try {
+    process.on('beforeExit', () => {
+      flush();
+    });
+  } catch (_e) {
+    // Ignoring, process.on is only for Node.js
+  }
+
+  const track = (trace: Trace, { durationMSec }: { durationMSec: number; timeMSec: number; errorCode: string | undefined }) => {
     if (!shouldTrackFunc(trace)) {
       return;
     }
@@ -61,4 +72,6 @@ export const makeDebugProfiler = (log: () => Logger, shouldTrackFunc: (trace: Tr
     totalDurationById[id] = (totalDurationById[id] ?? 0) + durationMSec;
     numCallsById[id] = (numCallsById[id] ?? 0) + 1;
   };
+
+  return { track, flush };
 };

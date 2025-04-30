@@ -45,9 +45,9 @@ import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAc
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
-import { DefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
+import { type DefaultEncryptedFileStore, getOrCreateDefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
-import { DefaultPlainFileStore } from './DefaultPlainFileStore.ts';
+import { type DefaultPlainFileStore, getOrCreateDefaultPlainFileStore } from './DefaultPlainFileStore.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
@@ -65,8 +65,13 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
   private folderStore__: DefaultFolderStore | undefined;
   private get folderStore_(): DefaultFolderStore {
     if (this.folderStore__ === undefined) {
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        throw new Error('store was released');
+      }
+
       this.folderStore__ = new DefaultFolderStore({
-        store: this.weakStore_,
+        store,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
         folderOperationsHandler: this.folderOperationsHandler_,
@@ -81,12 +86,17 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
   private plainFileStore__: DefaultPlainFileStore | undefined;
   private get plainFileStore_(): DefaultPlainFileStore {
     if (this.plainFileStore__ === undefined) {
-      this.plainFileStore__ = new DefaultPlainFileStore({
-        store: this.weakStore_,
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        throw new Error('store was released');
+      }
+
+      this.plainFileStore__ = getOrCreateDefaultPlainFileStore({
+        store,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
-        folderOperationsHandler: this.folderOperationsHandler_,
         path: this.path,
+        folderOperationsHandler: this.folderOperationsHandler_,
         supportsDeletion: false
       });
     }
@@ -97,12 +107,17 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
   private encryptedFileStore__: DefaultEncryptedFileStore | undefined;
   private get encryptedFileStore_(): DefaultEncryptedFileStore {
     if (this.encryptedFileStore__ === undefined) {
-      this.encryptedFileStore__ = new DefaultEncryptedFileStore({
-        store: this.weakStore_,
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        throw new Error('store was released');
+      }
+
+      this.encryptedFileStore__ = getOrCreateDefaultEncryptedFileStore({
+        store,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
-        folderOperationsHandler: this.folderOperationsHandler_,
-        path: this.path
+        path: this.path,
+        folderOperationsHandler: this.folderOperationsHandler_
       });
     }
 
@@ -125,7 +140,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
     this.weakStore_ = new WeakRef(store);
-    this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(this.weakStore_);
+    this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);
     this.makeFolderAccessor_ = makeFolderAccessor;
   }
 
@@ -133,23 +148,30 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   public readonly getAccessControlDocument = makeAsyncResultFunc(
     [import.meta.filename, 'getAccessControlDocument'],
-    async (trace: Trace): PR<SyncableStoreAccessControlDocument> => await getAccessControlDocument(trace, this.weakStore_, this.path)
+    async (trace: Trace): PR<SyncableStoreAccessControlDocument> => {
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
+      return await getAccessControlDocument(trace, store, this.path);
+    }
   );
 
   public readonly updateAccess = makeAsyncResultFunc(
     [import.meta.filename, 'updateAccess'],
     async (trace: Trace, change: AccessChangeParams<SyncableStoreRole>): PR<undefined, 'conflict'> => {
-      const accessControlDoc = await getMutableAccessControlDocument(trace, this.weakStore_, this.path);
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
+      const accessControlDoc = await getMutableAccessControlDocument(trace, store, this.path);
       /* node:coverage disable */
       if (!accessControlDoc.ok) {
         return accessControlDoc;
       }
       /* node:coverage enable */
-
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-      }
 
       let signedTimedChange: Result<TrustedTimeSignedAccessChange<SyncableStoreRole>>;
       switch (change.type) {
@@ -207,7 +229,12 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
   // AccessControlledFolderAccessor Methods
 
   public readonly canPushToRemotes = makeAsyncResultFunc([import.meta.filename, 'canPushToRemotes'], async (trace): PR<boolean> => {
-    const accessControlDoc = await disableLam(trace, true, (trace) => getAccessControlDocument(trace, this.weakStore_, this.path));
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+    }
+
+    const accessControlDoc = await disableLam(trace, true, (trace) => getAccessControlDocument(trace, store, this.path));
     return makeSuccess(accessControlDoc.ok);
   });
 
@@ -217,7 +244,12 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace,
       { cryptoKeySetId, oneOfRoles, timeMSec }: { cryptoKeySetId: CryptoKeySetId; oneOfRoles: Set<SyncableStoreRole>; timeMSec: number }
     ): PR<boolean> => {
-      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
+      const accessControlDoc = await getAccessControlDocument(trace, store, this.path);
       if (!accessControlDoc.ok) {
         return accessControlDoc;
       }
@@ -513,14 +545,14 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // Protected Methods
 
-  protected makeFolderOperationsHandler_(weakStore: WeakRef<MutableSyncableStore>) {
+  protected makeFolderOperationsHandler_(store: MutableSyncableStore) {
     const path = this.path;
 
     return new FolderOperationsHandler({
-      store: weakStore,
-      getAccessControlDocument: (trace: Trace): PR<SyncableStoreAccessControlDocument> => getAccessControlDocument(trace, weakStore, path),
+      store,
+      getAccessControlDocument: (trace: Trace): PR<SyncableStoreAccessControlDocument> => getAccessControlDocument(trace, store, path),
       getMutableSyncableStoreChangesDocument: (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> =>
-        getMutableSyncableStoreChangesDocument(trace, weakStore, path)
+        getMutableSyncableStoreChangesDocument(trace, store, path)
     });
   }
 
@@ -555,7 +587,12 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
   private readonly getAccessControlState_ = makeAsyncResultFunc(
     [import.meta.filename, 'getAccessControlState'],
     async (trace: Trace): PR<AccessControlState<SyncableStoreRole>> => {
-      const accessControlDoc = await getAccessControlDocument(trace, this.weakStore_, this.path);
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
+      const accessControlDoc = await getAccessControlDocument(trace, store, this.path);
       /* node:coverage disable */
       if (!accessControlDoc.ok) {
         return accessControlDoc;
@@ -584,8 +621,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
 const getAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getAccessControlDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath) => {
-    const accessControlDoc = await getMutableAccessControlDocument(trace, weakStore, path);
+  async (trace, store: MutableSyncableStore, path: SyncablePath) => {
+    const accessControlDoc = await getMutableAccessControlDocument(trace, store, path);
     /* node:coverage disable */
     if (!accessControlDoc.ok) {
       return accessControlDoc;
@@ -598,12 +635,7 @@ const getAccessControlDocument = makeAsyncResultFunc(
 
 const getMutableAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableAccessControlDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
-    const store = weakStore.deref();
-    if (store === undefined) {
-      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-    }
-
+  async (trace, store: MutableSyncableStore, path: SyncablePath): PR<SaveableDocument<SyncableStoreAccessControlDocument>> => {
     const accessControlBundlePath = path.append(ACCESS_CONTROL_BUNDLE_ID);
 
     const doc = await getMutableConflictFreeDocumentFromBundleAtPath(
@@ -625,12 +657,7 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
 
 const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
   [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
-  async (trace, weakStore: WeakRef<MutableSyncableStore>, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
-    const store = weakStore.deref();
-    if (store === undefined) {
-      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-    }
-
+  async (trace, store: MutableSyncableStore, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
     const storeChangesBundlePath = path.append(STORE_CHANGES_BUNDLE_ID);
 
     // TODO: doc can be modified directly by changing bundle.  this should track that probably
