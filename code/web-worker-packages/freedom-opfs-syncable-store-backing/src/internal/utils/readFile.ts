@@ -11,14 +11,9 @@ export const readFile = makeAsyncResultFunc(
     const lockStore = getLockStore();
 
     const completed = await withAcquiredLock(trace, lockStore.lock(lockKey), {}, async (): PR<Uint8Array> => {
-      const syncFileHandle = await fileHandle.createSyncAccessHandle();
-      try {
-        const buffer = new Uint8Array(syncFileHandle.getSize());
-        syncFileHandle.read(buffer);
-        return makeSuccess(buffer);
-      } finally {
-        syncFileHandle.close();
-      }
+      const file = await fileHandle.getFile();
+      const buffer = await file.arrayBuffer();
+      return makeSuccess(Buffer.from(buffer));
     });
     if (!completed.ok) {
       return generalizeFailureResult(trace, completed, 'lock-timeout');
