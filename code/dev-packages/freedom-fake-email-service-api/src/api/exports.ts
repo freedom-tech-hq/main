@@ -1,3 +1,4 @@
+export * as checkNameAvailability from './check-name-availability.ts';
 export * as health from './health.ts';
 export * as publicKeys from './publicKeys.ts';
 export * as pull from './pull.ts';

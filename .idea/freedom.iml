@@ -69,6 +69,7 @@
       <excludeFolder url="file://$MODULE_DIR$/code/backends/freedom-store-api-server/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-utils/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-db/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-syncable-store/lib" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

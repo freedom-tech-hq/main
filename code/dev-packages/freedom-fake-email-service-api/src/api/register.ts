@@ -5,6 +5,8 @@ import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
 
+import { emailNameSchema } from '../types/exports.ts';
+
 export const POST = makeHttpApi({
   method: 'POST',
   routeType: 'rest',
@@ -13,6 +15,7 @@ export const POST = makeHttpApi({
   schemas: {
     request: {
       body: schema.object({
+        name: emailNameSchema,
         storageRootId: storageRootIdInfo.schema,
         metadata: schema.omit(syncableItemMetadataSchema, ['name']),
         creatorPublicKeys: combinationCryptoKeySetSchema,
@@ -22,6 +25,10 @@ export const POST = makeHttpApi({
     successResponse: {
       status: schema.number(StatusCodes.OK)
     },
-    failureResponse: makeFailureWithCodeSchemas('conflict')
+    failureResponse: makeFailureWithCodeSchemas(
+      'already-created', // It is clearly the same user
+      'conflict', // The user ID is already known, but the user is different
+      'email-is-unavailable' // The email is already taken by another user
+    )
   }
 });
