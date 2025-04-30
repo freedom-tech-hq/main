@@ -1,5 +1,5 @@
 import { CircularProgress, ListItem, ListItemText } from '@mui/material';
-import type { MailThread, ThreadLikeId } from 'freedom-email-user';
+import type { ThreadLikeId } from 'freedom-email-user';
 import { mailThreadIdInfo } from 'freedom-email-user';
 import { noop } from 'lodash-es';
 import { useMemo } from 'react';
@@ -50,20 +50,10 @@ export const useMailCollectionDelegate = (
   );
 };
 
-const prototypeMail: MailThread = {
-  id: mailThreadIdInfo.make(),
-  from: 'hello@freedomtechhq.com',
-  to: ['hello@freedomtechhq.com'],
-  subject: 'Prototype',
-  body: 'Prototype',
-  timeMSec: Date.now(),
-  numMessages: 0,
-  numUnread: 0
-};
 const itemPrototypes = {
   'mail-thread': {
     defaultEstimatedSizePx: 113,
     isSizeDynamic: false,
-    Component: () => <MailThreadListItem id={prototypeMail.id} thread={prototypeMail} tag={undefined} onClick={noop} />
+    Component: () => <MailThreadListItem id={mailThreadIdInfo.make()} timeMSec={Date.now()} tag={undefined} onClick={noop} />
   }
 };

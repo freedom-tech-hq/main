@@ -1,18 +1,11 @@
 import type { PR, Result } from 'freedom-async';
-import {
-  allResultsMappedSkipFailures,
-  excludeFailureResult,
-  flushMetrics,
-  makeAsyncResultFunc,
-  makeSuccess,
-  uncheckedResult
-} from 'freedom-async';
+import { excludeFailureResult, flushMetrics, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { autoGeneralizeFailureResults, generalizeFailureResult } from 'freedom-common-errors';
 import { devSetEnv } from 'freedom-contexts';
 import { type MailId } from 'freedom-email-sync';
-import type { CollectionLikeId, EmailCredential, MailThread } from 'freedom-email-user';
-import { getCollectionDoc, getMailById, mailCollectionTypes } from 'freedom-email-user';
+import type { CollectionLikeId } from 'freedom-email-user';
+import { getCollectionDoc, mailCollectionTypes } from 'freedom-email-user';
 import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
@@ -35,7 +28,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     const lockStore = new InMemoryLockStore();
 
     if (credential === undefined) {
-      return makeSuccess({ type: 'mail-added' as const, threads: [] });
+      return makeSuccess({ type: 'mail-added' as const, threadIds: [] });
     }
 
     const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
@@ -43,7 +36,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     const collectionType = mailCollectionTypes.checked(collectionId);
     if (collectionType === undefined || collectionType === 'custom') {
       // TODO: TEMP
-      return makeSuccess({ type: 'mail-added' as const, threads: [] });
+      return makeSuccess({ type: 'mail-added' as const, threadIds: [] });
     }
 
     // TODO: traverse backwards also
@@ -51,7 +44,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     if (!collectionDoc.ok) {
       if (collectionDoc.value.errorCode === 'deleted' || collectionDoc.value.errorCode === 'not-found') {
         // TODO: TEMP
-        return makeSuccess({ type: 'mail-added' as const, threads: [] });
+        return makeSuccess({ type: 'mail-added' as const, threadIds: [] });
       }
 
       return generalizeFailureResult(trace, excludeFailureResult(collectionDoc, 'deleted', 'not-found'), [
@@ -83,12 +76,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
         }
 
         if (addedMailIds.size > 0) {
-          const threads = await getThreadsForMailIds(trace, credential, Array.from(addedMailIds));
-          if (!threads.ok) {
-            return threads;
-          }
-
-          await onData({ ok: true, value: { type: 'mail-added' as const, threads: threads.value } });
+          await onData({ ok: true, value: { type: 'mail-added' as const, threadIds: Array.from(addedMailIds) } });
         }
 
         mailIds = newMailIds;
@@ -112,57 +100,10 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       trace,
       'lock-timeout',
       withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<GetMailThreadsForCollection_MailAddedPacket> => {
-        mailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
-
-        const threads = await getThreadsForMailIds(trace, credential, mailIds);
-        if (!threads.ok) {
-          return threads;
-        }
-
         flushMetrics()?.();
 
-        return makeSuccess({ type: 'mail-added' as const, threads: threads.value });
+        return makeSuccess({ type: 'mail-added' as const, threadIds: Array.from(collectionDoc.value.document.mailIds.iterator()) });
       })
     );
-  }
-);
-
-// Helpers
-
-const getThreadsForMailIds = makeAsyncResultFunc(
-  [import.meta.filename, 'getThreadsForMailIds'],
-  async (trace, credential: EmailCredential, mailIds: MailId[]): PR<MailThread[]> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
-
-    const threads: MailThread[] = [];
-    const storedMails = await allResultsMappedSkipFailures(
-      trace,
-      mailIds,
-      { skipErrorCodes: ['not-found'] },
-      async (trace, mailId): PR<undefined, 'not-found'> => {
-        const storedMail = await getMailById(trace, access, mailId);
-        if (!storedMail.ok) {
-          return storedMail;
-        }
-
-        threads.push({
-          id: mailId,
-          from: storedMail.value.from,
-          to: storedMail.value.to,
-          subject: storedMail.value.subject,
-          body: storedMail.value.body,
-          timeMSec: storedMail.value.timeMSec,
-          numMessages: 1,
-          numUnread: 1
-        });
-
-        return makeSuccess(undefined);
-      }
-    );
-    if (!storedMails.ok) {
-      return storedMails;
-    }
-
-    return makeSuccess(threads);
   }
 );

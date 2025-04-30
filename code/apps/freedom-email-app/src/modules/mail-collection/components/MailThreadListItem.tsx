@@ -4,8 +4,10 @@ import { parseFrom } from 'email-addresses';
 import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import { useDerivedWaitable, WC } from 'react-waitables';
 
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
+import { useTaskWaitable } from '../../../hooks/useTaskWaitable.ts';
 import { formatTimeIfSameDateOrFormatDate } from '../../../utils/formatTimeIfSameDateOrFormatDate.ts';
 import { makeStringAvatarProps } from '../../../utils/makeStringAvatarProps.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
@@ -15,15 +17,17 @@ export interface MailThreadListItemProps<TagT> extends Omit<MailThreadDataSource
   onClick: (tag: TagT) => void;
 }
 
-export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadListItemProps<TagT>) => {
+export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailThreadListItemProps<TagT>) => {
   const selectedThreadId = useSelectedMailThreadId();
   const theme = useTheme();
 
+  const thread = useTaskWaitable((tasks) => tasks.getMailThread(id), { id: 'thread', deps: [id] });
+
   const taggedOnClick = useCallbackRef(() => onClick(tag));
 
-  const isSelected = useDerivedBinding(selectedThreadId, (selectedThreadId) => selectedThreadId === thread.id, {
+  const isSelected = useDerivedBinding(selectedThreadId, (selectedThreadId) => selectedThreadId === id, {
     id: 'isSelected',
-    deps: [thread.id]
+    deps: [id]
   });
 
   const unreadIndicatorStyle = useMemo((): Record<`${boolean}`, CSSProperties> => {
@@ -43,25 +47,30 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
     };
   }, [theme]);
 
-  const parsedFrom = parseFrom(thread.from) ?? [];
-  const fromTags = parsedFrom.map((parsed, index) => {
-    switch (parsed.type) {
-      case 'group':
-        return (
-          <Typography key={index} fontWeight="bold" sx={emailStyle}>
-            {parsed.name}
-            {index < parsedFrom.length - 1 ? <span style={commaReactStyle}>,</span> : null}
-          </Typography>
-        );
-      case 'mailbox':
-        return (
-          <Typography key={index} fontWeight="bold" sx={emailStyle}>
-            {parsed.name ?? parsed.address}
-            {index < parsedFrom.length - 1 ? <span style={commaReactStyle}>,</span> : null}
-          </Typography>
-        );
-    }
-  });
+  const parsedFrom = useDerivedWaitable(thread, (thread) => parseFrom(thread.from) ?? [], { id: 'parsedFrom' });
+  const fromTags = useDerivedWaitable(
+    parsedFrom,
+    (parsedFrom) =>
+      parsedFrom.map((parsed, index) => {
+        switch (parsed.type) {
+          case 'group':
+            return (
+              <Typography key={index} fontWeight="bold" sx={emailStyle}>
+                {parsed.name}
+                {index < parsedFrom.length - 1 ? <span style={commaReactStyle}>,</span> : null}
+              </Typography>
+            );
+          case 'mailbox':
+            return (
+              <Typography key={index} fontWeight="bold" sx={emailStyle}>
+                {parsed.name ?? parsed.address}
+                {index < parsedFrom.length - 1 ? <span style={commaReactStyle}>,</span> : null}
+              </Typography>
+            );
+        }
+      }),
+    { id: 'fromTags', detectValueChanges: false }
+  );
 
   return (
     <>
@@ -73,25 +82,42 @@ export const MailThreadListItem = <TagT,>({ thread, tag, onClick }: MailThreadLi
         >
           <ListItemAvatar sx={avatarStyle}>
             <Stack direction="row" gap={1} alignItems="center">
-              <div style={unreadIndicatorStyle[`${thread.numUnread > 0}`]} />
-              <Avatar {...makeStringAvatarProps(thread.from)} />
+              {WC(
+                thread,
+                (thread) => (
+                  <>
+                    <div style={unreadIndicatorStyle[`${thread.numUnread > 0}`]} />
+                    <Avatar {...makeStringAvatarProps(thread.from)} />
+                  </>
+                ),
+                () => (
+                  <>
+                    <div style={unreadIndicatorStyle.false} />
+                    <Avatar sx={{ bgcolor: theme.palette.divider }} />
+                  </>
+                )
+              )}
             </Stack>
           </ListItemAvatar>
           <Stack alignItems="stretch" sx={{ ...overflowHiddenStyle, flexGrow: 1 }}>
             <div>
               <Typography variant="body2" color="textSecondary" sx={{ ...noWrapStyle, float: 'right', ml: 1 }}>
-                {formatTimeIfSameDateOrFormatDate(thread.timeMSec)}
+                {formatTimeIfSameDateOrFormatDate(timeMSec)}
               </Typography>
-              <div>{fromTags}</div>
+              <div>{WC(fromTags, (fromTags) => fromTags)}</div>
             </div>
-            <ListItemText primary={thread.subject} slotProps={subjectSlotProps} sx={noVerticalMarginStyle} />
-            <ListItemText
-              secondary={thread.body}
-              sx={{
-                overflow: 'hidden',
-                height: `calc(${theme.typography.body2.fontSize} * ${theme.typography.body2.lineHeight} * 2)`
-              }}
-            />
+            {WC(thread, (thread) => (
+              <>
+                <ListItemText primary={thread.subject} slotProps={subjectSlotProps} sx={noVerticalMarginStyle} />
+                <ListItemText
+                  secondary={thread.body}
+                  sx={{
+                    overflow: 'hidden',
+                    height: `calc(${theme.typography.body2.fontSize} * ${theme.typography.body2.lineHeight} * 2)`
+                  }}
+                />
+              </>
+            ))}
           </Stack>
         </ListItemButton>
       ))}

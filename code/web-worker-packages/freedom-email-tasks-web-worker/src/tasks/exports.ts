@@ -14,6 +14,7 @@ import type { removeEncryptionForBiometricsFromLocallyStoredEmailCredential } fr
 import type { createMailDraft } from './mail/createMailDraft.ts';
 import type { getMailCollections } from './mail/getMailCollections.ts';
 import type { getMailForThread } from './mail/getMailForThread.ts';
+import type { getMailThread } from './mail/getMailThread.ts';
 import type { getMailThreadsForCollection } from './mail/getMailThreadsForCollection.ts';
 import type { createUser } from './user/createUser.ts';
 import type { restoreUser } from './user/restoreUser.ts';
@@ -87,6 +88,9 @@ class TasksImpl {
 
   public readonly getMailCollections = async (...args: ParametersExceptFirst<typeof getMailCollections>) =>
     await (await import('./mail/getMailCollections.ts')).getMailCollections(this.#trace, ...args);
+
+  public readonly getMailThread = async (...args: ParametersExceptFirst<typeof getMailThread>) =>
+    await (await import('./mail/getMailThread.ts')).getMailThread(this.#trace, ...args);
 
   public readonly getMailThreadsForCollection = async (...args: ParametersExceptFirst<typeof getMailThreadsForCollection>) =>
     await (await import('./mail/getMailThreadsForCollection.ts')).getMailThreadsForCollection(this.#trace, ...args);

@@ -3,8 +3,9 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
+import { mailIdInfo } from 'freedom-email-sync';
 import type { GetMailThreadsForCollectionPacket } from 'freedom-email-tasks-web-worker';
-import type { MailThread, ThreadLikeId } from 'freedom-email-user';
+import type { ThreadLikeId } from 'freedom-email-user';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 import { SortedArray } from 'yasorted-array';
@@ -22,7 +23,7 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
   const tasks = useTasks();
 
   const items = useMemo(
-    () => new SortedArray<MailCollectionDataSourceItem>((a, b) => compareThreadsDescendingTimeOrder(a.thread, b.thread)),
+    () => new SortedArray<MailCollectionDataSourceItem>((a, b) => compareMailCollectionDataSourceItemDescendingTimeOrder(a, b)),
     []
   );
 
@@ -65,7 +66,13 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
           case 'mail-added': {
             dataSource.itemsAdded({
               indices: items.addMultiple(
-                ...packet.value.threads.map((thread): MailThreadDataSourceItem => ({ type: 'mail-thread', id: thread.id, thread }))
+                ...packet.value.threadIds.map(
+                  (threadId): MailThreadDataSourceItem => ({
+                    type: 'mail-thread',
+                    id: threadId,
+                    timeMSec: mailIdInfo.is(threadId) ? mailIdInfo.extractTimeMSec(threadId) : 0
+                  })
+                )
               )
             });
 
@@ -118,7 +125,7 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
 
 // Helpers
 
-const compareThreadsDescendingTimeOrder = (a: MailThread, b: MailThread) => {
+const compareMailCollectionDataSourceItemDescendingTimeOrder = (a: MailCollectionDataSourceItem, b: MailCollectionDataSourceItem) => {
   const comparedTimeMSecs = b.timeMSec - a.timeMSec;
   if (comparedTimeMSecs !== 0) {
     return comparedTimeMSecs;
