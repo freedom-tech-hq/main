@@ -13,7 +13,26 @@ import type { MailCollectionType } from '../types/MailCollectionType.ts';
 import { mailCollectionTypes } from '../types/MailCollectionType.ts';
 import type { MailDraftId } from '../types/MailDraftId.ts';
 
-export const getUserMailPaths = async (userFs: SyncableStore) =>
+const globalCache = new WeakMap<SyncableStore, UserMailPaths>();
+
+export const getUserMailPaths = async (userFs: SyncableStore) => {
+  const cached = globalCache.get(userFs);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const newValue = await internalGetUserMailPaths(userFs);
+  globalCache.set(userFs, newValue);
+  return newValue;
+};
+
+export type UserMailPaths = Awaited<ReturnType<typeof internalGetUserMailPaths>>;
+
+export type TimeOrganizedCollectionPaths = ReturnType<typeof makeTimeOrganizedCollectionPaths>;
+
+// Helpers
+
+const internalGetUserMailPaths = async (userFs: SyncableStore) =>
   await nest(userFs.path, async (rootPath) => ({
     ...(await getMailPaths(userFs)),
 
@@ -95,10 +114,6 @@ export const getUserMailPaths = async (userFs: SyncableStore) =>
       })
     )
   }));
-
-export type TimeOrganizedCollectionPaths = ReturnType<typeof makeTimeOrganizedCollectionPaths>;
-
-// Helpers
 
 const makeTimeOrganizedCollectionPaths = (parentPath: SyncablePath) => ({
   year: (date: Date) =>
