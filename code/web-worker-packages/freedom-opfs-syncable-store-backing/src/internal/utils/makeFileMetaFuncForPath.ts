@@ -8,6 +8,7 @@ import type { JsonValue } from 'yaschema';
 import type { OpfsLocalItemMetadata } from '../types/OpfsLocalItemMetadata.ts';
 import { storedMetadataSchema } from '../types/StoredMetadata.ts';
 import { getDirectoryHandleAndFilenameForMetadataFile } from './getDirectoryHandleAndFilenameForMetadataFile.ts';
+import { getFileHandleForDirectoryHandleAndFilename } from './getFileHandleForDirectoryHandleAndFilename.ts';
 import { readTextFile } from './readTextFile.ts';
 
 export const makeFileMetaFuncForPath = (rootHandle: FileSystemDirectoryHandle, path: SyncablePath) =>
@@ -21,11 +22,16 @@ export const makeFileMetaFuncForPath = (rootHandle: FileSystemDirectoryHandle, p
 
       const { dir, filename, metaFileLockKey } = dirAndFilename.value;
 
-      const fileHandle = await dir.getFileHandle(filename);
-      const metadataJsonString = await readTextFile(trace, fileHandle, { lockKey: metaFileLockKey });
+      const fileHandle = await getFileHandleForDirectoryHandleAndFilename(trace, dir, filename);
+      if (!fileHandle.ok) {
+        return fileHandle;
+      }
+
+      const metadataJsonString = await readTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey });
       if (!metadataJsonString.ok) {
         return generalizeFailureResult(trace, metadataJsonString, 'format-error');
       }
+
       try {
         const metadataJson = JSON.parse(metadataJsonString.value) as JsonValue;
         const deserialization = await deserialize(trace, { serializedValue: metadataJson, valueSchema: storedMetadataSchema });

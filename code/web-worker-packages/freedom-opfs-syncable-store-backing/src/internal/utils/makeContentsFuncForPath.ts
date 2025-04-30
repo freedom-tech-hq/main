@@ -1,15 +1,11 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { log } from 'freedom-contexts';
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableIdParts } from 'freedom-sync-types';
 
 import type { OpfsSyncableStoreBackingItem } from '../types/OpfsSyncableStoreBackingItem.ts';
+import { getBackingItem } from './getBackingItem.ts';
 import { getDirectoryHandle } from './getDirectoryHandle.ts';
 import { ls } from './ls.ts';
-import { makeDataFuncForPath } from './makeDataFuncForPath.ts';
-import { makeFileMetaFuncForPath } from './makeFileMetaFuncForPath.ts';
-import { makeFolderMetaFuncForPath } from './makeFolderMetaFuncForPath.ts';
 
 export const makeContentsFuncForPath = (rootHandle: FileSystemDirectoryHandle, path: SyncablePath) =>
   makeAsyncResultFunc(
@@ -35,28 +31,7 @@ export const makeContentsFuncForPath = (rootHandle: FileSystemDirectoryHandle, p
         }
 
         const id = decodeURIComponent(entry) as SyncableId;
-        const subPath = path.append(id);
-        try {
-          const idParts = extractSyncableIdParts(id);
-
-          if (idParts.type === 'file') {
-            result[id] = {
-              type: 'file',
-              id,
-              metadata: makeFileMetaFuncForPath(rootHandle, subPath),
-              data: makeDataFuncForPath(rootHandle, subPath)
-            };
-          } else {
-            result[id] = {
-              type: 'folder',
-              id,
-              metadata: makeFolderMetaFuncForPath(rootHandle, subPath),
-              contents: makeContentsFuncForPath(rootHandle, subPath)
-            };
-          }
-        } catch (e) {
-          log().debug?.(`Error while processing: ${entry}`, e);
-        }
+        result[id] = getBackingItem(rootHandle, path, id);
       }
 
       return makeSuccess(result);

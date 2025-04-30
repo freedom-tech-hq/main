@@ -28,7 +28,9 @@ import { createFolder } from '../internal/utils/createFolder.ts';
 import { createMetadataFile } from '../internal/utils/createMetadataFile.ts';
 import { deleteFileOrFolder } from '../internal/utils/deleteFileOrFolder.ts';
 import { makeContentsFuncForPath } from '../internal/utils/makeContentsFuncForPath.ts';
+import { makeExistsFuncForFolderPath } from '../internal/utils/makeExistsFuncForFolderPath.ts';
 import { makeFolderMetaFuncForPath } from '../internal/utils/makeFolderMetaFuncForPath.ts';
+import { makeGetFuncForPath } from '../internal/utils/makeGetFuncForPath.ts';
 import { makeItemAccessor } from '../internal/utils/makeItemAccessor.ts';
 import { traversePath } from '../internal/utils/traversePath.ts';
 import { updateLocalMetadata } from '../internal/utils/updateLocalMetadata.ts';
@@ -42,6 +44,8 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
+      exists: makeExistsFuncForFolderPath(this.rootPath_, []),
+      get: makeGetFuncForPath(this.rootPath_, []),
       metadata: makeFolderMetaFuncForPath(this.rootPath_, []),
       contents: makeContentsFuncForPath(this.rootPath_, [])
     };
@@ -204,12 +208,10 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
         return foundParent;
       }
 
-      const contents = await foundParent.value.contents(trace);
-      if (!contents.ok) {
-        return contents;
-      }
-
-      if (contents.value[path.lastId!] !== undefined) {
+      const exists = await foundParent.value.exists(trace, path.lastId!);
+      if (!exists.ok) {
+        return exists;
+      } else if (exists.value) {
         return makeFailure(new ConflictError(trace, { message: `${path.toString()} already exists`, errorCode: 'conflict' }));
       }
 
@@ -239,12 +241,10 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
         return foundParent;
       }
 
-      const contents = await foundParent.value.contents(trace);
-      if (!contents.ok) {
-        return contents;
-      }
-
-      if (contents.value[path.lastId!] !== undefined) {
+      const exists = await foundParent.value.exists(trace, path.lastId!);
+      if (!exists.ok) {
+        return exists;
+      } else if (exists.value) {
         return makeFailure(new ConflictError(trace, { message: `${path.toString()} already exists`, errorCode: 'conflict' }));
       }
 

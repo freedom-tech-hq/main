@@ -3,6 +3,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncablePath } from 'freedom-sync-types';
 
 import { getDirectoryHandle } from './getDirectoryHandle.ts';
+import { invalidateDirectoryHandleCache } from './opfs-access-cache.ts';
 
 export const deleteFileOrFolder = makeAsyncResultFunc(
   [import.meta.filename],
@@ -13,6 +14,8 @@ export const deleteFileOrFolder = makeAsyncResultFunc(
     }
 
     await dir.value.removeEntry(encodeURIComponent(path.lastId!), { recursive: true });
+
+    invalidateDirectoryHandleCache(rootHandle, path);
 
     return makeSuccess(undefined);
   }

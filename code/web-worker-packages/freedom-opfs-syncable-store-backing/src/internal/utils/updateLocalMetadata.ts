@@ -8,6 +8,7 @@ import type { JsonValue } from 'yaschema';
 import type { OpfsChangeableLocalItemMetadata } from '../types/OpfsLocalItemMetadata.ts';
 import { storedMetadataSchema } from '../types/StoredMetadata.ts';
 import { getDirectoryHandleAndFilenameForMetadataFile } from './getDirectoryHandleAndFilenameForMetadataFile.ts';
+import { getFileHandleForDirectoryHandleAndFilename } from './getFileHandleForDirectoryHandleAndFilename.ts';
 import { readTextFile } from './readTextFile.ts';
 import { writeTextFile } from './writeTextFile.ts';
 
@@ -18,7 +19,7 @@ export const updateLocalMetadata = makeAsyncResultFunc(
     rootHandle: FileSystemDirectoryHandle,
     path: SyncablePath,
     metadataChanges: Partial<OpfsChangeableLocalItemMetadata>
-  ): PR<undefined> => {
+  ): PR<undefined, 'not-found'> => {
     const dirAndFilename = await getDirectoryHandleAndFilenameForMetadataFile(trace, rootHandle, path);
     if (!dirAndFilename.ok) {
       return dirAndFilename;
@@ -26,8 +27,12 @@ export const updateLocalMetadata = makeAsyncResultFunc(
 
     const { dir, filename, metaFileLockKey } = dirAndFilename.value;
 
-    const fileHandle = await dir.getFileHandle(filename);
-    const metadataJsonString = await readTextFile(trace, fileHandle, { lockKey: metaFileLockKey });
+    const fileHandle = await getFileHandleForDirectoryHandleAndFilename(trace, dir, filename);
+    if (!fileHandle.ok) {
+      return fileHandle;
+    }
+
+    const metadataJsonString = await readTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey });
     if (!metadataJsonString.ok) {
       return generalizeFailureResult(trace, metadataJsonString, 'format-error');
     }
@@ -49,7 +54,7 @@ export const updateLocalMetadata = makeAsyncResultFunc(
         }
 
         const outMetadataJsonString = JSON.stringify(serialization.value.serializedValue);
-        const wrote = await writeTextFile(trace, fileHandle, { lockKey: metaFileLockKey, stringValue: outMetadataJsonString });
+        const wrote = await writeTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey, stringValue: outMetadataJsonString });
         if (!wrote.ok) {
           return wrote;
         }

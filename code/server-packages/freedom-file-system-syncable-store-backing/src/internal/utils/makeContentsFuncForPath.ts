@@ -8,9 +8,7 @@ import { get } from 'lodash-es';
 
 import type { FileSystemSyncableStoreBackingItem } from '../types/FileSystemSyncableStoreBackingItem.ts';
 import { getFsPath } from './getFsPath.ts';
-import { makeDataFuncForPath } from './makeDataFuncForPath.ts';
-import { makeFileMetaFuncForPath } from './makeFileMetaFuncForPath.ts';
-import { makeFolderMetaFuncForPath } from './makeFolderMetaFuncForPath.ts';
+import { getBackingItem } from './getItemInPathWithId.ts';
 
 export const makeContentsFuncForPath = (rootPath: string, ids: readonly SyncableId[]) =>
   makeAsyncResultFunc(
@@ -29,22 +27,7 @@ export const makeContentsFuncForPath = (rootPath: string, ids: readonly Syncable
           }
 
           const id = decodeURIComponent(entry.name) as SyncableId;
-
-          if (entry.isFile()) {
-            result[id] = {
-              type: 'file',
-              id,
-              metadata: makeFileMetaFuncForPath(dirPath, [id]),
-              data: makeDataFuncForPath(dirPath, [id])
-            };
-          } else if (entry.isDirectory()) {
-            result[id] = {
-              type: 'folder',
-              id,
-              metadata: makeFolderMetaFuncForPath(dirPath, [id]),
-              contents: makeContentsFuncForPath(dirPath, [id])
-            };
-          }
+          result[id] = getBackingItem(dirPath, [id]);
         }
 
         return makeSuccess(result);

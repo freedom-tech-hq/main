@@ -44,12 +44,12 @@ export const traversePath = makeAsyncResultFunc(
           );
 
         case 'folder': {
-          const contents = await cursor.contents(trace);
-          if (!contents.ok) {
-            return contents;
+          const got = await cursor.get(trace, pathId);
+          if (!got.ok) {
+            return got;
           }
 
-          const nextCursor = contents.value[pathId];
+          const nextCursor = got.value;
 
           if (nextCursor === undefined) {
             return makeFailure(
@@ -69,6 +69,18 @@ export const traversePath = makeAsyncResultFunc(
     const guards = guardIsExpectedType(trace, path, itemType, expectedType, 'wrong-type');
     if (!guards.ok) {
       return guards;
+    }
+
+    const exists = await cursor.exists(trace);
+    if (!exists.ok) {
+      return exists;
+    } else if (!exists.value) {
+      return makeFailure(
+        new NotFoundError(trace, {
+          message: `No item found at ${new SyncablePath(path.storageRootId, ...idsSoFar).toString()}`,
+          errorCode: 'not-found'
+        })
+      );
     }
 
     return makeSuccess(

@@ -7,6 +7,8 @@ import type { OpfsSyncableStoreBackingItem } from './OpfsSyncableStoreBackingIte
 export interface OpfsSyncableStoreBackingFolderItem {
   readonly type: 'folder';
   readonly id: SyncableId;
+  readonly exists: PRFunc<boolean, 'wrong-type', [id?: SyncableId]>;
+  readonly get: PRFunc<OpfsSyncableStoreBackingItem, 'not-found' | 'wrong-type', [id: SyncableId]>;
   readonly metadata: PRFunc<SyncableItemMetadata & OpfsLocalItemMetadata, 'not-found' | 'wrong-type'>;
   readonly contents: PRFunc<Partial<Record<SyncableId, OpfsSyncableStoreBackingItem>>, 'not-found' | 'wrong-type'>;
 }
