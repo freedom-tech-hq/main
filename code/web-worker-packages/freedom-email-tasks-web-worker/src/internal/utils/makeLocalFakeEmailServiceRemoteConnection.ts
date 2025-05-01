@@ -54,7 +54,8 @@ export const makeLocalFakeEmailServiceRemoteConnection = makeAsyncResultFunc(
           registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() })
         );
         if (!registered.ok) {
-          if (registered.value.errorCode === 'already-created') {
+          // TODO: TEMP treating conflict as success until updated service is deployed
+          if (registered.value.errorCode === 'conflict' || registered.value.errorCode === 'already-created') {
             // If there's a conflict, the account was probably already registered
             return makeSuccess(undefined);
           }

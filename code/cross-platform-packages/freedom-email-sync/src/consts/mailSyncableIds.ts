@@ -9,47 +9,60 @@ import type { MailId } from '../types/MailId.ts';
 
 // These are share with the server
 
-/** Server gets append-only access */
-const storage = nest(saltedId('folder', 'storage'), {
+export const makeTimeOrganizedIds = <YearT extends object, MonthT extends object, DayT extends object, HourT extends object>({
+  yearContent,
+  monthContent,
+  dayContent,
+  hourContent
+}: {
+  yearContent: YearT;
+  monthContent: MonthT;
+  dayContent: DayT;
+  hourContent: HourT;
+}) => ({
   year: nest(({ year }: { year: number }): SyncableId => plainId('bundle', `${year}`), {
+    ...yearContent,
     month: nest(({ month }: { month: number }): SyncableId => plainId('bundle', `${month}`), {
+      ...monthContent,
       day: nest(({ day }: { day: number }): SyncableId => plainId('bundle', `${day}`), {
-        hour: nest(({ hour }: { hour: number }): SyncableId => plainId('bundle', `${hour}`), {
-          emailId: nest((mailId: MailId): SyncableId => prefixedUuidId('bundle', mailId), {
-            summary: saltedId('file', 'summary.json'),
-            detailed: saltedId('file', 'detailed.json'),
-            attachments: nest(saltedId('bundle', 'attachments'), {
-              attachmentId: nest((uuid?: Uuid): SyncableId => uuidId('bundle', uuid), {
-                chunkId: (chunkNumber: number): SaltedId => saltedId('file', `chunk-${chunkNumber}`)
-              })
-            })
-          })
-        })
+        ...dayContent,
+        hour: nest(({ hour }: { hour: number }): SyncableId => plainId('bundle', `${hour}`), { ...hourContent })
       })
     })
   })
 });
 
-/** Server gets read-write access */
-const out = nest(saltedId('folder', 'out'), {
-  year: nest(({ year }: { year: number }): SyncableId => plainId('bundle', `${year}`), {
-    month: nest(({ month }: { month: number }): SyncableId => plainId('bundle', `${month}`), {
-      day: nest(({ day }: { day: number }): SyncableId => plainId('bundle', `${day}`), {
-        hour: nest(({ hour }: { hour: number }): SyncableId => plainId('bundle', `${hour}`), {
-          emailId: nest((mailId: MailId): SyncableId => prefixedUuidId('bundle', mailId), {
-            summary: saltedId('file', 'summary.json'),
-            detailed: saltedId('file', 'detailed.json'),
-            attachments: nest(saltedId('bundle', 'attachments'), {
-              attachmentId: nest((uuid?: Uuid): SyncableId => uuidId('bundle', uuid), {
-                chunkId: (chunkNumber: number): SaltedId => saltedId('file', `chunk-${chunkNumber}`)
-              })
-            })
-          })
-        })
+export type TimeOrganizedIds<YearT extends object, MonthT extends object, DayT extends object, HourT extends object> = ReturnType<
+  typeof makeTimeOrganizedIds<YearT, MonthT, DayT, HourT>
+>;
+
+const storedMailIds = {
+  mailId: nest((mailId: MailId): SyncableId => prefixedUuidId('bundle', mailId), {
+    summary: saltedId('file', 'summary.json'),
+    detailed: saltedId('file', 'detailed.json'),
+    attachments: nest(saltedId('bundle', 'attachments'), {
+      attachmentId: nest((uuid?: Uuid): SyncableId => uuidId('bundle', uuid), {
+        chunkId: (chunkNumber: number): SaltedId => saltedId('file', `chunk-${chunkNumber}`)
       })
     })
   })
+};
+export type StoredMailIds = typeof storedMailIds;
+
+const timeOrganizedMailIds = makeTimeOrganizedIds({
+  yearContent: {},
+  monthContent: {},
+  dayContent: {},
+  hourContent: storedMailIds
 });
+
+export type TimeOrganizedMailIds = typeof timeOrganizedMailIds;
+
+/** Server gets append-only access */
+const storage = nest<SaltedId, TimeOrganizedMailIds>(saltedId('folder', 'storage'), timeOrganizedMailIds);
+
+/** Server gets read-write access */
+const out = nest(saltedId('folder', 'out'), timeOrganizedMailIds);
 
 /** See SYNCABLE_MAIL_STORAGE.md */
 export const mailSyncableIds = { storage, out };

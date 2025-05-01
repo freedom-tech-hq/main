@@ -1,9 +1,10 @@
 import { Box, CssBaseline } from '@mui/material';
+import { proxy } from 'comlink';
+import type { Uuid } from 'freedom-basic-data';
 import { log, makeUuid } from 'freedom-contexts';
 import { HistoryProvider, useCreateBrowserHistory } from 'freedom-web-navigation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
-import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
@@ -39,7 +40,7 @@ const BootstrappedWebApp = () => {
   const uuid = useMemo(() => makeUuid(), []);
   const sideMenuWidth = useSideMenuWidth();
   const tasks = useTasks();
-  const lastSyncService = useRef<{ stop: () => TypeOrPromisedType<void> } | undefined>(undefined);
+  const lastSyncServiceUuid = useRef<Uuid | undefined>(undefined);
 
   useBindingEffect(
     activeUserId,
@@ -48,19 +49,21 @@ const BootstrappedWebApp = () => {
         return; // Not ready
       }
 
-      const startedSyncService = await tasks.startSyncService();
+      lastSyncServiceUuid.current = makeUuid();
+      const mySyncServiceUuid = lastSyncServiceUuid.current;
+      const isConnected = proxy(() => mySyncServiceUuid === lastSyncServiceUuid.current);
+
+      const startedSyncService = await tasks.startSyncService(isConnected);
       if (!startedSyncService.ok) {
         log().error?.('Failed to start sync service', startedSyncService.value);
         return;
       }
-
-      lastSyncService.current = startedSyncService.value;
     },
     { deps: [tasks], triggerOnMount: true }
   );
 
   useEffect(() => () => {
-    lastSyncService.current?.stop();
+    lastSyncServiceUuid.current = undefined;
   });
 
   useBindingEffect(
