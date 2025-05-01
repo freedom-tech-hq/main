@@ -1,5 +1,5 @@
 import type { PR, Result } from 'freedom-async';
-import { flushMetrics, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { allResultsMapped, bestEffort, flushMetrics, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { autoGeneralizeFailureResults } from 'freedom-common-errors';
 import { devSetEnv } from 'freedom-contexts';
@@ -15,6 +15,7 @@ import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
 import type { GetMailThreadsForCollection_MailAddedPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollection_MailAddedPacket.ts';
 import type { GetMailThreadsForCollectionPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollectionPacket.ts';
+import { getMailThread } from './getMailThread.ts';
 
 export const getMailThreadsForCollection = makeAsyncResultFunc(
   [import.meta.filename],
@@ -119,6 +120,12 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       }
     );
     setTimeout(() => loadMorePages(trace, nextPageToken), ONE_SEC_MSEC);
+
+    // Before returning the first page, loading the first 20 items
+    await bestEffort(
+      trace,
+      allResultsMapped(trace, initiallyLoadedMailIds.slice(0, 20), {}, async (trace, mailId) => await getMailThread(trace, mailId))
+    );
 
     return await autoGeneralizeFailureResults(
       trace,
