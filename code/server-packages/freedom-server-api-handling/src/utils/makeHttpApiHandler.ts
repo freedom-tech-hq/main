@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import type { HttpApiHandlerOptions } from 'express-yaschema-api-handler';
 import { registerHttpApiHandler } from 'express-yaschema-api-handler';
-import type { FuncOptions } from 'freedom-async';
+import type { AsyncFuncOptions } from 'freedom-async';
 import { callAsyncFunc } from 'freedom-async';
 import { Cast } from 'freedom-cast';
 import { attachToTrace, log, LogJson, makeTrace } from 'freedom-contexts';
@@ -39,7 +39,7 @@ export const makeHttpApiHandler =
       disableLam,
       ...handlerOptions
     }: HttpApiHandlerOptions &
-      Pick<FuncOptions<any>, 'disableLam'> & {
+      Pick<AsyncFuncOptions<any>, 'disableLam'> & {
         api: HttpApi<
           ReqHeadersT,
           ReqParamsT,
@@ -74,7 +74,7 @@ export const makeHttpApiHandler =
     }
     /* node:coverage enable */
 
-    const options: FuncOptions<void | Response<any, Record<string, any>>> = { disableLam };
+    const options: AsyncFuncOptions<void | Response<any, Record<string, any>>> = { disableLam };
 
     return registerHttpApiHandler<
       ReqHeadersT,

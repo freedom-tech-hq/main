@@ -10,7 +10,7 @@ import { argsToStrings, shouldLogFuncArgs } from '../internal/debugging/args.ts'
 import { getCallCount } from '../internal/debugging/callCounter.ts';
 import { shouldLogFailures, shouldLogFunc } from '../internal/debugging/funcs.ts';
 import { resultToString, shouldLogFuncResult } from '../internal/debugging/results.ts';
-import type { FuncOptions } from '../types/FuncOptions.ts';
+import type { SyncFuncOptions } from '../types/SyncFuncOptions.ts';
 
 /**
  * Calls a sync function, potentially measuring its performance, tracking metrics, and/or logging state/results.
@@ -19,7 +19,7 @@ import type { FuncOptions } from '../types/FuncOptions.ts';
  */
 export const callSyncFunc = <ArgsT extends any[], ReturnT>(
   trace: Trace,
-  options: FuncOptions<ReturnT>,
+  options: SyncFuncOptions<ReturnT>,
   func: (trace: Trace, ...args: ArgsT) => ReturnT,
   ...args: ArgsT
 ): ReturnT => {
@@ -58,7 +58,9 @@ export const callSyncFunc = <ArgsT extends any[], ReturnT>(
     }
 
     options?.onStart?.();
+
     result = func(trace, ...args);
+
     options?.onComplete?.(result);
 
     return result;

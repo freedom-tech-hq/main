@@ -13,8 +13,8 @@ import { shouldLogFailures, shouldLogFunc } from '../internal/debugging/funcs.ts
 import { resultToString, shouldLogFuncResult } from '../internal/debugging/results.ts';
 import { GeneralError } from '../types/GeneralError.ts';
 import type { Result } from '../types/Result.ts';
-import type { ResultFuncOptions } from '../types/ResultFuncOptions.ts';
 import type { RFunc } from '../types/RFunc.ts';
+import type { SyncResultFuncOptions } from '../types/SyncResultFuncOptions.ts';
 import type { TraceableError } from '../types/TraceableError.ts';
 
 /**
@@ -24,7 +24,7 @@ import type { TraceableError } from '../types/TraceableError.ts';
  */
 export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT extends string = never>(
   trace: Trace,
-  options: ResultFuncOptions<SuccessT, ErrorCodeT>,
+  options: SyncResultFuncOptions<SuccessT, ErrorCodeT>,
   func: RFunc<SuccessT, ErrorCodeT, [...args: ArgsT]>,
   ...args: ArgsT
 ): Result<SuccessT, ErrorCodeT> => {
@@ -65,7 +65,9 @@ export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT ext
     }
 
     options?.onStart?.();
+
     result = func(trace, ...args);
+
     options?.onComplete?.(result);
 
     if (!result.ok) {

@@ -1,6 +1,7 @@
 import type { Trace } from 'freedom-contexts';
 import { getTraceStackTop, log, LogJson } from 'freedom-contexts';
 import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
+import isPromise from 'is-promise';
 import { once } from 'lodash-es';
 import type { Logger } from 'yaschema';
 
@@ -74,32 +75,52 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
         /* node:coverage enable */
       }
 
-      options?.onStart?.();
+      const onStartResult = options?.onStart?.();
+      if (onStartResult !== undefined && isPromise(onStartResult)) {
+        await onStartResult;
+      }
+
       result = await func(trace, ...args);
-      options?.onComplete?.(result);
+
+      const onCompleteResult = options?.onComplete?.(result);
+      if (onCompleteResult !== undefined && isPromise(onCompleteResult)) {
+        await onCompleteResult;
+      }
 
       if (!result.ok) {
-        options?.onFailure?.(result.value);
+        const onFailureResult = options?.onFailure?.(result.value);
+        if (onFailureResult !== undefined && isPromise(onFailureResult)) {
+          await onFailureResult;
+        }
 
         error = result.value;
         errorCode = result.value.errorCode ?? 'generic';
         errorMessage = () => (result!.value as TraceableError<ErrorCodeT>).toString();
         logLevel = result.value.wasAlreadyLogged() ? 'debug' : result.value.logLevel;
       } else {
-        options?.onSuccess?.(result.value);
+        const onSuccessResult = options?.onSuccess?.(result.value);
+        if (onSuccessResult !== undefined && isPromise(onSuccessResult)) {
+          await onSuccessResult;
+        }
       }
 
       return result;
     } catch (e) {
       try {
-        options?.onError?.(e);
+        const onErrorResult = options?.onError?.(e);
+        if (onErrorResult !== undefined && isPromise(onErrorResult)) {
+          await onErrorResult;
+        }
       } catch (e2) {
         /* node:coverage ignore next */
         log().error?.(trace, e2);
       }
 
       try {
-        options?.onFailure?.(new GeneralError(trace, e));
+        const onFailureResult = options?.onFailure?.(new GeneralError(trace, e));
+        if (onFailureResult !== undefined && isPromise(onFailureResult)) {
+          await onFailureResult;
+        }
       } catch (e2) {
         /* node:coverage ignore next */
         log().error?.(trace, e2);
