@@ -36,7 +36,7 @@ export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], as
     }
 
     // Detect a duplicate request to handle it softly
-    if (isEqual(existingEmailResult.value, user)) {
+    if (isEqual(existingUserResult.value, user)) {
       return makeFailure(
         new ConflictError(trace, {
           message: 'User already exists with identical information',
