@@ -1,11 +1,12 @@
 import type { AccessControlDocumentPrefix } from 'freedom-access-control-types';
 import type { PR, PRFunc } from 'freedom-async';
 import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { objectValues } from 'freedom-cast';
 import { ForbiddenError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
 import { makeUuid, type Trace } from 'freedom-contexts';
+import type { OnCacheEntryInvalidatedCallback } from 'freedom-in-memory-cache';
+import { InMemoryCache } from 'freedom-in-memory-cache';
 import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
 import { NotificationManager } from 'freedom-notification-types';
 import type { SyncablePath } from 'freedom-sync-types';
@@ -19,6 +20,7 @@ import type {
 } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
+import { noop } from 'lodash-es';
 
 import { APPLY_DELTAS_LIMIT_TIME_MSEC, CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';
 import { accessControlDocumentProvider } from '../../internal/context/accessControlDocument.ts';
@@ -31,45 +33,12 @@ import { getProvenanceOfSyncable } from './getProvenanceOfSyncable.ts';
 import { getStringFromFile } from './getStringFromFile.ts';
 import { getSyncableAtPath } from './getSyncableAtPath.ts';
 
-interface DocumentCacheValue {
-  numWatchers: number;
-  value: WatchableDocument<any>;
-  deleteFromCache: () => void;
-  deletionTimeout?: ReturnType<typeof setTimeout>;
-}
-
-// TODO: switch to inmemory cache
-const globalDocumentCache = new Map<string, Partial<Record<string, DocumentCacheValue>>>();
+const globalDocumentCache = new InMemoryCache<string, WatchableDocument<any>, SyncableStore>({
+  cacheDurationMSec: CACHE_DURATION_MSEC,
+  shouldResetIntervalOnGet: true
+});
 
 const globalLockStore = new InMemoryLockStore();
-
-export const clearDocumentCache = () => {
-  for (const storeUid of globalDocumentCache.keys()) {
-    clearDocumentCacheForStore(storeUid);
-  }
-};
-
-export const clearDocumentCacheForStore = (storeUid: string) => {
-  const storeCache = globalDocumentCache.get(storeUid);
-  globalDocumentCache.delete(storeUid);
-
-  for (const value of objectValues(storeCache ?? {})) {
-    if (value === undefined) {
-      continue;
-    }
-
-    value.deleteFromCache();
-  }
-};
-
-export const deleteItemFromDocumentCache = (storeUid: string, path: SyncablePath) => {
-  const storeCache = globalDocumentCache.get(storeUid);
-  if (storeCache === undefined) {
-    return;
-  }
-
-  storeCache[path.toString()]?.deleteFromCache();
-};
 
 export interface GetConflictFreeDocumentFromBundleAtPathArgs {
   /**
@@ -107,17 +76,25 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       globalLockStore.lock(watch !== false ? pathString : makeUuid()),
       {},
       async (trace): PR<WatchableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-        let storeCache = watch !== false ? globalDocumentCache.get(store.uid) : undefined;
-
-        if (watch !== false) {
-          if (storeCache === undefined) {
-            storeCache = {};
-            globalDocumentCache.set(store.uid, storeCache);
+        switch (watch) {
+          case false:
+            // No caching is used
+            break;
+          case 'auto': {
+            // Default caching retention period is used
+            const cached = globalDocumentCache.get(store, pathString);
+            if (cached !== undefined) {
+              return makeSuccess({ ...cached, stopWatching: noop });
+            }
+            break;
           }
-
-          const cached = storeCache[pathString];
-          if (cached !== undefined) {
-            return makeSuccess(addWatcher(cached, watch));
+          case true: {
+            // The cache must be explicitly released
+            const cached = globalDocumentCache.getRetained(store, pathString);
+            if (cached !== undefined) {
+              return makeSuccess({ ...cached.value, stopWatching: cached.release });
+            }
+            break;
           }
         }
 
@@ -128,21 +105,14 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         const areSnapshotsEncrypted = isSyncableItemEncrypted(path.lastId!);
 
         const notificationManager = new NotificationManager<ConflictFreeDocumentBundleNotifications>();
-        const onDeleteFromCache: Array<() => void> = [];
-        const deleteFromCache = () => {
-          const cached = storeCache![pathString];
-          if (cached !== undefined) {
-            clearTimeout(cached.deletionTimeout);
-            cached.deletionTimeout = undefined;
-            cached.value.stopWatching();
-          }
+        const onCacheInvalidatedSteps: Array<() => void> = [];
+        const onCacheInvalidated: OnCacheEntryInvalidatedCallback<string, WatchableDocument<any>> = (_key, value) => {
+          value.stopWatching();
 
-          delete storeCache![pathString];
-
-          const callbacks = [...onDeleteFromCache];
-          onDeleteFromCache.length = 0;
-          for (const callback of callbacks) {
-            callback();
+          const steps = [...onCacheInvalidatedSteps];
+          onCacheInvalidatedSteps.length = 0;
+          for (const step of steps) {
+            step();
           }
         };
 
@@ -163,7 +133,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
           const pendingDeltaPaths: SyncablePath[] = [];
           const pendingDeltasTaskQueue = new TaskQueue(trace);
           pendingDeltasTaskQueue.start({ maxConcurrency: 1, delayWhenEmptyMSec: APPLY_DELTAS_LIMIT_TIME_MSEC });
-          onDeleteFromCache.push(() => pendingDeltasTaskQueue.stop());
+          onCacheInvalidatedSteps.push(() => pendingDeltasTaskQueue.stop());
 
           const applyPendingDeltasNow = makeAsyncResultFunc(
             [import.meta.filename, 'applyPendingDeltasNow'],
@@ -189,7 +159,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
           );
           applyPendingDeltas = async () => await pendingDeltasTaskQueue.wait();
 
-          onDeleteFromCache.push(
+          onCacheInvalidatedSteps.push(
             store.addListener('itemAdded', (event) => {
               const currentSnapshotId = getSnapshotId();
               if (currentSnapshotId === undefined) {
@@ -448,12 +418,24 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
             stopWatching: () => {} // Replaced before returning, when watch is true
           };
 
-          if (watch !== false) {
-            const cached: DocumentCacheValue = { numWatchers: 0, deleteFromCache, value: watchableDocument };
+          switch (watch) {
+            case false:
+              // No caching is used
+              break;
+            case 'auto': {
+              // Default caching retention period is used
+              globalDocumentCache.set(store, pathString, watchableDocument, { onInvalidated: onCacheInvalidated });
 
-            storeCache![pathString] = cached;
+              return makeSuccess({ ...watchableDocument, stopWatching: noop });
+            }
+            case true: {
+              // The cache must be explicitly released
+              const { release } = globalDocumentCache.setRetained(store, pathString, watchableDocument, {
+                onInvalidated: onCacheInvalidated
+              });
 
-            return makeSuccess(addWatcher(cached, watch));
+              return makeSuccess({ ...watchableDocument, stopWatching: release });
+            }
           }
 
           return makeSuccess(watchableDocument);
@@ -471,32 +453,3 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     return makeSuccess(result.value);
   }
 );
-
-// Helpers
-
-const addWatcher = (cached: DocumentCacheValue, watch: true | 'auto') => {
-  clearTimeout(cached.deletionTimeout);
-  cached.deletionTimeout = undefined;
-
-  cached.numWatchers += 1;
-
-  let didStopWatching = false;
-  const stopWatching = () => {
-    if (didStopWatching) {
-      return;
-    }
-    didStopWatching = true;
-
-    cached.numWatchers -= 1;
-
-    if (cached.numWatchers === 0) {
-      cached.deletionTimeout = setTimeout(cached.deleteFromCache, CACHE_DURATION_MSEC);
-    }
-  };
-
-  if (watch === 'auto') {
-    stopWatching();
-  }
-
-  return { ...cached.value, stopWatching };
-};

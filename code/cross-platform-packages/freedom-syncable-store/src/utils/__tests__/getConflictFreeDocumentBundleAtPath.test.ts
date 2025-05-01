@@ -18,7 +18,6 @@ import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTes
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { clearDocumentCache } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -32,7 +31,6 @@ describe('getConflictFreeDocumentBundleAtPath', () => {
   const storageRootId = storageRootIdInfo.make('test');
 
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

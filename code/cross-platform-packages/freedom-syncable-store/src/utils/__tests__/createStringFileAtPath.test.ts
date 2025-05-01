@@ -16,7 +16,6 @@ import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { clearDocumentCache } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getStringFromFile } from '../get/getStringFromFile.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -30,7 +29,6 @@ describe('createStringFileAtPath', () => {
   const storageRootId = storageRootIdInfo.make('test');
 
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

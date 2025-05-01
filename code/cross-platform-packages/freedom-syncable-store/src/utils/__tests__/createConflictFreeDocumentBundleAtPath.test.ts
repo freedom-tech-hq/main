@@ -19,7 +19,7 @@ import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { clearDocumentCache, getConflictFreeDocumentFromBundleAtPath } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
+import { getConflictFreeDocumentFromBundleAtPath } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -33,7 +33,6 @@ describe('createConflictFreeDocumentBundleAtPath', () => {
   const storageRootId = storageRootIdInfo.make('test');
 
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

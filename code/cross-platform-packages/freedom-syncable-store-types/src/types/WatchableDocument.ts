@@ -13,6 +13,6 @@ export interface WatchableDocument<DocumentT> extends Notifiable<ConflictFreeDoc
   applyPendingDeltas: () => Promise<void>;
 
   /** If `watch` is `true` when calling `getConflictFreeDocumentFromBundleAtPath` or similar, `stopWatching` must be called to release the
-   * associated watching resources */
+   * associated watching resources.  This function is a noop for other `watch` values */
   stopWatching: () => void;
 }
