@@ -1,14 +1,18 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import type { Trace } from 'freedom-contexts';
+import type { Nested } from 'freedom-nest';
 import { type PageToken, pageTokenInfo, type Paginated, type PaginationOptions } from 'freedom-paginated-data';
+import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getBundleAtPath } from 'freedom-syncable-store';
+import type { SaltedId } from 'freedom-syncable-store-types';
 import { DateTime } from 'luxon';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';
-import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
+import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourTimeObject } from './HourPrecisionTimeUnitValue.ts';
 import type { BottomUpMailStorageTraversalResult } from './traverseTimeOrganizedMailStorageFromTheBottomUp.ts';
 import { traverseTimeOrganizedMailStorageFromTheBottomUp } from './traverseTimeOrganizedMailStorageFromTheBottomUp.ts';
@@ -18,10 +22,28 @@ const TARGET_PAGE_SIZE = 10;
 /** Items are in reverse order by time */
 export const listTimeOrganizedMailIds = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
+  async <
+    IdT extends SaltedId | SyncableId,
+    YearIdsT extends object,
+    MonthIdsT extends object,
+    DayIdsT extends object,
+    HourIdsT extends object,
+    YearContentT extends object,
+    MonthContentT extends object,
+    DayContentT extends object,
+    HourContentT extends object
+  >(
+    trace: Trace,
     access: EmailAccess,
-    { timeOrganizedMailStorage, pageToken }: PaginationOptions & { timeOrganizedMailStorage: TimeOrganizedMailPaths }
+    {
+      timeOrganizedPaths,
+      pageToken
+    }: PaginationOptions & {
+      timeOrganizedPaths: Nested<
+        SyncablePath,
+        TimeOrganizedPaths<IdT, YearIdsT, MonthIdsT, DayIdsT, HourIdsT, YearContentT, MonthContentT, DayContentT, HourContentT>
+      >;
+    }
   ): PR<Paginated<MailId>> => {
     const userFs = access.userFs;
 
@@ -33,13 +55,13 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
       hour: offsetDate.getUTCHours()
     };
 
-    const mailIds: MailId[] = [];
+    const pageContent: MailId[] = [];
     let nextPageToken: PageToken | undefined;
     const traversed = await traverseTimeOrganizedMailStorageFromTheBottomUp(
       trace,
       access,
       {
-        timeOrganizedMailStorage,
+        timeOrganizedPaths,
         offset
       },
       async (trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
@@ -47,9 +69,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
           return makeSuccess('inspect' as const);
         }
 
-        const baseYearPath = timeOrganizedMailStorage.year(
-          makeDate(cursor.value.year, cursor.value.month, cursor.value.day, cursor.value.hour)
-        );
+        const baseYearPath = timeOrganizedPaths.year(makeDate(cursor.value.year, cursor.value.month, cursor.value.day, cursor.value.hour));
         const hourPath = baseYearPath.month.day.hour.value;
 
         const hourBundle = await getBundleAtPath(trace, userFs, hourPath);
@@ -62,19 +82,15 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
             ]);
           }
         } else {
-          const syncableIdsInHour = await hourBundle.value.getIds(trace, { type: 'bundle' });
+          const syncableIdsInHour = await hourBundle.value.getIds(trace);
           if (!syncableIdsInHour.ok) {
             return syncableIdsInHour;
           }
 
-          const mailIdsInHour = syncableIdsInHour.value
-            .map((syncableId) => mailIdInfo.checked(extractUnmarkedSyncableId(syncableId)))
-            .filter((v) => v !== undefined)
-            .sort()
-            .reverse();
-          mailIds.push(...mailIdsInHour);
+          const mailIdsInHour = syncableIdsInHour.value.map(extractUnmarkedSyncableId).filter(mailIdInfo.is).sort().reverse();
+          pageContent.push(...mailIdsInHour);
 
-          if (mailIds.length >= TARGET_PAGE_SIZE) {
+          if (pageContent.length >= TARGET_PAGE_SIZE) {
             nextPageToken = pageTokenInfo.make(DateTime.fromObject(cursor.value, { zone: 'UTC' }).minus({ hour: 1 }).toISO()!);
             return makeSuccess('stop' as const);
           }
@@ -87,7 +103,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
       return traversed;
     }
 
-    return makeSuccess({ items: mailIds, nextPageToken });
+    return makeSuccess({ items: pageContent, nextPageToken });
   }
 );
 

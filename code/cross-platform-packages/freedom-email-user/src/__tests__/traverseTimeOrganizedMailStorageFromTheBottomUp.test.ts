@@ -28,7 +28,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
         access,
-        { timeOrganizedMailStorage: paths.storage },
+        { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder.push(
             `${cursor.type}:${cursor.value.year}${cursor.value.month !== undefined ? `/${cursor.value.month}` : ''}${cursor.value.day !== undefined ? `/${cursor.value.day}` : ''}${cursor.value.hour !== undefined ? `/${cursor.value.hour}` : ''}`
@@ -67,7 +67,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
         access,
-        { timeOrganizedMailStorage: paths.storage },
+        { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder.push(
             `${cursor.type}:${cursor.value.year}${cursor.value.month !== undefined ? `/${cursor.value.month}` : ''}${cursor.value.day !== undefined ? `/${cursor.value.day}` : ''}${cursor.value.hour !== undefined ? `/${cursor.value.hour}` : ''}`
@@ -156,7 +156,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
         access,
-        { timeOrganizedMailStorage: paths.storage },
+        { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder.push(
             `${cursor.type}:${cursor.value.year}${cursor.value.month !== undefined ? `/${cursor.value.month}` : ''}${cursor.value.day !== undefined ? `/${cursor.value.day}` : ''}${cursor.value.hour !== undefined ? `/${cursor.value.hour}` : ''}`
@@ -260,7 +260,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
         access,
-        { timeOrganizedMailStorage: paths.storage },
+        { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           if (
             cursor.type === 'hour' &&
@@ -285,7 +285,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
         access,
-        { timeOrganizedMailStorage: paths.storage, offset: { year: 2025, month: 1, day: 2, hour: 3 } },
+        { timeOrganizedPaths: paths.storage, offset: { year: 2025, month: 1, day: 2, hour: 3 } },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder2.push(
             `${cursor.type}:${cursor.value.year}${cursor.value.month !== undefined ? `/${cursor.value.month}` : ''}${cursor.value.day !== undefined ? `/${cursor.value.day}` : ''}${cursor.value.hour !== undefined ? `/${cursor.value.hour}` : ''}`

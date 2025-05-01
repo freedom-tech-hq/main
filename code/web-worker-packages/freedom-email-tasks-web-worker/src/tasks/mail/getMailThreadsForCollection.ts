@@ -1,12 +1,14 @@
 import type { PR, Result } from 'freedom-async';
-import { excludeFailureResult, flushMetrics, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { flushMetrics, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { autoGeneralizeFailureResults, generalizeFailureResult } from 'freedom-common-errors';
+import { autoGeneralizeFailureResults } from 'freedom-common-errors';
 import { devSetEnv } from 'freedom-contexts';
-import { type MailId } from 'freedom-email-sync';
-import type { CollectionLikeId } from 'freedom-email-user';
-import { getCollectionDoc, mailCollectionTypes } from 'freedom-email-user';
+import { listTimeOrganizedMailIds, type MailId, mailIdInfo } from 'freedom-email-sync';
+import type { CollectionLikeId, ThreadLikeId } from 'freedom-email-user';
+import { getUserMailPaths, mailCollectionTypes } from 'freedom-email-user';
 import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
+import type { PageToken } from 'freedom-paginated-data';
+import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -33,68 +35,88 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
+    const userFs = access.userFs;
+    const paths = await getUserMailPaths(userFs);
+
     const collectionType = mailCollectionTypes.checked(collectionId);
     if (collectionType === undefined || collectionType === 'custom') {
       // TODO: TEMP
       return makeSuccess({ type: 'mail-added' as const, threadIds: [] });
     }
 
-    // TODO: traverse backwards also
-    const collectionDoc = await getCollectionDoc(trace, access, { collectionType, date: new Date(), watch: true });
-    if (!collectionDoc.ok) {
-      if (collectionDoc.value.errorCode === 'deleted' || collectionDoc.value.errorCode === 'not-found') {
-        // TODO: TEMP
-        return makeSuccess({ type: 'mail-added' as const, threadIds: [] });
-      }
+    const collectionPaths = paths.collections[collectionType];
 
-      return generalizeFailureResult(trace, excludeFailureResult(collectionDoc, 'deleted', 'not-found'), [
-        'format-error',
-        'untrusted',
-        'wrong-type'
-      ]);
+    const pagedMailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: collectionPaths });
+    if (!pagedMailIds.ok) {
+      return pagedMailIds;
     }
 
-    // TODO: also need to monitor the storage system in case new collection docs are created
+    const initiallyLoadedMailIds: ThreadLikeId[] = pagedMailIds.value.items;
 
-    const removeDidApplyDeltasListener = collectionDoc.value.addListener('didApplyDeltas', () =>
-      withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<undefined> => {
-        const unusedOldMailIds = new Set(mailIds);
+    const pendingMailIds: MailId[] = [];
+    const removeCollectionChangeListener = userFs.addListener('itemAdded', ({ type, path }) => {
+      if (type !== 'file') {
+        return;
+      } else if (!path.startsWith(collectionPaths.value)) {
+        return;
+      }
 
-        const newMailIds = Array.from(collectionDoc.value.document.mailIds.iterator());
+      const lastId = extractUnmarkedSyncableId(path.lastId!);
+      if (!mailIdInfo.is(lastId)) {
+        return;
+      }
 
-        const addedMailIds = new Set<MailId>();
-        for (const mailId of newMailIds) {
-          if (unusedOldMailIds.has(mailId)) {
-            unusedOldMailIds.delete(mailId);
-          } else {
-            addedMailIds.add(mailId);
-          }
+      pendingMailIds.push(lastId);
+
+      return withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<undefined> => {
+        if (pendingMailIds.length === 0) {
+          return makeSuccess(undefined);
         }
 
-        if (unusedOldMailIds.size > 0) {
-          await onData({ ok: true, value: { type: 'mail-removed' as const, ids: Array.from(unusedOldMailIds) } });
-        }
+        const addedMailIds = [...pendingMailIds];
+        pendingMailIds.length = 0;
 
-        if (addedMailIds.size > 0) {
-          await onData({ ok: true, value: { type: 'mail-added' as const, threadIds: Array.from(addedMailIds) } });
-        }
-
-        mailIds = newMailIds;
+        await onData({ ok: true, value: { type: 'mail-added' as const, threadIds: addedMailIds } });
 
         return makeSuccess(undefined);
-      })
-    );
+      });
+    });
 
     // Periodically checking if the connection is still active
+    let wasDisconnected = false;
     const checkConnectionInterval = setInterval(async () => {
       if (!(await isConnected())) {
+        wasDisconnected = true;
         clearInterval(checkConnectionInterval);
-        removeDidApplyDeltasListener();
-        collectionDoc.value.stopWatching();
+        removeCollectionChangeListener();
       }
     }, ONE_SEC_MSEC);
 
-    let mailIds: MailId[];
+    // TODO: should load lazily based on whats visible instead
+    const loadMorePages = makeAsyncResultFunc(
+      [import.meta.filename, 'loadMorePages'],
+      async (trace, pageToken: PageToken | undefined): PR<undefined> => {
+        if (pageToken === undefined || wasDisconnected) {
+          return makeSuccess(undefined); // No more pages / disconnected
+        }
+
+        const pagedMailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: collectionPaths, pageToken });
+        if (!pagedMailIds.ok) {
+          return pagedMailIds;
+        }
+
+        await withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<GetMailThreadsForCollection_MailAddedPacket> => {
+          flushMetrics()?.();
+
+          return makeSuccess({ type: 'mail-added' as const, threadIds: pagedMailIds.value.items });
+        });
+
+        setTimeout(() => loadMorePages(trace, pagedMailIds.value.nextPageToken), ONE_SEC_MSEC);
+
+        return makeSuccess(undefined);
+      }
+    );
+    setTimeout(() => loadMorePages(trace, pagedMailIds.value.nextPageToken), ONE_SEC_MSEC);
 
     return await autoGeneralizeFailureResults(
       trace,
@@ -102,7 +124,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<GetMailThreadsForCollection_MailAddedPacket> => {
         flushMetrics()?.();
 
-        return makeSuccess({ type: 'mail-added' as const, threadIds: Array.from(collectionDoc.value.document.mailIds.iterator()) });
+        return makeSuccess({ type: 'mail-added' as const, threadIds: initiallyLoadedMailIds });
       })
     );
   }

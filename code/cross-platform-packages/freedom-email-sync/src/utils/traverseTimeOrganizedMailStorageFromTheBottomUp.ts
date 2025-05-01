@@ -1,8 +1,12 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import type { Trace } from 'freedom-contexts';
+import type { Nested } from 'freedom-nest';
+import type { SyncableId, SyncablePath } from 'freedom-sync-types';
+import type { SaltedId } from 'freedom-syncable-store-types';
 
 import type { EmailAccess } from '../types/EmailAccess.ts';
-import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
+import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
 import type { TimeOrganizedMailStorageTraverserAccessor } from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
 import { makeBottomUpTimeOrganizedMailStorageTraverser } from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
@@ -27,13 +31,32 @@ export type BottomUpMailStorageTraversalCallback = PRFunc<
  */
 export const traverseTimeOrganizedMailStorageFromTheBottomUp = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
+  async <
+    IdT extends SaltedId | SyncableId,
+    YearIdsT extends object,
+    MonthIdsT extends object,
+    DayIdsT extends object,
+    HourIdsT extends object,
+    YearContentT extends object,
+    MonthContentT extends object,
+    DayContentT extends object,
+    HourContentT extends object
+  >(
+    trace: Trace,
     access: EmailAccess,
-    { timeOrganizedMailStorage, offset }: { timeOrganizedMailStorage: TimeOrganizedMailPaths; offset?: HourOrLessTimeObject },
+    {
+      timeOrganizedPaths,
+      offset
+    }: {
+      timeOrganizedPaths: Nested<
+        SyncablePath,
+        TimeOrganizedPaths<IdT, YearIdsT, MonthIdsT, DayIdsT, HourIdsT, YearContentT, MonthContentT, DayContentT, HourContentT>
+      >;
+      offset?: HourOrLessTimeObject;
+    },
     callback: BottomUpMailStorageTraversalCallback
   ): PR<undefined> => {
-    const cursor = await makeBottomUpTimeOrganizedMailStorageTraverser(trace, access, { timeOrganizedMailStorage, offset });
+    const cursor = await makeBottomUpTimeOrganizedMailStorageTraverser(trace, access, { timeOrganizedPaths, offset });
     if (!cursor.ok) {
       return cursor;
     }

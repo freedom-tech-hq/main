@@ -1,13 +1,17 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import type { Trace } from 'freedom-contexts';
+import type { Nested } from 'freedom-nest';
+import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
+import type { SaltedId } from 'freedom-syncable-store-types';
 import { DateTime } from 'luxon';
 
 import { extractNumberFromPlainSyncableId } from '../internal/utils/extractNumberFromPlainSyncableId.ts';
 import type { EmailAccess } from '../types/EmailAccess.ts';
-import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
+import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourOrLessPrecisionValue, HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
 
 export type TimeOrganizedMailStorageTraverserAccessor = HourOrLessPrecisionValue & {
@@ -26,10 +30,29 @@ export type TimeOrganizedMailStorageTraverserAccessor = HourOrLessPrecisionValue
  */
 export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
+  async <
+    IdT extends SaltedId | SyncableId,
+    YearIdsT extends object,
+    MonthIdsT extends object,
+    DayIdsT extends object,
+    HourIdsT extends object,
+    YearContentT extends object,
+    MonthContentT extends object,
+    DayContentT extends object,
+    HourContentT extends object
+  >(
+    trace: Trace,
     access: EmailAccess,
-    { timeOrganizedMailStorage, offset }: { timeOrganizedMailStorage: TimeOrganizedMailPaths; offset?: HourOrLessTimeObject }
+    {
+      timeOrganizedPaths,
+      offset
+    }: {
+      timeOrganizedPaths: Nested<
+        SyncablePath,
+        TimeOrganizedPaths<IdT, YearIdsT, MonthIdsT, DayIdsT, HourIdsT, YearContentT, MonthContentT, DayContentT, HourContentT>
+      >;
+      offset?: HourOrLessTimeObject;
+    }
   ): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
     const userFs = access.userFs;
 
@@ -41,7 +64,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
     const getSameOrPreviousYear = makeAsyncResultFunc(
       [import.meta.filename, 'getSameOrPreviousYear'],
       async (trace, cursorYear: number): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
-        const baseFolderLike = await getSyncableAtPath(trace, userFs, timeOrganizedMailStorage.value, syncableItemTypes.exclude('file'));
+        const baseFolderLike = await getSyncableAtPath(trace, userFs, timeOrganizedPaths.value, syncableItemTypes.exclude('file'));
         if (!baseFolderLike.ok) {
           if (baseFolderLike.value.errorCode === 'deleted' || baseFolderLike.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
@@ -92,7 +115,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
           return makeSuccess(undefined);
         }
 
-        const baseYearPath = timeOrganizedMailStorage.year(makeDate(cursorYear, 1, 1, 0));
+        const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, 1, 1, 0));
         const yearPath = baseYearPath.value;
 
         const yearBundle = await getSyncableAtPath(trace, userFs, yearPath, 'bundle');
@@ -158,7 +181,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
           return makeSuccess(undefined);
         }
 
-        const baseYearPath = timeOrganizedMailStorage.year(makeDate(cursorYear, cursorMonth, 1, 0));
+        const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, 1, 0));
         const monthPath = baseYearPath.month.value;
 
         const monthBundle = await getSyncableAtPath(trace, userFs, monthPath, 'bundle');
@@ -226,7 +249,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
           return makeSuccess(undefined);
         }
 
-        const baseYearPath = timeOrganizedMailStorage.year(makeDate(cursorYear, cursorMonth, cursorDay, 0));
+        const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, cursorDay, 0));
         const dayPath = baseYearPath.month.day.value;
 
         const dayBundle = await getSyncableAtPath(trace, userFs, dayPath, 'bundle');

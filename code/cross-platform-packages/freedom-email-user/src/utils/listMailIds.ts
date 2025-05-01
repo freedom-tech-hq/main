@@ -11,6 +11,6 @@ export const listMailIds = makeAsyncResultFunc(
     const userFs = access.userFs;
     const paths = await getMailPaths(userFs);
 
-    return await listTimeOrganizedMailIds(trace, access, { ...options, timeOrganizedMailStorage: paths.storage });
+    return await listTimeOrganizedMailIds(trace, access, { ...options, timeOrganizedPaths: paths.storage });
   }
 );

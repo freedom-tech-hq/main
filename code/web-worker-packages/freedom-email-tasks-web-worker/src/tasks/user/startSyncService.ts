@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import { allResults, bestEffort, makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { InternalStateError } from 'freedom-common-errors';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import { api as fakeEmailServiceApi } from 'freedom-fake-email-service-api';
@@ -21,7 +22,7 @@ const getPublicKeysForRemote = makeApiFetchTask([import.meta.filename, 'getPubli
 
 export const startSyncService = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace): PR<{ stop: () => TypeOrPromisedType<void> }, 'email-is-unavailable'> => {
+  async (trace, isConnected: () => TypeOrPromisedType<boolean>): PR<undefined, 'email-is-unavailable'> => {
     const credential = useActiveCredential(trace).credential;
 
     if (credential === undefined) {
@@ -105,6 +106,14 @@ export const startSyncService = makeAsyncResultFunc(
       );
     };
 
-    return makeSuccess({ stop });
+    // Periodically checking if the connection is still active
+    const checkConnectionInterval = setInterval(async () => {
+      if (!(await isConnected())) {
+        clearInterval(checkConnectionInterval);
+        stop();
+      }
+    }, ONE_SEC_MSEC);
+
+    return makeSuccess(undefined);
   }
 );

@@ -1,5 +1,5 @@
 import type { PR, PRFunc } from 'freedom-async';
-import { bestEffort, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { excludeFailureResult, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { log } from 'freedom-contexts';
 import type {
@@ -10,14 +10,13 @@ import type {
 } from 'freedom-email-sync';
 import { listTimeOrganizedMailIdsForHour, mailIdInfo, traverseTimeOrganizedMailStorageFromTheBottomUp } from 'freedom-email-sync';
 import type { EmailCredential } from 'freedom-email-user';
-import { getCollectionDoc, getProcessedHashesTrackingDoc, getProcessedMailIdsTrackingDoc, getUserMailPaths } from 'freedom-email-user';
-import type { SyncablePath } from 'freedom-sync-types';
+import { getUserMailPaths } from 'freedom-email-user';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
-import { getBundleAtPath } from 'freedom-syncable-store';
+import { getSyncableAtPath } from 'freedom-syncable-store';
 import type { SyncTrackerItemAddedEvent } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
-import { DateTime } from 'luxon';
 
+import { createMailIdMarkerFile } from '../../utils/createMailIdMarkerFile.ts';
 import { getOrCreateEmailAccessForUser } from '../user/getOrCreateEmailAccessForUser.ts';
 
 /** Looks for mail that hasn't been processed yet.  For each unprocessed mail in the storage folder, this determines which collections the
@@ -61,7 +60,7 @@ export const routeMail = makeAsyncResultFunc(
     traverseTimeOrganizedMailStorageFromTheBottomUp(
       trace,
       access,
-      { timeOrganizedMailStorage: paths.storage },
+      { timeOrganizedPaths: paths.storage },
       async (trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
         if (stopTraversal) {
           return makeSuccess('stop' as const);
@@ -115,62 +114,28 @@ const hasMailBeenProcessedForRoutingAlready = makeAsyncResultFunc(
     const timeMSec = mailIdInfo.extractTimeMSec(mailId);
     const mailDate = new Date(timeMSec);
 
-    const trackingDoc = await getProcessedMailIdsTrackingDoc(trace, access, mailDate);
-    if (!trackingDoc.ok) {
-      return generalizeFailureResult(trace, trackingDoc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+    const userFs = access.userFs;
+    const paths = await getUserMailPaths(userFs);
+
+    const routeProcessedMarkerFilePath = paths.routeProcessing.year(mailDate).month.day.hour.mailId(mailId);
+    const syncableItem = await getSyncableAtPath(trace, userFs, routeProcessedMarkerFilePath, 'file');
+    if (!syncableItem.ok) {
+      if (syncableItem.value.errorCode === 'not-found') {
+        return makeSuccess(false);
+      }
+      return generalizeFailureResult(trace, excludeFailureResult(syncableItem, 'not-found'), ['deleted', 'untrusted', 'wrong-type']);
     }
 
-    return makeSuccess(trackingDoc.value.document.mailIds.has(mailId));
+    return makeSuccess(true);
   }
 );
 
 // TODO: move
 const isEverythingProcessedForRoutingAtLevel = makeAsyncResultFunc(
   [import.meta.filename, 'isEverythingProcessedForRoutingAtLevel'],
-  async (trace, credential: EmailCredential, level: TimeOrganizedMailStorageTraverserAccessor): PR<boolean> => {
-    if (level.type === 'hour') {
-      return makeSuccess(false);
-    }
-
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
-
-    const trackingDoc = await getProcessedHashesTrackingDoc(trace, access, level);
-    if (!trackingDoc.ok) {
-      return generalizeFailureResult(trace, trackingDoc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    const date = DateTime.fromObject(level.value, { zone: 'UTC' }).toJSDate();
-
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
-    const yearPath = paths.storage.year(date);
-
-    let bundlePath: SyncablePath;
-    switch (level.type) {
-      case 'day':
-        bundlePath = yearPath.month.day.value;
-        break;
-      case 'month':
-        bundlePath = yearPath.month.value;
-        break;
-      case 'year':
-        bundlePath = yearPath.value;
-        break;
-    }
-
-    const bundle = await getBundleAtPath(trace, userFs, bundlePath);
-    if (!bundle.ok) {
-      // If there's an error, just assume we haven't processed everything
-      return makeSuccess(false);
-    }
-
-    const bundleHash = await bundle.value.getHash(trace);
-    if (!bundleHash.ok) {
-      // If there's an error, just assume we haven't processed everything
-      return makeSuccess(false);
-    }
-
-    return makeSuccess(trackingDoc.value.document.hashes.has(bundleHash.value));
+  async (_trace, _credential: EmailCredential, _level: TimeOrganizedMailStorageTraverserAccessor): PR<boolean> => {
+    // TODO: TEMP
+    return makeSuccess(false);
   }
 );
 
@@ -200,31 +165,19 @@ const routeSingleMail = makeAsyncResultFunc(
   async (trace, credential: EmailCredential, mailId: MailId): PR<undefined> => {
     const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
+    const userFs = access.userFs;
+    const paths = await getUserMailPaths(userFs);
+
     // TODO: handle routing into spam or custom collections as well
-    const timeMSec = mailIdInfo.extractTimeMSec(mailId);
-    const mailDate = new Date(timeMSec);
-    const collectionDoc = await getCollectionDoc(trace, access, { collectionType: 'inbox', date: mailDate });
-    if (!collectionDoc.ok) {
-      return generalizeFailureResult(trace, collectionDoc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+
+    const createdCollectionMembershipMarker = await createMailIdMarkerFile(trace, userFs, paths.collections.inbox, mailId);
+    if (!createdCollectionMembershipMarker.ok) {
+      return createdCollectionMembershipMarker;
     }
 
-    const trackingDoc = await getProcessedMailIdsTrackingDoc(trace, access, mailDate);
-    if (!trackingDoc.ok) {
-      return generalizeFailureResult(trace, trackingDoc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
-    if (!collectionDoc.value.document.mailIds.has(mailId)) {
-      collectionDoc.value.document.mailIds.add(mailId);
-
-      // Not waiting
-      bestEffort(trace, collectionDoc.value.saveSoon(trace));
-    }
-
-    if (!trackingDoc.value.document.mailIds.has(mailId)) {
-      trackingDoc.value.document.mailIds.add(mailId);
-
-      // Not waiting
-      bestEffort(trace, trackingDoc.value.saveSoon(trace));
+    const createdRouteProcessedMarker = await createMailIdMarkerFile(trace, userFs, paths.routeProcessing, mailId);
+    if (!createdRouteProcessedMarker.ok) {
+      return createdRouteProcessedMarker;
     }
 
     // TODO: we need to detect if we think we've processed everything for routing and update the hashes docs

@@ -23,7 +23,7 @@ describe('listTimeOrganizedMailIds', () => {
     expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
 
     // Act
-    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedMailStorage: paths.storage });
+    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage });
     expectOk(mailIds);
 
     // Assert
@@ -50,7 +50,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
 
     // Act
-    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedMailStorage: paths.storage });
+    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage });
     expectOk(mailIds);
 
     // Assert
@@ -127,7 +127,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
 
     // Act
-    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedMailStorage: paths.storage });
+    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage });
     expectOk(mailIds);
 
     // Assert
@@ -157,7 +157,7 @@ describe('listTimeOrganizedMailIds', () => {
     let pageToken: PageToken | undefined;
     let totalMailIdCount = 0;
     while (true) {
-      const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedMailStorage: paths.storage, pageToken });
+      const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage, pageToken });
       expectOk(mailIds);
 
       if (mailIds.value.nextPageToken === undefined || mailIds.value.items.length === 0) {
