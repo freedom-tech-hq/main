@@ -1,6 +1,7 @@
 import type { TestContext } from 'node:test';
 import { afterEach, describe, it } from 'node:test';
 
+import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { encName, uuidId } from 'freedom-sync-types';
 import { expectErrorCode, expectIncludes, expectOk } from 'freedom-testing-tools';
 
@@ -14,6 +15,7 @@ import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.t
 import { getStringFromFile } from '../../utils/get/getStringFromFile.ts';
 
 describe('DefaultSyncableStore', () => {
+  afterEach(invalidateAllInMemoryCaches);
   afterEach(clearDocumentCache);
 
   it('deleting files and folders should work', async (t: TestContext) => {
