@@ -17,7 +17,6 @@ import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createJsonFileAtPath } from '../create/createJsonFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
-import { clearDocumentCache } from '../get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getJsonFromFile } from '../get/getJsonFromFile.ts';
 import { initializeRoot } from '../initializeRoot.ts';
 
@@ -33,7 +32,6 @@ describe('createJsonFileAtPath', () => {
   const storageRootId = storageRootIdInfo.make('test');
 
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

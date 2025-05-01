@@ -21,7 +21,6 @@ import { createBundleAtPath } from '../../../utils/create/createBundleAtPath.ts'
 import { createFolderAtPath } from '../../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../../utils/create/createStringFileAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../../../utils/generateProvenanceForNewSyncableStore.ts';
-import { clearDocumentCache } from '../../../utils/get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getFolderAtPath } from '../../../utils/get/getFolderAtPath.ts';
 import { getStringFromFile } from '../../../utils/get/getStringFromFile.ts';
 import { initializeRoot } from '../../../utils/initializeRoot.ts';
@@ -37,7 +36,6 @@ describe('folders', () => {
   const storageRootId = storageRootIdInfo.make('test');
 
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   beforeEach(async () => {
     trace = makeTrace('test');

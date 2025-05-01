@@ -9,14 +9,12 @@ import { createStoreTestStack } from '../../tests/createStoreTestStack.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../utils/create/createStringFileAtPath.ts';
 import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.ts';
-import { clearDocumentCache } from '../../utils/get/getConflictFreeDocumentFromBundleAtPath.ts';
 import { getFolderAtPath } from '../../utils/get/getFolderAtPath.ts';
 import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.ts';
 import { getStringFromFile } from '../../utils/get/getStringFromFile.ts';
 
 describe('DefaultSyncableStore', () => {
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   it('deleting files and folders should work', async (t: TestContext) => {
     const { trace, store } = await createStoreTestStack();

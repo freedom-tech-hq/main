@@ -4,7 +4,6 @@ import { makeSuccess, type PR } from 'freedom-async';
 import type { BottomUpMailStorageTraversalResult } from 'freedom-email-sync';
 import { addMail, traverseTimeOrganizedMailStorageFromTheBottomUp } from 'freedom-email-sync';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
-import { clearDocumentCache } from 'freedom-syncable-store';
 import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 
 import { createEmailStoreTestStack } from '../__test_dependency__/createEmailStoreTestStack.ts';
@@ -13,7 +12,6 @@ import { getUserMailPaths } from '../utils/getUserMailPaths.ts';
 
 describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   it('should work with no emails', async () => {
     // Arrange

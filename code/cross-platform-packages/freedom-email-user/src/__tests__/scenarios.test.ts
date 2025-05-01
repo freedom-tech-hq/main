@@ -3,14 +3,13 @@ import { afterEach, describe, test } from 'node:test';
 
 import { addMail, getOutboundMailById, listOutboundMailIds, moveOutboundMailToStorage } from 'freedom-email-sync';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
-import { clearDocumentCache, createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
+import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
 
 import { createEmailStoreTestStack } from '../__test_dependency__/createEmailStoreTestStack.ts';
 import { addMailDraft, getMailDraftById, getUserMailPaths, moveMailDraftToOutbox } from '../utils/exports.ts';
 
 describe('Inbound email routes', () => {
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   // Note: always from external address
 
@@ -50,7 +49,6 @@ describe('Inbound email routes', () => {
 
 describe('Outbound email routes', () => {
   afterEach(invalidateAllInMemoryCaches);
-  afterEach(clearDocumentCache);
 
   test('Full external address outbound', async () => {
     // Arrange
