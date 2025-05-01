@@ -1,3 +1,4 @@
+export * from './AsyncFuncOptions.ts';
 export * from './AsyncResultFuncOptions.ts';
 export * from './ChainableResult.ts';
 export * from './FuncOptions.ts';
@@ -12,4 +13,6 @@ export * from './ResultFuncOptions.ts';
 export * from './RFunc.ts';
 export * from './ShouldRetryArgs.ts';
 export * from './ShouldRetryFunc.ts';
+export * from './SyncFuncOptions.ts';
+export * from './SyncResultFuncOptions.ts';
 export * from './TraceableError.ts';

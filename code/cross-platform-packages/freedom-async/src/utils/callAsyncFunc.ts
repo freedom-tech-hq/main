@@ -1,6 +1,7 @@
 import type { Trace } from 'freedom-contexts';
 import { getTraceStackTop, log, LogJson } from 'freedom-contexts';
 import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
+import isPromise from 'is-promise';
 import { once } from 'lodash-es';
 
 import { shouldDebugPerfIssues } from '../config/debug.ts';
@@ -10,7 +11,7 @@ import { argsToStrings, shouldLogFuncArgs } from '../internal/debugging/args.ts'
 import { getCallCount } from '../internal/debugging/callCounter.ts';
 import { shouldLogFailures, shouldLogFunc } from '../internal/debugging/funcs.ts';
 import { resultToString, shouldLogFuncResult } from '../internal/debugging/results.ts';
-import type { FuncOptions } from '../types/FuncOptions.ts';
+import type { AsyncFuncOptions } from '../types/AsyncFuncOptions.ts';
 
 /**
  * Calls an async function, potentially measuring its performance, tracking metrics, and/or logging state/results.
@@ -19,7 +20,7 @@ import type { FuncOptions } from '../types/FuncOptions.ts';
  */
 export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
   trace: Trace,
-  options: FuncOptions<ReturnT>,
+  options: AsyncFuncOptions<ReturnT>,
   func: (trace: Trace, ...args: ArgsT) => Promise<ReturnT>,
   ...args: ArgsT
 ): Promise<ReturnT> => {
@@ -57,14 +58,25 @@ export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
       /* node:coverage enable */
     }
 
-    options?.onStart?.();
+    const onStartResult = options?.onStart?.();
+    if (onStartResult !== undefined && isPromise(onStartResult)) {
+      await onStartResult;
+    }
+
     result = await func(trace, ...args);
-    options?.onComplete?.(result);
+
+    const onCompleteResult = options?.onComplete?.(result);
+    if (onCompleteResult !== undefined && isPromise(onCompleteResult)) {
+      await onCompleteResult;
+    }
 
     return result;
   } catch (e) {
     try {
-      options?.onError?.(e);
+      const onErrorResult = options?.onError?.(e);
+      if (onErrorResult !== undefined && isPromise(onErrorResult)) {
+        await onErrorResult;
+      }
     } catch (e2) {
       /* node:coverage ignore next */
       log().error?.(trace, e2);
