@@ -2,6 +2,7 @@ import { afterEach, describe, it } from 'node:test';
 
 import { ONE_HOUR_MSEC } from 'freedom-basic-data';
 import { addMail, listTimeOrganizedMailIds } from 'freedom-email-sync';
+import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import type { PageToken } from 'freedom-paginated-data';
 import { clearDocumentCache } from 'freedom-syncable-store';
 import { expectOk, expectStrictEqual } from 'freedom-testing-tools';
@@ -11,6 +12,7 @@ import { createInitialSyncableStoreStructureForUser } from '../utils/createIniti
 import { getUserMailPaths } from '../utils/getUserMailPaths.ts';
 
 describe('listTimeOrganizedMailIds', () => {
+  afterEach(invalidateAllInMemoryCaches);
   afterEach(clearDocumentCache);
 
   it('should work with no emails', async () => {

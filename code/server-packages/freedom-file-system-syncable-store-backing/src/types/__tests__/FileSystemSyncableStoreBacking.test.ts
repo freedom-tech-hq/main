@@ -2,13 +2,14 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import type { TestContext } from 'node:test';
-import { before, beforeEach, describe, it } from 'node:test';
+import { afterEach, before, beforeEach, describe, it } from 'node:test';
 
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
+import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import {
   createBinaryFileAtPath,
@@ -32,6 +33,8 @@ import { makeHotSwappableCryptoServiceForTesting } from '../../__test_dependency
 import { FileSystemSyncableStoreBacking } from '../FileSystemSyncableStoreBacking.ts';
 
 describe('FileSystemSyncableStore', () => {
+  afterEach(invalidateAllInMemoryCaches);
+
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;

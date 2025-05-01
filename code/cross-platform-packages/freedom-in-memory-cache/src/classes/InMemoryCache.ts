@@ -1,19 +1,25 @@
+export type OnCacheEntryInvalidatedCallback<KeyT extends string, ValueT> = (key: KeyT, value: ValueT) => void;
+
+interface CacheEntry<KeyT extends string, ValueT> {
+  retainCount: number;
+  value: ValueT;
+  timeout: ReturnType<typeof setTimeout> | undefined;
+  onInvalidated?: OnCacheEntryInvalidatedCallback<KeyT, ValueT>;
+}
+
+const globalAllNonEmptyCaches = new Set<InMemoryCache<any, any>>();
+
+export const invalidateAllInMemoryCaches = () => {
+  for (const cache of globalAllNonEmptyCaches) {
+    cache.invalidateEverything();
+  }
+};
+
 /** Caches values for the specified interval.  Every set, and optionally every get, access resets the interval.  Cache entries may also be
  * retained and released such that if an entry has a retain count &gt; 0 it will never be automatically invalidated and its timeout interval
  * will only begin counting once the retainCount goes back down to 0. */
 export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
-  private readonly cache_ = new Map<
-    OwningObjectT,
-    Map<
-      KeyT,
-      {
-        retainCount: number;
-        value: ValueT;
-        timeout: ReturnType<typeof setTimeout> | undefined;
-        onInvalidated?: (owner: OwningObjectT, key: KeyT, value: ValueT) => void;
-      }
-    >
-  >();
+  private readonly cache_ = new Map<OwningObjectT, Map<KeyT, CacheEntry<KeyT, ValueT>>>();
 
   private readonly cacheDurationMSec_: number;
   private readonly shouldResetIntervalOnGet_: boolean;
@@ -49,7 +55,7 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
     owner: OwningObjectT,
     cacheKey: KeyT,
     value: ValueT,
-    { onInvalidated }: { onInvalidated?: (owner: OwningObjectT, key: KeyT, value: ValueT) => void } = {}
+    { onInvalidated }: { onInvalidated?: OnCacheEntryInvalidatedCallback<KeyT, ValueT> } = {}
   ): ValueT {
     this.set_(owner, cacheKey, value, { retain: false, onInvalidated });
     return value;
@@ -59,7 +65,7 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
     owner: OwningObjectT,
     cacheKey: KeyT,
     value: ValueT,
-    { onInvalidated }: { onInvalidated?: (owner: OwningObjectT, key: KeyT, value: ValueT) => void } = {}
+    { onInvalidated }: { onInvalidated?: OnCacheEntryInvalidatedCallback<KeyT, ValueT> } = {}
   ): { value: ValueT; release: () => void } {
     const release = this.set_(owner, cacheKey, value, { retain: true, onInvalidated });
     return { value, release: release! };
@@ -81,7 +87,7 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
     /* node:coverage enable */
 
     for (const key of ownerCache.keys()) {
-      this.invalidate(owner, key);
+      this.invalidate_(owner, ownerCache, key);
     }
   }
 
@@ -93,20 +99,7 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
     }
     /* node:coverage enable */
 
-    const cached = ownerCache.get(cacheKey);
-    /* node:coverage disable */
-    if (cached === undefined) {
-      return undefined;
-    }
-    /* node:coverage enable */
-
-    clearTimeout(cached.timeout);
-    ownerCache.delete(cacheKey);
-    if (ownerCache.size === 0) {
-      this.cache_.delete(owner);
-    }
-
-    cached.onInvalidated?.(owner, cacheKey, cached.value);
+    this.invalidate_(owner, ownerCache, cacheKey);
   }
 
   public invalidateWithKeyPrefix(owner: OwningObjectT, cacheKeyPrefix: string) {
@@ -119,7 +112,7 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
 
     const filteredKeys = Array.from(ownerCache.keys()).filter((key) => key.startsWith(cacheKeyPrefix));
     for (const key of filteredKeys) {
-      this.invalidate(owner, key);
+      this.invalidate_(owner, ownerCache, key);
     }
   }
 
@@ -167,14 +160,36 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
     return { value: cached.value, release };
   }
 
+  private invalidate_(owner: OwningObjectT, ownerCache: Map<KeyT, CacheEntry<KeyT, ValueT>>, cacheKey: KeyT) {
+    const cached = ownerCache.get(cacheKey);
+    /* node:coverage disable */
+    if (cached === undefined) {
+      return undefined;
+    }
+    /* node:coverage enable */
+
+    clearTimeout(cached.timeout);
+    ownerCache.delete(cacheKey);
+    if (ownerCache.size === 0) {
+      this.cache_.delete(owner);
+      if (this.cache_.size === 0) {
+        globalAllNonEmptyCaches.delete(this);
+      }
+    }
+
+    cached.onInvalidated?.(cacheKey, cached.value);
+  }
+
   /** If `retain` is `true`, return a function to release */
   private set_(
     owner: OwningObjectT,
     cacheKey: KeyT,
     value: ValueT,
-    { retain, onInvalidated }: { retain: boolean; onInvalidated?: (owner: OwningObjectT, key: KeyT, value: ValueT) => void }
+    { retain, onInvalidated }: { retain: boolean; onInvalidated?: OnCacheEntryInvalidatedCallback<KeyT, ValueT> }
   ): (() => void) | undefined {
     this.invalidate(owner, cacheKey);
+
+    globalAllNonEmptyCaches.add(this);
 
     let ownerCache = this.cache_.get(owner);
     if (ownerCache === undefined) {
@@ -182,7 +197,7 @@ export class InMemoryCache<KeyT extends string, ValueT, OwningObjectT = any> {
       this.cache_.set(owner, ownerCache);
     }
 
-    const cacheEntry = {
+    const cacheEntry: CacheEntry<KeyT, ValueT> = {
       retainCount: retain ? 1 : 0,
       value,
       timeout: retain ? undefined : setTimeout(() => this.invalidate(owner, cacheKey), this.cacheDurationMSec_),

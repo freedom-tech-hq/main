@@ -21,6 +21,7 @@
     "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
+    "freedom-in-memory-cache": "0.0.0",
     "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
   },

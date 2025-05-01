@@ -6,6 +6,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { CryptoService } from 'freedom-crypto-service';
+import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { ACCESS_CONTROL_BUNDLE_ID, saltedId, STORE_CHANGES_BUNDLE_ID } from 'freedom-syncable-store-types';
@@ -35,6 +36,7 @@ describe('folders', () => {
 
   const storageRootId = storageRootIdInfo.make('test');
 
+  afterEach(invalidateAllInMemoryCaches);
   afterEach(clearDocumentCache);
 
   beforeEach(async () => {

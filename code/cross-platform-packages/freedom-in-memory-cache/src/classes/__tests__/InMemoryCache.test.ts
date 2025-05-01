@@ -1,10 +1,12 @@
-import { describe, it } from 'node:test';
+import { afterEach, describe, it } from 'node:test';
 
 import { expectStrictEqual, sleep } from 'freedom-testing-tools';
 
-import { InMemoryCache } from '../InMemoryCache.ts';
+import { InMemoryCache, invalidateAllInMemoryCaches } from '../InMemoryCache.ts';
 
 describe('InMemoryCache', () => {
+  afterEach(invalidateAllInMemoryCaches);
+
   it('getting and setting should work', async () => {
     const cache = new InMemoryCache<string, number>({ cacheDurationMSec: 500, shouldResetIntervalOnGet: true });
 
@@ -216,5 +218,23 @@ describe('InMemoryCache', () => {
 
       expectStrictEqual(cache.get(owner, 'key'), undefined);
     }
+  });
+
+  it('invalidateAllInMemoryCaches should work', async () => {
+    const cache = new InMemoryCache<string, number>({ cacheDurationMSec: 60000, shouldResetIntervalOnGet: true });
+
+    const owner = {};
+
+    expectStrictEqual(cache.get(owner, 'key'), undefined);
+    cache.set(owner, 'key', 3.14);
+    expectStrictEqual(cache.get(owner, 'key'), 3.14);
+
+    await sleep(50);
+
+    expectStrictEqual(cache.get(owner, 'key'), 3.14);
+
+    invalidateAllInMemoryCaches();
+
+    expectStrictEqual(cache.get(owner, 'key'), undefined);
   });
 });
