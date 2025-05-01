@@ -50,6 +50,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     if (!pagedMailIds.ok) {
       return pagedMailIds;
     }
+    let nextPageToken = pagedMailIds.value.nextPageToken;
 
     const initiallyLoadedMailIds: ThreadLikeId[] = pagedMailIds.value.items;
 
@@ -104,6 +105,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
         if (!pagedMailIds.ok) {
           return pagedMailIds;
         }
+        nextPageToken = pagedMailIds.value.nextPageToken;
 
         await withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<GetMailThreadsForCollection_MailAddedPacket> => {
           flushMetrics()?.();
@@ -111,12 +113,12 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
           return makeSuccess({ type: 'mail-added' as const, threadIds: pagedMailIds.value.items });
         });
 
-        setTimeout(() => loadMorePages(trace, pagedMailIds.value.nextPageToken), ONE_SEC_MSEC);
+        setTimeout(() => loadMorePages(trace, nextPageToken), ONE_SEC_MSEC);
 
         return makeSuccess(undefined);
       }
     );
-    setTimeout(() => loadMorePages(trace, pagedMailIds.value.nextPageToken), ONE_SEC_MSEC);
+    setTimeout(() => loadMorePages(trace, nextPageToken), ONE_SEC_MSEC);
 
     return await autoGeneralizeFailureResults(
       trace,
