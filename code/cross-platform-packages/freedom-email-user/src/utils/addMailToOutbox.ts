@@ -25,7 +25,7 @@ export const addMailToOutbox = makeAsyncResultFunc(
       (await outYearPath.month.day.hour.mailId(mailId)).value
     );
     if (!mailBundle.ok) {
-      return generalizeFailureResult(trace, mailBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, mailBundle, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     // TODO: should add summary and attachments etc
@@ -34,7 +34,7 @@ export const addMailToOutbox = makeAsyncResultFunc(
       schema: storedMailSchema
     });
     if (!stored.ok) {
-      return generalizeFailureResult(trace, stored, ['conflict', 'deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, stored, ['conflict', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     return makeSuccess({ mailId });

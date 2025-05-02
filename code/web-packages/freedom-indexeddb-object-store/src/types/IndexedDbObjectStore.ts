@@ -231,7 +231,9 @@ export class IndexedDbObjectStore<KeyT extends string, T> implements MutableObje
   public object(key: KeyT): ObjectAccessor<T> {
     return {
       exists: makeAsyncResultFunc([import.meta.filename, 'object', 'exists'], async (trace): PR<boolean> => {
-        const found = await readKv<KeyT, JsonValue>(trace, this.db_, { storeName: this.storeName_, key });
+        const found = await disableLam(trace, 'not-found', (trace) =>
+          readKv<KeyT, JsonValue>(trace, this.db_, { storeName: this.storeName_, key })
+        );
         if (!found.ok) {
           if (found.value.errorCode === 'not-found') {
             return makeSuccess(false);

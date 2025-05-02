@@ -26,7 +26,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
     path: SyncablePath,
     documentEvaluator: ConflictFreeDocumentEvaluator<PrefixT, DocumentT>,
     args?: GetMutableConflictFreeDocumentFromBundleAtPathArgs
-  ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<SaveableDocument<DocumentT>, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const loaded = await getConflictFreeDocumentFromBundleAtPath(trace, store, path, documentEvaluator, args);
     if (!loaded.ok) {
       return loaded;
@@ -46,7 +46,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
         const deltasPath = path.append(makeDeltasBundleId({ encrypted: areDeltasEncrypted }, document.snapshotId));
         const deltas = await getBundleAtPath(trace, store, deltasPath);
         if (!deltas.ok) {
-          return generalizeFailureResult(trace, deltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, deltas, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
         }
 
         const encodedDelta = document.encodeDelta();
@@ -61,7 +61,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
         /* node:coverage disable */
         if (!savedDelta.ok) {
           // Conflicts shouldn't happen since we're using a UUID for the delta ID
-          return generalizeFailureResult(trace, savedDelta, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, savedDelta, ['not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
 

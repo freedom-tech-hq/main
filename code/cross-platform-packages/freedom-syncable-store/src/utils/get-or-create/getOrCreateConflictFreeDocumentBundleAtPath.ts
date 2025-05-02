@@ -28,8 +28,8 @@ export const getOrCreateConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
         newDocument: (snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<PrefixT> }) => DocumentT;
         name?: DynamicSyncableItemName;
       }
-  ): PR<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-    await getOrCreate<SaveableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>(trace, {
+  ): PR<SaveableDocument<DocumentT>, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+    await getOrCreate<SaveableDocument<DocumentT>, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>(trace, {
       get: (trace: Trace) =>
         getMutableConflictFreeDocumentFromBundleAtPath<PrefixT, DocumentT>(trace, store, path, documentEvaluator, args),
       create: (trace: Trace) =>

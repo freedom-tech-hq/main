@@ -19,7 +19,7 @@ export const getMailDraftById = makeAsyncResultFunc(
 
     const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, userFs, draftDocPath, MailDraftDocument);
     if (!doc.ok) {
-      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, doc, ['format-error', 'untrusted', 'wrong-type']);
     }
 
     return makeSuccess(doc.value);

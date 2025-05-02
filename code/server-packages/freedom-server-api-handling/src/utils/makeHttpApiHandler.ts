@@ -101,6 +101,7 @@ export const makeHttpApiHandler =
           const genericOutput = Cast<GenericallyFailableHttpOutput>(output);
 
           let ok = true;
+          let httpResultStatus: StatusCodes | undefined = undefined;
           try {
             const selectedAuthToken =
               (api.credentials ?? 'omit') !== 'omit' ? await authProvider()?.getHttpAuthToken?.(trace, express) : undefined;
@@ -145,8 +146,9 @@ export const makeHttpApiHandler =
 
               if (handlerResult.ok) {
                 const { status, ...value } = handlerResult.value;
+                httpResultStatus = status ?? StatusCodes.OK;
                 output.success(
-                  (status ?? StatusCodes.OK) as ResStatusT,
+                  httpResultStatus as ResStatusT,
                   value as OptionalIfPossiblyUndefined<'headers', ResHeadersT> & OptionalIfPossiblyUndefined<'body', ResBodyT>
                 );
               } else {
@@ -163,13 +165,14 @@ export const makeHttpApiHandler =
               durationMSec: 0,
               ok: false
             });
-            return express.res.status(StatusCodes.INTERNAL_SERVER_ERROR).send('Internal server error');
+            httpResultStatus = StatusCodes.INTERNAL_SERVER_ERROR;
+            return express.res.status(httpResultStatus).send('Internal server error');
           } finally {
             resolveDurationTracking?.({ ok });
             const stop = performance.now();
             log().debug?.(
               trace,
-              `Handler for ${express.req.path} ended with status: ${express.res.statusCode}`,
+              `Handler for ${express.req.path} ended${httpResultStatus !== undefined ? ` with status: ${httpResultStatus}` : ''}`,
               new LogJson('durationMSec', stop - start)
             );
           }

@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
@@ -23,16 +23,7 @@ export const pushFile = makeAsyncResultFunc(
   ): PR<undefined, 'not-found'> => {
     const file = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, data, metadata);
     if (!file.ok) {
-      if (file.value.errorCode === 'deleted') {
-        // Was locally (with respect to the mock remote) deleted, so not interested in this content
-        return makeSuccess(undefined);
-      }
-      return generalizeFailureResult(
-        trace,
-        excludeFailureResult(file, 'deleted'),
-        ['conflict', 'untrusted', 'wrong-type'],
-        `Failed to push flat file: ${path.toString()}`
-      );
+      return generalizeFailureResult(trace, file, ['conflict', 'untrusted', 'wrong-type'], `Failed to push flat file: ${path.toString()}`);
     }
 
     return makeSuccess(undefined);

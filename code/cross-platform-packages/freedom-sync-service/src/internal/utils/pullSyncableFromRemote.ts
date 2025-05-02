@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
@@ -90,16 +90,7 @@ const onBundlePulled = makeAsyncResultFunc(
 
     const localBundle = await getOrCreateViaSyncBundleAtPath(trace, store, path, file.metadata);
     if (!localBundle.ok) {
-      if (localBundle.value.errorCode === 'deleted') {
-        // Was locally deleted, so not interested in this content
-        return makeSuccess(undefined);
-      }
-      return generalizeFailureResult(trace, excludeFailureResult(localBundle, 'deleted'), [
-        'format-error',
-        'not-found',
-        'untrusted',
-        'wrong-type'
-      ]);
+      return generalizeFailureResult(trace, localBundle, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     const localMetadataById = await localBundle.value.bundle.getMetadataById(trace);
@@ -138,11 +129,7 @@ const onFolderPulled = makeAsyncResultFunc(
 
     const localFolder = await getOrCreateViaSyncFolderAtPath(trace, store, path, folder.metadata);
     if (!localFolder.ok) {
-      if (localFolder.value.errorCode === 'deleted') {
-        // Was locally deleted, so not interested in this content
-        return makeSuccess(undefined);
-      }
-      return generalizeFailureResult(trace, excludeFailureResult(localFolder, 'deleted'), ['not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, localFolder, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const localMetadataById = await localFolder.value.folder.getMetadataById(trace);
@@ -174,22 +161,14 @@ const onFilePulled = makeAsyncResultFunc(
     trace: Trace,
     { store, file, path }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncFile; path: SyncablePath }
   ): PR<undefined> => {
-    if (file.data === undefined) {
+    const fileData = file.data;
+    if (fileData === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));
     }
 
-    const localFile = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, file.data, file.metadata);
+    const localFile = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, fileData, file.metadata);
     if (!localFile.ok) {
-      if (localFile.value.errorCode === 'deleted') {
-        // Was locally deleted, so not interested in this content
-        return makeSuccess(undefined);
-      }
-      return generalizeFailureResult(trace, excludeFailureResult(localFile, 'deleted'), [
-        'conflict',
-        'not-found',
-        'untrusted',
-        'wrong-type'
-      ]);
+      return generalizeFailureResult(trace, localFile, ['conflict', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     return makeSuccess(undefined);

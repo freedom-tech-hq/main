@@ -1,7 +1,7 @@
-import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
-import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { InSyncBundle, OutOfSyncBundle, SyncableId, SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
@@ -17,11 +17,7 @@ export const pullBundle = makeAsyncResultFunc(
   ): PR<InSyncBundle | OutOfSyncBundle, 'not-found'> => {
     const bundle = await getSyncableAtPath(trace, store, path, 'bundle');
     if (!bundle.ok) {
-      if (bundle.value.errorCode === 'deleted') {
-        // Treating deleted as not found
-        return makeFailure(new NotFoundError(trace, { cause: bundle.value, errorCode: 'not-found' }));
-      }
-      return generalizeFailureResult(trace, excludeFailureResult(bundle, 'deleted'), ['untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, bundle, ['untrusted', 'wrong-type']);
     }
 
     const hash = await bundle.value.getHash(trace);
@@ -62,5 +58,6 @@ export const pullBundle = makeAsyncResultFunc(
       hashesById,
       metadata: metadata.value
     } satisfies OutOfSyncBundle);
-  }
+  },
+  { disableLam: 'not-found' }
 );

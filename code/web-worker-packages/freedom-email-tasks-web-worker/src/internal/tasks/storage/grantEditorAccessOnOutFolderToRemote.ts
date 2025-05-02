@@ -19,7 +19,7 @@ export const grantEditorAccessOnOutFolderToRemote = makeAsyncResultFunc(
     const outFolderPath = mailPaths.out.value;
     const outFolder = await getMutableFolderAtPath(trace, userFs, outFolderPath);
     if (!outFolder.ok) {
-      return generalizeFailureResult(trace, outFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, outFolder, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const remoteCurrentOutFolderRoles = await outFolder.value.getRolesByCryptoKeySetId(trace, {

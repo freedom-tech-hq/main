@@ -1,7 +1,6 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { log } from 'freedom-contexts';
 import type {
   BottomUpMailStorageTraversalResult,
   HourTimeObject,
@@ -15,6 +14,7 @@ import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
 import type { SyncTrackerItemAddedEvent } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { createMailIdMarkerFile } from '../../utils/createMailIdMarkerFile.ts';
 import { getOrCreateEmailAccessForUser } from '../user/getOrCreateEmailAccessForUser.ts';
@@ -35,15 +35,14 @@ export const routeMail = makeAsyncResultFunc(
     highPriorityQueue.start();
 
     const removeItemAddedListener = userFs.addListener('itemAdded', async (event: SyncTrackerItemAddedEvent) => {
-      const { type, path } = event;
-      if (type !== 'file' || !path.startsWith(paths.storage.value)) {
+      const { path } = event;
+      if (!path.startsWith(paths.storage.value)) {
         return;
       }
 
       const mailId = path.ids.map(extractUnmarkedSyncableId).find(mailIdInfo.is);
       if (mailId === undefined) {
-        // Couldn't determine mail ID
-        log().debug?.(trace, `Failed to determine mail ID for path: ${path.toString()}`);
+        // Not a MailID, ignore
         return;
       }
 
@@ -52,17 +51,17 @@ export const routeMail = makeAsyncResultFunc(
 
     // Used for historical mail
     const lowPriorityQueue = new TaskQueue(trace);
-    lowPriorityQueue.start();
+    lowPriorityQueue.start({ maxConcurrency: 1 });
 
     // Detecting previously-received emails that haven't been routed yet
-    let stopTraversal = false;
+    let wasStopped = false;
     // Not waiting
     traverseTimeOrganizedMailStorageFromTheBottomUp(
       trace,
       access,
       { timeOrganizedPaths: paths.storage },
       async (trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
-        if (stopTraversal) {
+        if (wasStopped) {
           return makeSuccess('stop' as const);
         }
 
@@ -91,7 +90,7 @@ export const routeMail = makeAsyncResultFunc(
     const stop = makeAsyncResultFunc([import.meta.filename, 'stop'], async (_trace): PR<undefined> => {
       highPriorityQueue.stop();
       lowPriorityQueue.stop();
-      stopTraversal = true;
+      wasStopped = true;
       removeItemAddedListener();
 
       await highPriorityQueue.wait();
@@ -118,12 +117,14 @@ const hasMailBeenProcessedForRoutingAlready = makeAsyncResultFunc(
     const paths = await getUserMailPaths(userFs);
 
     const routeProcessedMarkerFilePath = paths.routeProcessing.year(mailDate).month.day.hour.mailId(mailId);
-    const syncableItem = await getSyncableAtPath(trace, userFs, routeProcessedMarkerFilePath, 'file');
+    const syncableItem = await disableLam(trace, 'not-found', (trace) =>
+      getSyncableAtPath(trace, userFs, routeProcessedMarkerFilePath, 'file')
+    );
     if (!syncableItem.ok) {
       if (syncableItem.value.errorCode === 'not-found') {
         return makeSuccess(false);
       }
-      return generalizeFailureResult(trace, excludeFailureResult(syncableItem, 'not-found'), ['deleted', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, excludeFailureResult(syncableItem, 'not-found'), ['untrusted', 'wrong-type']);
     }
 
     return makeSuccess(true);

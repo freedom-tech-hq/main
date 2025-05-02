@@ -13,6 +13,6 @@ export const createStringFileAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: SyncablePath,
     { name, value, trustedTimeSignature }: Partial<SyncableOriginOptions> & { name?: DynamicSyncableItemName; value: string }
-  ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+  ): PR<MutableSyncableFileAccessor, 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> =>
     await createBinaryFileAtPath(trace, store, path, { name, value: Buffer.from(value, 'utf-8'), trustedTimeSignature })
 );

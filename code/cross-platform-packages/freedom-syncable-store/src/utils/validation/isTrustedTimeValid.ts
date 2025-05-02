@@ -5,6 +5,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractKeyIdFromSignature, isSignatureValidForValue } from 'freedom-crypto';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TrustedTime, TrustedTimeSignatureParams } from 'freedom-trusted-time-source';
 import { trustedTimeSignatureParamsSchema } from 'freedom-trusted-time-source';
 
@@ -49,12 +50,12 @@ export const isTrustedTimeValid = makeAsyncResultFunc(
       });
     }
 
-    const trustedTimeSources = await getTrustedTimeSourcesForPath(trace, store, parentPath);
+    const trustedTimeSources = await disableLam(trace, 'untrusted', (trace) => getTrustedTimeSourcesForPath(trace, store, parentPath));
     if (!trustedTimeSources.ok) {
       if (trustedTimeSources.value.errorCode === 'untrusted') {
         return makeSuccess(false);
       }
-      return generalizeFailureResult(trace, excludeFailureResult(trustedTimeSources, 'untrusted'), ['deleted', 'not-found', 'wrong-type']);
+      return generalizeFailureResult(trace, excludeFailureResult(trustedTimeSources, 'untrusted'), ['not-found', 'wrong-type']);
     }
 
     const trustedTimeValid = await allResultsMapped(

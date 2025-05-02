@@ -48,7 +48,9 @@ export const makeSyncService = makeAsyncResultFunc(
         const version = hash;
 
         pullQueue.add({ key, version }, async (trace) => {
-          const pulled = await pullSyncableFromRemotes(trace, { store, syncService: service }, args);
+          const pulled = await disableLam(trace, 'not-found', (trace) =>
+            pullSyncableFromRemotes(trace, { store, syncService: service }, args)
+          );
           if (!pulled.ok) {
             if (pulled.value.errorCode === 'not-found') {
               return makeSuccess(undefined);

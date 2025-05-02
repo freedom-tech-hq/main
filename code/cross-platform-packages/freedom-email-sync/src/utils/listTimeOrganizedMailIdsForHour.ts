@@ -33,12 +33,8 @@ export const listTimeOrganizedMailIdsForHour = makeAsyncResultFunc(
 
     const hourBundle = await getBundleAtPath(trace, userFs, hourPath);
     if (!hourBundle.ok) {
-      if (hourBundle.value.errorCode !== 'deleted' && hourBundle.value.errorCode !== 'not-found') {
-        return generalizeFailureResult(trace, excludeFailureResult(hourBundle, 'deleted', 'not-found'), [
-          'format-error',
-          'untrusted',
-          'wrong-type'
-        ]);
+      if (hourBundle.value.errorCode !== 'not-found') {
+        return generalizeFailureResult(trace, excludeFailureResult(hourBundle, 'not-found'), ['format-error', 'untrusted', 'wrong-type']);
       }
 
       return makeSuccess([]);

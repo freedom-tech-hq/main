@@ -22,7 +22,7 @@ export const generateTrustedTime = makeAsyncResultFunc(
       path: parentPath
     });
     if (!roleAndCryptoKeySetId.ok) {
-      return generalizeFailureResult(trace, roleAndCryptoKeySetId, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, roleAndCryptoKeySetId, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     // If the user is a creator, they can sign their own trusted time names
@@ -32,7 +32,7 @@ export const generateTrustedTime = makeAsyncResultFunc(
 
     const trustedTimeSources = await getTrustedTimeSourcesForPath(trace, store, parentPath);
     if (!trustedTimeSources.ok) {
-      return generalizeFailureResult(trace, trustedTimeSources, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, trustedTimeSources, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const timeId = timeIdInfo.make();

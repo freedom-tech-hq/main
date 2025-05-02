@@ -20,7 +20,7 @@ export const createDefaultCollectionsForUser = makeAsyncResultFunc(
       async (trace, collectionType) => await createBundleAtPath(trace, userFs, paths.collections[collectionType].value)
     );
     if (!createdAllCollectionsBundles.ok) {
-      return generalizeFailureResult(trace, createdAllCollectionsBundles, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, createdAllCollectionsBundles, ['conflict', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     return makeSuccess(undefined);

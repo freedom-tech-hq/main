@@ -13,7 +13,7 @@ export const getOrCreateBundlesAtPaths = makeAsyncResultFunc(
     store: MutableSyncableStore,
     firstPath: SyncablePath,
     ...paths: SyncablePath[]
-  ): PR<MutableFileStore, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableFileStore, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     let lastValue: SuccessResult<MutableFileStore> | undefined;
     for (const path of [firstPath, ...paths]) {
       const done = await getOrCreateBundleAtPath(trace, store, path);

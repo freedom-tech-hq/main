@@ -15,7 +15,7 @@ export const getMutableParentSyncable = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: SyncablePath,
     expectedType?: SingleOrArray<T>
-  ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const parentPath = path.parentPath;
     if (parentPath === undefined) {
       return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));

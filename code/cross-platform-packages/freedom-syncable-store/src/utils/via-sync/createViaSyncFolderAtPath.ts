@@ -4,26 +4,27 @@ import { ConflictError } from 'freedom-common-errors';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableFolderAccessor, MutableSyncableStore } from 'freedom-syncable-store-types';
 
+import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
 
 export const createViaSyncFolderAtPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    store: MutableSyncableStore,
-    path: SyncablePath,
-    metadata: SyncableItemMetadata
-  ): PR<MutableSyncableFolderAccessor, 'deleted' | 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    if (path.ids.length === 0) {
-      // Root will always already exist
-      return makeFailure(new ConflictError(trace, { errorCode: 'conflict' }));
-    }
+  async (trace, store: MutableSyncableStore, path: SyncablePath, metadata: SyncableItemMetadata) =>
+    await isSyncableValidationEnabledProvider(
+      trace,
+      false,
+      async (trace): PR<MutableSyncableFolderAccessor, 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+        if (path.ids.length === 0) {
+          // Root will always already exist
+          return makeFailure(new ConflictError(trace, { errorCode: 'conflict' }));
+        }
 
-    const parent = await getMutableParentSyncable(trace, store, path, 'folder');
-    if (!parent.ok) {
-      return parent;
-    }
+        const parent = await getMutableParentSyncable(trace, store, path, 'folder');
+        if (!parent.ok) {
+          return parent;
+        }
 
-    return await parent.value.createFolder(trace, { mode: 'via-sync', id: path.lastId!, metadata });
-  }
+        return await parent.value.createFolder(trace, { mode: 'via-sync', id: path.lastId!, metadata });
+      }
+    )
 );

@@ -24,7 +24,7 @@ export const deleteOutboundMailById = makeAsyncResultFunc(
 
     const hourBundle = await getMutableBundleAtPath(trace, userFs, hourBundlePath);
     if (!hourBundle.ok) {
-      return generalizeFailureResult(trace, hourBundle, ['deleted', 'format-error', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, hourBundle, ['format-error', 'untrusted', 'wrong-type']);
     }
 
     return await hourBundle.value.delete(trace, mailBundlePath.lastId!);

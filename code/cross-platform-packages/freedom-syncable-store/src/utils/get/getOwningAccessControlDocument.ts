@@ -21,7 +21,7 @@ export const getOwningAccessControlDocument = makeAsyncResultFunc(
 
     const nearestFolder = await getNearestFolder(trace, store, path);
     if (!nearestFolder.ok) {
-      return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, nearestFolder, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const accessControlDoc = await nearestFolder.value.getAccessControlDocument(trace);

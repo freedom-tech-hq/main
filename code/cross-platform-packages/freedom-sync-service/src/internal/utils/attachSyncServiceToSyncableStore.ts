@@ -3,12 +3,12 @@ import { allResultsMapped, debugTopic, excludeFailureResult, makeAsyncResultFunc
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectValues } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { addCoordinatedHashSaltChangeListener } from 'freedom-crypto';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import { doPeriodic } from 'freedom-periodic';
 import type { SyncablePath } from 'freedom-sync-types';
 import { getRecursiveFolderPaths, getSyncableHashAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { MANUAL_SYNC_INTERVAL_MSEC } from '../../consts/syncing.ts';
 import type { SyncService } from '../../types/SyncService.ts';
@@ -38,15 +38,11 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       async (trace, { path, hash: remoteHash }: { path: SyncablePath; hash: Sha256Hash }): PR<undefined> => {
         DEV: syncService.devLogging.appendLogEntry?.({ type: 'notified', pathString: path.toString() });
 
-        const localHash = await getSyncableHashAtPath(trace, store, path);
+        const localHash = await disableLam(trace, 'not-found', (trace) => getSyncableHashAtPath(trace, store, path));
         if (!localHash.ok) {
           // 'not-found' errors are expected in cases where the remote has content that the local doesn't know about yet
-          // 'deleted' errors are expected in cases where the local has deleted the content but the deletion hasn't synced with the remote
-          if (localHash.value.errorCode === 'deleted') {
-            // Was locally deleted, so not interested in this content
-            return makeSuccess(undefined);
-          } else if (localHash.value.errorCode !== 'not-found') {
-            return generalizeFailureResult(trace, excludeFailureResult(localHash, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
+          if (localHash.value.errorCode !== 'not-found') {
+            return generalizeFailureResult(trace, excludeFailureResult(localHash, 'not-found'), ['untrusted', 'wrong-type']);
           }
         } else if (localHash.value === remoteHash) {
           return makeSuccess(undefined);
@@ -59,30 +55,22 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     );
 
     const onFolderAdded = makeAsyncResultFunc([import.meta.filename, 'onFolderAdded'], async (trace, path: SyncablePath): PR<undefined> => {
-      // TODO: TEMP
-      const streamId = path.toString();
-      // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
-
       const pathString = path.toString();
+      // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
 
       DEV: debugTopic('SYNC', (log) => log(`Adding contentChange listeners for ${path.toString()}`));
       for (const deviceNotificationClient of deviceNotificationClients) {
         removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
         removeListenersByFolderPath[pathString].push(
-          deviceNotificationClient.addListener(`contentChange:${streamId}`, ({ hash }) => {
+          deviceNotificationClient.addListener(`contentChange:${pathString}`, ({ hash }) => {
             onRemoteContentChange(trace, { path, hash });
           })
         );
       }
 
-      const localHash = await getSyncableHashAtPath(trace, store, path);
-      if (!localHash.ok) {
-        return generalizeFailureResult(trace, localHash, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-      }
-
       // Pulling whenever we add a new folder because otherwise there's a race condition where the folder could have been changed on the
       // remote in the meantime
-      syncService.pullFromRemotes({ path, hash: localHash.value });
+      syncService.pullFromRemotes({ path });
 
       return makeSuccess(undefined);
     });
@@ -98,45 +86,27 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       return makeSuccess(undefined);
     };
 
-    const rotateRemoteFolderContentChangeListeners = makeAsyncResultFunc(
-      [import.meta.filename, 'rotateRemoteFolderContentChangeListeners'],
-      async (trace): PR<undefined> => {
-        const lastRemoveListenersByFolderPath = removeListenersByFolderPath;
-        removeListenersByFolderPath = {};
+    const rootAdded = await onFolderAdded(trace, store.path);
+    if (!rootAdded.ok) {
+      return rootAdded;
+    }
 
-        try {
-          const rootAdded = await onFolderAdded(trace, store.path);
-          if (!rootAdded.ok) {
-            return rootAdded;
-          }
+    const allFolderPaths = await getRecursiveFolderPaths(trace, store);
+    if (!allFolderPaths.ok) {
+      return allFolderPaths;
+    }
 
-          const allFolderPaths = await getRecursiveFolderPaths(trace, store);
-          if (!allFolderPaths.ok) {
-            return allFolderPaths;
-          }
-
-          const foldersAdded = await allResultsMapped(trace, allFolderPaths.value, {}, async (trace, folderPath) => {
-            const folderAdded = await onFolderAdded(trace, folderPath);
-            if (!folderAdded.ok) {
-              return folderAdded;
-            }
-
-            return makeSuccess(undefined);
-          });
-          if (!foldersAdded.ok) {
-            return foldersAdded;
-          }
-
-          return makeSuccess(undefined);
-        } finally {
-          removeListeners(lastRemoveListenersByFolderPath);
-        }
+    const foldersAdded = await allResultsMapped(trace, allFolderPaths.value, {}, async (trace, folderPath) => {
+      const folderAdded = await onFolderAdded(trace, folderPath);
+      if (!folderAdded.ok) {
+        return folderAdded;
       }
-    );
-    await rotateRemoteFolderContentChangeListeners(trace);
-    const removeCoordinatedHashSaltChangeListener = addCoordinatedHashSaltChangeListener(() =>
-      rotateRemoteFolderContentChangeListeners(trace)
-    );
+
+      return makeSuccess(undefined);
+    });
+    if (!foldersAdded.ok) {
+      return foldersAdded;
+    }
 
     DEV: debugTopic('SYNC', (log) => log(`Added folderAdded listener for ${store.path.toString()}`));
     const removeLocalFolderAddedListener = store.addListener('folderAdded', ({ path }) => {
@@ -169,7 +139,6 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
 
     return makeSuccess({
       detach: () => {
-        removeCoordinatedHashSaltChangeListener();
         removeListeners(removeListenersByFolderPath);
         removeListenersByFolderPath = {};
         removeLocalFolderAddedListener();

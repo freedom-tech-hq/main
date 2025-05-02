@@ -31,7 +31,6 @@ import type {
   SyncTrackerNotifications
 } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID, syncableStoreRoleSchema } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
 import { pick } from 'lodash-es';
@@ -44,6 +43,7 @@ import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableSto
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
+import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { type DefaultEncryptedFileStore, getOrCreateDefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
@@ -228,16 +228,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // AccessControlledFolderAccessor Methods
 
-  public readonly canPushToRemotes = makeAsyncResultFunc([import.meta.filename, 'canPushToRemotes'], async (trace): PR<boolean> => {
-    const store = this.weakStore_.deref();
-    if (store === undefined) {
-      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-    }
-
-    const accessControlDoc = await disableLam(trace, true, (trace) => getAccessControlDocument(trace, store, this.path));
-    return makeSuccess(accessControlDoc.ok);
-  });
-
   public readonly didCryptoKeyHaveRoleAtTimeMSec = makeAsyncResultFunc(
     [import.meta.filename, 'didCryptoKeyHaveRoleAtTimeMSec'],
     async (
@@ -295,11 +285,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
       // Syncable Store Changes
       const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path.append(STORE_CHANGES_BUNDLE_ID), {
-        newDocument: () => SyncableStoreChangesDocument.newDocument()
+        newDocument: () => SyncableStoreChangesDocument.newDocument(this.path)
       });
       /* node:coverage disable */
       if (!createdStoreChanges.ok) {
-        return generalizeFailureResult(trace, createdStoreChanges, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+        return generalizeFailureResult(trace, createdStoreChanges, ['not-found', 'untrusted', 'wrong-type']);
       }
       /* node:coverage enable */
 
@@ -312,7 +302,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       );
       /* node:coverage disable */
       if (!createdAccessControlDoc.ok) {
-        return generalizeFailureResult(trace, createdAccessControlDoc, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+        return generalizeFailureResult(trace, createdAccessControlDoc, ['not-found', 'untrusted', 'wrong-type']);
       }
       /* node:coverage enable */
 
@@ -364,6 +354,36 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     await this.folderOperationsHandler_.generateNewSyncableItemName(trace, args);
 
   // FolderStore Methods
+
+  public readonly isDeleted = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeleted'],
+    async (trace, { recursive }: { recursive: boolean }): PR<boolean> => {
+      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path);
+      if (!isDeleted.ok) {
+        return isDeleted;
+      } else if (isDeleted.value) {
+        return makeSuccess(true);
+      }
+
+      if (recursive) {
+        const store = this.weakStore_.deref();
+        if (store === undefined) {
+          return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+        }
+
+        if (this.path.parentPath !== undefined) {
+          const parent = await getSyncableAtPath(trace, store, this.path.parentPath);
+          if (!parent.ok) {
+            return generalizeFailureResult(trace, parent, ['not-found', 'untrusted', 'wrong-type']);
+          }
+
+          return await parent.value.isDeleted(trace, { recursive: true });
+        }
+      }
+
+      return makeSuccess(false);
+    }
+  );
 
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
@@ -448,7 +468,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         const marked = await markSyncableNeedsRecomputeHashAtPath(trace, store, parentPath);
         /* node:coverage disable */
         if (!marked.ok) {
-          return generalizeFailureResult(trace, marked, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
       }
@@ -482,7 +502,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
       const store = this.selectStoreForId_(id);
       return await store.getMutable(trace, id, expectedType);
     }
@@ -515,8 +535,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-      await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
   // BundleManagement Methods
@@ -647,7 +666,7 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
     );
     /* node:coverage disable */
     if (!doc.ok) {
-      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, doc, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
     /* node:coverage enable */
 
@@ -664,9 +683,11 @@ const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
     const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, storeChangesBundlePath, SyncableStoreChangesDocument);
     /* node:coverage disable */
     if (!doc.ok) {
-      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, doc, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
     /* node:coverage enable */
+
+    doc.value.document.initializeFolderPath(path);
 
     return makeSuccess(doc.value);
   }

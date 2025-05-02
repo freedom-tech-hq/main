@@ -14,7 +14,7 @@ export const getCryptoKeyIdForHighestCurrentUserRoleAtPath = makeAsyncResultFunc
     trace,
     store: SyncableStore,
     { path }: { path: SyncablePath }
-  ): PR<{ role: SyncableStoreRole; cryptoKeySetId: CryptoKeySetId }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<{ role: SyncableStoreRole; cryptoKeySetId: CryptoKeySetId }, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const privateKeyIds = await store.userKeys.getPrivateCryptoKeySetIds(trace);
     if (!privateKeyIds.ok) {
       return privateKeyIds;

@@ -1,14 +1,5 @@
 import type { PR } from 'freedom-async';
-import {
-  allResults,
-  allResultsMapped,
-  allResultsReduced,
-  debugTopic,
-  excludeFailureResult,
-  makeAsyncResultFunc,
-  makeFailure,
-  makeSuccess
-} from 'freedom-async';
+import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
@@ -28,12 +19,12 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
+import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
@@ -91,7 +82,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBinaryFile'],
-    async (trace: Trace, args): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
+    async (trace: Trace, args): PR<MutableSyncableFileAccessor, 'conflict'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
@@ -144,7 +135,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly createBundle: MutableFileStore['createBundle'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBundle'],
-    async (trace, args): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
+    async (trace, args): PR<MutableSyncableBundleAccessor, 'conflict'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBundle_(trace, args.id, args.metadata);
@@ -252,14 +243,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     }
     /* node:coverage enable */
 
-    const guards = await disableLam(trace, true, (trace) => this.guardNotDeleted_(trace, checkingPath, 'deleted'));
-    if (!guards.ok) {
-      if (guards.value.errorCode === 'deleted') {
-        return makeSuccess(false);
-      }
-      return excludeFailureResult(guards, 'deleted');
-    }
-
     return makeSuccess(true);
   });
 
@@ -269,7 +252,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
       const store = this.weakStore_.deref();
@@ -278,21 +261,17 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       }
 
       const itemType = extractSyncableItemTypeFromId(id);
-      const guards = await allResults(trace, [
-        this.guardNotDeleted_(trace, getPath, 'deleted'),
-        guardIsExpectedType(
-          trace,
-          getPath,
-          itemType,
-          intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
-          'wrong-type'
-        )
-      ]);
+      const guards = guardIsExpectedType(
+        trace,
+        getPath,
+        itemType,
+        intersectSyncableItemTypes(expectedType, syncableItemTypes.exclude('folder')),
+        'wrong-type'
+      );
       if (!guards.ok) {
         return guards;
       }
 
-      // Checking existence after deletion check because we want to return a 'deleted' errorCode explicitly if deleted
       const exists = await this.exists(trace, id);
       if (!exists.ok) {
         return exists;
@@ -315,6 +294,38 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     this.folderOperationsHandler_.generateNewSyncableItemName(trace, args);
 
   // FileStore Methods
+
+  public readonly isDeleted = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeleted'],
+    async (trace, { recursive }: { recursive: boolean }): PR<boolean> => {
+      if (this.supportsDeletion) {
+        const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path);
+        if (!isDeleted.ok) {
+          return isDeleted;
+        } else if (isDeleted.value) {
+          return makeSuccess(true);
+        }
+      }
+
+      if (recursive) {
+        const store = this.weakStore_.deref();
+        if (store === undefined) {
+          return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+        }
+
+        if (this.path.parentPath !== undefined) {
+          const parent = await getSyncableAtPath(trace, store, this.path.parentPath);
+          if (!parent.ok) {
+            return generalizeFailureResult(trace, parent, ['not-found', 'untrusted', 'wrong-type']);
+          }
+
+          return await parent.value.isDeleted(trace, { recursive: true });
+        }
+      }
+
+      return makeSuccess(false);
+    }
+  );
 
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
@@ -437,12 +448,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       const isEncrypted = this.isEncrypted_();
       const idsWithMatchingEncryptionMode = ids.value.filter((id) => isSyncableItemEncrypted(id) === isEncrypted);
 
-      const nonDeletedIds = await this.filterOutDeletedIds_(trace, idsWithMatchingEncryptionMode);
-      if (!nonDeletedIds.ok) {
-        return nonDeletedIds;
-      }
-
-      return makeSuccess(nonDeletedIds.value);
+      return makeSuccess(idsWithMatchingEncryptionMode);
     }
   );
 
@@ -452,8 +458,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-      await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
   public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
@@ -483,7 +488,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         const marked = await markSyncableNeedsRecomputeHashAtPath(trace, store, parentPath);
         /* node:coverage disable */
         if (!marked.ok) {
-          return generalizeFailureResult(trace, marked, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
       }
@@ -599,7 +604,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       id: SyncableId,
       encodedData: Uint8Array,
       metadata: SyncableItemMetadata & LocalItemMetadata
-    ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
+    ): PR<MutableSyncableFileAccessor, 'conflict'> => {
       const newPath = this.path.append(id);
 
       DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-binary', pathString: newPath.toString() });
@@ -609,11 +614,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return exists;
       } else if (exists.value) {
         return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
-      }
-
-      const guards = await this.guardNotDeleted_(trace, newPath, 'deleted');
-      if (!guards.ok) {
-        return guards;
       }
 
       const hash = await this.computeHash_(trace, encodedData);
@@ -656,11 +656,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly createPreEncodedBundle_ = makeAsyncResultFunc(
     [import.meta.filename, 'createPreEncodedBundle_'],
-    async (
-      trace,
-      id: SyncableId,
-      metadata: SyncableItemMetadata & LocalItemMetadata
-    ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
+    async (trace, id: SyncableId, metadata: SyncableItemMetadata & LocalItemMetadata): PR<MutableSyncableBundleAccessor, 'conflict'> => {
       const newPath = this.path.append(id);
 
       DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-bundle', pathString: newPath.toString() });
@@ -670,11 +666,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
         return exists;
       } else if (exists.value) {
         return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
-      }
-
-      const guards = await this.guardNotDeleted_(trace, newPath, 'deleted');
-      if (!guards.ok) {
-        return guards;
       }
 
       const store = this.weakStore_.deref();
@@ -714,53 +705,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
       });
 
       return makeSuccess(itemAccessor);
-    }
-  );
-
-  private readonly filterOutDeletedIds_ = makeAsyncResultFunc(
-    [import.meta.filename, 'filterOutDeletedIds_'],
-    async (trace, encodedIds: SyncableId[]) => {
-      if (!this.supportsDeletion) {
-        return makeSuccess(encodedIds);
-      }
-
-      return await allResultsReduced(
-        trace,
-        encodedIds,
-        {},
-        async (_trace, id) => makeSuccess(id),
-        async (trace, out, id) => {
-          const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
-          if (!isDeleted.ok) {
-            return isDeleted;
-          }
-
-          if (!isDeleted.value) {
-            out.push(id);
-          }
-
-          return makeSuccess(out);
-        },
-        [] as SyncableId[]
-      );
-    }
-  );
-
-  private readonly guardNotDeleted_ = makeAsyncResultFunc(
-    [import.meta.filename, 'guardNotDeleted_'],
-    async <ErrorCodeT extends string>(trace: Trace, path: SyncablePath, errorCode: ErrorCodeT): PR<undefined, ErrorCodeT> => {
-      if (!this.supportsDeletion) {
-        return makeSuccess(undefined);
-      }
-
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, path);
-      if (!isDeleted.ok) {
-        return isDeleted;
-      } else if (isDeleted.value) {
-        return makeFailure(new NotFoundError(trace, { message: `${path.toString()} was deleted`, errorCode }));
-      }
-
-      return makeSuccess(undefined);
     }
   );
 

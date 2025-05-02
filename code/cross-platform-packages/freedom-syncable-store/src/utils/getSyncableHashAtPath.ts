@@ -8,7 +8,7 @@ import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
 
 export const getSyncableHashAtPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, path: SyncablePath): PR<Sha256Hash, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: SyncableStore, path: SyncablePath): PR<Sha256Hash, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const itemAccessor = await getSyncableAtPath(trace, store, path);
     if (!itemAccessor.ok) {
       return itemAccessor;

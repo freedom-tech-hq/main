@@ -6,9 +6,10 @@ import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnaps
 import type { Trace } from 'freedom-contexts';
 import type { SignedValue } from 'freedom-crypto-data';
 import { makeSignedValueSchema } from 'freedom-crypto-data';
-import type { SyncablePath } from 'freedom-sync-types';
+import { type SyncablePath, syncablePathSchema } from 'freedom-sync-types';
 import type { ConflictFreeDocumentEvaluator, SyncableStore, SyncableStoreRole } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID, adminAndAboveRoles, STORE_CHANGES_BUNDLE_ID } from 'freedom-syncable-store-types';
+import { once } from 'lodash-es';
 
 import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from '../utils/checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder.ts';
 import { getNearestFolderPath } from '../utils/get/getNearestFolderPath.ts';
@@ -27,9 +28,11 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
   private transients_ = new AsyncTransient(async () => {
     const deletedPathStrings = new Set<string>();
 
+    const folderPath = this.getFolderPath_();
+
     const transients = { deletedPathStrings };
     for (const change of this.changes_.values()) {
-      applyChangeToTransients(transients, (await change).value);
+      applyChangeToTransients(transients, (await change).value, { folderPath });
     }
 
     return transients;
@@ -39,7 +42,18 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
     super(SYNCABLE_STORE_CHANGES_DOCUMENT_PREFIX, snapshot);
   }
 
-  public static newDocument = () => new SyncableStoreChangesDocument();
+  public static newDocument = (folderPath: SyncablePath) => {
+    const doc = new SyncableStoreChangesDocument();
+    doc.folderPath_.set(folderPath);
+    return doc;
+  };
+
+  /** Older documents were initialized in this way, so this provides backwards compatibility */
+  public initializeFolderPath = (folderPath: SyncablePath) => {
+    if (this.folderPath_.get() === undefined) {
+      this.folderPath_.set(folderPath);
+    }
+  };
 
   // ConflictFreeDocumentEvaluator Methods
 
@@ -84,9 +98,13 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
   public readonly isDeletedPath = makeAsyncResultFunc(
     [import.meta.filename, 'isDeletedPath'],
     async (trace, path: SyncablePath): PR<boolean> => {
+      if (!path.startsWith(this.getFolderPath_())) {
+        return makeSuccess(false); // Not owned by this folder
+      }
+
       const transients = await this.transients_.getValue(trace);
 
-      return makeSuccess(transients.deletedPathStrings.has(path.toString()));
+      return makeSuccess(transients.deletedPathStrings.has(makeKeyFromPath({ folderPath: this.getFolderPath_(), path })));
     }
   );
 
@@ -96,7 +114,7 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
       const transients = await this.transients_.getValue(trace);
 
       // Directly modifying the transients
-      applyChangeToTransients(transients, change.value);
+      applyChangeToTransients(transients, change.value, { folderPath: this.getFolderPath_() });
 
       this.changes_.append([change]);
 
@@ -110,7 +128,13 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
     return this.generic.getAsyncArrayField<SignedValue<SyncableStoreChange>>('changes', signedStoreChangeSchema);
   }
 
+  private get folderPath_() {
+    return this.generic.getObjectField<SyncablePath>('folderPath', syncablePathSchema);
+  }
+
   // Private Methods
+
+  private readonly getFolderPath_ = once(() => this.folderPath_.get()!);
 
   private readonly isDeltaValidForRole_ = makeAsyncResultFunc(
     [import.meta.filename, 'isDeltaValidForRole_'],
@@ -186,7 +210,7 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
               return makeSuccess(true);
             });
             if (!checked.ok) {
-              return generalizeFailureResult(trace, checked, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+              return generalizeFailureResult(trace, checked, ['not-found', 'untrusted', 'wrong-type']);
             } else if (checked.value.includes(false)) {
               return makeSuccess(false);
             }
@@ -201,13 +225,25 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
 
 // Helpers
 
-const applyChangeToTransients = ({ deletedPathStrings }: { deletedPathStrings: Set<string> }, change: SyncableStoreChange) => {
+const applyChangeToTransients = (
+  { deletedPathStrings }: { deletedPathStrings: Set<string> },
+  change: SyncableStoreChange,
+  { folderPath }: { folderPath: SyncablePath }
+) => {
   switch (change.type) {
     case 'delete':
       for (const path of change.paths) {
-        deletedPathStrings.add(path.toString());
+        deletedPathStrings.add(makeKeyFromPath({ folderPath, path }));
       }
 
       break;
   }
+};
+
+const makeKeyFromPath = ({ folderPath, path }: { folderPath: SyncablePath; path: SyncablePath }): string => {
+  if (!path.startsWith(folderPath)) {
+    throw new Error(`${path.toString()} isn't owned by ${folderPath.toString()}`);
+  }
+
+  return path.ids.slice(folderPath.ids.length).join('/');
 };

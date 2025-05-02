@@ -8,11 +8,7 @@ import { getSyncableAtPath } from './getSyncableAtPath.ts';
 
 export const getNearestFolder = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    store: SyncableStore,
-    path: SyncablePath
-  ): PR<SyncableFolderAccessor, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: SyncableStore, path: SyncablePath): PR<SyncableFolderAccessor, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const nearestFolderPath = await getNearestFolderPath(trace, store, path);
     if (!nearestFolderPath.ok) {
       return nearestFolderPath;

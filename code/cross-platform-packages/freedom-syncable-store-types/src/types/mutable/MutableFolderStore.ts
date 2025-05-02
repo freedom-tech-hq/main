@@ -13,7 +13,7 @@ export interface MutableFolderStore extends MutableStoreBase, FolderStore {
    */
   readonly createFolder: PRFunc<
     MutableSyncableFolderAccessor,
-    'conflict' | 'deleted',
+    'conflict',
     [
       | (SyncableOriginOptions & {
           mode?: 'local';

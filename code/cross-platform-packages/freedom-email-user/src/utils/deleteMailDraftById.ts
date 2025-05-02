@@ -18,7 +18,7 @@ export const deleteMailDraftById = makeAsyncResultFunc(
 
     const draftsBundle = await getMutableBundleAtPath(trace, userFs, draftsPath);
     if (!draftsBundle.ok) {
-      return generalizeFailureResult(trace, draftsBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, draftsBundle, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     const deleted = await draftsBundle.value.delete(trace, draftBundlePath.value.lastId!);

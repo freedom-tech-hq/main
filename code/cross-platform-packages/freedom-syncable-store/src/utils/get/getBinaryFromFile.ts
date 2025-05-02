@@ -11,9 +11,8 @@ export const getBinaryFromFile = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    pathOrAccessor:
-      | SyncablePath
-      | ChainableResult<SyncableFileAccessor, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>
+    pathOrAccessor: SyncablePath | ChainableResult<SyncableFileAccessor, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>,
+    { checkForDeletion = true }: { checkForDeletion?: boolean } = {}
   ): PR<Uint8Array, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const file = await (pathOrAccessor instanceof SyncablePath
       ? getSyncableAtPath(trace, store, pathOrAccessor, 'file')
@@ -22,6 +21,6 @@ export const getBinaryFromFile = makeAsyncResultFunc(
       return file;
     }
 
-    return await file.value.getBinary(trace);
+    return await file.value.getBinary(trace, { checkForDeletion });
   }
 );

@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
@@ -26,16 +26,7 @@ export const pushFolder = makeAsyncResultFunc(
 
     const folder = await createViaSyncFolderAtPath(trace, store, path, metadata);
     if (!folder.ok) {
-      if (folder.value.errorCode === 'deleted') {
-        // Was locally (with respect to the mock remote) deleted, so not interested in this content
-        return makeSuccess(undefined);
-      }
-      return generalizeFailureResult(
-        trace,
-        excludeFailureResult(folder, 'deleted'),
-        ['conflict', 'untrusted', 'wrong-type'],
-        `Failed to push folder: ${path.toString()}`
-      );
+      return generalizeFailureResult(trace, folder, ['conflict', 'untrusted', 'wrong-type'], `Failed to push folder: ${path.toString()}`);
     }
 
     return makeSuccess(undefined);

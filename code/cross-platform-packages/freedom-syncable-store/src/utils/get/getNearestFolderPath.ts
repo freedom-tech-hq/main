@@ -8,7 +8,7 @@ import type { SyncableStore } from 'freedom-syncable-store-types';
  * same path */
 export const getNearestFolderPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, path: SyncablePath): PR<SyncablePath, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: SyncableStore, path: SyncablePath): PR<SyncablePath, 'not-found' | 'untrusted' | 'wrong-type'> => {
     if (store.path.storageRootId !== path.storageRootId) {
       return makeFailure(new NotFoundError(trace, { message: 'Wrong storage root ID', errorCode: 'not-found' }));
     }

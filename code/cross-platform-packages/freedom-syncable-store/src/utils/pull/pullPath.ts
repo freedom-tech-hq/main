@@ -15,7 +15,7 @@ export const pullPath = makeAsyncResultFunc(
   async (trace, store: SyncableStore, args: SyncPullArgs): PR<SyncPullResponse, 'not-found'> => {
     const syncableItem = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, store, args.path));
     if (!syncableItem.ok) {
-      return generalizeFailureResult(trace, syncableItem, ['deleted', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, syncableItem, ['untrusted', 'wrong-type']);
     }
 
     switch (syncableItem.value.type) {

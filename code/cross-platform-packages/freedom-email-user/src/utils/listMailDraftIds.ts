@@ -19,7 +19,7 @@ export const listMailDraftIds = makeAsyncResultFunc(
     const draftsPath = paths.drafts.value;
     const draftsBundle = await getBundleAtPath(trace, userFs, draftsPath);
     if (!draftsBundle.ok) {
-      return generalizeFailureResult(trace, draftsBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, draftsBundle, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     const syncableIdsInDrafts = await draftsBundle.value.getIds(trace, { type: 'bundle' });

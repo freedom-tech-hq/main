@@ -1,13 +1,14 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { extractSyncableItemTypeFromId, type SyncableId, type SyncablePath } from 'freedom-sync-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { getDirectoryHandle } from './getDirectoryHandle.ts';
 import { getFileHandleForSyncablePath } from './getFileHandleForSyncablePath.ts';
 
 export const makeExistsFuncForFolderPath = (rootHandle: FileSystemDirectoryHandle, path: SyncablePath) =>
   makeAsyncResultFunc([import.meta.filename], async (trace, id?: SyncableId): PR<boolean, 'wrong-type'> => {
-    const dir = await getDirectoryHandle(trace, rootHandle, path);
+    const dir = await disableLam(trace, 'not-found', (trace) => getDirectoryHandle(trace, rootHandle, path));
     if (!dir.ok) {
       if (dir.value.errorCode === 'not-found') {
         return makeSuccess(false);
@@ -19,7 +20,9 @@ export const makeExistsFuncForFolderPath = (rootHandle: FileSystemDirectoryHandl
       const itemType = extractSyncableItemTypeFromId(id);
       switch (itemType) {
         case 'file': {
-          const fileHandle = await getFileHandleForSyncablePath(trace, rootHandle, path.append(id));
+          const fileHandle = await disableLam(trace, 'not-found', (trace) =>
+            getFileHandleForSyncablePath(trace, rootHandle, path.append(id))
+          );
           if (!fileHandle.ok) {
             if (fileHandle.value.errorCode === 'not-found') {
               return makeSuccess(false);
@@ -31,7 +34,7 @@ export const makeExistsFuncForFolderPath = (rootHandle: FileSystemDirectoryHandl
         }
         case 'bundle':
         case 'folder': {
-          const dirHandle = await getDirectoryHandle(trace, rootHandle, path.append(id));
+          const dirHandle = await disableLam(trace, 'not-found', (trace) => getDirectoryHandle(trace, rootHandle, path.append(id)));
           if (!dirHandle.ok) {
             if (dirHandle.value.errorCode === 'not-found') {
               return makeSuccess(false);

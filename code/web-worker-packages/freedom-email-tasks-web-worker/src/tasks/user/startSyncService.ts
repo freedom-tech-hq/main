@@ -7,6 +7,7 @@ import { makeApiFetchTask } from 'freedom-fetching';
 import { api as fakeEmailServiceApi } from 'freedom-store-api-server-api';
 import type { RemoteAccessor } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TypeOrPromisedType } from 'yaschema';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
@@ -66,9 +67,13 @@ export const startSyncService = makeAsyncResultFunc(
     // These will typically fail if we're recovering an account from the remote -- because the storage folder won't exist locally yet, but
     // that's ok, it means the remote already has the access it needs.
     // Giving Appender Access on the Storage Folder to the Server
-    await bestEffort(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }));
+    await disableLam(trace, true, (trace) =>
+      bestEffort(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }))
+    );
     // Giving Editor Access on the Out Folder to the Server
-    await bestEffort(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
+    await disableLam(trace, true, (trace) =>
+      bestEffort(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }))
+    );
 
     const startedRoutingMail = await routeMail(trace, credential);
     if (!startedRoutingMail.ok) {

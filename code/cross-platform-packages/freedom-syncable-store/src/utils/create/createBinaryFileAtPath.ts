@@ -15,7 +15,7 @@ export const createBinaryFileAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: SyncablePath,
     { name, value, trustedTimeSignature }: Partial<SyncableOriginOptions> & { name?: DynamicSyncableItemName; value: Uint8Array }
-  ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableFileAccessor, 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     // Disabling validation since we're creating something new -- and this might be a new access control bundle for example, which would
     // make checking it impossible anyway
     const parent = await isSyncableValidationEnabledProvider(

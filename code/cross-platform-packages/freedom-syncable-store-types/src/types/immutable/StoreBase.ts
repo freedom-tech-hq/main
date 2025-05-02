@@ -20,7 +20,7 @@ export interface StoreBase extends SyncableItemAccessorBase {
     trace: Trace,
     id: SyncableId,
     expectedType?: SingleOrArray<T>
-  ) => PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'>;
+  ) => PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'>;
 
   /** Unordered IDs, optionally restricted to a specified type */
   readonly getIds: PRFunc<SyncableId[], never, [options?: { type?: SingleOrArray<SyncableItemType> }]>;

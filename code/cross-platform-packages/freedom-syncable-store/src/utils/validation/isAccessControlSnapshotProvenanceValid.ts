@@ -48,7 +48,7 @@ export const isAccessControlSnapshotProvenanceValid = makeAsyncResultFunc(
 
       const folder = await getNearestFolder(trace, store, item.path);
       if (!folder.ok) {
-        return generalizeFailureResult(trace, folder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+        return generalizeFailureResult(trace, folder, ['not-found', 'untrusted', 'wrong-type']);
       }
 
       const folderMetadata = await folder.value.getMetadata(trace);

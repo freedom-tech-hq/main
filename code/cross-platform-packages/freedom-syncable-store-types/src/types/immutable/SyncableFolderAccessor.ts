@@ -11,9 +11,6 @@ import type { FolderStore } from './FolderStore.ts';
 export interface SyncableFolderAccessor extends FileStore, FolderStore {
   readonly type: 'folder';
 
-  /** Returns `true` if this folder is ready to be pushed to remotes.  This returns `false` when the folder hasn't been initialized. */
-  readonly canPushToRemotes: PRFunc<boolean>;
-
   /** Determines if the specified crypto key set ID was associated with any of the specified roles at the specified time */
   readonly didCryptoKeyHaveRoleAtTimeMSec: PRFunc<
     boolean,

@@ -71,7 +71,7 @@ export const isAcceptanceValid = makeAsyncResultFunc(
 
     const nearestFolder = await getNearestFolder(trace, store, item.path);
     if (!nearestFolder.ok) {
-      return generalizeFailureResult(trace, nearestFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, nearestFolder, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const timeMSec = timeIdInfo.extractTimeMSec(acceptance.value.timeId);
