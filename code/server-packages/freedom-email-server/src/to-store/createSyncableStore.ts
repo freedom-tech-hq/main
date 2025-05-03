@@ -6,11 +6,10 @@ import { ConflictError } from 'freedom-common-errors';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { getPublicKeyStore } from 'freedom-db';
 import type { EmailUserId } from 'freedom-email-sync';
+import { getFsRootPathForStorageRootId } from 'freedom-fake-email-service/src/utils/getFsRootPathForStorageRootId.ts';
+import { getFsStatsAtPath } from 'freedom-fake-email-service/src/utils/getFsStatsAtPath.ts';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { storageRootIdInfo, type SyncableItemMetadata } from 'freedom-sync-types';
-
-import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
-import { getFsStatsAtPath } from './getFsStatsAtPath.ts';
 
 export const createSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],
