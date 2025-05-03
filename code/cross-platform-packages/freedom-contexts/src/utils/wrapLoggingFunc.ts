@@ -158,24 +158,27 @@ const makePrettyPrintLoggingFunc =
         break;
     }
 
-    const lines = [
-      // Main line
-      `${prettyTime} - ${paintedSeverity} - ${msgContent || '[No message]'}`,
-      // Format traceIds as path
-      `  traceIds: ${traceIds.length === 0 ? '<root>' : traceIds.join('.')}`
-    ];
+    const paleLines = [];
 
-    // Hide traceStacks, if empty
-    if (traceStacks.length > 0) {
-      lines.push(`  traceStacks: ${formatPrettyPrintValue(traceStacks)}`);
+    // Join traceIds
+    if (traceIds.length > 0) {
+      paleLines.push(`  traceIds: ${traceIds.join(', ')}`);
+    }
+
+    // Hide traceStacks if empty. Format each otherwise. Triangle is bright enough to be noticeable taking one space
+    for (let i = 0; i < traceStacks.length; i++) {
+      paleLines.push(`  traceStacks ${i}: ${traceStacks[i].join('▶︎')}`);
     }
 
     // Format the rest
     Object.entries(rest).forEach(([key, value]) => {
-      lines.push(`  ${key}: ${formatPrettyPrintValue(value)}`);
+      paleLines.push(`  ${key}: ${formatPrettyPrintValue(value)}`);
     });
 
-    loggingFunc(lines.join('\n'));
+    loggingFunc(
+      // Form the main bright line and wrap the pale lines with 'faint' color
+      `${prettyTime} - ${paintedSeverity} - ${msgContent || '<No message>'}\n\x1b[2m${paleLines.join('\n')}\x1b[0m`
+    );
   };
 
 const formatPrettyPrintValue = (value: any): string => {
