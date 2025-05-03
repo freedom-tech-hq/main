@@ -16,7 +16,7 @@ fi
 # Check if deployment name is provided
 if [ -z "$1" ]; then
   echo "Usage: $0 <deployment-name> [env-name]"
-  echo " E.g. $0 3.1_mail-host local"
+  echo " E.g. $0 3.1_mail-host.compose local"
   exit 1
 fi
 

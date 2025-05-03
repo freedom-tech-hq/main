@@ -10,7 +10,7 @@ Includes:
 ## Envs
 
 - Local & cloud deployments are supported.
-- Requires credentials and env-specific settings. See [secrets sample](../../secrets/sample/3.1_mail-host/)
+- Requires credentials and env-specific settings. See [secrets sample](../../secrets/sample/3.1_mail-host.compose/)
 
 ## Testing
 

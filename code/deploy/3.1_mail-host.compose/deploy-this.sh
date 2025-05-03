@@ -8,4 +8,4 @@ cd "$DEPLOY_SCRIPTS_DIR"
 read -p "Enter the env name (default: local): " ENV_NAME
 ENV_NAME="${ENV_NAME:-local}"
 
-./deploy-compose.sh 3.1_mail-host "$ENV_NAME"
+./deploy-compose.sh 3.1_mail-host.compose "$ENV_NAME"

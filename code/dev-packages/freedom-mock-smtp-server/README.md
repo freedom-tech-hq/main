@@ -14,12 +14,12 @@ The tool can expose emails in logs and collect samples.
 
 ### Prerequisites
 
-- [2.2_tools](../../deploy/2.2_tools) setup.
+- [2.2_tools](../../deploy/2.2_tools.iac) setup.
 - Local docker context `freedom-dev` is created for the dev server.
 
 ### Deploy
 
-IP is chosen in [freedom-mock-smtp-server.tf](../../deploy/2.2_tools/freedom-mock-smtp-server.tf)
+IP is chosen in [freedom-mock-smtp-server.tf](../../deploy/2.2_tools.iac/freedom-mock-smtp-server.tf)
 
 ```
 COMPOSE_BAKE=true \

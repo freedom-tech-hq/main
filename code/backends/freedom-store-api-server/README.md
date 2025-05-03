@@ -14,7 +14,7 @@ Before going production:
 
 ## Cloud Deployment
 
-See [mail-host](../../deploy/3.1_mail-host/README.md) deployment.
+See [mail-host](../../deploy/3.1_mail-host.compose/README.md) deployment.
 
 ## Development
 
