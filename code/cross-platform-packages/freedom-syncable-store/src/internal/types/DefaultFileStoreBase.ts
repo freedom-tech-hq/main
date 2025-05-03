@@ -24,7 +24,6 @@ import type { SingleOrArray } from 'yaschema';
 
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
-import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
@@ -295,38 +294,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   // FileStore Methods
 
-  public readonly isDeleted = makeAsyncResultFunc(
-    [import.meta.filename, 'isDeleted'],
-    async (trace, { recursive }: { recursive: boolean }): PR<boolean> => {
-      if (this.supportsDeletion) {
-        const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path);
-        if (!isDeleted.ok) {
-          return isDeleted;
-        } else if (isDeleted.value) {
-          return makeSuccess(true);
-        }
-      }
-
-      if (recursive) {
-        const store = this.weakStore_.deref();
-        if (store === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-        }
-
-        if (this.path.parentPath !== undefined) {
-          const parent = await getSyncableAtPath(trace, store, this.path.parentPath);
-          if (!parent.ok) {
-            return generalizeFailureResult(trace, parent, ['not-found', 'untrusted', 'wrong-type']);
-          }
-
-          return await parent.value.isDeleted(trace, { recursive: true });
-        }
-      }
-
-      return makeSuccess(false);
-    }
-  );
-
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
 
@@ -471,6 +438,22 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
     return makeSuccess(metadata.value);
   });
+
+  public readonly isDeleted = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeleted'],
+    async (trace, id: SyncableId): PR<boolean, 'not-found'> => {
+      if (!this.supportsDeletion) {
+        return makeSuccess(false);
+      }
+
+      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
+      if (!isDeleted.ok) {
+        return isDeleted;
+      }
+
+      return makeSuccess(isDeleted.value);
+    }
+  );
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],

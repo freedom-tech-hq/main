@@ -22,10 +22,11 @@ import {
   getFolderAtPath,
   getMutableFolderAtPath,
   getStringFromFile,
-  initializeRoot
+  initializeRoot,
+  isSyncableDeleted
 } from 'freedom-syncable-store';
 import { saltedId } from 'freedom-syncable-store-types';
-import { expectErrorCode, expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
+import { expectErrorCode, expectIncludes, expectNotOk, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
 import type { HotSwappableUserKeys } from '../../__test_dependency__/makeHotSwappableUserKeysForTesting.ts';
 import { makeHotSwappableUserKeysForTesting } from '../../__test_dependency__/makeHotSwappableUserKeysForTesting.ts';
@@ -107,7 +108,7 @@ describe('FileSystemSyncableStore', () => {
     // Deleting folder
     expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));
 
-    expectErrorCode(await getFolderAtPath(trace, store, testingPath), 'deleted');
+    expectStrictEqual((await isSyncableDeleted(trace, store, testingPath, { recursive: false })).value, true);
   });
 
   it('getIds should work', async (_t: TestContext) => {

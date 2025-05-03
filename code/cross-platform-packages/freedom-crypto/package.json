@@ -6,7 +6,6 @@
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-crypto-data": "0.0.0",
-    "freedom-notification-types": "0.0.0",
     "freedom-serialization": "0.0.0",
     "freedom-testing-tools": "0.0.0",
     "yaschema": "5.0.0"

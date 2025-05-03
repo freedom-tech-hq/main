@@ -6,6 +6,7 @@ import type { SyncableFileAccessor, SyncableStore } from 'freedom-syncable-store
 
 import { getBinaryFromFile } from './getBinaryFromFile.ts';
 
+/** `checkForDeletion` defaults to `true` */
 export const getStringFromFile = makeAsyncResultFunc(
   [import.meta.filename],
   async (

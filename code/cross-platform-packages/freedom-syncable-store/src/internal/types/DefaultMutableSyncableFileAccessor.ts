@@ -1,17 +1,15 @@
 import type { PR, PRFunc } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import { generateSha256HashFromBuffer } from 'freedom-crypto';
 import { InMemoryCache } from 'freedom-in-memory-cache';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableFileAccessor, MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { CACHE_DURATION_MSEC } from '../consts/timing.ts';
-import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAccessor {
   public readonly type = 'file';
@@ -19,7 +17,6 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
   public readonly path: SyncablePath;
 
   protected readonly weakStore_: WeakRef<MutableSyncableStore>;
-  private folderOperationsHandler_!: FolderOperationsHandler;
 
   protected readonly backing_: SyncableStoreBacking;
 
@@ -29,54 +26,21 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
     store,
     backing,
     path,
-    folderOperationsHandler,
     decode
   }: {
     store: MutableSyncableStore;
     backing: SyncableStoreBacking;
     path: SyncablePath;
-    folderOperationsHandler: FolderOperationsHandler;
     decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
   }) {
     this.weakStore_ = new WeakRef(store);
     this.backing_ = backing;
     this.path = path;
-    this.folderOperationsHandler_ = folderOperationsHandler;
 
     this.decode_ = decode;
   }
 
   // FileAccessor Methods
-
-  public readonly isDeleted = makeAsyncResultFunc(
-    [import.meta.filename, 'isDeleted'],
-    async (trace, { recursive }: { recursive: boolean }): PR<boolean> => {
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path);
-      if (!isDeleted.ok) {
-        return isDeleted;
-      } else if (isDeleted.value) {
-        return makeSuccess(true);
-      }
-
-      if (recursive) {
-        const store = this.weakStore_.deref();
-        if (store === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-        }
-
-        if (this.path.parentPath !== undefined) {
-          const parent = await getSyncableAtPath(trace, store, this.path.parentPath);
-          if (!parent.ok) {
-            return generalizeFailureResult(trace, parent, ['not-found', 'untrusted', 'wrong-type']);
-          }
-
-          return await parent.value.isDeleted(trace, { recursive: true });
-        }
-      }
-
-      return makeSuccess(false);
-    }
-  );
 
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
@@ -142,38 +106,26 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
     shouldResetIntervalOnGet: true
   });
 
-  public readonly getBinary = makeAsyncResultFunc(
-    [import.meta.filename, 'getBinary'],
-    async (trace, { checkForDeletion }: { checkForDeletion: boolean }): PR<Uint8Array, 'deleted'> => {
-      const cached = this.cache_.get(this, 'binary');
-      if (cached !== undefined) {
-        return makeSuccess(cached);
-      }
-
-      if (checkForDeletion) {
-        const isDeleted = await this.isDeleted(trace, { recursive: true });
-        if (!isDeleted.ok) {
-          return isDeleted;
-        } else if (isDeleted.value) {
-          return makeFailure(new NotFoundError(trace, { message: `${this.path.toString()} was deleted`, errorCode: 'deleted' }));
-        }
-      }
-
-      const encodedBinary = await this.getEncodedBinary(trace);
-      if (!encodedBinary.ok) {
-        return encodedBinary;
-      }
-
-      const decoded = await this.decode_(trace, encodedBinary.value);
-      /* node:coverage disable */
-      if (!decoded.ok) {
-        return decoded;
-      }
-      /* node:coverage enable */
-
-      return makeSuccess(this.cache_.set(this, 'binary', decoded.value));
+  public readonly getBinary = makeAsyncResultFunc([import.meta.filename, 'getBinary'], async (trace): PR<Uint8Array> => {
+    const cached = this.cache_.get(this, 'binary');
+    if (cached !== undefined) {
+      return makeSuccess(cached);
     }
-  );
+
+    const encodedBinary = await this.getEncodedBinary(trace);
+    if (!encodedBinary.ok) {
+      return encodedBinary;
+    }
+
+    const decoded = await this.decode_(trace, encodedBinary.value);
+    /* node:coverage disable */
+    if (!decoded.ok) {
+      return decoded;
+    }
+    /* node:coverage enable */
+
+    return makeSuccess(this.cache_.set(this, 'binary', decoded.value));
+  });
 
   public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
@@ -200,17 +152,10 @@ export const getOrCreateDefaultMutableSyncableFileAccessor = ({
   store,
   backing,
   path,
-  folderOperationsHandler,
   decode
 }: {
   store: MutableSyncableStore;
   backing: SyncableStoreBacking;
   path: SyncablePath;
-  folderOperationsHandler: FolderOperationsHandler;
   decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
-}) =>
-  globalCache.getOrCreate(
-    store,
-    path.toString(),
-    () => new DefaultMutableSyncableFileAccessor({ store, backing, path, folderOperationsHandler, decode })
-  );
+}) => globalCache.getOrCreate(store, path.toString(), () => new DefaultMutableSyncableFileAccessor({ store, backing, path, decode }));

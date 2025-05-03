@@ -24,6 +24,7 @@ export * from './getSyncableHashAtPath.ts';
 export * from './getTrustedTimeSourcesForPath.ts';
 export * from './guards/exports.ts';
 export * from './initializeRoot.ts';
+export * from './isSyncableDeleted.ts';
 export * from './logLs.ts';
 export * from './markSyncableNeedsRecomputeHashAtPath.ts';
 export * from './pull/exports.ts';

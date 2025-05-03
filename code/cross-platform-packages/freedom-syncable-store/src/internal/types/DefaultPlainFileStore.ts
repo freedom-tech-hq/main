@@ -64,7 +64,6 @@ export class DefaultPlainFileStore extends DefaultFileStoreBase {
       store,
       backing: this.backing_,
       path,
-      folderOperationsHandler: this.folderOperationsHandler_,
       decode: (trace, encodedData) => this.decodeData_(trace, encodedData)
     });
   }

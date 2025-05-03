@@ -43,7 +43,6 @@ import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableSto
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
-import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { type DefaultEncryptedFileStore, getOrCreateDefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
@@ -355,36 +354,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // FolderStore Methods
 
-  public readonly isDeleted = makeAsyncResultFunc(
-    [import.meta.filename, 'isDeleted'],
-    async (trace, { recursive }: { recursive: boolean }): PR<boolean> => {
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path);
-      if (!isDeleted.ok) {
-        return isDeleted;
-      } else if (isDeleted.value) {
-        return makeSuccess(true);
-      }
-
-      if (recursive) {
-        const store = this.weakStore_.deref();
-        if (store === undefined) {
-          return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-        }
-
-        if (this.path.parentPath !== undefined) {
-          const parent = await getSyncableAtPath(trace, store, this.path.parentPath);
-          if (!parent.ok) {
-            return generalizeFailureResult(trace, parent, ['not-found', 'untrusted', 'wrong-type']);
-          }
-
-          return await parent.value.isDeleted(trace, { recursive: true });
-        }
-      }
-
-      return makeSuccess(false);
-    }
-  );
-
   public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
 
@@ -536,6 +505,14 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       id: SyncableId,
       expectedType?: SingleOrArray<T>
     ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
+  );
+
+  public readonly isDeleted = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeleted'],
+    async (trace, id: SyncableId): PR<boolean, 'not-found'> => {
+      const store = this.selectStoreForId_(id);
+      return await store.isDeleted(trace, id);
+    }
   );
 
   // BundleManagement Methods

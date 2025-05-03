@@ -9,6 +9,7 @@ import type { JsonValue, Schema } from 'yaschema';
 
 import { getStringFromFile } from './getStringFromFile.ts';
 
+/** `checkForDeletion` defaults to `true` */
 export const getJsonFromFile = makeAsyncResultFunc(
   [import.meta.filename],
   async <T>(

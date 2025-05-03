@@ -7,9 +7,6 @@ export interface SyncableItemAccessorBase {
 
   readonly path: SyncablePath;
 
-  /** Checks if the item is marked as deleted.  If `recursive` is `true`, also checks the item's ancestors. */
-  readonly isDeleted: PRFunc<boolean, never, [{ recursive: boolean }]>;
-
   /** Gets the hash of this file */
   readonly getHash: PRFunc<Sha256Hash>;
 
