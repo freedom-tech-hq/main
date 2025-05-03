@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { subscribeOnOutboundEmails } from 'freedom-fake-email-service';
+import { subscribeOnOutboundEmails } from 'freedom-email-server';
 
 import { processOutboundEmail } from './processOutboundEmail.ts';
 

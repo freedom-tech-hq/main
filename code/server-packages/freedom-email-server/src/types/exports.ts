@@ -1,1 +1,1 @@
-// This file exports all type definitions for freedom-email-server
+export type { OutboundEmailHandlerArgs } from './OutboundEmailHandlerArgs.ts';

@@ -5,9 +5,9 @@ import type { User } from 'freedom-db';
 import { getAllUsers } from 'freedom-db';
 import type { EmailAccess } from 'freedom-email-sync';
 import { listOutboundMailIds } from 'freedom-email-sync';
+import { getOrCreateEmailAccessForUserPure } from 'freedom-fake-email-service';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
-import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
 
 /**
  * Subscribes to outbound emails by polling the listOutboundMailIds function
