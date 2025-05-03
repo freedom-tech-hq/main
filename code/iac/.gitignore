@@ -1,5 +1,0 @@
-.terraform/
-
-secrets/
-terraform.tfstate
-terraform.tfstate.backup

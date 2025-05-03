@@ -24,7 +24,7 @@ TODO: revise the part below
 ## Usage
 
 ```bash
-./deploy.sh <deployment-name> [env-name]
+./deploy-compose.sh <deployment-name> [env-name]
 ```
 
 - `<deployment-name>` is the name of a deployment configuration in the `deployments/` directory (e.g., `mail-host`).
@@ -32,7 +32,7 @@ TODO: revise the part below
 
 ## Deployment Process Implementation
 
-See the contents of `deploy.sh`. It is structured in a way so that each step can be executed or re-executed **manually** one by one.
+See the contents of `deploy-compose.sh`. It is structured in a way so that each step can be executed or re-executed **manually** one by one.
 
 To reproduce any step, the first one `. ./steps/1_vars.sh <deployment-name> <env-name>` should be executed in the current shell session at least once.
 
