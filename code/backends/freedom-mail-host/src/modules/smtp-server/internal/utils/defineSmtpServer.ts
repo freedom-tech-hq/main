@@ -224,7 +224,7 @@ function spawnAsyncThread(trace: Trace, handler: () => PR<undefined>) {
     })
     .then((value) => {
       if (!value.ok) {
-        // TODO: Log or something
+        log().error?.(trace, value.value.message);
       }
     });
 }
