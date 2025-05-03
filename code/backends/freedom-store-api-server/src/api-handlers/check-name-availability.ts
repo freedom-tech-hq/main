@@ -1,7 +1,7 @@
 import { excludeFailureResult, makeSuccess } from 'freedom-async';
 import { findUserByEmail } from 'freedom-db';
-import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
+import { api } from 'freedom-store-api-server-api';
 
 import * as config from '../config.ts';
 

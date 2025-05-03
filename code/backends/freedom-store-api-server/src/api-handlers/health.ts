@@ -1,6 +1,6 @@
 import { makeSuccess } from 'freedom-async';
-import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
+import { api } from 'freedom-store-api-server-api';
 
 import { startedAt, version } from '../version.ts';
 

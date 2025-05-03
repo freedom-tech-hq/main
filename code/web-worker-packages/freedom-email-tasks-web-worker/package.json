@@ -12,7 +12,7 @@
     "freedom-device-notification-types": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "freedom-email-user": "0.0.0",
-    "freedom-fake-email-service-api": "0.0.0",
+    "freedom-store-api-server-api": "0.0.0",
     "freedom-fetching": "0.0.0",
     "freedom-indexeddb-object-store": "0.0.0",
     "freedom-locking-types": "0.0.0",

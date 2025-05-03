@@ -2,8 +2,8 @@ import { makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import { getOrCreateEmailAccessForUser } from 'freedom-fake-email-service';
-import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
+import { api } from 'freedom-store-api-server-api';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { pullPath } from 'freedom-syncable-store';
 

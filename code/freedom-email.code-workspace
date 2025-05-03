@@ -118,6 +118,9 @@
             "path": "cross-platform-packages/freedom-syncable-store-types"
         },
         {
+            "path": "cross-platform-packages/freedom-store-api-server-api"
+        },
+        {
             "path": "cross-platform-packages/freedom-task-queue"
         },
         {
@@ -140,9 +143,6 @@
         },
         {
             "path": "dev-packages/freedom-fake-email-service"
-        },
-        {
-            "path": "dev-packages/freedom-fake-email-service-api"
         },
         {
             "path": "dev-packages/freedom-localization-tools"

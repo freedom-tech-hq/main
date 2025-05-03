@@ -14,11 +14,10 @@
   },
   "type": "module",
   "main": "lib/exports.mjs",
-  "name": "freedom-fake-email-service-api",
+  "name": "freedom-store-api-server-api",
   "nx": {
     "tags": [
       "type:lib",
-      "type:dev",
       "platform:server",
       "platform:web"
     ]
