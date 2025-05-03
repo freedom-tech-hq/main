@@ -177,7 +177,9 @@ const makePrettyPrintLoggingFunc =
 
     loggingFunc(
       // Form the main bright line and wrap the pale lines with 'faint' color
-      `${prettyTime} - ${paintedSeverity} - ${msgContent || '<No message>'}\n\x1b[2m${paleLines.join('\n')}\x1b[0m`
+      `${prettyTime} - ${paintedSeverity} - ${msgContent || '<No message>'}${
+        paleLines.length > 0 ? `\n\x1b[2m${paleLines.join('\n')}\x1b[0m` : ''
+      }`
     );
   };
 
