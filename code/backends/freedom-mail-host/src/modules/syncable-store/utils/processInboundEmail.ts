@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { log } from 'freedom-contexts';
-import { addIncomingEmail } from 'freedom-fake-email-service';
+import { addIncomingEmail } from 'freedom-email-server';
 import type { SMTPServerEnvelope } from 'smtp-server';
 
 import { parseEmail } from '../../formats/utils/parseEmail.ts';

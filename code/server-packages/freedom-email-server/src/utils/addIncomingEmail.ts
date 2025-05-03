@@ -3,8 +3,7 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { findUserByEmail } from 'freedom-db';
 import { addMail, type StoredMail } from 'freedom-email-sync';
-
-import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
+import { getOrCreateEmailAccessForUserPure } from 'freedom-fake-email-service/src/utils/getOrCreateEmailAccessForUserPure.ts';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],

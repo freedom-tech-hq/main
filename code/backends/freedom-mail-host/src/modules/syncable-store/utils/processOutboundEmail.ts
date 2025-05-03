@@ -1,8 +1,9 @@
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
+import { addIncomingEmail } from 'freedom-email-server';
 import { getOutboundMailById, moveOutboundMailToStorage } from 'freedom-email-sync';
-import { addIncomingEmail, type OutboundEmailHandlerArgs } from 'freedom-fake-email-service';
+import type { OutboundEmailHandlerArgs } from 'freedom-fake-email-service';
 
 import * as config from '../../../config.ts';
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';

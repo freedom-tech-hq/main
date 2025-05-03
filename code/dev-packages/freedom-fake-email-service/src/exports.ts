@@ -3,7 +3,6 @@ import { buildMode } from 'freedom-contexts';
 // export * from './startHttpRestServer.ts';
 // export * from './startHttpsRestServer.ts';
 export type { OutboundEmailHandlerArgs } from './types/OutboundEmailHandlerArgs.ts';
-export * from './utils/addIncomingEmail.ts';
 export * from './utils/createServerPrivateKeysIfNeeded.ts';
 export * from './utils/createSyncableStore.ts';
 export * from './utils/getOrCreateEmailAccessForUser.ts';
