@@ -2,11 +2,11 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
-import { getFsRootPathForStorageRootId } from 'freedom-fake-email-service';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { type SaltId, storageRootIdInfo } from 'freedom-sync-types';
 import { DefaultSyncableStore } from 'freedom-syncable-store';
 
+import { getFsRootPathForStorageRootId } from '../internal/utils/getFsRootPathForStorageRootId.ts';
 import { getCryptoService } from './getCryptoService.ts';
 
 export const getEmailAccess = makeAsyncResultFunc(
