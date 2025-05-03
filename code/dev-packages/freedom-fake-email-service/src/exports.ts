@@ -4,7 +4,7 @@ import { buildMode } from 'freedom-contexts';
 // export * from './startHttpsRestServer.ts';
 export * from './utils/getCryptoService.ts';
 export * from './utils/getFsRootPathForStorageRootId.ts';
-export * from './utils/getSyncableStoreBackingForUserEmail.ts';
+// inlined in freedom-syncable-store-server: export * from './utils/getSyncableStoreBackingForUserEmail.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
 DEV: expectedBuildMode = 'DEV';
