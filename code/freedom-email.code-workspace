@@ -172,6 +172,9 @@
             "path": "server-packages/freedom-email-server"
         },
         {
+            "path": "server-packages/freedom-syncable-store-server"
+        },
+        {
             "path": "server-packages/freedom-db"
         },
         {
