@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 
+// TODO: Invent a better package for this
 export const getFsStatsAtPath = makeAsyncResultFunc(
   [import.meta.filename],
   async (_trace, path: string): PR<{ exists: false; stats?: undefined } | { exists: true; stats: Stats }> => {
