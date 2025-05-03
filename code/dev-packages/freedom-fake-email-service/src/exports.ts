@@ -3,7 +3,7 @@ import { buildMode } from 'freedom-contexts';
 // export * from './startHttpRestServer.ts';
 // export * from './startHttpsRestServer.ts';
 export * from './utils/getCryptoService.ts';
-export * from './utils/getPublicKeysForUser.ts';
+export * from './utils/getFsRootPathForStorageRootId.ts';
 export * from './utils/getSyncableStoreBackingForUserEmail.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';

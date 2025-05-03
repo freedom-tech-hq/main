@@ -3,9 +3,9 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { getSaltsForUser } from 'freedom-db';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
-import { getPublicKeysForUser } from 'freedom-fake-email-service';
 
 import { getEmailAccess } from './getEmailAccess.ts';
+import { getPublicKeysForUser } from './getPublicKeysForUser.ts';
 
 // TODO: TEMP
 const globalCache: Record<EmailUserId, EmailAccess> = {};
