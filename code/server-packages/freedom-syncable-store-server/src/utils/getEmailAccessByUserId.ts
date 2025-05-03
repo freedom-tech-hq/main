@@ -3,14 +3,14 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { getSaltsForUser } from 'freedom-db';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
+import { getPublicKeysForUser } from 'freedom-fake-email-service';
 
-import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
-import { getPublicKeysForUser } from './getPublicKeysForUser.ts';
+import { getEmailAccess } from './getEmailAccess.ts';
 
 // TODO: TEMP
 const globalCache: Record<EmailUserId, EmailAccess> = {};
 
-export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
+export const getEmailAccessByUserId = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { userId }: { userId: EmailUserId }): PR<EmailAccess> => {
     const cached = globalCache[userId];
@@ -28,7 +28,7 @@ export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
       return generalizeFailureResult(trace, publicKeys, 'not-found');
     }
 
-    const access = await getOrCreateEmailAccessForUserPure(trace, {
+    const access = await getEmailAccess(trace, {
       userId,
       publicKeys: publicKeys.value,
       saltsById: saltsById.value

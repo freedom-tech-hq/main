@@ -1,11 +1,11 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { emailUserIdInfo } from 'freedom-email-sync';
-import { getOrCreateEmailAccessForUser } from 'freedom-fake-email-service';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { api } from 'freedom-store-api-server-api';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { pushPath } from 'freedom-syncable-store';
+import { getEmailAccessByUserId } from 'freedom-syncable-store-server';
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -16,7 +16,7 @@ export default makeHttpApiHandler(
       return makeFailure(new InputSchemaValidationError(trace, { message: 'Expected a valid EmailUserId' }));
     }
 
-    const access = await getOrCreateEmailAccessForUser(trace, { userId });
+    const access = await getEmailAccessByUserId(trace, { userId });
     if (!access.ok) {
       return access;
     }

@@ -5,7 +5,7 @@ import type { User } from 'freedom-db';
 import { getAllUsers } from 'freedom-db';
 import type { EmailAccess } from 'freedom-email-sync';
 import { listOutboundMailIds } from 'freedom-email-sync';
-import { getOrCreateEmailAccessForUserPure } from 'freedom-fake-email-service';
+import { getEmailAccess } from 'freedom-syncable-store-server';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
 
@@ -78,7 +78,7 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
         if (!isActive) return;
 
         const access = await uncheckedResult(
-          getOrCreateEmailAccessForUserPure(trace, {
+          getEmailAccess(trace, {
             userId: user.userId,
             publicKeys: user.publicKeys,
             saltsById: { SALT_default: user.defaultSalt }

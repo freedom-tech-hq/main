@@ -2,8 +2,9 @@ import { buildMode } from 'freedom-contexts';
 
 // export * from './startHttpRestServer.ts';
 // export * from './startHttpsRestServer.ts';
-export * from './utils/getOrCreateEmailAccessForUser.ts';
-export * from './utils/getOrCreateEmailAccessForUserPure.ts';
+export * from './utils/getCryptoService.ts';
+export * from './utils/getPublicKeysForUser.ts';
+export * from './utils/getSyncableStoreBackingForUserEmail.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
 DEV: expectedBuildMode = 'DEV';
