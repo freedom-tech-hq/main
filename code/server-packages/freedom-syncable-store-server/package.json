@@ -11,7 +11,6 @@
     "freedom-db": "0.0.0",
     "freedom-dev-logging-support": "0.0.0",
     "freedom-email-sync": "0.0.0",
-    "freedom-fake-email-service": "0.0.0",
     "freedom-file-system-syncable-store-backing": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",

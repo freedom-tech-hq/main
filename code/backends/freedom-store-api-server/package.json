@@ -3,11 +3,11 @@
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
     "express-ws": "5.0.2",
+    "express-yaschema-ws-api-handler": "4.3.0",
     "freedom-async": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
-    "freedom-email-server": "0.0.0",
-    "freedom-fake-email-service": "0.0.0"
+    "freedom-email-server": "0.0.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "1.4.8",

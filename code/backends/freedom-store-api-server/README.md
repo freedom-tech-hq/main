@@ -8,7 +8,7 @@ REST API server for Syncable Store.
 
 Before going production:
 
-- Get rid of `freedom-fake-email-service` dependency
++ Get rid of `freedom-fake-email-service` dependency
 + Implement unified error wrapping
 + Remove excessive console.log()
 

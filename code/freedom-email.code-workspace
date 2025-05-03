@@ -142,9 +142,6 @@
             "path": "dev-packages/freedom-dev-scripts"
         },
         {
-            "path": "dev-packages/freedom-fake-email-service"
-        },
-        {
             "path": "dev-packages/freedom-localization-tools"
         },
         {
