@@ -4,7 +4,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ConflictError } from 'freedom-common-errors';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
-import { getPublicKeyStore } from 'freedom-db';
+import { getPublicKeyStore } from 'freedom-db'; // TODO: Revise importing freedom-db in this package. They should probably join one level above, but maybe not
 import type { EmailUserId } from 'freedom-email-sync';
 import { getFsRootPathForStorageRootId } from 'freedom-fake-email-service/src/utils/getFsRootPathForStorageRootId.ts';
 import { getFsStatsAtPath } from 'freedom-fake-email-service/src/utils/getFsStatsAtPath.ts';

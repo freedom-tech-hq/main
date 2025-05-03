@@ -1,6 +1,6 @@
 import { buildMode } from 'freedom-contexts';
 
-export * from './types/exports.ts';
+export * from './utils/exports.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
 DEV: expectedBuildMode = 'DEV';
