@@ -2,12 +2,12 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
+import { getMailAgentUserKeys } from 'freedom-db/src/model/utils/getMailAgentUserKeys.ts';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { type SaltId, storageRootIdInfo } from 'freedom-sync-types';
 import { DefaultSyncableStore } from 'freedom-syncable-store';
 
 import { getFsRootPathForStorageRootId } from '../internal/utils/getFsRootPathForStorageRootId.ts';
-import { getCryptoService } from './getCryptoService.ts';
 
 export const getEmailAccess = makeAsyncResultFunc(
   [import.meta.filename],
@@ -23,7 +23,7 @@ export const getEmailAccess = makeAsyncResultFunc(
       saltsById: Partial<Record<SaltId, string>>;
     }
   ): PR<EmailAccess> => {
-    const cryptoService = await uncheckedResult(getCryptoService(trace));
+    const agentUserKeys = await uncheckedResult(getMailAgentUserKeys(trace));
 
     const storageRootId = storageRootIdInfo.make(userId);
 
@@ -33,13 +33,13 @@ export const getEmailAccess = makeAsyncResultFunc(
 
     const userFs = new DefaultSyncableStore({
       storageRootId,
-      cryptoService,
+      cryptoService: agentUserKeys,
       saltsById: saltsById,
       creatorPublicKeys: publicKeys,
       backing: backing
     });
 
-    const output: EmailAccess = { userId, cryptoService, saltsById: saltsById, userFs };
+    const output: EmailAccess = { userId, cryptoService: agentUserKeys, saltsById: saltsById, userFs };
 
     return makeSuccess(output);
   }

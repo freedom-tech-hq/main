@@ -3,14 +3,11 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import { type CryptoService } from 'freedom-crypto-service';
-import { getServerPrivateKeys } from 'freedom-db';
 import { once } from 'lodash-es';
 
-// TODO: Move to freedom-db, rename to get(MailAgent|MailBot|ServerAgent|ServerBot)CryptoService
-//   I want to pick the word 'agent' or 'bot' to represent it uses the User's interfaces, but it is not the end user.
-//   And then use the picked word everywhere.
-//   'agent' is a better choice, isn't it?
-export const getCryptoService = makeAsyncResultFunc(
+import { getServerPrivateKeys } from './getServerPrivateKeys.ts';
+
+export const getMailAgentUserKeys = makeAsyncResultFunc(
   [import.meta.filename],
   once(async (trace): PR<CryptoService> => {
     const serverPrivateKeys = await getServerPrivateKeys(trace);
