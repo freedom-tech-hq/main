@@ -5,7 +5,7 @@ set -e
 . "$DEPLOY_STEPS_DIR/require-params.sh"
 
 # Select the part of git repo we use
-cd "$PROJECT_CODE_ROOT"
+cd "$PROJECT_CODE_ROOT_DIR"
 
 # Clean and create deployment workspace
 mkdir -p "$DEPLOY_WORKSPACE_DIR"

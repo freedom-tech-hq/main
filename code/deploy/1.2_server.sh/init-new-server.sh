@@ -2,7 +2,11 @@
 set -e
 
 # Define constants
-ADMIN_USERS=("pavel")
+ENV_NAME=dev
+ADMIN_USERS=( # also ensure that all the SSH pub keys are in $PUB_KEYS_DIR (see below)
+  "pavel"
+  "brian"
+)
 
 # Check if server IP is provided
 if [ -z "$1" ]; then
@@ -23,7 +27,8 @@ HOSTNAME="$2"
 USER_SERVER="root@$SERVER_IP"
 SCRIPT_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 SECRETS_DIR="$(realpath "$SCRIPT_DIR/../../secrets")"
-SHARED_DIR="$(realpath "$SCRIPT_DIR/../../shared")"
+PUB_KEYS_DIR="$(realpath "$SECRETS_DIR/$ENV_NAME/secrets")"
+SHARED_DIR="$(realpath "$SCRIPT_DIR/../shared")"
 
 # Initialize the full init script
 echo "Initializing server IP=$SERVER_IP HOSTNAME=$HOSTNAME..."
@@ -44,8 +49,8 @@ EOF
 ### Create admin users ###
 # Check if every public key exists
 for USER in "${ADMIN_USERS[@]}"; do
-  if [ ! -f "$SECRETS_DIR/$USER.pub" ]; then
-    echo "Error: Public key for $USER not found at $SECRETS_DIR/$USER.pub"
+  if [ ! -f "$PUB_KEYS_DIR/$USER.pub" ]; then
+    echo "Error: Public key for $USER not found at $PUB_KEYS_DIR/$USER.pub"
     exit 1
   fi
 done
@@ -55,7 +60,7 @@ for USER in "${ADMIN_USERS[@]}"; do
   echo "Setting up admin user: $USER"
 
   # Read the public key content
-  PUB_KEY="$(cat "$SECRETS_DIR/$USER.pub")"
+  PUB_KEY="$(cat "$PUB_KEYS_DIR/$USER.pub")"
 
   # Add user setup script as a here-document
   FULL_INIT_SCRIPT="$FULL_INIT_SCRIPT"$'\n\n\n'$(cat <<EOF
