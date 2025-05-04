@@ -41,7 +41,7 @@ jobs:
         run: yarn lint
 
       - name: 🔸 Lint package.json Synchronization
-        run: nx run freedom-dev-scripts:run:package-sync
+        run: npx nx run freedom-dev-scripts:run:package-sync
 
   ######################################################################################################################
   test:
