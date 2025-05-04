@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-DEPLOY_SCRIPTS_DIR="$(realpath "$(dirname "$0")/..")"
+DEPLOY_ROOT_DIR="$(realpath "$(dirname "$0")/..")"
 
-cd "$DEPLOY_SCRIPTS_DIR"
+cd "$DEPLOY_ROOT_DIR"
 
 # UI
 read -p "Enter the env name (default: local): " ENV_NAME

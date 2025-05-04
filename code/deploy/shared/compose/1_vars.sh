@@ -3,10 +3,10 @@
 
 # Locate the roots
 if [ "$(basename "$0")" = "deploy-compose.sh" ]; then
-  DEPLOY_SCRIPTS_DIR="$(realpath "$(dirname "$0")")"
+  DEPLOY_ROOT_DIR="$(realpath "$(dirname "$0")")"
 elif [ "$(basename "$0")" = "1_vars.sh" ]; then
-  DEPLOY_SCRIPTS_DIR="$(realpath "$(dirname "$0")/..")"
-elif [ -n "$DEPLOY_SCRIPTS_DIR" ]; then
+  DEPLOY_ROOT_DIR="$(realpath "$(dirname "$0")/../..")"
+elif [ -n "$DEPLOY_ROOT_DIR" ]; then
   true # Calling in another context, but this var is already prepared
 else
   echo "Error: 1_vars.sh should be sourced from either deploy-compose.sh or a user shell session"
@@ -21,20 +21,20 @@ if [ -z "$1" ]; then
 fi
 
 # Calculations
-DEPLOY_STEPS_DIR="$DEPLOY_SCRIPTS_DIR/steps"
-PROJECT_CODE_ROOT="$(realpath "$DEPLOY_SCRIPTS_DIR/..")"
+DEPLOY_STEPS_DIR="$DEPLOY_ROOT_DIR/shared/compose"
+PROJECT_CODE_ROOT_DIR="$(realpath "$DEPLOY_ROOT_DIR/..")"
 DEPLOY_DOCKER_CONTEXT="$(docker context show)"
 
 # Set deploy params
 export DEPLOY_DEPLOYMENT="$1"
 export DEPLOY_ENV_NAME="${2:-local}"
 
-export PROJECT_CODE_ROOT
-export DEPLOY_DEPLOYMENT_DIR="$DEPLOY_SCRIPTS_DIR/$DEPLOY_DEPLOYMENT"
-export DEPLOY_DEPLOYMENT_SECRETS_DIR="$PROJECT_CODE_ROOT/secrets/$DEPLOY_ENV_NAME/$DEPLOY_DEPLOYMENT"
-export DEPLOY_WORKSPACE_DIR="$DEPLOY_SCRIPTS_DIR/workspace"
+export PROJECT_CODE_ROOT_DIR
+export DEPLOY_DEPLOYMENT_DIR="$DEPLOY_ROOT_DIR/$DEPLOY_DEPLOYMENT"
+export DEPLOY_DEPLOYMENT_SECRETS_DIR="$PROJECT_CODE_ROOT_DIR/secrets/$DEPLOY_ENV_NAME/$DEPLOY_DEPLOYMENT"
+export DEPLOY_WORKSPACE_DIR="$DEPLOY_ROOT_DIR/workspace"
 
-export DEPLOY_SCRIPTS_DIR
+export DEPLOY_ROOT_DIR
 export DEPLOY_STEPS_DIR
 
 export DEPLOY_DOCKER_CONTEXT
