@@ -4,7 +4,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { encryptBuffer, generateSignedBuffer } from 'freedom-crypto';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { deserialize } from 'freedom-serialization';
 import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types';
 
@@ -13,7 +13,7 @@ export const encryptAndSignBinary = makeAsyncResultFunc(
   async (
     trace: Trace,
     value: Uint8Array,
-    { accessControlDoc, cryptoService }: { accessControlDoc: ISyncableStoreAccessControlDocument; cryptoService: CryptoService }
+    { accessControlDoc, cryptoService }: { accessControlDoc: ISyncableStoreAccessControlDocument; cryptoService: UserKeys }
   ): PR<Uint8Array> => {
     const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {

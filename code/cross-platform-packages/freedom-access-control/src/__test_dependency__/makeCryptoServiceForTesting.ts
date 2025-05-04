@@ -4,10 +4,10 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { makeCryptoService } from 'freedom-crypto-service';
 
-export const makeCryptoServiceForTesting = ({ privateKeys }: { privateKeys: PrivateCombinationCryptoKeySet }): CryptoService =>
+export const makeCryptoServiceForTesting = ({ privateKeys }: { privateKeys: PrivateCombinationCryptoKeySet }): UserKeys =>
   makeCryptoService({
     getPrivateCryptoKeySetIds: makeAsyncResultFunc(
       [import.meta.filename, 'getPrivateCryptoKeySetIds'],

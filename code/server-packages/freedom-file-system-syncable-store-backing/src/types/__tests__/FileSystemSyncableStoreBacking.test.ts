@@ -8,7 +8,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import {
@@ -38,7 +38,7 @@ describe('FileSystemSyncableStore', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
   let cryptoService!: HotSwappableCryptoService;
-  let primaryUserCryptoService!: CryptoService;
+  let primaryUserCryptoService!: UserKeys;
   let storeBacking!: FileSystemSyncableStoreBacking;
   let store!: DefaultSyncableStore;
 

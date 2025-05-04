@@ -8,7 +8,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
@@ -22,7 +22,7 @@ describe('generateSignedModifyAccessChange', () => {
   let trace!: Trace;
   let cryptoKeys1!: PrivateCombinationCryptoKeySet;
   let cryptoKeys2!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: CryptoService;
+  let cryptoService!: UserKeys;
   let accessControlDoc!: TestAccessControlDocument;
 
   beforeEach(async () => {

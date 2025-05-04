@@ -9,7 +9,7 @@ import {
   extractValueFromSignedBuffer,
   isSignatureValidForSignedBuffer
 } from 'freedom-crypto';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { decryptOneEncryptedValue } from 'freedom-crypto-service';
 import type { ISyncableStoreAccessControlDocument } from 'freedom-syncable-store-types';
 
@@ -18,7 +18,7 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
   async (
     trace: Trace,
     signedEncryptedValue: Uint8Array,
-    { accessControlDoc, cryptoService }: { accessControlDoc: ISyncableStoreAccessControlDocument; cryptoService: CryptoService }
+    { accessControlDoc, cryptoService }: { accessControlDoc: ISyncableStoreAccessControlDocument; cryptoService: UserKeys }
   ): PR<Uint8Array> => {
     const sharedKeys = await accessControlDoc.getSharedKeys(trace);
     /* node:coverage disable */

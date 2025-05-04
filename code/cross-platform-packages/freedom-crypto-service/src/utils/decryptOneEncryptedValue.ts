@@ -6,7 +6,7 @@ import type { Trace } from 'freedom-contexts';
 import { decryptEncryptedValue } from 'freedom-crypto';
 import type { CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
 
-import type { CryptoService } from '../types/CryptoService.ts';
+import type { UserKeys } from '../types/UserKeys.ts';
 
 /**
  * Decrypts the first value that the crypto service has access to.  Returns an error if the crypto service can't access any of the values.
@@ -15,7 +15,7 @@ import type { CryptoService } from '../types/CryptoService.ts';
  */
 export const decryptOneEncryptedValue = makeAsyncResultFunc(
   [import.meta.filename],
-  async <T>(trace: Trace, cryptoService: CryptoService, encryptedValues: Partial<Record<CryptoKeySetId, EncryptedValue<T>>>): PR<T> => {
+  async <T>(trace: Trace, cryptoService: UserKeys, encryptedValues: Partial<Record<CryptoKeySetId, EncryptedValue<T>>>): PR<T> => {
     const privateKeyIds = await cryptoService.getPrivateCryptoKeySetIds(trace);
     if (!privateKeyIds.ok) {
       return privateKeyIds;

@@ -14,7 +14,7 @@ import { makeSerializedValueSchema, timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { serialize } from 'freedom-serialization';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 import type { Schema } from 'yaschema';
@@ -34,7 +34,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
       doesRoleHaveReadAccess
     }: {
       generateTrustedTimeForAccessChange: PRFunc<TrustedTime, never, [AccessChange<RoleT>]>;
-      cryptoService: CryptoService;
+      cryptoService: UserKeys;
       accessControlDoc: AccessControlDocument<RoleT>;
       params: Omit<AddAccessChangeParams<RoleT>, 'type'>;
       roleSchema: Schema<RoleT>;

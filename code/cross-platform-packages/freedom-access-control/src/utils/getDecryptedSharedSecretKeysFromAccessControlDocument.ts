@@ -3,14 +3,14 @@ import type { PR } from 'freedom-async';
 import { allResultsReduced, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { decryptOneEncryptedValue } from 'freedom-crypto-service';
 
 export const getDecryptedSharedSecretKeysFromAccessControlDocument = makeAsyncResultFunc(
   [import.meta.filename],
   async <RoleT extends string>(
     trace: Trace,
-    { cryptoService, accessControl }: { cryptoService: CryptoService; accessControl: AccessControlDocument<RoleT> }
+    { cryptoService, accessControl }: { cryptoService: UserKeys; accessControl: AccessControlDocument<RoleT> }
   ): PR<Partial<Record<CryptoKeySetId, SharedSecretKeys>>> => {
     const sharedKeys = await accessControl.getSharedKeys(trace);
     /* node:coverage disable */

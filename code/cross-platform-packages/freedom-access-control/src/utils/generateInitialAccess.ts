@@ -7,7 +7,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
 import { type CombinationCryptoKeySet, type CryptoKeySetId, type EncryptingKeySet, publicKeysByIdSchema } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { serialize } from 'freedom-serialization';
 import { type Schema } from 'yaschema';
 
@@ -25,7 +25,7 @@ export const generateInitialAccess = makeAsyncResultFunc(
       roleSchema,
       doesRoleHaveReadAccess
     }: {
-      cryptoService: CryptoService;
+      cryptoService: UserKeys;
       initialAccess: Array<{ role: RoleT; publicKeys: CombinationCryptoKeySet }>;
       roleSchema: Schema<RoleT>;
       doesRoleHaveReadAccess: (role: RoleT) => boolean;

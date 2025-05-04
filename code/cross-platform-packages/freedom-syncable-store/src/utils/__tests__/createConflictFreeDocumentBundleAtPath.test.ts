@@ -7,7 +7,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
@@ -26,7 +26,7 @@ import { initializeRoot } from '../initializeRoot.ts';
 describe('createConflictFreeDocumentBundleAtPath', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: CryptoService;
+  let cryptoService!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 

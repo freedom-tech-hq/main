@@ -1,10 +1,10 @@
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 
-export interface HotSwappableCryptoService extends CryptoService {
-  hotSwap: (newCryptoService: CryptoService) => void;
+export interface HotSwappableCryptoService extends UserKeys {
+  hotSwap: (newCryptoService: UserKeys) => void;
 }
 
-export const makeHotSwappableCryptoServiceForTesting = (initialCryptoService: CryptoService): HotSwappableCryptoService => {
+export const makeHotSwappableCryptoServiceForTesting = (initialCryptoService: UserKeys): HotSwappableCryptoService => {
   let activeCryptoService = initialCryptoService;
 
   return {
