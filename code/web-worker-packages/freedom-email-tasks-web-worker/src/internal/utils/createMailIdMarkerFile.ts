@@ -28,7 +28,7 @@ export const createMailIdMarkerFile = makeAsyncResultFunc(
       yearPath.month.day.hour.value
     );
     if (!createdStructure.ok) {
-      return generalizeFailureResult(trace, createdStructure, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, createdStructure, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     const markerPath = yearPath.month.day.hour.mailId(mailId);
@@ -37,7 +37,12 @@ export const createMailIdMarkerFile = makeAsyncResultFunc(
     if (!created.ok) {
       // Treating conflict as success, since it means the file already exists
       if (created.value.errorCode !== 'conflict') {
-        return generalizeFailureResult(trace, excludeFailureResult(created, 'conflict'), ['not-found', 'untrusted', 'wrong-type']);
+        return generalizeFailureResult(trace, excludeFailureResult(created, 'conflict'), [
+          'deleted',
+          'not-found',
+          'untrusted',
+          'wrong-type'
+        ]);
       }
     }
 

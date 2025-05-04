@@ -1,10 +1,10 @@
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableIdParts, extractSyncableItemTypeFromId } from 'freedom-sync-types';
-import { ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID } from 'freedom-syncable-store-types';
+import { ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
 
 export const isSpecialAutomaticallyTrustedPath = (path: SyncablePath): boolean => {
-  // Folders always have access control and store changes bundles inside them, so we can automatically trust that they should exist
-  if (isAccessControlDocumentPath(path) || isStoreChangesDocumentPath(path)) {
+  // Folders always have an access control bundle inside them, so we can automatically trust that they should exist
+  if (isAccessControlDocumentPath(path)) {
     return true;
   }
 
@@ -37,13 +37,6 @@ export const isAccessControlDocumentSnapshotFilePath = (path: SyncablePath): boo
   path.ids.length > 1 &&
   extractSyncableItemTypeFromId(path.lastId!) === 'file' &&
   isAccessControlDocumentSnapshotsBundlePath(path.parentPath!);
-
-export const isStoreChangesDocumentPath = (path: SyncablePath): boolean =>
-  path.ids.length > 0 &&
-  path.lastId === STORE_CHANGES_BUNDLE_ID &&
-  extractSyncableItemTypeFromId(path.lastId) === 'bundle' &&
-  // Root folder or explicit folder
-  (path.ids.length === 1 || extractSyncableItemTypeFromId(path.ids[path.ids.length - 2]) === 'folder');
 
 // Helpers
 

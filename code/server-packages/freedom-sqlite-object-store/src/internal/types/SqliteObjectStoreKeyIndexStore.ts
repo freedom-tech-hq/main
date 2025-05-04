@@ -31,7 +31,7 @@ export class SqliteObjectStoreKeyIndexStore<KeyT extends string> implements Inde
       const prepared = this.db_.prepare<unknown[], { count: number }>(`
         SELECT count(*) AS count
         FROM ${this.tableName_}
-        WHERE isDeleted = 0 ${andParams.length > 0 ? `AND ${andParams.join(' AND ')}` : ''}
+        ${andParams.length > 0 ? `WHERE ${andParams.join(' AND ')}` : ''}
       `);
       const result = prepared.get(args);
 
@@ -85,7 +85,7 @@ export class SqliteObjectStoreKeyIndexStore<KeyT extends string> implements Inde
 
       const prepared = this.db_.prepare<unknown[], { key: KeyT }>(`
         SELECT key FROM ${this.tableName_} 
-        WHERE isDeleted = 0 ${andParams.length > 0 ? `AND ${andParams.join(' AND ')}` : ''}
+        ${andParams.length > 0 ? `WHERE ${andParams.join(' AND ')}` : ''}
         ORDER BY key ${asc ? 'ASC' : 'DESC'}
         LIMIT ? OFFSET ?
       `);

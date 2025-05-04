@@ -26,7 +26,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
       newDocument: () => TypeOrPromisedType<DocumentT>;
       name?: DynamicSyncableItemName;
     }
-  ): PR<undefined, 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<undefined, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const docBundle = await createBundleAtPath(trace, store, path, { name, trustedTimeSignature });
     /* node:coverage disable */
     if (!docBundle.ok) {

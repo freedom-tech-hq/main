@@ -14,7 +14,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    */
   readonly createBinaryFile: PRFunc<
     MutableSyncableFileAccessor,
-    'conflict',
+    'conflict' | 'deleted',
     [
       | (SyncableOriginOptions & {
           mode?: 'local';
@@ -40,7 +40,7 @@ export interface MutableFileStore extends MutableStoreBase, FileStore {
    */
   readonly createBundle: PRFunc<
     MutableSyncableBundleAccessor,
-    'conflict',
+    'conflict' | 'deleted',
     [
       | (SyncableOriginOptions & {
           mode?: 'local';

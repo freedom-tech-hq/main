@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { allResultsMapped, debugTopic, GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
@@ -9,7 +9,6 @@ import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath }
 import { extractSyncableItemTypeFromId, isSyncableItemEncrypted, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { guardIsExpectedType, type LocalItemMetadata, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
-  BundleManagement,
   GenerateNewSyncableItemNameFunc,
   MutableFileStore,
   MutableSyncableBundleAccessor,
@@ -25,6 +24,7 @@ import type { SingleOrArray } from 'yaschema';
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
+import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
@@ -38,7 +38,7 @@ export interface DefaultFileStoreBaseConstructorArgs {
   supportsDeletion: boolean;
 }
 
-export abstract class DefaultFileStoreBase implements MutableFileStore, BundleManagement {
+export abstract class DefaultFileStoreBase implements MutableFileStore {
   public readonly type = 'bundle';
   public readonly path: SyncablePath;
   public readonly supportsDeletion: boolean;
@@ -81,7 +81,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBinaryFile'],
-    async (trace: Trace, args): PR<MutableSyncableFileAccessor, 'conflict'> => {
+    async (trace: Trace, args): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
@@ -103,6 +103,13 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const id = args.id ?? uuidId('file');
           const newPath = this.path.append(id);
+
+          const isDeleted = await isSyncableDeleted(trace, store, newPath, { recursive: false });
+          if (!isDeleted.ok) {
+            return isDeleted;
+          } else if (isDeleted.value) {
+            return makeFailure(new NotFoundError(trace, { message: `${newPath.toString()} was deleted`, errorCode: 'deleted' }));
+          }
 
           const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
             name: args.name ?? id,
@@ -134,7 +141,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly createBundle: MutableFileStore['createBundle'] = makeAsyncResultFunc(
     [import.meta.filename, 'createBundle'],
-    async (trace, args): PR<MutableSyncableBundleAccessor, 'conflict'> => {
+    async (trace, args): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
           return await this.createPreEncodedBundle_(trace, args.id, args.metadata);
@@ -147,6 +154,13 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
           const id = args.id ?? uuidId('bundle');
           const newPath = this.path.append(id);
+
+          const isDeleted = await isSyncableDeleted(trace, store, newPath, { recursive: false });
+          if (!isDeleted.ok) {
+            return isDeleted;
+          } else if (isDeleted.value) {
+            return makeFailure(new NotFoundError(trace, { message: `${newPath.toString()} was deleted`, errorCode: 'deleted' }));
+          }
 
           const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
             name: args.name ?? id,
@@ -177,53 +191,51 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
-    async (trace, id: SyncableId): PR<undefined, 'not-found'> => {
-      const removePath = this.path.append(id);
+    async (trace, _id: SyncableId): PR<undefined, 'not-found'> => {
+      // TODO: reimplement
+      return makeFailure(new GeneralError(trace, { message: 'delete is not supported' }));
+      // const removePath = this.path.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'delete', pathString: removePath.toString() });
+      // DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'delete', pathString: removePath.toString() });
 
-      if (!this.supportsDeletion) {
-        return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported in ${this.path.toString()}` }));
-      }
+      // if (!this.supportsDeletion) {
+      //   return makeFailure(new InternalStateError(trace, { message: `Deletion is not supported in ${this.path.toString()}` }));
+      // }
 
-      // Checking that the requested file exists in the backing
-      const exists = await this.backing_.existsAtPath(trace, removePath);
-      /* node:coverage disable */
-      if (!exists.ok) {
-        return exists;
-      } else if (!exists.value) {
-        return makeFailure(
-          new NotFoundError(trace, {
-            message: `No file found for ID: ${id} in ${this.path.toString()}`,
-            errorCode: 'not-found'
-          })
-        );
-      }
-      /* node:coverage enable */
+      // // Checking that the requested file exists in the backing
+      // const exists = await this.backing_.existsAtPath(trace, removePath);
+      // /* node:coverage disable */
+      // if (!exists.ok) {
+      //   return exists;
+      // } else if (!exists.value) {
+      //   return makeFailure(
+      //     new NotFoundError(trace, {
+      //       message: `No file found for ID: ${id} in ${this.path.toString()}`,
+      //       errorCode: 'not-found'
+      //     })
+      //   );
+      // }
+      // /* node:coverage enable */
 
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, removePath);
-      if (!isDeleted.ok) {
-        return isDeleted;
-      } else if (isDeleted.value) {
-        // Already deleted
-        return makeSuccess(undefined);
-      }
+      // const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, removePath);
+      // if (!isDeleted.ok) {
+      //   return isDeleted;
+      // } else if (isDeleted.value) {
+      //   // Already deleted
+      //   return makeSuccess(undefined);
+      // }
 
-      const markedAsDeleted = await this.folderOperationsHandler_.markPathAsDeleted(trace, removePath);
-      /* node:coverage disable */
-      if (!markedAsDeleted.ok) {
-        return markedAsDeleted;
-      }
-      /* node:coverage enable */
+      // const markedAsDeleted = await this.folderOperationsHandler_.markPathAsDeleted(trace, removePath);
+      // /* node:coverage disable */
+      // if (!markedAsDeleted.ok) {
+      //   return markedAsDeleted;
+      // }
+      // /* node:coverage enable */
 
-      const markedNeedsRecomputedHash = await this.markNeedsRecomputeHash(trace);
-      /* node:coverage disable */
-      if (!markedNeedsRecomputedHash.ok) {
-        return markedNeedsRecomputedHash;
-      }
-      /* node:coverage enable */
+      // // Note: the actual files aren't deleted directly.  Only when the approval of the deletion change is detected will the data actually
+      // // be removed
 
-      return makeSuccess(undefined);
+      // return makeSuccess(undefined);
     }
   );
 
@@ -439,21 +451,20 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     return makeSuccess(metadata.value);
   });
 
-  public readonly isDeleted = makeAsyncResultFunc(
-    [import.meta.filename, 'isDeleted'],
-    async (trace, id: SyncableId): PR<boolean, 'not-found'> => {
-      if (!this.supportsDeletion) {
-        return makeSuccess(false);
-      }
+  public readonly isDeleted = makeAsyncResultFunc([import.meta.filename, 'isDeleted'], async (_trace, _id: SyncableId): PR<boolean> => {
+    // TODO: reimplement
+    return makeSuccess(false);
+    // if (!this.supportsDeletion) {
+    //   return makeSuccess(false);
+    // }
 
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
-      if (!isDeleted.ok) {
-        return isDeleted;
-      }
+    // const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
+    // if (!isDeleted.ok) {
+    //   return isDeleted;
+    // }
 
-      return makeSuccess(isDeleted.value);
-    }
-  );
+    // return makeSuccess(isDeleted.value);
+  });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
@@ -527,55 +538,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore, BundleMa
     }
 
     return makeSuccess(flatten(recursiveLs.value));
-  });
-
-  // BundleManagement Methods
-
-  public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (trace: Trace): PR<undefined> => {
-    if (!this.supportsDeletion) {
-      return makeSuccess(undefined);
-    }
-
-    const allItemIds = await this.backing_.getIdsInPath(trace, this.path, { type: syncableItemTypes.exclude('folder') });
-    if (!allItemIds.ok) {
-      return generalizeFailureResult(trace, allItemIds, ['not-found', 'wrong-type']);
-    } else if (allItemIds.value.length === 0) {
-      return makeSuccess(undefined);
-    }
-
-    const deleteIds = new Set<SyncableId>();
-    for (const id of allItemIds.value) {
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
-      if (!isDeleted.ok) {
-        return isDeleted;
-      }
-      if (isDeleted.value) {
-        deleteIds.add(id);
-      }
-    }
-
-    const deletedInBacking = await allResultsMapped(trace, Array.from(deleteIds), {}, (trace, itemId) =>
-      this.backing_.deleteAtPath(trace, this.path.append(itemId))
-    );
-    if (!deletedInBacking.ok) {
-      return generalizeFailureResult(trace, deletedInBacking, ['not-found', 'wrong-type']);
-    }
-
-    const subBundleIds = await this.backing_.getIdsInPath(trace, this.path, { type: 'bundle' });
-    if (!subBundleIds.ok) {
-      return generalizeFailureResult(trace, subBundleIds, ['not-found', 'wrong-type']);
-    }
-    const recursivelySwept = await allResultsMapped(trace, subBundleIds.value, {}, async (trace, bundleId) => {
-      const itemAccessor = this.makeMutableItemAccessor_(this.path.append(bundleId), 'bundle');
-      return await itemAccessor.sweep(trace);
-    });
-    /* node:coverage disable */
-    if (!recursivelySwept.ok) {
-      return recursivelySwept;
-    }
-    /* node:coverage enable */
-
-    return makeSuccess(undefined);
   });
 
   // Private Methods

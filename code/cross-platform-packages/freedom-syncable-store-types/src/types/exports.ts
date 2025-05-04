@@ -1,7 +1,5 @@
-export * from './BundleManagement.ts';
 export * from './ConflictFreeDocumentBundleNotifications.ts';
 export * from './ConflictFreeDocumentEvaluator.ts';
-export * from './FolderManagement.ts';
 export * from './GenerateNewSyncableItemNameFunc.ts';
 export * from './immutable/exports.ts';
 export * from './IsConflictFreeDocumentSnapshotValidFunc.ts';

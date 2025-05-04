@@ -21,7 +21,7 @@ export const createJsonFileAtPath = makeAsyncResultFunc(
       schema,
       trustedTimeSignature
     }: Partial<SyncableOriginOptions> & { name?: DynamicSyncableItemName; value: T; schema: Schema<T> }
-  ): PR<MutableSyncableFileAccessor, 'conflict' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const serialization = await serialize(trace, value, schema);
     /* node:coverage disable */
     if (!serialization.ok) {

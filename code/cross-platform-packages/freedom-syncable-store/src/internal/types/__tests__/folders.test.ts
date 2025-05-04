@@ -9,7 +9,7 @@ import type { UserKeys } from 'freedom-crypto-service';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
-import { ACCESS_CONTROL_BUNDLE_ID, saltedId, STORE_CHANGES_BUNDLE_ID } from 'freedom-syncable-store-types';
+import { ACCESS_CONTROL_BUNDLE_ID, saltedId } from 'freedom-syncable-store-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { HotSwappableUserKeys } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
@@ -181,7 +181,6 @@ describe('folders', () => {
     const outerFolderItemIds = await outerFolder2.value.getIds(trace);
     expectOk(outerFolderItemIds);
     expectIncludes(outerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_ID);
-    expectIncludes(outerFolderItemIds.value, STORE_CHANGES_BUNDLE_ID);
     expectIncludes(outerFolderItemIds.value, innerFolder.value.path.lastId);
 
     const innerFolder2 = await getFolderAtPath(trace, store, innerPath);
@@ -190,7 +189,6 @@ describe('folders', () => {
     const innerFolderItemIds = await innerFolder2.value.getIds(trace);
     expectOk(innerFolderItemIds);
     expectIncludes(innerFolderItemIds.value, ACCESS_CONTROL_BUNDLE_ID);
-    expectIncludes(innerFolderItemIds.value, STORE_CHANGES_BUNDLE_ID);
     expectIncludes(innerFolderItemIds.value, helloWorldTxtFile.value.path.lastId!);
   });
 

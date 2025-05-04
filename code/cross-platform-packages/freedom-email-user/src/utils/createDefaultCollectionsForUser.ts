@@ -21,7 +21,13 @@ export const createDefaultCollectionsForUser = makeAsyncResultFunc(
         await getOrCreateBundlesAtPaths(trace, userFs, paths.collections.value, paths.collections[collectionType].value)
     );
     if (!createdAllCollectionsBundles.ok) {
-      return generalizeFailureResult(trace, createdAllCollectionsBundles, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, createdAllCollectionsBundles, [
+        'deleted',
+        'format-error',
+        'not-found',
+        'untrusted',
+        'wrong-type'
+      ]);
     }
 
     return makeSuccess(undefined);

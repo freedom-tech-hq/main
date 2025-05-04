@@ -61,7 +61,7 @@ export const getMutableConflictFreeDocumentFromBundleAtPath = makeAsyncResultFun
         /* node:coverage disable */
         if (!savedDelta.ok) {
           // Conflicts shouldn't happen since we're using a UUID for the delta ID
-          return generalizeFailureResult(trace, savedDelta, ['not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, savedDelta, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
 

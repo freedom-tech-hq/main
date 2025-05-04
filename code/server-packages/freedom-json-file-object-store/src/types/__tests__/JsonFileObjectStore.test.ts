@@ -44,20 +44,12 @@ describe('JsonFileObjectStore', () => {
     t.assert.strictEqual(found.value, 3.14);
   });
 
-  it('Deleting existing entries should work', async (t: TestContext) => {
+  it('Deleting existing entries should work', async (_t: TestContext) => {
     expectOk(await objectStore.mutableObject('a').create(trace, 3.14));
 
     expectOk(await objectStore.mutableObject('a').delete(trace));
 
-    const deletedKeys1 = await objectStore.getDeletedKeys(trace);
-    expectOk(deletedKeys1);
-    t.assert.deepStrictEqual(deletedKeys1.value.items, ['a']);
-
-    await objectStore.sweep(trace);
-
-    const deletedKeys2 = await objectStore.getDeletedKeys(trace);
-    expectOk(deletedKeys2);
-    t.assert.strictEqual(deletedKeys2.value.items.length, 0);
+    expectErrorCode(await objectStore.mutableObject('a').get(trace), 'not-found');
   });
 
   it('Exists should work', async (_t: TestContext) => {

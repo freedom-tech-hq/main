@@ -10,7 +10,7 @@ import {
   getFolderAtPathForPush,
   getSyncableItemTypeAtPathForPush
 } from 'freedom-syncable-store';
-import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
+import { ACCESS_CONTROL_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncService } from '../../types/SyncService.ts';
@@ -210,15 +210,6 @@ const pushFolder = makeAsyncResultFunc(
       syncService.pushToRemotes({
         path: path.append(ACCESS_CONTROL_BUNDLE_ID),
         hash: localMetadataById[ACCESS_CONTROL_BUNDLE_ID]!.hash!
-      });
-    } else if (
-      localMetadataById[STORE_CHANGES_BUNDLE_ID] !== undefined &&
-      localMetadataById[STORE_CHANGES_BUNDLE_ID]!.hash !== pulledHashesById?.[STORE_CHANGES_BUNDLE_ID]
-    ) {
-      // If the remote doesn't have the syncable store changes bundle, we need to push that second
-      syncService.pushToRemotes({
-        path: path.append(STORE_CHANGES_BUNDLE_ID),
-        hash: localMetadataById[STORE_CHANGES_BUNDLE_ID]!.hash!
       });
     } else {
       for (const [id, localMetadata] of objectEntries(localMetadataById)) {

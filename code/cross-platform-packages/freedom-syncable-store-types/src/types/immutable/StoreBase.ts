@@ -28,7 +28,7 @@ export interface StoreBase extends SyncableItemAccessorBase {
   readonly getMetadataById: PRFunc<Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>>;
 
   /** Checks if the specified item is deleted */
-  readonly isDeleted: PRFunc<boolean, 'not-found', [id: SyncableId]>;
+  readonly isDeleted: PRFunc<boolean, never, [id: SyncableId]>;
 
   /** Lists the IDs of files, along with their hashes */
   readonly ls: PRFunc<string[]>;

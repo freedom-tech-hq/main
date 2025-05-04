@@ -19,7 +19,7 @@ export const addMailDraft = makeAsyncResultFunc(
     const draftIdPath = await paths.drafts.draftId(draftId);
     const draftBundle = await createBundleAtPath(trace, userFs, draftIdPath.value);
     if (!draftBundle.ok) {
-      return generalizeFailureResult(trace, draftBundle, ['conflict', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, draftBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     // If this is in reply to another email, we should determine the subject from the original email
@@ -37,7 +37,7 @@ export const addMailDraft = makeAsyncResultFunc(
       newDocument: () => MailDraftDocument.newDocument({ inReplyToMailId, subject })
     });
     if (!created.ok) {
-      return generalizeFailureResult(trace, created, ['conflict', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, created, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
     return makeSuccess({ draftId });

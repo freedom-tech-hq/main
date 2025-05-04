@@ -14,7 +14,7 @@ export const createBundleAtPath = makeAsyncResultFunc(
     store: MutableSyncableStore,
     path: SyncablePath,
     { name, trustedTimeSignature }: Partial<SyncableOriginOptions> & { name?: DynamicSyncableItemName } = {}
-  ): PR<MutableSyncableBundleAccessor, 'conflict' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     // Disabling validation since we're creating something new -- and this might be a new access control bundle for example, which would
     // make checking it impossible anyway
     const parent = await isSyncableValidationEnabledProvider(

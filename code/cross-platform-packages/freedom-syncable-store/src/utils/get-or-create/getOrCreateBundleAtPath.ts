@@ -14,7 +14,7 @@ export const getOrCreateBundleAtPath = makeAsyncResultFunc(
     trace,
     store: MutableSyncableStore,
     path: SyncablePath
-  ): PR<MutableFileStore, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+  ): PR<MutableFileStore, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
     await isSyncableValidationEnabledProvider(
       trace,
       false,

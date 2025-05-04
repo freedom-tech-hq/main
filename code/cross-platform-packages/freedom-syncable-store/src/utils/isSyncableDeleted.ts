@@ -13,7 +13,7 @@ export const isSyncableDeleted = makeAsyncResultFunc(
     store: SyncableStore,
     pathOrAccessor: SyncablePath | ChainableResult<SyncableFileAccessor, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>,
     { recursive }: { recursive: boolean }
-  ): PR<boolean, 'not-found'> => {
+  ): PR<boolean> => {
     let path: SyncablePath;
     if (pathOrAccessor instanceof SyncablePath) {
       path = pathOrAccessor;
@@ -31,7 +31,7 @@ export const isSyncableDeleted = makeAsyncResultFunc(
 
     const parentFolderLike = await getSyncableAtPath(trace, store, path.parentPath, syncableItemTypes.exclude('file'));
     if (!parentFolderLike.ok) {
-      return generalizeFailureResult(trace, parentFolderLike, ['untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, parentFolderLike, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const isDeleted = await parentFolderLike.value.isDeleted(trace, path.lastId!);

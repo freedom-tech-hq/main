@@ -5,13 +5,11 @@ import type { Trace } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import type { IndexStore } from 'freedom-indexing-types';
 import { InMemoryIndexStore } from 'freedom-indexing-types';
-import type { PageToken, Paginated } from 'freedom-paginated-data';
 import type { Schema } from 'yaschema';
 
 import type { MutableObjectAccessor } from './MutableObjectAccessor.ts';
 import type { MutableObjectStore } from './MutableObjectStore.ts';
 import type { ObjectAccessor } from './ObjectAccessor.ts';
-import type { ObjectStoreManagement } from './ObjectStoreManagement.ts';
 import type { StorableObject } from './StorableObject.ts';
 
 export type InMemoryObjectStoreConstructorArgs<KeyT extends string, T> = {
@@ -19,14 +17,13 @@ export type InMemoryObjectStoreConstructorArgs<KeyT extends string, T> = {
   _keyType?: KeyT;
 };
 
-export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T>, ObjectStoreManagement<KeyT, T> {
+export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T> {
   public readonly uid = makeUuid();
 
   private readonly keys_ = new InMemoryIndexStore<KeyT, unknown>({ config: { type: 'key' } });
   public readonly keys = this.keys_ as IndexStore<KeyT, unknown>;
 
   private readonly schema_: Schema<T>;
-  private readonly deletedKeys_ = new Set<KeyT>();
   private readonly storage_ = new Map<KeyT, StorableObject<T>>();
 
   constructor({ schema }: InMemoryObjectStoreConstructorArgs<KeyT, T>) {
@@ -43,8 +40,6 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
       async (trace: Trace, initialValue: T): PR<T, 'conflict'> => {
         if (this.storage_.has(key)) {
           return makeFailure(new ConflictError(trace, { message: `${key} already exists`, errorCode: 'conflict' }));
-        } else if (this.deletedKeys_.has(key)) {
-          return makeFailure(new ConflictError(trace, { message: `${key} was deleted`, errorCode: 'conflict' }));
         }
 
         const cloned = await this.cloneValue_(trace, initialValue);
@@ -70,14 +65,6 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
     const getMutable = makeAsyncResultFunc(
       [import.meta.filename, 'mutableObject', 'getMutable'],
       async (trace): PR<StorableObject<T>, 'not-found'> => {
-        /* node:coverage disable */
-        if (this.deletedKeys_.has(key)) {
-          return makeFailure(
-            new NotFoundError(trace, { message: `No object found for key: ${key} (was deleted)`, errorCode: 'not-found' })
-          );
-        }
-        /* node:coverage enable */
-
         const found = await this.get_(trace, key);
         /* node:coverage disable */
         if (!found.ok) {
@@ -102,7 +89,7 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
         }
         /* node:coverage enable */
 
-        this.deletedKeys_.add(key);
+        this.storage_.delete(key);
 
         // Updating indices
         await bestEffort(trace, this.removeFromIndices_(trace, key));
@@ -119,10 +106,6 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
           /* node:coverage disable */
           if (found === undefined) {
             return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
-          } else if (this.deletedKeys_.has(key)) {
-            return makeFailure(
-              new NotFoundError(trace, { message: `No object found for key: ${key} (was deleted)`, errorCode: 'not-found' })
-            );
           }
           /* node:coverage enable */
 
@@ -163,18 +146,10 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
     return {
       exists: makeAsyncResultFunc(
         [import.meta.filename, 'object', 'exists'],
-        async (_trace): PR<boolean> => makeSuccess(this.storage_.has(key) && !this.deletedKeys_.has(key))
+        async (_trace): PR<boolean> => makeSuccess(this.storage_.has(key))
       ),
 
       get: makeAsyncResultFunc([import.meta.filename, 'object', 'get'], async (trace): PR<T, 'not-found'> => {
-        /* node:coverage disable */
-        if (this.deletedKeys_.has(key)) {
-          return makeFailure(
-            new NotFoundError(trace, { message: `No object found for key: ${key} (was deleted)`, errorCode: 'not-found' })
-          );
-        }
-        /* node:coverage enable */
-
         const found = await this.get_(trace, key);
         /* node:coverage disable */
         if (!found.ok) {
@@ -193,7 +168,7 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
 
     for (const key of keys) {
       const foundRecord = this.storage_.get(key);
-      if (foundRecord === undefined || this.deletedKeys_.has(key)) {
+      if (foundRecord === undefined) {
         notFound.push(key);
       } else {
         found[key] = foundRecord.storedValue;
@@ -202,37 +177,6 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
 
     return makeSuccess({ found, notFound });
   }
-
-  // ObjectStoreManagementAccessor Methods
-
-  public readonly getDeletedKeys = makeAsyncResultFunc(
-    [import.meta.filename, 'getDeletedKeys'],
-    async (_trace: Trace, startFromPageToken?: PageToken): PR<Paginated<KeyT>> => {
-      /* node:coverage disable */
-      if (startFromPageToken !== undefined) {
-        return makeSuccess({ items: [] });
-      }
-      /* node:coverage enable */
-
-      return makeSuccess({ items: Array.from(this.deletedKeys_), estCount: this.deletedKeys_.size });
-    }
-  );
-
-  public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (trace: Trace): PR<KeyT[]> => {
-    const deletedKeys = await this.getDeletedKeys(trace);
-    /* node:coverage disable */
-    if (!deletedKeys.ok) {
-      return deletedKeys;
-    }
-    /* node:coverage enable */
-
-    for (const key of deletedKeys.value.items) {
-      this.deletedKeys_.delete(key);
-      this.storage_.delete(key);
-    }
-
-    return makeSuccess(deletedKeys.value.items);
-  });
 
   // Private Methods
 
@@ -248,8 +192,6 @@ export class InMemoryObjectStore<KeyT extends string, T> implements MutableObjec
       /* node:coverage disable */
       if (found === undefined) {
         return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
-      } else if (this.deletedKeys_.has(key)) {
-        return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key} (was deleted)`, errorCode: 'not-found' }));
       }
       /* node:coverage enable */
 
