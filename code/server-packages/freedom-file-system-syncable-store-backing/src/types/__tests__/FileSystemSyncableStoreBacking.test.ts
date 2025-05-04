@@ -27,9 +27,9 @@ import {
 import { saltedId } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
 import type { HotSwappableCryptoService } from '../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
 import { makeHotSwappableCryptoServiceForTesting } from '../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { FileSystemSyncableStoreBacking } from '../FileSystemSyncableStoreBacking.ts';
 
 describe('FileSystemSyncableStore', () => {
@@ -55,7 +55,7 @@ describe('FileSystemSyncableStore', () => {
   beforeEach(async () => {
     trace = makeTrace('test');
 
-    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
+    primaryUserCryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
     cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
@@ -146,7 +146,7 @@ describe('FileSystemSyncableStore', () => {
 
     expectOk(await store.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -174,7 +174,7 @@ describe('FileSystemSyncableStore', () => {
       await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' })
     );
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 
@@ -202,7 +202,7 @@ describe('FileSystemSyncableStore', () => {
       await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'appender' })
     );
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
     cryptoService.hotSwap(secondaryUserCryptoService);
 

@@ -14,7 +14,7 @@ import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-syn
 import type { ConflictFreeDocumentEvaluator } from 'freedom-syncable-store-types';
 import { expectEventually, expectOk, sleep } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';
@@ -39,7 +39,7 @@ describe('getConflictFreeDocumentBundleAtPath', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
+    cryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,

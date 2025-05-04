@@ -7,7 +7,7 @@ import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-cry
 import type { UserKeys } from 'freedom-crypto-service';
 import { makeUserKeys } from 'freedom-crypto-service';
 
-export const makeCryptoServiceForTesting = ({ privateKeys }: { privateKeys: PrivateCombinationCryptoKeySet }): UserKeys =>
+export const makeUserKeysForTesting = ({ privateKeys }: { privateKeys: PrivateCombinationCryptoKeySet }): UserKeys =>
   makeUserKeys({
     getPrivateCryptoKeySetIds: makeAsyncResultFunc(
       [import.meta.filename, 'getPrivateCryptoKeySetIds'],

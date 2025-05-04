@@ -12,7 +12,7 @@ import type { UserKeys } from 'freedom-crypto-service';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 import { generateSignedAddAccessChange } from '../generateSignedAddAccessChange.ts';
@@ -32,7 +32,7 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(internalCryptoKeys1);
     cryptoKeys1 = internalCryptoKeys1.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys1 });
+    cryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys1 });
 
     const initialAccess = await generateInitialAccess(trace, {
       cryptoService,

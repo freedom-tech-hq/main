@@ -12,7 +12,7 @@ import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-syn
 import { expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
-import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createJsonFileAtPath } from '../create/createJsonFileAtPath.ts';
@@ -40,7 +40,7 @@ describe('createJsonFileAtPath', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
+    cryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,

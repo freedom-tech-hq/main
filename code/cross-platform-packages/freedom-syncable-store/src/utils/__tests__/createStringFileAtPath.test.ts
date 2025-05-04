@@ -11,7 +11,7 @@ import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-b
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
@@ -37,7 +37,7 @@ describe('createStringFileAtPath', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
+    cryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,

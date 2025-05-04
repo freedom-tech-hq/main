@@ -7,7 +7,7 @@ import { expectOk, getSerializedFixture } from 'freedom-testing-tools';
 import { DefaultSyncableStore } from '../types/DefaultSyncableStore.ts';
 import { generateProvenanceForNewSyncableStore } from '../utils/generateProvenanceForNewSyncableStore.ts';
 import { initializeRoot } from '../utils/initializeRoot.ts';
-import { makeCryptoServiceForTesting } from './makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from './makeUserKeysForTesting.ts';
 
 export async function createStoreTestStack({
   extraSaltsById = {}
@@ -39,7 +39,7 @@ export async function createStoreTestStack({
   const privateKeys = await getSerializedFixture(import.meta.dirname, 'fixtures/keys.json', privateCombinationCryptoKeySetSchema);
 
   // Crypto Service Mock
-  const cryptoService = makeCryptoServiceForTesting({ privateKeys });
+  const cryptoService = makeUserKeysForTesting({ privateKeys });
 
   // Provenance Parameters
   const provenance = await generateProvenanceForNewSyncableStore(trace, {
