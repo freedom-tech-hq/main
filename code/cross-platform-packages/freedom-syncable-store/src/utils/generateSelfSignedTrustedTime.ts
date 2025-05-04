@@ -17,7 +17,7 @@ export const generateSelfSignedTrustedTime = makeAsyncResultFunc(
   ): PR<TrustedTime> => {
     const timeId = timeIdInfo.make();
 
-    const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await store.userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

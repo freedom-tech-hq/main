@@ -27,14 +27,14 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
     trace: Trace,
     {
       generateTrustedTimeForAccessChange,
-      cryptoService,
+      userKeys,
       accessControlDoc,
       params,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
       generateTrustedTimeForAccessChange: PRFunc<TrustedTime, never, [AccessChange<RoleT>]>;
-      cryptoService: UserKeys;
+      userKeys: UserKeys;
       accessControlDoc: AccessControlDocument<RoleT>;
       params: Omit<AddAccessChangeParams<RoleT>, 'type'>;
       roleSchema: Schema<RoleT>;
@@ -49,7 +49,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
      */
     const encryptedSecretKeysForNewUserBySharedKeysId = doesRoleHaveReadAccess(params.role)
       ? await encryptAccessControlDocumentSecretKeysForUser(trace, {
-          cryptoService,
+          userKeys,
           accessControlDoc,
           userPublicKeys: params.publicKeys
         })
@@ -76,7 +76,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
 
     const timeMSec = timeIdInfo.extractTimeMSec(trustedTime.value.timeId);
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

@@ -22,7 +22,7 @@ import { initializeRoot } from '../../../utils/initializeRoot.ts';
 describe('hashes', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: UserKeys;
+  let userKeys!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -37,11 +37,11 @@ describe('hashes', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
+    userKeys = makeUserKeysForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
-      cryptoService,
+      userKeys,
       trustedTimeSignature: undefined
     });
     expectOk(provenance);
@@ -50,7 +50,7 @@ describe('hashes', () => {
     store = new DefaultSyncableStore({
       storageRootId,
       backing: storeBacking,
-      cryptoService,
+      userKeys,
       creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });

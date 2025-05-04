@@ -15,7 +15,7 @@ export interface SyncableStore extends SyncableFolderAccessor, Notifiable<SyncTr
   readonly localTrustMarks: MutableTrustMarkStore;
 
   readonly creatorPublicKeys: CombinationCryptoKeySet;
-  readonly cryptoService: UserKeys;
+  readonly userKeys: UserKeys;
 
   readonly saltsById: Partial<Record<SaltId, string>>;
 

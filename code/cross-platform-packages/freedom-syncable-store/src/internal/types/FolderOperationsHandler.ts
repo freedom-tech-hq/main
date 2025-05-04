@@ -98,7 +98,7 @@ export class FolderOperationsHandler {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace);
+      const privateKeys = await store.userKeys.getPrivateCryptoKeySet(trace);
       if (!privateKeys.ok) {
         return generalizeFailureResult(trace, privateKeys, 'not-found');
       }
@@ -150,7 +150,7 @@ export class FolderOperationsHandler {
 
       return await verifyAndDecryptBinary(trace, signedEncryptedValue, {
         accessControlDoc: accessControl.value,
-        cryptoService: store.cryptoService
+        userKeys: store.userKeys
       });
     }
   );
@@ -186,7 +186,7 @@ export class FolderOperationsHandler {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      return await encryptAndSignBinary(trace, value, { accessControlDoc: accessControlDoc.value, cryptoService: store.cryptoService });
+      return await encryptAndSignBinary(trace, value, { accessControlDoc: accessControlDoc.value, userKeys: store.userKeys });
     }
   );
 

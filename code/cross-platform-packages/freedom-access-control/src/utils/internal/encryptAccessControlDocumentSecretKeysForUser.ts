@@ -15,13 +15,13 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
   async <RoleT extends string>(
     trace: Trace,
     {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       userPublicKeys
-    }: { cryptoService: UserKeys; accessControlDoc: AccessControlDocument<RoleT>; userPublicKeys: CombinationCryptoKeySet }
+    }: { userKeys: UserKeys; accessControlDoc: AccessControlDocument<RoleT>; userPublicKeys: CombinationCryptoKeySet }
   ): PR<Partial<Record<CryptoKeySetId, EncryptedValue<SharedSecretKeys>>>> => {
     const decryptedSharedSecretKeys = await getDecryptedSharedSecretKeysFromAccessControlDocument(trace, {
-      cryptoService,
+      userKeys,
       accessControl: accessControlDoc
     });
     /* node:coverage disable */

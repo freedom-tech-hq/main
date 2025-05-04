@@ -18,10 +18,10 @@ describe('generateInitialAccess', () => {
     const privateKeys = await generateCryptoCombinationKeySet(trace);
     expectOk(privateKeys);
 
-    const cryptoService = makeUserKeysForTesting({ privateKeys: privateKeys.value });
+    const userKeys = makeUserKeysForTesting({ privateKeys: privateKeys.value });
 
     const initialAccess = await generateInitialAccess(trace, {
-      cryptoService,
+      userKeys,
       initialAccess: [{ role: 'creator', publicKeys: privateKeys.value.publicOnly() }],
       roleSchema,
       doesRoleHaveReadAccess: () => true

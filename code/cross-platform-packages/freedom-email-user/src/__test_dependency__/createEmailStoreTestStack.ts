@@ -16,7 +16,7 @@ export async function createEmailStoreTestStack() {
   // The Access Object
   const access: EmailAccess = {
     userId,
-    cryptoService: stack.cryptoService,
+    userKeys: stack.userKeys,
     saltsById: stack.saltsById,
     userFs: stack.store
   };

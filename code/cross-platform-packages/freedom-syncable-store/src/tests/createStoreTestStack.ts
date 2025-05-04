@@ -39,12 +39,12 @@ export async function createStoreTestStack({
   const privateKeys = await getSerializedFixture(import.meta.dirname, 'fixtures/keys.json', privateCombinationCryptoKeySetSchema);
 
   // Crypto Service Mock
-  const cryptoService = makeUserKeysForTesting({ privateKeys });
+  const userKeys = makeUserKeysForTesting({ privateKeys });
 
   // Provenance Parameters
   const provenance = await generateProvenanceForNewSyncableStore(trace, {
     storageRootId,
-    cryptoService,
+    userKeys,
     trustedTimeSignature: undefined
   });
   expectOk(provenance);
@@ -54,7 +54,7 @@ export async function createStoreTestStack({
   const store = new DefaultSyncableStore({
     storageRootId,
     backing: storeBacking,
-    cryptoService,
+    userKeys,
     creatorPublicKeys: privateKeys.publicOnly(),
     saltsById
   });
@@ -71,7 +71,7 @@ export async function createStoreTestStack({
     saltsById,
 
     // Test Subject
-    cryptoService,
+    userKeys,
     storeBacking,
     store
   };

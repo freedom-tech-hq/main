@@ -10,7 +10,7 @@ export const getDecryptedSharedSecretKeysFromAccessControlDocument = makeAsyncRe
   [import.meta.filename],
   async <RoleT extends string>(
     trace: Trace,
-    { cryptoService, accessControl }: { cryptoService: UserKeys; accessControl: AccessControlDocument<RoleT> }
+    { userKeys, accessControl }: { userKeys: UserKeys; accessControl: AccessControlDocument<RoleT> }
   ): PR<Partial<Record<CryptoKeySetId, SharedSecretKeys>>> => {
     const sharedKeys = await accessControl.getSharedKeys(trace);
     /* node:coverage disable */
@@ -23,7 +23,7 @@ export const getDecryptedSharedSecretKeysFromAccessControlDocument = makeAsyncRe
       trace,
       sharedKeys.value,
       {},
-      async (trace, sharedKeys) => await decryptOneEncryptedValue(trace, cryptoService, sharedKeys.secretKeysEncryptedPerMember),
+      async (trace, sharedKeys) => await decryptOneEncryptedValue(trace, userKeys, sharedKeys.secretKeysEncryptedPerMember),
       async (_trace, out, decryptedSharedSecretKeys, sharedKeys) => {
         out[sharedKeys.id] = decryptedSharedSecretKeys;
         return makeSuccess(out);

@@ -66,7 +66,7 @@ export const isOriginValid = makeAsyncResultFunc(
       return makeSuccess(true);
     }
 
-    const privateKeyIds = await store.cryptoService.getPrivateCryptoKeySetIds(trace);
+    const privateKeyIds = await store.userKeys.getPrivateCryptoKeySetIds(trace);
     if (!privateKeyIds.ok) {
       return privateKeyIds;
     }

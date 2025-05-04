@@ -13,9 +13,9 @@ export const encryptAndSignBinary = makeAsyncResultFunc(
   async (
     trace: Trace,
     value: Uint8Array,
-    { accessControlDoc, cryptoService }: { accessControlDoc: ISyncableStoreAccessControlDocument; cryptoService: UserKeys }
+    { accessControlDoc, userKeys }: { accessControlDoc: ISyncableStoreAccessControlDocument; userKeys: UserKeys }
   ): PR<Uint8Array> => {
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

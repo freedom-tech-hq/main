@@ -30,14 +30,14 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
     trace: Trace,
     {
       generateTrustedTimeForAccessChange,
-      cryptoService,
+      userKeys,
       params,
       accessControlDoc,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
       generateTrustedTimeForAccessChange: PRFunc<TrustedTime, never, [AccessChange<RoleT>]>;
-      cryptoService: UserKeys;
+      userKeys: UserKeys;
       accessControlDoc: AccessControlDocument<RoleT>;
       params: Omit<ModifyAccessChangeParams<RoleT>, 'type'>;
       roleSchema: Schema<RoleT>;
@@ -67,7 +67,7 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
         }
 
         const encryptedSecretKeysForModifiedUserBySharedKeysId = await encryptAccessControlDocumentSecretKeysForUser(trace, {
-          cryptoService,
+          userKeys,
           accessControlDoc,
           userPublicKeys: userPublicKeys.value
         });
@@ -108,7 +108,7 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
       }
     }
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

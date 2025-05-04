@@ -15,8 +15,8 @@ import type { UserKeys } from '../types/UserKeys.ts';
  */
 export const decryptOneEncryptedValue = makeAsyncResultFunc(
   [import.meta.filename],
-  async <T>(trace: Trace, cryptoService: UserKeys, encryptedValues: Partial<Record<CryptoKeySetId, EncryptedValue<T>>>): PR<T> => {
-    const privateKeyIds = await cryptoService.getPrivateCryptoKeySetIds(trace);
+  async <T>(trace: Trace, userKeys: UserKeys, encryptedValues: Partial<Record<CryptoKeySetId, EncryptedValue<T>>>): PR<T> => {
+    const privateKeyIds = await userKeys.getPrivateCryptoKeySetIds(trace);
     if (!privateKeyIds.ok) {
       return privateKeyIds;
     }
@@ -30,7 +30,7 @@ export const decryptOneEncryptedValue = makeAsyncResultFunc(
 
     const encryptedValue = encryptedValues[keyId]!;
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace, keyId);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace, keyId);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

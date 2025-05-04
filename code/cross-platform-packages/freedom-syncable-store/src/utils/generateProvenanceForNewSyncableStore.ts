@@ -11,11 +11,7 @@ export const generateProvenanceForNewSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    {
-      storageRootId,
-      trustedTimeSignature,
-      cryptoService
-    }: SyncableOriginOptions & { storageRootId: StorageRootId; cryptoService: UserKeys }
+    { storageRootId, trustedTimeSignature, userKeys }: SyncableOriginOptions & { storageRootId: StorageRootId; userKeys: UserKeys }
   ): PR<SyncableProvenance> => {
     const origin = await generateOrigin(trace, {
       path: new SyncablePath(storageRootId),
@@ -23,7 +19,7 @@ export const generateProvenanceForNewSyncableStore = makeAsyncResultFunc(
       name: ROOT_FOLDER_ID,
       contentHash: undefined,
       trustedTimeSignature,
-      cryptoService
+      userKeys
     });
     if (!origin.ok) {
       return origin;

@@ -15,7 +15,7 @@ import { InMemoryTrustMarkStore } from './InMemoryTrustMarkStore.ts';
 export interface DefaultSyncableStoreConstructorArgs {
   storageRootId: StorageRootId;
   backing: SyncableStoreBacking;
-  cryptoService: UserKeys;
+  userKeys: UserKeys;
   creatorPublicKeys: CombinationCryptoKeySet;
   saltsById: Partial<Record<SaltId, string>>;
 }
@@ -23,19 +23,19 @@ export interface DefaultSyncableStoreConstructorArgs {
 export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
   public readonly uid = makeUuid();
   public readonly creatorPublicKeys: CombinationCryptoKeySet;
-  public readonly cryptoService: UserKeys;
+  public readonly userKeys: UserKeys;
   public readonly saltsById: Partial<Record<SaltId, string>>;
 
   public readonly localTrustMarks = new InMemoryTrustMarkStore();
 
-  constructor({ storageRootId, backing, cryptoService, creatorPublicKeys, saltsById }: DefaultSyncableStoreConstructorArgs) {
+  constructor({ storageRootId, backing, userKeys, creatorPublicKeys, saltsById }: DefaultSyncableStoreConstructorArgs) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
     const path = new SyncablePath(storageRootId);
 
     super({ backing, syncTracker, path });
 
     this.creatorPublicKeys = creatorPublicKeys;
-    this.cryptoService = cryptoService;
+    this.userKeys = userKeys;
     this.saltsById = saltsById;
 
     this.deferredInit_({

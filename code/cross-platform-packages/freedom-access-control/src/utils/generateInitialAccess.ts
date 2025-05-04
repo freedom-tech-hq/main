@@ -20,18 +20,18 @@ export const generateInitialAccess = makeAsyncResultFunc(
   async <RoleT extends string>(
     trace: Trace,
     {
-      cryptoService,
+      userKeys,
       initialAccess,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
-      cryptoService: UserKeys;
+      userKeys: UserKeys;
       initialAccess: Array<{ role: RoleT; publicKeys: CombinationCryptoKeySet }>;
       roleSchema: Schema<RoleT>;
       doesRoleHaveReadAccess: (role: RoleT) => boolean;
     }
   ): PR<InitialAccess<RoleT>> => {
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     /* node:coverage disable */
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');

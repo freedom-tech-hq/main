@@ -6,7 +6,7 @@ import type { EmailUserId } from './EmailUserId.ts';
 
 export interface EmailAccess {
   userId: EmailUserId;
-  cryptoService: UserKeys;
+  userKeys: UserKeys;
   saltsById: SaltsById;
   userFs: MutableSyncableStore;
 }

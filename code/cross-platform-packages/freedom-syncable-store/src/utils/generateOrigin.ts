@@ -17,14 +17,14 @@ export const generateOrigin = makeAsyncResultFunc(
       name,
       contentHash,
       trustedTimeSignature,
-      cryptoService
+      userKeys
     }: SyncableOriginOptions & {
       path: SyncablePath;
       type: SyncableItemType;
       name: SyncableItemName;
       /** Use `undefined` if the path represents a folder-like item */
       contentHash: Sha256Hash | undefined;
-      cryptoService: UserKeys;
+      userKeys: UserKeys;
     }
   ): PR<SignedSyncableOrigin> => {
     if (contentHash === undefined) {
@@ -36,7 +36,7 @@ export const generateOrigin = makeAsyncResultFunc(
       contentHash = folderContentHash.value;
     }
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

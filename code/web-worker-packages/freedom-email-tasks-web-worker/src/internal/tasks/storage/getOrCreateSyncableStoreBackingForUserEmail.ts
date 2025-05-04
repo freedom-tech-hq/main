@@ -21,12 +21,12 @@ export const getOrCreateSyncableStoreBackingForUserEmail = makeAsyncResultFunc(
       return makeSuccess(cached);
     }
 
-    const cryptoService = makeCryptoServiceForUser(credential);
+    const userKeys = makeCryptoServiceForUser(credential);
 
     const storageRootId = storageRootIdInfo.make(credential.userId);
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
-      cryptoService,
+      userKeys,
       trustedTimeSignature: undefined
     });
     if (!provenance.ok) {

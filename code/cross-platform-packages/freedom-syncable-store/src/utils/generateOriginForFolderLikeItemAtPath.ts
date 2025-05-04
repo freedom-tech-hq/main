@@ -17,5 +17,5 @@ export const generateOriginForFolderLikeItemAtPath = makeAsyncResultFunc(
       trustedTimeSignature
     }: SyncableOriginOptions & { path: SyncablePath; type: SyncableItemType; name: SyncableItemName }
   ): PR<SignedSyncableOrigin> =>
-    await generateOrigin(trace, { path, type, name, contentHash: undefined, trustedTimeSignature, cryptoService: store.cryptoService })
+    await generateOrigin(trace, { path, type, name, contentHash: undefined, trustedTimeSignature, userKeys: store.userKeys })
 );

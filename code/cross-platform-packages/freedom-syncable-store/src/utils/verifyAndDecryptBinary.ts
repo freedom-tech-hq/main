@@ -18,7 +18,7 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
   async (
     trace: Trace,
     signedEncryptedValue: Uint8Array,
-    { accessControlDoc, cryptoService }: { accessControlDoc: ISyncableStoreAccessControlDocument; cryptoService: UserKeys }
+    { accessControlDoc, userKeys }: { accessControlDoc: ISyncableStoreAccessControlDocument; userKeys: UserKeys }
   ): PR<Uint8Array> => {
     const sharedKeys = await accessControlDoc.getSharedKeys(trace);
     /* node:coverage disable */
@@ -74,7 +74,7 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
     const selectedSharedKeys = sharedKeys.value.find((sharedSecret) => sharedSecret.id === selectedSharedKeysId.value)!;
 
     // TODO: could be cached probably
-    const decryptedSharedSecretKeys = await decryptOneEncryptedValue(trace, cryptoService, selectedSharedKeys.secretKeysEncryptedPerMember);
+    const decryptedSharedSecretKeys = await decryptOneEncryptedValue(trace, userKeys, selectedSharedKeys.secretKeysEncryptedPerMember);
     /* node:coverage disable */
     if (!decryptedSharedSecretKeys.ok) {
       return decryptedSharedSecretKeys;

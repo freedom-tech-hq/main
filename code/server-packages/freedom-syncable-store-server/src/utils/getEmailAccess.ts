@@ -33,13 +33,13 @@ export const getEmailAccess = makeAsyncResultFunc(
 
     const userFs = new DefaultSyncableStore({
       storageRootId,
-      cryptoService: agentUserKeys,
+      userKeys: agentUserKeys,
       saltsById: saltsById,
       creatorPublicKeys: publicKeys,
       backing: backing
     });
 
-    const output: EmailAccess = { userId, cryptoService: agentUserKeys, saltsById: saltsById, userFs };
+    const output: EmailAccess = { userId, userKeys: agentUserKeys, saltsById: saltsById, userFs };
 
     return makeSuccess(output);
   }

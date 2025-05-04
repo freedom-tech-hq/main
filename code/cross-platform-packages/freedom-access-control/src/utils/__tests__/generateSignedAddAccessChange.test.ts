@@ -19,10 +19,10 @@ describe('generateSignedAddAccessChange', () => {
     const cryptoKeys1 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys1);
 
-    const cryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys1.value });
+    const userKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys1.value });
 
     const initialAccess = await generateInitialAccess(trace, {
-      cryptoService,
+      userKeys,
       initialAccess: [{ role: 'creator', publicKeys: cryptoKeys1.value.publicOnly() }],
       roleSchema: testStoreRoleSchema,
       doesRoleHaveReadAccess: (role) => role !== 'appender'
@@ -44,7 +44,7 @@ describe('generateSignedAddAccessChange', () => {
     expectOk(cryptoKeys2);
 
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here

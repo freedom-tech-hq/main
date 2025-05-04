@@ -25,7 +25,7 @@ const theSchema = schema.object({ one: schema.string(), two: schema.number() });
 describe('createJsonFileAtPath', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: UserKeys;
+  let userKeys!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -40,11 +40,11 @@ describe('createJsonFileAtPath', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
+    userKeys = makeUserKeysForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
-      cryptoService,
+      userKeys,
       trustedTimeSignature: undefined
     });
     expectOk(provenance);
@@ -53,7 +53,7 @@ describe('createJsonFileAtPath', () => {
     store = new DefaultSyncableStore({
       storageRootId,
       backing: storeBacking,
-      cryptoService,
+      userKeys,
       creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
