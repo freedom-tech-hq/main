@@ -19,10 +19,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## API Registration System
 - New API endpoints must follow the established pattern:
-  1. Define the API in `/dev-packages/freedom-fake-email-service-api/src/api/{endpoint}.ts` using `makeHttpApi`
-  2. Add your export to `/dev-packages/freedom-fake-email-service-api/src/api/exports.ts`
-  3. Implement handlers in `/dev-packages/freedom-fake-email-service/src/api-handlers/{endpoint}.ts` using `makeHttpApiHandler`
-  4. Register in `/dev-packages/freedom-fake-email-service/src/api-handlers/index.ts` with `makeRegisterAllWithExpress`
+  1. Define the API in `/cross-platform-packages/freedom-store-api-server-api/src/api/{endpoint}.ts` using `makeHttpApi`
+  2. Add your export to `/cross-platform-packages/freedom-store-api-server-api/src/api/exports.ts`
+  3. Implement handlers in `/backends/freedom-store-api-server/src/api-handlers/{endpoint}.ts` using `makeHttpApiHandler`
+  4. Register in `/backends/freedom-store-api-server/src/api-handlers/index.ts` with `makeRegisterAllWithExpress`
 - Use schema validation with yaschema for request/response types
 - Do not create separate Express routes or servers outside this system
 

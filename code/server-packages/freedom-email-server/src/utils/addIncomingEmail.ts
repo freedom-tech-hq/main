@@ -3,8 +3,7 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { findUserByEmail } from 'freedom-db';
 import { addMail, type StoredMail } from 'freedom-email-sync';
-
-import { getOrCreateEmailAccessForUserPure } from './getOrCreateEmailAccessForUserPure.ts';
+import { getEmailAccess } from 'freedom-syncable-store-server';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
@@ -17,7 +16,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
     const { userId, publicKeys, defaultSalt } = userResult.value;
 
     const access = await uncheckedResult(
-      getOrCreateEmailAccessForUserPure(trace, {
+      getEmailAccess(trace, {
         userId,
         publicKeys: publicKeys,
         saltsById: { SALT_default: defaultSalt }

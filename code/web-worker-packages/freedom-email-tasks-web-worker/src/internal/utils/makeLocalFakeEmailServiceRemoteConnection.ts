@@ -5,9 +5,9 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { DeviceNotificationClient, DeviceNotifications } from 'freedom-device-notification-types';
-import { api } from 'freedom-fake-email-service-api';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { NotificationManager } from 'freedom-notification-types';
+import { api } from 'freedom-store-api-server-api';
 import {
   type RemoteAccessor,
   type SaltsById,

@@ -4,12 +4,12 @@ import { shutdownWsHandlers } from 'express-yaschema-ws-api-handler';
 import type { PR } from 'freedom-async';
 import { makeAsyncFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { doSoon, hasMoreToDoSoon, waitForDoSoons } from 'freedom-do-soon';
-import { createServerPrivateKeysIfNeeded } from 'freedom-fake-email-service';
 import { log, startExpressServer } from 'freedom-server-api-handling';
 import { defaultServiceContext } from 'freedom-trace-service-context';
 import { once } from 'lodash-es';
 
 import * as config from './config.ts';
+import { requireServerPrivateKeys } from './utils/requireServerPrivateKeys.ts';
 
 export const startServer = makeAsyncFunc(
   [import.meta.filename],
@@ -18,7 +18,7 @@ export const startServer = makeAsyncFunc(
     server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
     { port = config.PORT }: { port?: number } = {}
   ): PR<{ shutDown: () => Promise<void> }> => {
-    await uncheckedResult(createServerPrivateKeysIfNeeded(trace));
+    await uncheckedResult(requireServerPrivateKeys(trace));
 
     const expressServer = await startExpressServer(trace, server, {
       port,

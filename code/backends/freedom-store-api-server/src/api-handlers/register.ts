@@ -2,10 +2,10 @@ import { bestEffort, callAsyncResultFunc, makeFailure, makeSuccess } from 'freed
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { addUser, deleteUserByUserId } from 'freedom-db';
 import { emailUserIdInfo } from 'freedom-email-sync';
-import { createSyncableStore } from 'freedom-fake-email-service';
-import { api } from 'freedom-fake-email-service-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
+import { api } from 'freedom-store-api-server-api';
 import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
+import { createSyncableStore } from 'freedom-syncable-store-server';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import * as config from '../config.ts';

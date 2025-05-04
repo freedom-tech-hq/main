@@ -9,7 +9,7 @@ import type { EmailUserId } from 'freedom-email-sync';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { storageRootIdInfo, SyncablePath } from 'freedom-sync-types';
 
-import { getFsRootPathForStorageRootId } from './getFsRootPathForStorageRootId.ts';
+import { getFsRootPathForStorageRootId } from '../internal/utils/getFsRootPathForStorageRootId.ts';
 
 export const getPublicKeysForUser = makeAsyncResultFunc(
   [import.meta.filename],

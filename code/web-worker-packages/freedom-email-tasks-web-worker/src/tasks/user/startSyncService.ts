@@ -3,8 +3,8 @@ import { allResults, bestEffort, makeAsyncResultFunc, makeFailure, makeSuccess, 
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { InternalStateError } from 'freedom-common-errors';
 import type { DeviceNotificationClient } from 'freedom-device-notification-types';
-import { api as fakeEmailServiceApi } from 'freedom-fake-email-service-api';
 import { makeApiFetchTask } from 'freedom-fetching';
+import { api as fakeEmailServiceApi } from 'freedom-store-api-server-api';
 import type { RemoteAccessor } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
 import type { TypeOrPromisedType } from 'yaschema';

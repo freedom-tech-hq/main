@@ -2,7 +2,8 @@ The list is not sorted. Use page search to find a term. Append new terms freely.
 
 - **account** - A user entity in the Freedom ecosystem with its own identity and cryptographic keys. Accounts can create and access stores based on permissions. See [User-Facing File System](User-Facing%20File%20System.md)
 
-- **store** = **root** - The top-level container for encrypted, synchronized data. Each store has one creator account and can be shared with other accounts. A single account can own multiple stores. See [User-Facing File System](User-Facing%20File%20System.md)
+- **syncable store** = **store** = **root** - The top-level container for encrypted, synchronized data. Each store has one creator account and can be shared with other accounts. A single account can own multiple stores. See [User-Facing File System](User-Facing%20File%20System.md)
+  - In the source code, `syncableStore` part of the name means a *single root* of a user's store, unless qualified with extra words.
 
 - **origin** - Metadata that proves who created an item in the store. Contains an author-signed hash of the path and contents, establishing verifiable creation attribution. See [Permission Management](Permission%20Management.md)
 

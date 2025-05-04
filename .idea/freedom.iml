@@ -51,7 +51,7 @@
       <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-build-tools/bin" />
       <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-build-tools/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-dev-scripts/bin" />
-      <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-fake-email-service-api/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-store-api-server-api/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-localization-tools/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-profiler/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/dev-packages/freedom-sync-service-testing-tools/lib" />
@@ -67,6 +67,8 @@
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-email-tasks-web-worker/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-opfs-syncable-store-backing/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/backends/freedom-store-api-server/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-email-server/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-syncable-store-server/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-utils/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-db/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-syncable-store/lib" />
