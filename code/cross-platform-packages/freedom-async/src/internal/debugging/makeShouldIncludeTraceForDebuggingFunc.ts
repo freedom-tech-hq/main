@@ -10,7 +10,7 @@ import { tokenize } from '../utils/tokenize.ts';
  * - If patterns is empty, returns a function that always returns `false`
  * - If patterns is 'all', returns a function that always returns `true`
  * - Otherwise, splits the patterns string on commas/newlines and uses the following matching logic:
- *   - If a pattern is a simple ID, like "`freedom-crypto-service/utils/makeCryptoService>generateSignedValue`", it will be matched if the
+ *   - If a pattern is a simple ID, like "`freedom-crypto-service/utils/makeUserKeys>generateSignedValue`", it will be matched if the
  *     ID string at the top of the trace stack matches it
  *   - If a pattern contains '`**`', it will match '`**`' anywhere in the trace stack
  *   - If a pattern contains '`*`', it will allow anything except '`>`' in place of '`*`'

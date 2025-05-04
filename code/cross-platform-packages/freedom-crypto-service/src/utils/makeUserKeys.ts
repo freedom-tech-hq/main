@@ -4,7 +4,7 @@ import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-cry
 
 import type { UserKeys } from '../types/UserKeys.ts';
 
-export const makeCryptoService = ({
+export const makeUserKeys = ({
   getPrivateCryptoKeySetIds,
   getPrivateCryptoKeysById,
   getMostRecentPrivateCryptoKeys

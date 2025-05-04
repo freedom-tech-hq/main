@@ -1,2 +1,2 @@
 export * from './decryptOneEncryptedValue.ts';
-export * from './makeCryptoService.ts';
+export * from './makeUserKeys.ts';
