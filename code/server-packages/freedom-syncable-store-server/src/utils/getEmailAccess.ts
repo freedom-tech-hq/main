@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
+import { getMailAgentUserKeys } from 'freedom-db';
 import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
-import { getMailAgentUserKeys } from 'freedom-db/src/model/utils/getMailAgentUserKeys.ts';
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { type SaltId, storageRootIdInfo } from 'freedom-sync-types';
 import { DefaultSyncableStore } from 'freedom-syncable-store';

@@ -18,7 +18,7 @@ import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-cry
  * TODO: revise the package name and purpose.
  *   decryptOneEncryptedValue() is looking like a service. And the name is great.
  *   But the whole package looks as a part of a bigger crypto scope, not a package-worth atomic aspect.
-*/
+ */
 export interface CryptoService {
   /**
    * Get the key(set) listed by getPrivateCryptoKeySetIds()
@@ -26,7 +26,7 @@ export interface CryptoService {
    * TODO: What does it mean to call it without an id?
    * I suspect the semantics is different. Maybe it should be split into two:
    *   - getAllPrivateCryptoKeySets() - for decryption, instead of getPrivateCryptoKeySetIds + getPrivateCryptoKeySet(id)
-   *   - get<Current|Default>PrivateCryptoKeySet() - for encryption
+   *   - get(Current|Default)PrivateCryptoKeySet() - for encryption
    */
   readonly getPrivateCryptoKeySet: PRFunc<PrivateCombinationCryptoKeySet, 'not-found', [id?: CryptoKeySetId]>;
 
