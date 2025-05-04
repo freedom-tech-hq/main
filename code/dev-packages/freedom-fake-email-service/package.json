@@ -21,6 +21,7 @@
     "freedom-build-tools": "0.0.0",
     "typescript": "5.8.3"
   },
+  "main": "build/exports.mjs",
   "name": "freedom-fake-email-service",
   "nx": {
     "tags": [
@@ -46,6 +47,5 @@
     "deploy:extract": "../../poc/repo/deploy.extract.sh"
   },
   "types": "build/exports.d.ts",
-  "main": "build/exports.mjs",
   "version": "0.0.0"
 }

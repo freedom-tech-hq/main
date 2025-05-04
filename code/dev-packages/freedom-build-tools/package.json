@@ -1,5 +1,4 @@
 {
-  "description": "Shared build tools for packages in The Freedom Network monorepo",
   "dependencies": {
     "esbuild": "0.25.3",
     "esbuild-plugin-inline-image": "0.0.9",
@@ -16,6 +15,7 @@
   },
   "type": "module",
   "name": "freedom-build-tools",
+  "description": "Shared build tools for packages in The Freedom Network monorepo",
   "nx": {
     "tags": [
       "type:lib",

@@ -1,9 +1,13 @@
 {
-  "dependencies": {},
+  "dependencies": {
+    "glob": "11.0.1",
+    "lodash-es": "4.17.21"
+  },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",
     "typescript": "5.8.3"
   },
+  "type": "module",
   "name": "freedom-dev-scripts",
   "nx": {
     "tags": [
@@ -13,6 +17,8 @@
   },
   "private": true,
   "scripts": {
+    "run:package-sync": "NODE_OPTIONS='--experimental-transform-types  --disable-warning=ExperimentalWarning' node src/package-sync/sync.ts",
+    "run:package-sync:fix": "yarn run:package-sync --fix",
     "build": "tsc -p tsconfig.mjs.json --noEmit && node ../../dev-packages/freedom-build-tools/bin/freedom-build.mjs --tsconfig tsconfig.mjs.json",
     "clean": "rimraf ./coverage ./bin",
     "depcheck": "depcheck --ignores=freedom-build-tools,freedom-contexts || (code ./package.json && exit 1)",
