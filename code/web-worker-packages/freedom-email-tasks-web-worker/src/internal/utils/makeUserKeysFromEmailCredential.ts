@@ -6,7 +6,7 @@ import type { UserKeys } from 'freedom-crypto-service';
 import { makeUserKeys } from 'freedom-crypto-service';
 import type { EmailCredential } from 'freedom-email-user';
 
-export const makeCryptoServiceForUser = (credential: EmailCredential): UserKeys =>
+export const makeUserKeysFromEmailCredential = (credential: EmailCredential): UserKeys =>
   makeUserKeys({
     getPrivateCryptoKeySetIds: makeAsyncResultFunc(
       [import.meta.filename, 'getPrivateCryptoKeySetIds'],

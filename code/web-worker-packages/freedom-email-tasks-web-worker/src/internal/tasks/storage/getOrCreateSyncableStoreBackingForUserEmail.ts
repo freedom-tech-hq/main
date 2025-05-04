@@ -8,7 +8,7 @@ import { storageRootIdInfo, SyncablePath } from 'freedom-sync-types';
 import { generateProvenanceForNewSyncableStore } from 'freedom-syncable-store';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 
-import { makeCryptoServiceForUser } from '../../utils/makeCryptoServiceForUser.ts';
+import { makeUserKeysFromEmailCredential } from '../../utils/makeUserKeysFromEmailCredential.ts';
 
 // TODO: TEMP
 const globalCache: Record<EmailUserId, SyncableStoreBacking> = {};
@@ -21,7 +21,7 @@ export const getOrCreateSyncableStoreBackingForUserEmail = makeAsyncResultFunc(
       return makeSuccess(cached);
     }
 
-    const userKeys = makeCryptoServiceForUser(credential);
+    const userKeys = makeUserKeysFromEmailCredential(credential);
 
     const storageRootId = storageRootIdInfo.make(credential.userId);
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
