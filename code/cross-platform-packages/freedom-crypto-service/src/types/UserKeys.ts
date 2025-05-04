@@ -19,7 +19,7 @@ import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-cry
  *   decryptOneEncryptedValue() is looking like a service. And the name is great.
  *   But the whole package looks as a part of a bigger crypto scope, not a package-worth atomic aspect.
  */
-export interface CryptoService {
+export interface UserKeys {
   /**
    * Get the key(set) listed by getPrivateCryptoKeySetIds()
    *

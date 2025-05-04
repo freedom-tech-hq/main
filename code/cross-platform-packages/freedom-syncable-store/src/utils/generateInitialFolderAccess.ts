@@ -12,7 +12,7 @@ import { doesSyncableStoreRoleHaveReadAccess } from './doesSyncableStoreRoleHave
 export const generateInitialFolderAccess = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore): PR<InitialAccess<SyncableStoreRole>> => {
-    const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await store.userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
@@ -33,7 +33,7 @@ export const generateInitialFolderAccess = makeAsyncResultFunc(
     }
 
     return await generateInitialAccess(trace, {
-      cryptoService: store.cryptoService,
+      userKeys: store.userKeys,
       initialAccess,
       roleSchema: syncableStoreRoleSchema,
       doesRoleHaveReadAccess: doesSyncableStoreRoleHaveReadAccess

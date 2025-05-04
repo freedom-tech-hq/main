@@ -8,11 +8,11 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 import { generateSignedAddAccessChange } from '../generateSignedAddAccessChange.ts';
@@ -22,7 +22,7 @@ describe('generateSignedModifyAccessChange', () => {
   let trace!: Trace;
   let cryptoKeys1!: PrivateCombinationCryptoKeySet;
   let cryptoKeys2!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: CryptoService;
+  let userKeys!: UserKeys;
   let accessControlDoc!: TestAccessControlDocument;
 
   beforeEach(async () => {
@@ -32,10 +32,10 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(internalCryptoKeys1);
     cryptoKeys1 = internalCryptoKeys1.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys1 });
+    userKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys1 });
 
     const initialAccess = await generateInitialAccess(trace, {
-      cryptoService,
+      userKeys,
       initialAccess: [{ role: 'creator', publicKeys: cryptoKeys1.publicOnly() }],
       roleSchema: testStoreRoleSchema,
       doesRoleHaveReadAccess: (role) => role !== 'appender'
@@ -56,7 +56,7 @@ describe('generateSignedModifyAccessChange', () => {
 
   it('should work maintaining read access', async () => {
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here
@@ -74,7 +74,7 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(accessAdded);
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here
@@ -103,7 +103,7 @@ describe('generateSignedModifyAccessChange', () => {
 
   it('should work dropping read access', async (t: TestContext) => {
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here
@@ -121,7 +121,7 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(accessAdded);
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here
@@ -158,7 +158,7 @@ describe('generateSignedModifyAccessChange', () => {
 
   it('should work adding read access', async (t: TestContext) => {
     const signedAddAccessChange = await generateSignedAddAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here
@@ -176,7 +176,7 @@ describe('generateSignedModifyAccessChange', () => {
     expectOk(accessAdded);
 
     const signedModifyAccessChange = await generateSignedModifyAccessChange(trace, {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       roleSchema: testStoreRoleSchema,
       // Not validating trusted times here

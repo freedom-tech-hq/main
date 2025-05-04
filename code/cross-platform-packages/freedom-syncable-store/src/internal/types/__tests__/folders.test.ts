@@ -5,16 +5,16 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { ACCESS_CONTROL_BUNDLE_ID, saltedId, STORE_CHANGES_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../../tests/makeCryptoServiceForTesting.ts';
-import type { HotSwappableCryptoService } from '../../../tests/makeHotSwappableCryptoServiceForTesting.ts';
-import { makeHotSwappableCryptoServiceForTesting } from '../../../tests/makeHotSwappableCryptoServiceForTesting.ts';
+import type { HotSwappableUserKeys } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
+import { makeHotSwappableUserKeysForTesting } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
+import { makeUserKeysForTesting } from '../../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
 import { createBundleAtPath } from '../../../utils/create/createBundleAtPath.ts';
@@ -28,8 +28,8 @@ import { initializeRoot } from '../../../utils/initializeRoot.ts';
 describe('folders', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: HotSwappableCryptoService;
-  let primaryUserCryptoService!: CryptoService;
+  let userKeys!: HotSwappableUserKeys;
+  let primaryUserUserKeys!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -44,12 +44,12 @@ describe('folders', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    primaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
-    cryptoService = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
+    primaryUserUserKeys = makeUserKeysForTesting({ privateKeys: privateKeys });
+    userKeys = makeHotSwappableUserKeysForTesting(primaryUserUserKeys);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
-      cryptoService,
+      userKeys,
       trustedTimeSignature: undefined
     });
     expectOk(provenance);
@@ -58,7 +58,7 @@ describe('folders', () => {
     store = new DefaultSyncableStore({
       storageRootId,
       backing: storeBacking,
-      cryptoService,
+      userKeys,
       creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });
@@ -77,9 +77,9 @@ describe('folders', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'editor' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    cryptoService.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
@@ -103,9 +103,9 @@ describe('folders', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'appender' }));
 
-    const secondaryUserCryptoService = makeCryptoServiceForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    cryptoService.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
@@ -118,7 +118,7 @@ describe('folders', () => {
     const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
-    cryptoService.hotSwap(primaryUserCryptoService);
+    userKeys.hotSwap(primaryUserUserKeys);
 
     // Primary user should be able to read back that file
     const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);

@@ -1,5 +1,5 @@
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import type { DevLoggingSupport } from 'freedom-dev-logging-support';
 import type { Notifiable } from 'freedom-notification-types';
 import type { SaltId } from 'freedom-sync-types';
@@ -15,7 +15,7 @@ export interface SyncableStore extends SyncableFolderAccessor, Notifiable<SyncTr
   readonly localTrustMarks: MutableTrustMarkStore;
 
   readonly creatorPublicKeys: CombinationCryptoKeySet;
-  readonly cryptoService: CryptoService;
+  readonly userKeys: UserKeys;
 
   readonly saltsById: Partial<Record<SaltId, string>>;
 

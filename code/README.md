@@ -32,7 +32,7 @@ yarn test
 
 For the logging-related environment variables: `FREEDOM_LOG_FUNCS`, `FREEDOM_LOG_ARGS`, and `FREEDOM_LOG_RESULTS`, rules are used to select what to log.
 
-For example: `FREEDOM_LOG_FUNCS=freedom-crypto-service/utils/makeCryptoService>generateSignedValue` selects functions where the top ID string for the trace stack is '`freedom-crypto-service/utils/makeCryptoService>generateSignedValue`'.
+For example: `FREEDOM_LOG_FUNCS=freedom-crypto-service/utils/makeUserKeys>generateSignedValue` selects functions where the top ID string for the trace stack is '`freedom-crypto-service/utils/makeUserKeys>generateSignedValue`'.
 
 Multiple inclusion rules can be added by separating individual rules using commas and/or newlines.
 

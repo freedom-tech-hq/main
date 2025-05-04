@@ -66,7 +66,7 @@ const internalGenerateAcceptanceForFileAtPathWithKeySet = makeAsyncResultFunc(
       return trustedTime;
     }
 
-    const privateKeys = await store.cryptoService.getPrivateCryptoKeySet(trace, cryptoKeySetId);
+    const privateKeys = await store.userKeys.getPrivateCryptoKeySet(trace, cryptoKeySetId);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

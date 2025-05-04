@@ -5,7 +5,7 @@ import type { EmailCredential } from 'freedom-email-user';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { DefaultSyncableStore } from 'freedom-syncable-store';
 
-import { makeCryptoServiceForUser } from '../../utils/makeCryptoServiceForUser.ts';
+import { makeUserKeysFromEmailCredential } from '../../utils/makeUserKeysFromEmailCredential.ts';
 import { getOrCreateSyncableStoreBackingForUserEmail } from '../storage/getOrCreateSyncableStoreBackingForUserEmail.ts';
 
 // TODO: TEMP
@@ -27,17 +27,17 @@ export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
     }
 
     const storageRootId = storageRootIdInfo.make(userId);
-    const cryptoService = makeCryptoServiceForUser(credential);
+    const userKeys = makeUserKeysFromEmailCredential(credential);
 
     const userFs = new DefaultSyncableStore({
       storageRootId,
-      cryptoService,
+      userKeys,
       saltsById: credential.saltsById,
       creatorPublicKeys: credential.privateKeys.publicOnly(),
       backing: backing.value
     });
 
-    const output: EmailAccess = { userId, cryptoService, saltsById: credential.saltsById, userFs };
+    const output: EmailAccess = { userId, userKeys, saltsById: credential.saltsById, userFs };
     globalCache[userId] = output;
 
     return makeSuccess(output);

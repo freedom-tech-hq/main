@@ -3,7 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { generateSha256HashForEmptyString, generateSignedValue } from 'freedom-crypto';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import type { SignedSyncableOrigin, SyncableItemName, SyncableItemType, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 import { syncableOriginSchema, syncableOriginSignatureExtrasSchema } from 'freedom-sync-types';
 
@@ -17,14 +17,14 @@ export const generateOrigin = makeAsyncResultFunc(
       name,
       contentHash,
       trustedTimeSignature,
-      cryptoService
+      userKeys
     }: SyncableOriginOptions & {
       path: SyncablePath;
       type: SyncableItemType;
       name: SyncableItemName;
       /** Use `undefined` if the path represents a folder-like item */
       contentHash: Sha256Hash | undefined;
-      cryptoService: CryptoService;
+      userKeys: UserKeys;
     }
   ): PR<SignedSyncableOrigin> => {
     if (contentHash === undefined) {
@@ -36,7 +36,7 @@ export const generateOrigin = makeAsyncResultFunc(
       contentHash = folderContentHash.value;
     }
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

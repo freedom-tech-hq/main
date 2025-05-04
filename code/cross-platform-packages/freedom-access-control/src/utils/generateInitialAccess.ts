@@ -7,7 +7,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
 import { type CombinationCryptoKeySet, type CryptoKeySetId, type EncryptingKeySet, publicKeysByIdSchema } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { serialize } from 'freedom-serialization';
 import { type Schema } from 'yaschema';
 
@@ -20,18 +20,18 @@ export const generateInitialAccess = makeAsyncResultFunc(
   async <RoleT extends string>(
     trace: Trace,
     {
-      cryptoService,
+      userKeys,
       initialAccess,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
-      cryptoService: CryptoService;
+      userKeys: UserKeys;
       initialAccess: Array<{ role: RoleT; publicKeys: CombinationCryptoKeySet }>;
       roleSchema: Schema<RoleT>;
       doesRoleHaveReadAccess: (role: RoleT) => boolean;
     }
   ): PR<InitialAccess<RoleT>> => {
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     /* node:coverage disable */
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');

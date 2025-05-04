@@ -35,7 +35,7 @@ export const generateOriginForFileAtPath = makeAsyncResultFunc(
       name,
       contentHash: contentHash.value,
       trustedTimeSignature,
-      cryptoService: store.cryptoService
+      userKeys: store.userKeys
     });
   }
 );

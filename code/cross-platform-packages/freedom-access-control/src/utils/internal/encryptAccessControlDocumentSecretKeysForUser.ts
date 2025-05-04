@@ -6,7 +6,7 @@ import { objectEntries } from 'freedom-cast';
 import type { Trace } from 'freedom-contexts';
 import { generateEncryptedValue } from 'freedom-crypto';
 import type { CombinationCryptoKeySet, CryptoKeySetId, EncryptedValue } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 
 import { getDecryptedSharedSecretKeysFromAccessControlDocument } from '../getDecryptedSharedSecretKeysFromAccessControlDocument.ts';
 
@@ -15,13 +15,13 @@ export const encryptAccessControlDocumentSecretKeysForUser = makeAsyncResultFunc
   async <RoleT extends string>(
     trace: Trace,
     {
-      cryptoService,
+      userKeys,
       accessControlDoc,
       userPublicKeys
-    }: { cryptoService: CryptoService; accessControlDoc: AccessControlDocument<RoleT>; userPublicKeys: CombinationCryptoKeySet }
+    }: { userKeys: UserKeys; accessControlDoc: AccessControlDocument<RoleT>; userPublicKeys: CombinationCryptoKeySet }
   ): PR<Partial<Record<CryptoKeySetId, EncryptedValue<SharedSecretKeys>>>> => {
     const decryptedSharedSecretKeys = await getDecryptedSharedSecretKeysFromAccessControlDocument(trace, {
-      cryptoService,
+      userKeys,
       accessControl: accessControlDoc
     });
     /* node:coverage disable */

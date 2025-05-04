@@ -14,7 +14,7 @@ import { makeSerializedValueSchema, timeIdInfo } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { serialize } from 'freedom-serialization';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 import type { Schema } from 'yaschema';
@@ -27,14 +27,14 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
     trace: Trace,
     {
       generateTrustedTimeForAccessChange,
-      cryptoService,
+      userKeys,
       accessControlDoc,
       params,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
       generateTrustedTimeForAccessChange: PRFunc<TrustedTime, never, [AccessChange<RoleT>]>;
-      cryptoService: CryptoService;
+      userKeys: UserKeys;
       accessControlDoc: AccessControlDocument<RoleT>;
       params: Omit<AddAccessChangeParams<RoleT>, 'type'>;
       roleSchema: Schema<RoleT>;
@@ -49,7 +49,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
      */
     const encryptedSecretKeysForNewUserBySharedKeysId = doesRoleHaveReadAccess(params.role)
       ? await encryptAccessControlDocumentSecretKeysForUser(trace, {
-          cryptoService,
+          userKeys,
           accessControlDoc,
           userPublicKeys: params.publicKeys
         })
@@ -76,7 +76,7 @@ export const generateSignedAddAccessChange = makeAsyncResultFunc(
 
     const timeMSec = timeIdInfo.extractTimeMSec(trustedTime.value.timeId);
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }

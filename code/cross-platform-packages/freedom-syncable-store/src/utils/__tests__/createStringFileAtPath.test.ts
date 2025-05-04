@@ -5,13 +5,13 @@ import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 
-import { makeCryptoServiceForTesting } from '../../tests/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../create/createStringFileAtPath.ts';
@@ -22,7 +22,7 @@ import { initializeRoot } from '../initializeRoot.ts';
 describe('createStringFileAtPath', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let cryptoService!: CryptoService;
+  let userKeys!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -37,11 +37,11 @@ describe('createStringFileAtPath', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys });
+    userKeys = makeUserKeysForTesting({ privateKeys: privateKeys });
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
-      cryptoService,
+      userKeys,
       trustedTimeSignature: undefined
     });
     expectOk(provenance);
@@ -50,7 +50,7 @@ describe('createStringFileAtPath', () => {
     store = new DefaultSyncableStore({
       storageRootId,
       backing: storeBacking,
-      cryptoService,
+      userKeys,
       creatorPublicKeys: privateKeys.publicOnly(),
       saltsById: { [DEFAULT_SALT_ID]: makeUuid() }
     });

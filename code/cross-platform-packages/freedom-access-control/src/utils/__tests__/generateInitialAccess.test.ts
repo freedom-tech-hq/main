@@ -6,7 +6,7 @@ import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
-import { makeCryptoServiceForTesting } from '../../__test_dependency__/makeCryptoServiceForTesting.ts';
+import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 
 const roleSchema = schema.string();
@@ -18,10 +18,10 @@ describe('generateInitialAccess', () => {
     const privateKeys = await generateCryptoCombinationKeySet(trace);
     expectOk(privateKeys);
 
-    const cryptoService = makeCryptoServiceForTesting({ privateKeys: privateKeys.value });
+    const userKeys = makeUserKeysForTesting({ privateKeys: privateKeys.value });
 
     const initialAccess = await generateInitialAccess(trace, {
-      cryptoService,
+      userKeys,
       initialAccess: [{ role: 'creator', publicKeys: privateKeys.value.publicOnly() }],
       roleSchema,
       doesRoleHaveReadAccess: () => true

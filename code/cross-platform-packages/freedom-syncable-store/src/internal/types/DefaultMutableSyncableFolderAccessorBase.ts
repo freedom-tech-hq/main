@@ -177,7 +177,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       switch (change.type) {
         case 'add-access':
           signedTimedChange = await generateSignedAddAccessChange(trace, {
-            cryptoService: store.cryptoService,
+            userKeys: store.userKeys,
             accessControlDoc: accessControlDoc.value.document,
             generateTrustedTimeForAccessChange: async (trace, accessChange) =>
               await generateTrustedTimeForSyncableStoreAccessChange(trace, store, { parentPath: this.path, accessChange }),
@@ -189,7 +189,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
         case 'modify-access':
           signedTimedChange = await generateSignedModifyAccessChange(trace, {
-            cryptoService: store.cryptoService,
+            userKeys: store.userKeys,
             accessControlDoc: accessControlDoc.value.document,
             generateTrustedTimeForAccessChange: async (trace, accessChange) =>
               await generateTrustedTimeForSyncableStoreAccessChange(trace, store, { parentPath: this.path, accessChange }),

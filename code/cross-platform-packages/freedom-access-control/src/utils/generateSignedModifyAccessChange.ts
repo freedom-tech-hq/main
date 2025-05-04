@@ -16,7 +16,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSignedValue } from 'freedom-crypto';
 import type { EncryptingKeySet } from 'freedom-crypto-data';
-import type { CryptoService } from 'freedom-crypto-service';
+import type { UserKeys } from 'freedom-crypto-service';
 import { serialize } from 'freedom-serialization';
 import type { TrustedTime } from 'freedom-trusted-time-source';
 import type { Schema } from 'yaschema';
@@ -30,14 +30,14 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
     trace: Trace,
     {
       generateTrustedTimeForAccessChange,
-      cryptoService,
+      userKeys,
       params,
       accessControlDoc,
       roleSchema,
       doesRoleHaveReadAccess
     }: {
       generateTrustedTimeForAccessChange: PRFunc<TrustedTime, never, [AccessChange<RoleT>]>;
-      cryptoService: CryptoService;
+      userKeys: UserKeys;
       accessControlDoc: AccessControlDocument<RoleT>;
       params: Omit<ModifyAccessChangeParams<RoleT>, 'type'>;
       roleSchema: Schema<RoleT>;
@@ -67,7 +67,7 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
         }
 
         const encryptedSecretKeysForModifiedUserBySharedKeysId = await encryptAccessControlDocumentSecretKeysForUser(trace, {
-          cryptoService,
+          userKeys,
           accessControlDoc,
           userPublicKeys: userPublicKeys.value
         });
@@ -108,7 +108,7 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
       }
     }
 
-    const privateKeys = await cryptoService.getPrivateCryptoKeySet(trace);
+    const privateKeys = await userKeys.getPrivateCryptoKeySet(trace);
     if (!privateKeys.ok) {
       return generalizeFailureResult(trace, privateKeys, 'not-found');
     }
