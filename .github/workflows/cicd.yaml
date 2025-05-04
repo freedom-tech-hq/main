@@ -9,8 +9,8 @@ on:
 
 jobs:
   ######################################################################################################################
-  ci-all:
-    name: CI All
+  lint-all:
+    name: Lint All
 
     runs-on: build-server
     defaults:
@@ -39,6 +39,9 @@ jobs:
 
       - name: 🔸 Lint
         run: yarn lint
+
+      - name: 🔸 Lint package.json Synchronization
+        run: nx run freedom-dev-scripts:run:package-sync
 
   ######################################################################################################################
   test:
