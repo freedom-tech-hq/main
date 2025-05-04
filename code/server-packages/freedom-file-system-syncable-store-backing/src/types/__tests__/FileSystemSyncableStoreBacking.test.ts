@@ -38,7 +38,7 @@ describe('FileSystemSyncableStore', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
   let userKeys!: HotSwappableUserKeys;
-  let primaryUserCryptoService!: UserKeys;
+  let primaryUserKeys!: UserKeys;
   let storeBacking!: FileSystemSyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -55,8 +55,8 @@ describe('FileSystemSyncableStore', () => {
   beforeEach(async () => {
     trace = makeTrace('test');
 
-    primaryUserCryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
-    userKeys = makeHotSwappableUserKeysForTesting(primaryUserCryptoService);
+    primaryUserKeys = makeUserKeysForTesting({ privateKeys: privateKeys });
+    userKeys = makeHotSwappableUserKeysForTesting(primaryUserKeys);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
@@ -146,9 +146,9 @@ describe('FileSystemSyncableStore', () => {
 
     expectOk(await store.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' }));
 
-    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    userKeys.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, store.path.append(uuidId('file')), {
@@ -174,9 +174,9 @@ describe('FileSystemSyncableStore', () => {
       await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'editor' })
     );
 
-    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    userKeys.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
@@ -202,9 +202,9 @@ describe('FileSystemSyncableStore', () => {
       await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value.publicOnly(), role: 'appender' })
     );
 
-    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    userKeys.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
@@ -217,7 +217,7 @@ describe('FileSystemSyncableStore', () => {
     const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
-    userKeys.hotSwap(primaryUserCryptoService);
+    userKeys.hotSwap(primaryUserKeys);
 
     // Primary user should be able to read back that file
     const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);

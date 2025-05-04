@@ -29,7 +29,7 @@ describe('folders', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
   let userKeys!: HotSwappableUserKeys;
-  let primaryUserCryptoService!: UserKeys;
+  let primaryUserUserKeys!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
 
@@ -44,8 +44,8 @@ describe('folders', () => {
     expectOk(internalCryptoKeys);
     privateKeys = internalCryptoKeys.value;
 
-    primaryUserCryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
-    userKeys = makeHotSwappableUserKeysForTesting(primaryUserCryptoService);
+    primaryUserUserKeys = makeUserKeysForTesting({ privateKeys: privateKeys });
+    userKeys = makeHotSwappableUserKeysForTesting(primaryUserUserKeys);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
@@ -77,9 +77,9 @@ describe('folders', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'editor' }));
 
-    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    userKeys.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
@@ -103,9 +103,9 @@ describe('folders', () => {
 
     expectOk(await testingFolder.value.updateAccess(trace, { type: 'add-access', publicKeys: cryptoKeys2.value, role: 'appender' }));
 
-    const secondaryUserCryptoService = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
+    const secondaryUserUserKeys = makeUserKeysForTesting({ privateKeys: cryptoKeys2.value });
 
-    userKeys.hotSwap(secondaryUserCryptoService);
+    userKeys.hotSwap(secondaryUserUserKeys);
 
     // Should be able to write new file
     const createdTestTxtFile = await createStringFileAtPath(trace, store, testingFolder.value.path.append(uuidId('file')), {
@@ -118,7 +118,7 @@ describe('folders', () => {
     const textContent2 = await getStringFromFile(trace, store, createdTestTxtFile.value.path);
     expectNotOk(textContent2);
 
-    userKeys.hotSwap(primaryUserCryptoService);
+    userKeys.hotSwap(primaryUserUserKeys);
 
     // Primary user should be able to read back that file
     const textContent = await getStringFromFile(trace, store, createdTestTxtFile.value.path);

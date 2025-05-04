@@ -1,17 +1,17 @@
 import type { UserKeys } from 'freedom-crypto-service';
 
 export interface HotSwappableUserKeys extends UserKeys {
-  hotSwap: (newCryptoService: UserKeys) => void;
+  hotSwap: (newUserKeys: UserKeys) => void;
 }
 
-export const makeHotSwappableUserKeysForTesting = (initialCryptoService: UserKeys): HotSwappableUserKeys => {
-  let activeCryptoService = initialCryptoService;
+export const makeHotSwappableUserKeysForTesting = (initialUserKeys: UserKeys): HotSwappableUserKeys => {
+  let activeUserKeys = initialUserKeys;
 
   return {
-    getPrivateCryptoKeySetIds: (...args) => activeCryptoService.getPrivateCryptoKeySetIds(...args),
-    getPrivateCryptoKeySet: (...args) => activeCryptoService.getPrivateCryptoKeySet(...args),
-    hotSwap: (newCryptoService) => {
-      activeCryptoService = newCryptoService;
+    getPrivateCryptoKeySetIds: (...args) => activeUserKeys.getPrivateCryptoKeySetIds(...args),
+    getPrivateCryptoKeySet: (...args) => activeUserKeys.getPrivateCryptoKeySet(...args),
+    hotSwap: (newUserKeys) => {
+      activeUserKeys = newUserKeys;
     }
   };
 };
