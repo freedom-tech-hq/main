@@ -1,3 +1,3 @@
 export * from './createStoreTestStack.ts';
-export * from './makeHotSwappableCryptoServiceForTesting.ts';
+export * from './makeHotSwappableUserKeysForTesting.ts';
 export * from './makeUserKeysForTesting.ts';

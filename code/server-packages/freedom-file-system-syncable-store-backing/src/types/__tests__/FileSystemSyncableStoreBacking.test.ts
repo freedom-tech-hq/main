@@ -27,8 +27,8 @@ import {
 import { saltedId } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import type { HotSwappableCryptoService } from '../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
-import { makeHotSwappableCryptoServiceForTesting } from '../../__test_dependency__/makeHotSwappableCryptoServiceForTesting.ts';
+import type { HotSwappableUserKeys } from '../../__test_dependency__/makeHotSwappableUserKeysForTesting.ts';
+import { makeHotSwappableUserKeysForTesting } from '../../__test_dependency__/makeHotSwappableUserKeysForTesting.ts';
 import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { FileSystemSyncableStoreBacking } from '../FileSystemSyncableStoreBacking.ts';
 
@@ -37,7 +37,7 @@ describe('FileSystemSyncableStore', () => {
 
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let userKeys!: HotSwappableCryptoService;
+  let userKeys!: HotSwappableUserKeys;
   let primaryUserCryptoService!: UserKeys;
   let storeBacking!: FileSystemSyncableStoreBacking;
   let store!: DefaultSyncableStore;
@@ -56,7 +56,7 @@ describe('FileSystemSyncableStore', () => {
     trace = makeTrace('test');
 
     primaryUserCryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
-    userKeys = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
+    userKeys = makeHotSwappableUserKeysForTesting(primaryUserCryptoService);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,

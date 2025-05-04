@@ -12,8 +12,8 @@ import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId 
 import { ACCESS_CONTROL_BUNDLE_ID, saltedId, STORE_CHANGES_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
-import type { HotSwappableCryptoService } from '../../../tests/makeHotSwappableCryptoServiceForTesting.ts';
-import { makeHotSwappableCryptoServiceForTesting } from '../../../tests/makeHotSwappableCryptoServiceForTesting.ts';
+import type { HotSwappableUserKeys } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
+import { makeHotSwappableUserKeysForTesting } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
 import { makeUserKeysForTesting } from '../../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
@@ -28,7 +28,7 @@ import { initializeRoot } from '../../../utils/initializeRoot.ts';
 describe('folders', () => {
   let trace!: Trace;
   let privateKeys!: PrivateCombinationCryptoKeySet;
-  let userKeys!: HotSwappableCryptoService;
+  let userKeys!: HotSwappableUserKeys;
   let primaryUserCryptoService!: UserKeys;
   let storeBacking!: InMemorySyncableStoreBacking;
   let store!: DefaultSyncableStore;
@@ -45,7 +45,7 @@ describe('folders', () => {
     privateKeys = internalCryptoKeys.value;
 
     primaryUserCryptoService = makeUserKeysForTesting({ privateKeys: privateKeys });
-    userKeys = makeHotSwappableCryptoServiceForTesting(primaryUserCryptoService);
+    userKeys = makeHotSwappableUserKeysForTesting(primaryUserCryptoService);
 
     const provenance = await generateProvenanceForNewSyncableStore(trace, {
       storageRootId,
