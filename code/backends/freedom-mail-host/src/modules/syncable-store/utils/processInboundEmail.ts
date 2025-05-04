@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { log } from 'freedom-contexts';
 import { addIncomingEmail } from 'freedom-fake-email-service';
 import type { SMTPServerEnvelope } from 'smtp-server';
 
@@ -29,6 +30,8 @@ export const processInboundEmail = makeAsyncResultFunc(
     for (const recipient of envelope.rcptTo) {
       await addIncomingEmail(trace, recipient.address, parsedMail);
     }
+
+    log().info?.(trace, `Delivery is successful for ${envelope.rcptTo.map((v) => v.address).join(', ')}`);
 
     return makeSuccess(undefined);
   }
