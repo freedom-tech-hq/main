@@ -1,12 +1,21 @@
 import type { PR, PRFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncableId, SyncableItemMetadata, SyncableItemType } from 'freedom-sync-types';
 import type { LocalItemMetadata } from 'freedom-syncable-store-backing-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { GenerateNewSyncableItemNameFunc } from '../GenerateNewSyncableItemNameFunc.ts';
 import type { SyncableItemAccessor } from './SyncableItemAccessor.ts';
 import type { SyncableItemAccessorBase } from './SyncableItemAccessorBase.ts';
+
+export type LsFormat = (args: {
+  itemId: SyncableId;
+  metadata: SyncableItemMetadata & LocalItemMetadata;
+  dynamicName: DynamicSyncableItemName | undefined;
+}) => string;
+export type LsArgs = { format?: LsFormat };
+export const defaultLsFormat: LsFormat = ({ itemId, metadata, dynamicName }) =>
+  `${itemId}${dynamicName !== undefined ? ` (${JSON.stringify(dynamicName)})` : ''}: ${metadata.hash}`;
 
 export interface StoreBase extends SyncableItemAccessorBase {
   /** Determines if the file or access controlled folder exists or not */
@@ -31,5 +40,5 @@ export interface StoreBase extends SyncableItemAccessorBase {
   readonly isDeleted: PRFunc<boolean, never, [id: SyncableId]>;
 
   /** Lists the IDs of files, along with their hashes */
-  readonly ls: PRFunc<string[]>;
+  readonly ls: PRFunc<string[], never, [options?: LsArgs]>;
 }

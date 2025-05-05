@@ -17,6 +17,7 @@ import type { LocalItemMetadata, SyncableStoreBacking } from 'freedom-syncable-s
 import { guardIsExpectedType } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
+  LsArgs,
   MutableFolderStore,
   MutableSyncableFolderAccessor,
   MutableSyncableItemAccessor,
@@ -24,6 +25,7 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
+import { defaultLsFormat } from 'freedom-syncable-store-types';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
@@ -403,7 +405,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore> {
     }
   );
 
-  public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace): PR<string[]> => {
+  public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace, options?: LsArgs): PR<string[]> => {
     const metadataById = await this.getMetadataById(trace);
     if (!metadataById.ok) {
       return metadataById;
@@ -421,13 +423,20 @@ export class DefaultFolderStore implements Partial<MutableFolderStore> {
         const itemPath = this.path.append(itemId);
 
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
+        const lsFormat = options?.format ?? defaultLsFormat;
 
-        const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
+        const output: string[] = [
+          lsFormat({
+            itemId,
+            metadata,
+            dynamicName: dynamicName.ok ? dynamicName.value : undefined
+          })
+        ];
         const itemType = extractSyncableItemTypeFromId(itemId);
         switch (itemType) {
           case 'folder': {
             const itemAccessor = this.makeItemAccessor_(itemPath, itemType);
-            const fileLs = await itemAccessor.ls(trace);
+            const fileLs = await itemAccessor.ls(trace, options);
             if (!fileLs.ok) {
               return fileLs;
             }

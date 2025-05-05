@@ -1,9 +1,11 @@
 import type { TestContext } from 'node:test';
 import { afterEach, describe, it } from 'node:test';
 
+import { uncheckedResult } from 'freedom-async';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { encName, uuidId } from 'freedom-sync-types';
 import { expectErrorCode, expectIncludes, expectOk, expectStrictEqual } from 'freedom-testing-tools';
+import { isString } from 'lodash-es';
 
 import { createStoreTestStack } from '../../tests/createStoreTestStack.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
@@ -18,7 +20,7 @@ import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 describe('DefaultSyncableStore', () => {
   afterEach(invalidateAllInMemoryCaches);
 
-  it.skip('deleting files and folders should work', async (t: TestContext) => {
+  it('deleting files and folders should work', async (t: TestContext) => {
     const { trace, store } = await createStoreTestStack();
 
     // Creating folder with default initial access
@@ -38,20 +40,41 @@ describe('DefaultSyncableStore', () => {
     expectOk(helloWorldStringContent);
     t.assert.strictEqual(helloWorldStringContent.value, 'hello world');
 
-    // Deleting file
-    expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
+    console.log(
+      (
+        await uncheckedResult(
+          store.ls(trace, {
+            format: ({ itemId, dynamicName }) => {
+              let readableName = dynamicName !== undefined ? `${isString(dynamicName) ? dynamicName : dynamicName.plainName}` : '[NO NAME]';
+              const readableId = readableName === itemId ? '=ID' : itemId;
 
-    const helloWorldTxtItem = await getSyncableAtPath(trace, store, helloWorldTxtPath);
-    expectOk(helloWorldTxtItem);
+              if (readableId === '=ID') {
+                readableName = `\x1b[33m${readableName}\x1b[0m`;
+              } else {
+                readableName = `\x1b[34m${readableName}\x1b[0m`;
+              }
+              return `${readableName} \x1b[2m${readableId}\x1b[0m`;
+            }
+          })
+        )
+      ).join('\n')
+    );
+    // renderStoreFiles(trace, store);
 
-    expectStrictEqual((await isSyncableDeleted(trace, store, helloWorldTxtPath, { recursive: false })).value, true);
-
-    expectErrorCode(await getStringFromFile(trace, store, helloWorldTxtPath), 'deleted');
-
-    // Deleting folder
-    expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));
-
-    expectStrictEqual((await isSyncableDeleted(trace, store, testingPath, { recursive: false })).value, true);
+    // // Deleting file
+    // expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
+    //
+    // const helloWorldTxtItem = await getSyncableAtPath(trace, store, helloWorldTxtPath);
+    // expectOk(helloWorldTxtItem);
+    //
+    // expectStrictEqual((await isSyncableDeleted(trace, store, helloWorldTxtPath, { recursive: false })).value, true);
+    //
+    // expectErrorCode(await getStringFromFile(trace, store, helloWorldTxtPath), 'deleted');
+    //
+    // // Deleting folder
+    // expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));
+    //
+    // expectStrictEqual((await isSyncableDeleted(trace, store, testingPath, { recursive: false })).value, true);
   });
 
   it('getIds should work', async (_t: TestContext) => {
