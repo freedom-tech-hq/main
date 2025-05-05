@@ -15,15 +15,14 @@ describe('listTimeOrganizedMailIds', () => {
 
   it('should work with no emails', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     // Act
-    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage });
+    const mailIds = await listTimeOrganizedMailIds(trace, store, { timeOrganizedPaths: paths.storage });
     expectOk(mailIds);
 
     // Assert
@@ -32,15 +31,14 @@ describe('listTimeOrganizedMailIds', () => {
 
   it('should work with single email', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     expectOk(
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -50,7 +48,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
 
     // Act
-    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage });
+    const mailIds = await listTimeOrganizedMailIds(trace, store, { timeOrganizedPaths: paths.storage });
     expectOk(mailIds);
 
     // Assert
@@ -59,15 +57,14 @@ describe('listTimeOrganizedMailIds', () => {
 
   it('should work with multiple emails', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     expectOk(
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -77,7 +74,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
     expectOk(
       // Same year, month, day, hour
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -87,7 +84,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
     expectOk(
       // Same year, month, day
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -97,7 +94,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
     expectOk(
       // Same year, month
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -107,7 +104,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
     expectOk(
       // Same year
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -117,7 +114,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
     expectOk(
       // Different year
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -127,7 +124,7 @@ describe('listTimeOrganizedMailIds', () => {
     );
 
     // Act
-    const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage });
+    const mailIds = await listTimeOrganizedMailIds(trace, store, { timeOrganizedPaths: paths.storage });
     expectOk(mailIds);
 
     // Assert
@@ -136,15 +133,14 @@ describe('listTimeOrganizedMailIds', () => {
 
   it('pagination should work with multiple emails', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     for (let index = 0; index < 100; index += 1) {
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -157,7 +153,7 @@ describe('listTimeOrganizedMailIds', () => {
     let pageToken: PageToken | undefined;
     let totalMailIdCount = 0;
     while (true) {
-      const mailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: paths.storage, pageToken });
+      const mailIds = await listTimeOrganizedMailIds(trace, store, { timeOrganizedPaths: paths.storage, pageToken });
       expectOk(mailIds);
 
       if (mailIds.value.nextPageToken === undefined || mailIds.value.items.length === 0) {

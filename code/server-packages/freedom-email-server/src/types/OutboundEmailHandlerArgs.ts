@@ -1,8 +1,9 @@
 import type { User } from 'freedom-db';
-import type { EmailAccess, MailId } from 'freedom-email-sync';
+import type { MailId } from 'freedom-email-sync';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 export interface OutboundEmailHandlerArgs {
   user: User;
-  access: EmailAccess;
+  syncableStore: MutableSyncableStore;
   emailIds: MailId[];
 }

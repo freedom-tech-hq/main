@@ -1,8 +1,9 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { EmailAccess, MailId } from 'freedom-email-sync';
+import type { MailId } from 'freedom-email-sync';
 import { createBundleAtPath, createConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import { MailDraftDocument } from '../types/MailDraftDocument.ts';
 import { type MailDraftId, mailDraftIdInfo } from '../types/MailDraftId.ts';
@@ -11,13 +12,12 @@ import { getUserMailPaths } from './getUserMailPaths.ts';
 
 export const addMailDraft = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, access: EmailAccess, { inReplyToMailId }: { inReplyToMailId?: MailId }): PR<{ draftId: MailDraftId }> => {
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+  async (trace, syncableStore: MutableSyncableStore, { inReplyToMailId }: { inReplyToMailId?: MailId }): PR<{ draftId: MailDraftId }> => {
+    const paths = await getUserMailPaths(syncableStore);
 
     const draftId = mailDraftIdInfo.make();
     const draftIdPath = await paths.drafts.draftId(draftId);
-    const draftBundle = await createBundleAtPath(trace, userFs, draftIdPath.value);
+    const draftBundle = await createBundleAtPath(trace, syncableStore, draftIdPath.value);
     if (!draftBundle.ok) {
       return generalizeFailureResult(trace, draftBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
@@ -25,7 +25,7 @@ export const addMailDraft = makeAsyncResultFunc(
     // If this is in reply to another email, we should determine the subject from the original email
     let subject: string | undefined;
     if (inReplyToMailId !== undefined) {
-      const mailSummary = await getMailSummaryById(trace, access, inReplyToMailId);
+      const mailSummary = await getMailSummaryById(trace, syncableStore, inReplyToMailId);
       if (!mailSummary.ok) {
         return generalizeFailureResult(trace, mailSummary, 'not-found');
       }
@@ -33,7 +33,7 @@ export const addMailDraft = makeAsyncResultFunc(
       subject = mailSummary.value.subject;
     }
 
-    const created = await createConflictFreeDocumentBundleAtPath(trace, userFs, draftIdPath.draft, {
+    const created = await createConflictFreeDocumentBundleAtPath(trace, syncableStore, draftIdPath.draft, {
       newDocument: () => MailDraftDocument.newDocument({ inReplyToMailId, subject })
     });
     if (!created.ok) {

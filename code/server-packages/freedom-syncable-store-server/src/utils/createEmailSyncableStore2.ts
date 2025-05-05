@@ -2,17 +2,18 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { getSaltsForUser } from 'freedom-db';
-import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId } from 'freedom-email-sync';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { getEmailAccess } from './getEmailAccess.ts';
+import { createEmailSyncableStore1 } from './createEmailSyncableStore1.ts';
 import { getPublicKeysForUser } from './getPublicKeysForUser.ts';
 
 // TODO: TEMP
-const globalCache: Record<EmailUserId, EmailAccess> = {};
+const globalCache: Record<EmailUserId, MutableSyncableStore> = {};
 
-export const getEmailAccessByUserId = makeAsyncResultFunc(
+export const createEmailSyncableStore2 = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { userId }: { userId: EmailUserId }): PR<EmailAccess> => {
+  async (trace, { userId }: { userId: EmailUserId }): PR<MutableSyncableStore> => {
     const cached = globalCache[userId];
     if (cached !== undefined) {
       return makeSuccess(cached);
@@ -28,17 +29,17 @@ export const getEmailAccessByUserId = makeAsyncResultFunc(
       return generalizeFailureResult(trace, publicKeys, 'not-found');
     }
 
-    const access = await getEmailAccess(trace, {
+    const syncableStore = await createEmailSyncableStore1(trace, {
       userId,
       publicKeys: publicKeys.value,
       saltsById: saltsById.value
     });
-    if (!access.ok) {
-      return access;
+    if (!syncableStore.ok) {
+      return syncableStore;
     }
 
-    globalCache[userId] = access.value;
+    globalCache[userId] = syncableStore.value;
 
-    return access;
+    return syncableStore;
   }
 );

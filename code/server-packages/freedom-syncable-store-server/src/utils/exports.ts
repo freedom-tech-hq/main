@@ -1,4 +1,4 @@
+export { createEmailSyncableStore1 } from './createEmailSyncableStore1.ts';
+export { createEmailSyncableStore2 } from './createEmailSyncableStore2.ts';
 export { createSyncableStore } from './createSyncableStore.ts';
-export { getEmailAccess } from './getEmailAccess.ts';
-export { getEmailAccessByUserId } from './getEmailAccessByUserId.ts';
 export { getPublicKeysForUser } from './getPublicKeysForUser.ts';

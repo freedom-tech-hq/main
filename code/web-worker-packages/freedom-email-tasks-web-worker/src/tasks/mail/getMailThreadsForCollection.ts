@@ -12,7 +12,7 @@ import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import type { GetMailThreadsForCollection_MailAddedPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollection_MailAddedPacket.ts';
 import type { GetMailThreadsForCollectionPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollectionPacket.ts';
 import { getMailThread } from './getMailThread.ts';
@@ -32,10 +32,9 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
       return makeSuccess({ type: 'mail-added' as const, threadIds: [] });
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(syncableStore);
 
     const collectionType = mailCollectionTypes.checked(collectionId);
     if (collectionType === undefined || collectionType === 'custom') {
@@ -45,7 +44,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     const collectionPaths = paths.collections[collectionType];
 
-    const pagedMailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: collectionPaths });
+    const pagedMailIds = await listTimeOrganizedMailIds(trace, syncableStore, { timeOrganizedPaths: collectionPaths });
     if (!pagedMailIds.ok) {
       return pagedMailIds;
     }
@@ -53,7 +52,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     const initiallyLoadedMailIds: ThreadLikeId[] = pagedMailIds.value.items;
 
     const pendingMailIds: MailId[] = [];
-    const removeCollectionChangeListener = userFs.addListener('itemAdded', ({ type, path }) => {
+    const removeCollectionChangeListener = syncableStore.addListener('itemAdded', ({ type, path }) => {
       if (type !== 'file') {
         return;
       } else if (!path.startsWith(collectionPaths.value)) {
@@ -105,7 +104,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
           return makeSuccess(undefined); // No more pages / disconnected
         }
 
-        const pagedMailIds = await listTimeOrganizedMailIds(trace, access, { timeOrganizedPaths: collectionPaths, pageToken });
+        const pagedMailIds = await listTimeOrganizedMailIds(trace, syncableStore, { timeOrganizedPaths: collectionPaths, pageToken });
         if (!pagedMailIds.ok) {
           return pagedMailIds;
         }

@@ -18,14 +18,14 @@ import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 export const processOutboundEmail = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, args: OutboundEmailHandlerArgs): PR<undefined> => {
-    const { access, emailIds } = args;
+    const { syncableStore, emailIds } = args;
 
     // Process each email ID
     for (const mailId of emailIds) {
       DEV: debugTopic('SMTP', (log) => log(`Sending outbound email ${mailId}`));
 
       // Get the email content
-      const outboundMail = await getOutboundMailById(trace, access, mailId);
+      const outboundMail = await getOutboundMailById(trace, syncableStore, mailId);
       if (!outboundMail.ok) {
         return generalizeFailureResult(trace, outboundMail, 'not-found');
       }
@@ -74,7 +74,7 @@ export const processOutboundEmail = makeAsyncResultFunc(
       DEV: debugTopic('SMTP', (log) => log(`Before moveOutboundMailToStorage`));
 
       // Move to permanent storage after successful sending
-      const moved = await moveOutboundMailToStorage(trace, access, mailId);
+      const moved = await moveOutboundMailToStorage(trace, syncableStore, mailId);
       if (!moved.ok) {
         return generalizeFailureResult(trace, moved, 'not-found');
       }

@@ -6,7 +6,7 @@ import type { MailThread, ThreadLikeId } from 'freedom-email-user';
 import { getMailById } from 'freedom-email-user';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 
 export const getMailThread = makeAsyncResultFunc(
   [import.meta.filename],
@@ -17,10 +17,10 @@ export const getMailThread = makeAsyncResultFunc(
       return makeFailure(new UnauthorizedError(trace, { message: 'No active user' }));
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
     if (mailIdInfo.is(threadId)) {
-      const storedMail = await getMailById(trace, access, threadId);
+      const storedMail = await getMailById(trace, syncableStore, threadId);
       if (!storedMail.ok) {
         return storedMail;
       }

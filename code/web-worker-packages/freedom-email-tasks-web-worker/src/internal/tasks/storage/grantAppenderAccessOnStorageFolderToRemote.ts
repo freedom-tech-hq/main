@@ -6,18 +6,17 @@ import { getMailPaths } from 'freedom-email-sync';
 import type { EmailCredential } from 'freedom-email-user';
 import { getMutableFolderAtPath } from 'freedom-syncable-store';
 
-import { getOrCreateEmailAccessForUser } from '../user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../user/getOrCreateEmailSyncableStore.ts';
 
 export const grantAppenderAccessOnStorageFolderToRemote = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, credential: EmailCredential, { remotePublicKeys }: { remotePublicKeys: CombinationCryptoKeySet }): PR<undefined> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const userFs = access.userFs;
-    const mailPaths = await getMailPaths(userFs);
+    const mailPaths = await getMailPaths(syncableStore);
 
     const storageFolderPath = mailPaths.storage.value;
-    const storageFolder = await getMutableFolderAtPath(trace, userFs, storageFolderPath);
+    const storageFolder = await getMutableFolderAtPath(trace, syncableStore, storageFolderPath);
     if (!storageFolder.ok) {
       return generalizeFailureResult(trace, storageFolder, ['not-found', 'untrusted', 'wrong-type']);
     }

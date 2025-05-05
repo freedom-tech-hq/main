@@ -21,13 +21,12 @@ export const getMailCollections = makeAsyncResultFunc(
       return makeSuccess({ type: 'groups-added' as const, groups: [] });
     }
 
-    // const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    // const syncableStore = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
 
-    // const userFs = access.userFs;
-    // const paths = await getUserMailPaths(userFs);
+    // const paths = await getUserMailPaths(syncableStore);
     // const collectionIdsFromSaltedCollectionIds = getCollectionIdsFromSaltedCollectionIds(paths);
 
-    // const mailCollectionsBundle = await getBundleAtPath(trace, userFs, paths.collections.value);
+    // const mailCollectionsBundle = await getBundleAtPath(trace, syncableStore, paths.collections.value);
     // if (!mailCollectionsBundle.ok) {
     //   return generalizeFailureResult(trace, mailCollectionsBundle, ['not-found', 'deleted', 'wrong-type', 'untrusted', 'format-error']);
     // }

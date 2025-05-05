@@ -17,7 +17,7 @@ import { TaskQueue } from 'freedom-task-queue';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { createMailIdMarkerFile } from '../../utils/createMailIdMarkerFile.ts';
-import { getOrCreateEmailAccessForUser } from '../user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../user/getOrCreateEmailSyncableStore.ts';
 
 /** Looks for mail that hasn't been processed yet.  For each unprocessed mail in the storage folder, this determines which collections the
  * mail belongs to: ex. inbox, spam, and then adds it to the appropriate collection.  Every unprocessed mail should end up in at least one
@@ -25,16 +25,15 @@ import { getOrCreateEmailAccessForUser } from '../user/getOrCreateEmailAccessFor
 export const routeMail = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, credential: EmailCredential): PR<{ stop: PRFunc<undefined> }> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(syncableStore);
 
     // Used for mail that comes in while the app is already launched
     const highPriorityQueue = new TaskQueue(trace);
     highPriorityQueue.start();
 
-    const removeItemAddedListener = userFs.addListener('itemAdded', async (event: SyncTrackerItemAddedEvent) => {
+    const removeItemAddedListener = syncableStore.addListener('itemAdded', async (event: SyncTrackerItemAddedEvent) => {
       const { path } = event;
       if (!path.startsWith(paths.storage.value)) {
         return;
@@ -58,7 +57,7 @@ export const routeMail = makeAsyncResultFunc(
     // Not waiting
     traverseTimeOrganizedMailStorageFromTheBottomUp(
       trace,
-      access,
+      syncableStore,
       { timeOrganizedPaths: paths.storage },
       async (trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
         if (wasStopped) {
@@ -107,18 +106,17 @@ export const routeMail = makeAsyncResultFunc(
 const hasMailBeenProcessedForRoutingAlready = makeAsyncResultFunc(
   [import.meta.filename, 'hasMailBeenProcessedForRoutingAlready'],
   async (trace, credential: EmailCredential, mailId: MailId): PR<boolean> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
     // TODO: handle routing into spam or custom collections as well
     const timeMSec = mailIdInfo.extractTimeMSec(mailId);
     const mailDate = new Date(timeMSec);
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(syncableStore);
 
     const routeProcessedMarkerFilePath = paths.routeProcessing.year(mailDate).month.day.hour.mailId(mailId);
     const syncableItem = await disableLam(trace, 'not-found', (trace) =>
-      getSyncableAtPath(trace, userFs, routeProcessedMarkerFilePath, 'file')
+      getSyncableAtPath(trace, syncableStore, routeProcessedMarkerFilePath, 'file')
     );
     if (!syncableItem.ok) {
       if (syncableItem.value.errorCode === 'not-found') {
@@ -143,12 +141,11 @@ const isEverythingProcessedForRoutingAtLevel = makeAsyncResultFunc(
 const routeMailForHourAsNeeded = makeAsyncResultFunc(
   [import.meta.filename, 'routeMailForHourAsNeeded'],
   async (trace, credential: EmailCredential, { taskQueue, hour }: { taskQueue: TaskQueue; hour: HourTimeObject }): PR<undefined> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(syncableStore);
 
-    const mailIdsForHour = await listTimeOrganizedMailIdsForHour(trace, access, { timeOrganizedMailStorage: paths.storage, hour });
+    const mailIdsForHour = await listTimeOrganizedMailIdsForHour(trace, syncableStore, { timeOrganizedMailStorage: paths.storage, hour });
     if (!mailIdsForHour.ok) {
       return mailIdsForHour;
     }
@@ -164,19 +161,18 @@ const routeMailForHourAsNeeded = makeAsyncResultFunc(
 const routeSingleMail = makeAsyncResultFunc(
   [import.meta.filename, 'routeSingleMail'],
   async (trace, credential: EmailCredential, mailId: MailId): PR<undefined> => {
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(syncableStore);
 
     // TODO: handle routing into spam or custom collections as well
 
-    const createdCollectionMembershipMarker = await createMailIdMarkerFile(trace, userFs, paths.collections.inbox, mailId);
+    const createdCollectionMembershipMarker = await createMailIdMarkerFile(trace, syncableStore, paths.collections.inbox, mailId);
     if (!createdCollectionMembershipMarker.ok) {
       return createdCollectionMembershipMarker;
     }
 
-    const createdRouteProcessedMarker = await createMailIdMarkerFile(trace, userFs, paths.routeProcessing, mailId);
+    const createdRouteProcessedMarker = await createMailIdMarkerFile(trace, syncableStore, paths.routeProcessing, mailId);
     if (!createdRouteProcessedMarker.ok) {
       return createdRouteProcessedMarker;
     }

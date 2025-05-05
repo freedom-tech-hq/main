@@ -3,9 +3,9 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import type { Trace } from 'freedom-contexts';
 import type { User } from 'freedom-db';
 import { getAllUsers } from 'freedom-db';
-import type { EmailAccess } from 'freedom-email-sync';
 import { listOutboundMailIds } from 'freedom-email-sync';
-import { getEmailAccess } from 'freedom-syncable-store-server';
+import { createEmailSyncableStore1 } from 'freedom-syncable-store-server';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
 
@@ -27,10 +27,10 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
     const lastSeenIdsByUser = new Map<string, Set<string>>();
 
     // Helper function to fetch the latest outbound emails for a specific user
-    async function pollOutboundEmailsForUser(user: User, access: EmailAccess): Promise<void> {
+    async function pollOutboundEmailsForUser(user: User, syncableStore: MutableSyncableStore): Promise<void> {
       if (!isActive) return;
 
-      const result = await listOutboundMailIds(trace, access, {});
+      const result = await listOutboundMailIds(trace, syncableStore, {});
       if (!result.ok) {
         // If the underlying function reports an error, we still log it, but do not suppress thrown errors
         // console.error(`Failed to retrieve outbound email IDs for user ${user.userId.replace(/\[.*/, '')}:`);
@@ -55,7 +55,7 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
       // Call the handler with new IDs if there are any
       if (newIds.length > 0) {
         // TODO: Revise error handling here after replacing the implementation
-        await handler(trace, { user, access, emailIds: newIds });
+        await handler(trace, { user, syncableStore, emailIds: newIds });
       }
     }
 
@@ -77,15 +77,15 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
       for (const user of users) {
         if (!isActive) return;
 
-        const access = await uncheckedResult(
-          getEmailAccess(trace, {
+        const syncableStore = await uncheckedResult(
+          createEmailSyncableStore1(trace, {
             userId: user.userId,
             publicKeys: user.publicKeys,
             saltsById: { SALT_default: user.defaultSalt }
           })
         );
 
-        await pollOutboundEmailsForUser(user, access);
+        await pollOutboundEmailsForUser(user, syncableStore);
       }
       // Continue polling if subscription is still active
       if (isActive) {

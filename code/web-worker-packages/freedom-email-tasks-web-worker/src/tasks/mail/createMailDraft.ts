@@ -5,7 +5,7 @@ import type { MailId } from 'freedom-email-sync';
 import { addMailDraft, type MailDraftId } from 'freedom-email-user';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 
 export const createMailDraft = makeAsyncResultFunc(
   [import.meta.filename],
@@ -16,9 +16,9 @@ export const createMailDraft = makeAsyncResultFunc(
       return makeFailure(new InternalStateError(trace, { message: 'No active user' }));
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const added = await addMailDraft(trace, access, { inReplyToMailId });
+    const added = await addMailDraft(trace, syncableStore, { inReplyToMailId });
     if (!added.ok) {
       return added;
     }

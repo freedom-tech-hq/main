@@ -13,7 +13,7 @@ import { initializeRoot } from 'freedom-syncable-store';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 
 /**
  * Creates:
@@ -69,24 +69,24 @@ export const createUser = makeAsyncResultFunc(
       locallyStoredCredentialUuid = storedEncryptedEmailCredential.value.locallyStoredCredentialUuid;
     }
 
-    const access = await getOrCreateEmailAccessForUser(trace, credential.value);
-    if (!access.ok) {
-      return access;
+    const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, credential.value);
+    if (!syncableStoreResult.ok) {
+      return syncableStoreResult;
     }
 
-    const userFs = access.value.userFs;
+    const syncableStore = syncableStoreResult.value;
 
-    const initializedStore = await initializeRoot(trace, userFs);
+    const initializedStore = await initializeRoot(trace, syncableStore);
     if (!initializedStore.ok) {
       return generalizeFailureResult(trace, initializedStore, ['conflict', 'not-found']);
     }
 
-    const createdStructure = await createInitialSyncableStoreStructureForUser(trace, access.value);
+    const createdStructure = await createInitialSyncableStoreStructureForUser(trace, syncableStoreResult.value);
     if (!createdStructure.ok) {
       return createdStructure;
     }
 
-    const welcomeContentAdded = await createWelcomeContentForUser(trace, access.value);
+    const welcomeContentAdded = await createWelcomeContentForUser(trace, syncableStoreResult.value);
     if (!welcomeContentAdded.ok) {
       return welcomeContentAdded;
     }

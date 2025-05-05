@@ -5,7 +5,7 @@ import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { api } from 'freedom-store-api-server-api';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { pushPath } from 'freedom-syncable-store';
-import { getEmailAccessByUserId } from 'freedom-syncable-store-server';
+import { createEmailSyncableStore2 } from 'freedom-syncable-store-server';
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -16,14 +16,12 @@ export default makeHttpApiHandler(
       return makeFailure(new InputSchemaValidationError(trace, { message: 'Expected a valid EmailUserId' }));
     }
 
-    const access = await getEmailAccessByUserId(trace, { userId });
-    if (!access.ok) {
-      return access;
+    const syncableStoreResult = await createEmailSyncableStore2(trace, { userId });
+    if (!syncableStoreResult.ok) {
+      return syncableStoreResult;
     }
 
-    const userFs = access.value.userFs;
-
-    const pushed = await pushPath(trace, userFs, args);
+    const pushed = await pushPath(trace, syncableStoreResult.value, args);
     if (!pushed.ok) {
       return pushed;
     }

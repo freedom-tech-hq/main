@@ -1,5 +1,5 @@
 import { makeUuid } from 'freedom-contexts';
-import { type EmailAccess, emailUserIdInfo } from 'freedom-email-sync';
+import { emailUserIdInfo } from 'freedom-email-sync';
 import type { SaltsById } from 'freedom-sync-types';
 import { createStoreTestStack } from 'freedom-syncable-store/tests';
 
@@ -13,21 +13,10 @@ export async function createEmailStoreTestStack() {
   // General-purpose Stack
   const stack = await createStoreTestStack({ extraSaltsById });
 
-  // The Access Object
-  const access: EmailAccess = {
-    userId,
-    userKeys: stack.userKeys,
-    saltsById: stack.saltsById,
-    userFs: stack.store
-  };
-
   return {
     ...stack,
 
     // User Credentials
-    userId,
-
-    // Test Subject
-    access
+    userId
   };
 }

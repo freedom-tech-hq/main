@@ -1,19 +1,20 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { EmailAccess, EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId } from 'freedom-email-sync';
 import type { EmailCredential } from 'freedom-email-user';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { DefaultSyncableStore } from 'freedom-syncable-store';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import { makeUserKeysFromEmailCredential } from '../../utils/makeUserKeysFromEmailCredential.ts';
 import { getOrCreateSyncableStoreBackingForUserEmail } from '../storage/getOrCreateSyncableStoreBackingForUserEmail.ts';
 
 // TODO: TEMP
-const globalCache: Record<EmailUserId, EmailAccess> = {};
+const globalCache: Record<EmailUserId, MutableSyncableStore> = {};
 
-export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
+export const getOrCreateEmailSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, credential: EmailCredential): PR<EmailAccess> => {
+  async (trace, credential: EmailCredential): PR<MutableSyncableStore> => {
     const userId = credential.userId;
 
     const cached = globalCache[userId];
@@ -29,7 +30,7 @@ export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
     const storageRootId = storageRootIdInfo.make(userId);
     const userKeys = makeUserKeysFromEmailCredential(credential);
 
-    const userFs = new DefaultSyncableStore({
+    const syncableStore = new DefaultSyncableStore({
       storageRootId,
       userKeys,
       saltsById: credential.saltsById,
@@ -37,9 +38,8 @@ export const getOrCreateEmailAccessForUser = makeAsyncResultFunc(
       backing: backing.value
     });
 
-    const output: EmailAccess = { userId, userKeys, saltsById: credential.saltsById, userFs };
-    globalCache[userId] = output;
+    globalCache[userId] = syncableStore;
 
-    return makeSuccess(output);
+    return makeSuccess(syncableStore);
   }
 );

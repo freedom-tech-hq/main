@@ -15,19 +15,18 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
 
   it('should work with no emails', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     // Act
     const callOrder: string[] = [];
     expectOk(
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
-        access,
+        store,
         { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder.push(
@@ -44,15 +43,14 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
 
   it('should work with single email', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     expectOk(
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -66,7 +64,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     expectOk(
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
-        access,
+        store,
         { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder.push(
@@ -83,15 +81,14 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
 
   it('should work with multiple emails', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     expectOk(
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -101,7 +98,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year, month, day, hour
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -111,7 +108,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year, month, day
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -121,7 +118,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year, month
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -131,7 +128,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -141,7 +138,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Different year
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -155,7 +152,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     expectOk(
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
-        access,
+        store,
         { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder.push(
@@ -187,15 +184,14 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
 
   it('stopping and resuming using offset should work with multiple emails', async () => {
     // Arrange
-    const { trace, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
-    const userFs = access.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const paths = await getUserMailPaths(store);
 
-    expectOk(await createInitialSyncableStoreStructureForUser(trace, access));
+    expectOk(await createInitialSyncableStoreStructureForUser(trace, store));
 
     expectOk(
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -205,7 +201,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year, month, day, hour
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -215,7 +211,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year, month, day
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -225,7 +221,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year, month
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -235,7 +231,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Same year
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -245,7 +241,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     );
     expectOk(
       // Different year
-      await addMail(trace, access, {
+      await addMail(trace, store, {
         from: 'test@freedomtechhq.com',
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
@@ -259,7 +255,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     expectOk(
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
-        access,
+        store,
         { timeOrganizedPaths: paths.storage },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           if (
@@ -284,7 +280,7 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
     expectOk(
       await traverseTimeOrganizedMailStorageFromTheBottomUp(
         trace,
-        access,
+        store,
         { timeOrganizedPaths: paths.storage, offset: { year: 2025, month: 1, day: 2, hour: 3 } },
         async (_trace, cursor): PR<BottomUpMailStorageTraversalResult> => {
           callOrder2.push(

@@ -7,10 +7,9 @@ import { type PageToken, pageTokenInfo, type Paginated, type PaginationOptions }
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getBundleAtPath } from 'freedom-syncable-store';
-import type { SaltedId } from 'freedom-syncable-store-types';
+import type { MutableSyncableStore, SaltedId } from 'freedom-syncable-store-types';
 import { DateTime } from 'luxon';
 
-import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';
 import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourTimeObject } from './HourPrecisionTimeUnitValue.ts';
@@ -34,7 +33,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
     HourContentT extends object
   >(
     trace: Trace,
-    access: EmailAccess,
+    syncableStore: MutableSyncableStore,
     {
       timeOrganizedPaths,
       pageToken
@@ -45,8 +44,6 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
       >;
     }
   ): PR<Paginated<MailId>> => {
-    const userFs = access.userFs;
-
     const offsetDate = new Date(pageToken !== undefined ? pageTokenInfo.removePrefix(pageToken) : Date.now());
     const offset: HourTimeObject = {
       year: offsetDate.getUTCFullYear(),
@@ -59,7 +56,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
     let nextPageToken: PageToken | undefined;
     const traversed = await traverseTimeOrganizedMailStorageFromTheBottomUp(
       trace,
-      access,
+      syncableStore,
       {
         timeOrganizedPaths,
         offset
@@ -72,7 +69,7 @@ export const listTimeOrganizedMailIds = makeAsyncResultFunc(
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursor.value.year, cursor.value.month, cursor.value.day, cursor.value.hour));
         const hourPath = baseYearPath.month.day.hour.value;
 
-        const hourBundle = await getBundleAtPath(trace, userFs, hourPath);
+        const hourBundle = await getBundleAtPath(trace, syncableStore, hourPath);
         if (!hourBundle.ok) {
           if (hourBundle.value.errorCode !== 'not-found') {
             return generalizeFailureResult(trace, excludeFailureResult(hourBundle, 'not-found'), [

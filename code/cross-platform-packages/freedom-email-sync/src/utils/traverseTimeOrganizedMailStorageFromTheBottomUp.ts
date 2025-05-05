@@ -3,9 +3,8 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type { Nested } from 'freedom-nest';
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
-import type { SaltedId } from 'freedom-syncable-store-types';
+import type { MutableSyncableStore, SaltedId } from 'freedom-syncable-store-types';
 
-import type { EmailAccess } from '../types/EmailAccess.ts';
 import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
 import type { TimeOrganizedMailStorageTraverserAccessor } from './makeBottomUpTimeOrganizedMailStorageTraverser.ts';
@@ -43,7 +42,7 @@ export const traverseTimeOrganizedMailStorageFromTheBottomUp = makeAsyncResultFu
     HourContentT extends object
   >(
     trace: Trace,
-    access: EmailAccess,
+    syncableStore: MutableSyncableStore,
     {
       timeOrganizedPaths,
       offset
@@ -56,7 +55,7 @@ export const traverseTimeOrganizedMailStorageFromTheBottomUp = makeAsyncResultFu
     },
     callback: BottomUpMailStorageTraversalCallback
   ): PR<undefined> => {
-    const cursor = await makeBottomUpTimeOrganizedMailStorageTraverser(trace, access, { timeOrganizedPaths, offset });
+    const cursor = await makeBottomUpTimeOrganizedMailStorageTraverser(trace, syncableStore, { timeOrganizedPaths, offset });
     if (!cursor.ok) {
       return cursor;
     }

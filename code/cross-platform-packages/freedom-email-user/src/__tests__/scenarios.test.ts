@@ -25,7 +25,7 @@ describe('Inbound email routes', () => {
 
   test('Full inbound', async () => {
     // Arrange
-    const { trace, store, access: accessTodoReplace } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
     const paths = await getUserMailPaths(store);
 
@@ -40,7 +40,7 @@ describe('Inbound email routes', () => {
     // Assert
 
     // Act
-    const added = await addMail(trace, accessTodoReplace, parsedIncomingEmail);
+    const added = await addMail(trace, store, parsedIncomingEmail);
 
     // Assert
     assert.ok(added.ok);
@@ -52,7 +52,7 @@ describe('Outbound email routes', () => {
 
   test('Full external address outbound', async () => {
     // Arrange
-    const { trace, store, access } = await createEmailStoreTestStack();
+    const { trace, store } = await createEmailStoreTestStack();
 
     const paths = await getUserMailPaths(store);
 
@@ -70,7 +70,7 @@ describe('Outbound email routes', () => {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Create a draft
-    const draftResult = await addMailDraft(trace, access, {});
+    const draftResult = await addMailDraft(trace, store, {});
 
     // Assert - TODO
     assert.ok(draftResult.ok);
@@ -78,7 +78,7 @@ describe('Outbound email routes', () => {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Edit draft
-    const draftDoc = await getMailDraftById(trace, access, draftId);
+    const draftDoc = await getMailDraftById(trace, store, draftId);
     assert.ok(draftDoc.ok);
 
     const doc = draftDoc.value.document;
@@ -93,7 +93,7 @@ describe('Outbound email routes', () => {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Move draft to outbox
-    const moveOutboxResult = await moveMailDraftToOutbox(trace, access, draftId);
+    const moveOutboxResult = await moveMailDraftToOutbox(trace, store, draftId);
 
     // Assert - TODO
     assert.ok(moveOutboxResult.ok);
@@ -101,14 +101,14 @@ describe('Outbound email routes', () => {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Poll
     // TODO: Replace keys with server
-    const listResult = await listOutboundMailIds(trace, access);
+    const listResult = await listOutboundMailIds(trace, store);
     assert.ok(listResult.ok);
     assert.equal(listResult.value.items.length, 1);
     const mailId = listResult.value.items[0];
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Get contents to submit to our outbound delivery SMTP server
-    const mailResult = await getOutboundMailById(trace, access, mailId);
+    const mailResult = await getOutboundMailById(trace, store, mailId);
 
     // Assert - TODO
     assert.ok(mailResult.ok);
@@ -116,7 +116,7 @@ describe('Outbound email routes', () => {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Act - Move to permanent storage
-    const moveSentResult = await moveOutboundMailToStorage(trace, access, mailId);
+    const moveSentResult = await moveOutboundMailToStorage(trace, store, mailId);
 
     // Assert
     assert.ok(moveSentResult.ok);

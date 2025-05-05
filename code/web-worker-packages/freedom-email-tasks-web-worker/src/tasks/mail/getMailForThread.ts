@@ -8,7 +8,7 @@ import { getMailById, getMailDraftById, mailDraftIdInfo, mailThreadIdInfo, makeM
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import type { GetMailForThread_MailAddedPacket } from '../../types/mail/getMailForThread/GetMailForThread_MailAddedPacket.ts';
 import type { GetMailForThreadPacket } from '../../types/mail/getMailForThread/GetMailForThreadPacket.ts';
 
@@ -26,13 +26,13 @@ export const getMailForThread = makeAsyncResultFunc(
       return makeSuccess({ type: 'mail-added' as const, mail: [] });
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
     if (mailThreadIdInfo.is(threadLikeId)) {
       return makeFailure(new GeneralError(trace, new Error("MailThreadId isn't supported yet")));
     } else if (mailIdInfo.is(threadLikeId)) {
       const mailId: MailId = threadLikeId;
-      const storedMail = await getMailById(trace, access, mailId);
+      const storedMail = await getMailById(trace, syncableStore, mailId);
       if (!storedMail.ok) {
         return generalizeFailureResult(trace, storedMail, 'not-found');
       }
@@ -52,7 +52,7 @@ export const getMailForThread = makeAsyncResultFunc(
       return makeSuccess({ type: 'mail-added' as const, mail });
     } else if (mailDraftIdInfo.is(threadLikeId)) {
       const mailDraftId: MailDraftId = threadLikeId;
-      const draftDoc = await getMailDraftById(trace, access, mailDraftId);
+      const draftDoc = await getMailDraftById(trace, syncableStore, mailDraftId);
       if (!draftDoc.ok) {
         return generalizeFailureResult(trace, draftDoc, ['not-found']);
       }

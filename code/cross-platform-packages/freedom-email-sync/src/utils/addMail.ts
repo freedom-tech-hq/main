@@ -4,17 +4,16 @@ import { makeIsoDateTime } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';
 import { type StoredMail, storedMailSchema } from '../types/StoredMail.ts';
 import { getMailPaths } from './getMailPaths.ts';
 
 export const addMail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, access: EmailAccess, mail: StoredMail): PR<{ mailId: MailId }> => {
-    const userFs = access.userFs;
-    const paths = await getMailPaths(userFs);
+  async (trace, syncableStore: MutableSyncableStore, mail: StoredMail): PR<{ mailId: MailId }> => {
+    const paths = await getMailPaths(syncableStore);
 
     const mailId = mailIdInfo.make(`${makeIsoDateTime(new Date(mail.timeMSec))}-${makeUuid()}`);
     const mailDate = new Date(mailIdInfo.extractTimeMSec(mailId));
@@ -22,7 +21,7 @@ export const addMail = makeAsyncResultFunc(
     const storageYearPath = paths.storage.year(mailDate);
     const mailBundle = await getOrCreateBundlesAtPaths(
       trace,
-      userFs,
+      syncableStore,
       storageYearPath.value,
       storageYearPath.month.value,
       storageYearPath.month.day.value,
@@ -34,7 +33,7 @@ export const addMail = makeAsyncResultFunc(
     }
 
     // TODO: should add summary and attachments etc
-    const stored = await createJsonFileAtPath(trace, userFs, (await storageYearPath.month.day.hour.mailId(mailId)).detailed, {
+    const stored = await createJsonFileAtPath(trace, syncableStore, (await storageYearPath.month.day.hour.mailId(mailId)).detailed, {
       value: mail,
       schema: storedMailSchema
     });

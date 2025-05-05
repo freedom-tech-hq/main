@@ -1,15 +1,15 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { EmailAccess, MailId, StoredMail } from 'freedom-email-sync';
+import type { MailId, StoredMail } from 'freedom-email-sync';
 import { getMailPaths, mailIdInfo, storedMailSchema } from 'freedom-email-sync';
 import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 export const addMailToOutbox = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, access: EmailAccess, mail: StoredMail): PR<{ mailId: MailId }> => {
-    const userFs = access.userFs;
-    const paths = await getMailPaths(userFs);
+  async (trace, syncableStore: MutableSyncableStore, mail: StoredMail): PR<{ mailId: MailId }> => {
+    const paths = await getMailPaths(syncableStore);
 
     const mailId = mailIdInfo.make();
     const mailDate = new Date(mailIdInfo.extractTimeMSec(mailId));
@@ -17,7 +17,7 @@ export const addMailToOutbox = makeAsyncResultFunc(
     const outYearPath = paths.out.year(mailDate);
     const mailBundle = await getOrCreateBundlesAtPaths(
       trace,
-      userFs,
+      syncableStore,
       outYearPath.value,
       outYearPath.month.value,
       outYearPath.month.day.value,
@@ -29,7 +29,7 @@ export const addMailToOutbox = makeAsyncResultFunc(
     }
 
     // TODO: should add summary and attachments etc
-    const stored = await createJsonFileAtPath(trace, userFs, (await outYearPath.month.day.hour.mailId(mailId)).detailed, {
+    const stored = await createJsonFileAtPath(trace, syncableStore, (await outYearPath.month.day.hour.mailId(mailId)).detailed, {
       value: mail,
       schema: storedMailSchema
     });

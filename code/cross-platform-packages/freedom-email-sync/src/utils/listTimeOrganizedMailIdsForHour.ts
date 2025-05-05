@@ -3,9 +3,9 @@ import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getBundleAtPath } from 'freedom-syncable-store';
+import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { DateTime } from 'luxon';
 
-import type { EmailAccess } from '../types/EmailAccess.ts';
 import { type MailId, mailIdInfo } from '../types/MailId.ts';
 import type { TimeOrganizedMailPaths } from './getMailPaths.ts';
 import type { HourTimeObject } from './HourPrecisionTimeUnitValue.ts';
@@ -15,7 +15,7 @@ export const listTimeOrganizedMailIdsForHour = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    access: EmailAccess,
+    syncableStore: MutableSyncableStore,
     {
       timeOrganizedMailStorage,
       hour
@@ -24,14 +24,12 @@ export const listTimeOrganizedMailIdsForHour = makeAsyncResultFunc(
       hour: HourTimeObject;
     }
   ): PR<MailId[]> => {
-    const userFs = access.userFs;
-
     const date = DateTime.fromObject(hour, { zone: 'UTC' }).toJSDate();
 
     const baseYearPath = timeOrganizedMailStorage.year(date);
     const hourPath = baseYearPath.month.day.hour.value;
 
-    const hourBundle = await getBundleAtPath(trace, userFs, hourPath);
+    const hourBundle = await getBundleAtPath(trace, syncableStore, hourPath);
     if (!hourBundle.ok) {
       if (hourBundle.value.errorCode !== 'not-found') {
         return generalizeFailureResult(trace, excludeFailureResult(hourBundle, 'not-found'), ['format-error', 'untrusted', 'wrong-type']);

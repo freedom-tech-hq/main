@@ -10,7 +10,7 @@ import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
 import { DateTime } from 'luxon';
 
-import { getOrCreateEmailAccessForUser } from '../user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../user/getOrCreateEmailSyncableStore.ts';
 
 export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
   [import.meta.filename],
@@ -23,13 +23,13 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
       credential: EmailCredential;
     }
   ): PR<SyncService> => {
-    const access = await getOrCreateEmailAccessForUser(trace, credential);
-    if (!access.ok) {
-      return access;
+    const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, credential);
+    if (!syncableStoreResult.ok) {
+      return syncableStoreResult;
     }
 
-    const userFs = access.value.userFs;
-    const paths = await getUserMailPaths(userFs);
+    const syncableStore = syncableStoreResult.value;
+    const paths = await getUserMailPaths(syncableStore);
 
     return await makeSyncService(trace, {
       ...fwdArgs,
@@ -37,7 +37,7 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
       getSyncStrategyForPath: async (direction, path) => {
         switch (direction) {
           case 'pull': {
-            const found = await getSyncableAtPath(trace, userFs, path);
+            const found = await getSyncableAtPath(trace, syncableStore, path);
             if (!found.ok) {
               if (found.value.errorCode === 'not-found') {
                 return 'batch';
@@ -55,7 +55,7 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
 
         return 'default';
       },
-      store: userFs
+      store: syncableStore
     });
   }
 );

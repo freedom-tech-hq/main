@@ -6,11 +6,10 @@ import type { Nested } from 'freedom-nest';
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
-import type { SaltedId } from 'freedom-syncable-store-types';
+import type { MutableSyncableStore, SaltedId } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { DateTime } from 'luxon';
 
-import type { EmailAccess } from '../types/EmailAccess.ts';
 import { extractNumberFromPlainSyncableId } from './extractNumberFromPlainSyncableId.ts';
 import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourOrLessPrecisionValue, HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
@@ -43,7 +42,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
     HourContentT extends object
   >(
     trace: Trace,
-    access: EmailAccess,
+    syncableStore: MutableSyncableStore,
     {
       timeOrganizedPaths,
       offset
@@ -55,8 +54,6 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
       offset?: HourOrLessTimeObject;
     }
   ): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
-    const userFs = access.userFs;
-
     const offsetYear = offset?.year;
     const offsetMonth = offset?.month;
     const offsetDay = offset?.day;
@@ -66,7 +63,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
       [import.meta.filename, 'getSameOrPreviousYear'],
       async (trace, cursorYear: number): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
         const baseFolderLike = await disableLam(trace, 'not-found', (trace) =>
-          getSyncableAtPath(trace, userFs, timeOrganizedPaths.value, syncableItemTypes.exclude('file'))
+          getSyncableAtPath(trace, syncableStore, timeOrganizedPaths.value, syncableItemTypes.exclude('file'))
         );
         if (!baseFolderLike.ok) {
           if (baseFolderLike.value.errorCode === 'not-found') {
@@ -121,7 +118,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, 1, 1, 0));
         const yearPath = baseYearPath.value;
 
-        const yearBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, userFs, yearPath, 'bundle'));
+        const yearBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, syncableStore, yearPath, 'bundle'));
         if (!yearBundle.ok) {
           if (yearBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
@@ -187,7 +184,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, 1, 0));
         const monthPath = baseYearPath.month.value;
 
-        const monthBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, userFs, monthPath, 'bundle'));
+        const monthBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, syncableStore, monthPath, 'bundle'));
         if (!monthBundle.ok) {
           if (monthBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
@@ -255,7 +252,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, cursorDay, 0));
         const dayPath = baseYearPath.month.day.value;
 
-        const dayBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, userFs, dayPath, 'bundle'));
+        const dayBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, syncableStore, dayPath, 'bundle'));
         if (!dayBundle.ok) {
           if (dayBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);

@@ -16,7 +16,7 @@ import { routeMail } from '../../internal/tasks/mail/routeMail.ts';
 import { grantAppenderAccessOnStorageFolderToRemote } from '../../internal/tasks/storage/grantAppenderAccessOnStorageFolderToRemote.ts';
 import { grantEditorAccessOnOutFolderToRemote } from '../../internal/tasks/storage/grantEditorAccessOnOutFolderToRemote.ts';
 import { makeSyncServiceForUserSyncables } from '../../internal/tasks/storage/makeSyncServiceForUserSyncables.ts';
-import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import { makeEmailServiceRemoteConnection } from '../../internal/utils/makeEmailServiceRemoteConnection.ts';
 
 const getPublicKeysForRemote = makeApiFetchTask([import.meta.filename, 'getPublicKeysForRemote'], fakeEmailServiceApi.publicKeys.GET);
@@ -30,9 +30,7 @@ export const startSyncService = makeAsyncResultFunc(
       return makeFailure(new InternalStateError(trace, { message: 'No active user' }));
     }
 
-    const access = await uncheckedResult(getOrCreateEmailAccessForUser(trace, credential));
-
-    const userFs = access.userFs;
+    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
     const remoteConnection = await makeEmailServiceRemoteConnection(trace);
     if (!remoteConnection.ok) {
@@ -41,7 +39,7 @@ export const startSyncService = makeAsyncResultFunc(
 
     const mockRemotes: { deviceNotificationClient: DeviceNotificationClient; remoteAccessor: RemoteAccessor } = remoteConnection.value;
 
-    const rootMetadata = await userFs.getMetadata(trace);
+    const rootMetadata = await syncableStore.getMetadata(trace);
     if (!rootMetadata.ok) {
       return rootMetadata;
     }
@@ -51,7 +49,7 @@ export const startSyncService = makeAsyncResultFunc(
       creatorPublicKeys: credential.privateKeys.publicOnly(),
       storageRootId: storageRootIdInfo.make(credential.userId),
       metadata: { provenance: rootMetadata.value.provenance },
-      saltsById: { [DEFAULT_SALT_ID]: access.saltsById[DEFAULT_SALT_ID] }
+      saltsById: { [DEFAULT_SALT_ID]: syncableStore.saltsById[DEFAULT_SALT_ID] }
     });
     if (!registered.ok) {
       return registered;
