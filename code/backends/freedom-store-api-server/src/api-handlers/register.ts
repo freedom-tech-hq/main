@@ -65,9 +65,8 @@ export default makeHttpApiHandler(
         // (because it can't otherwise knows the state of registration on the server)
         const createSyncableStoreResult = await disableLam(trace, 'conflict', (trace) =>
           createSyncableStore(trace, {
-            userId,
-            metadata,
-            creatorPublicKeys
+            storageRootId,
+            metadata
           })
         );
         if (!createSyncableStoreResult.ok) {
