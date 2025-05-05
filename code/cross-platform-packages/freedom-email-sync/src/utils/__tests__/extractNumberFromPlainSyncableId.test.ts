@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { plainId } from 'freedom-sync-types';
 import { expectStrictEqual } from 'freedom-testing-tools';
 
-import { extractNumberFromPlainSyncableId } from '../extractNumberFromPlainSyncableId.ts';
+import { extractNumberFromPlainSyncableId } from '../../../utils/extractNumberFromPlainSyncableId.ts';
 
 describe('extractNumberFromPlainSyncableId', () => {
   it('should work', () => {

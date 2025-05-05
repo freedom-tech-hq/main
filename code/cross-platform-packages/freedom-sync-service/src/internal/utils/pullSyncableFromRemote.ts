@@ -4,12 +4,8 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
-import {
-  createViaSyncPreEncodedBinaryFileAtPath,
-  getOrCreateViaSyncBundleAtPath,
-  getOrCreateViaSyncFolderAtPath
-} from 'freedom-syncable-store';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath, SyncStrategy } from 'freedom-sync-types';
+import { getBundleAtPathForSync, getFolderAtPathForSync, pushBundle, pushFile, pushFolder } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
@@ -20,7 +16,7 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: MutableSyncableStore; syncService: SyncService },
-    args: { remoteId: RemoteId; path: SyncablePath; hash?: Sha256Hash }
+    args: { remoteId: RemoteId; path: SyncablePath; hash?: Sha256Hash; strategy: SyncStrategy }
   ): PR<undefined, 'not-found'> => {
     const pullFromRemote = syncService.getRemotesAccessors()[args.remoteId]?.puller;
     if (pullFromRemote === undefined) {
@@ -88,19 +84,21 @@ const onBundlePulled = makeAsyncResultFunc(
   ): PR<undefined> => {
     const path = fwd.path;
 
-    const localBundle = await getOrCreateViaSyncBundleAtPath(trace, store, path, file.metadata);
-    if (!localBundle.ok) {
-      return generalizeFailureResult(trace, localBundle, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
+    const pushedLocally = await pushBundle(trace, store, { path, metadata: file.metadata, batchContents: file.batchContents });
+    if (!pushedLocally.ok) {
+      return generalizeFailureResult(trace, pushedLocally, 'not-found');
     }
 
-    const localMetadataById = await localBundle.value.bundle.getMetadataById(trace);
-    if (!localMetadataById.ok) {
-      return localMetadataById;
+    const localBundle = await getBundleAtPathForSync(trace, store, path, { strategy: 'default' });
+    if (!localBundle.ok) {
+      return localBundle;
     }
+
+    const localMetadataById = localBundle.value.metadataById;
 
     // Trying to pull in sorted key order for better determinism
     for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(file.hashesById))) {
-      const localMetadata = localMetadataById.value[id];
+      const localMetadata = localMetadataById[id];
       if (remoteHash === undefined || localMetadata?.hash === remoteHash) {
         continue;
       }
@@ -127,19 +125,21 @@ const onFolderPulled = makeAsyncResultFunc(
   ): PR<undefined> => {
     const path = fwd.path;
 
-    const localFolder = await getOrCreateViaSyncFolderAtPath(trace, store, path, folder.metadata);
-    if (!localFolder.ok) {
-      return generalizeFailureResult(trace, localFolder, ['not-found', 'untrusted', 'wrong-type']);
+    const pushedLocally = await pushFolder(trace, store, { path, metadata: folder.metadata, batchContents: folder.batchContents });
+    if (!pushedLocally.ok) {
+      return generalizeFailureResult(trace, pushedLocally, 'not-found');
     }
 
-    const localMetadataById = await localFolder.value.folder.getMetadataById(trace);
-    if (!localMetadataById.ok) {
-      return localMetadataById;
+    const localFolder = await getFolderAtPathForSync(trace, store, path, { strategy: 'default' });
+    if (!localFolder.ok) {
+      return localFolder;
     }
+
+    const localMetadataById = localFolder.value.metadataById;
 
     // Trying to pull in sorted key order for better determinism
     for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(folder.hashesById))) {
-      const localMetadata = localMetadataById.value[id];
+      const localMetadata = localMetadataById[id];
       if (remoteHash !== undefined && localMetadata?.hash !== remoteHash) {
         syncService.pullFromRemotes({ path: path.append(id), hash: localMetadata?.hash });
       }
@@ -166,9 +166,10 @@ const onFilePulled = makeAsyncResultFunc(
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));
     }
 
-    const localFile = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, fileData, file.metadata);
-    if (!localFile.ok) {
-      return generalizeFailureResult(trace, localFile, ['conflict', 'not-found', 'untrusted', 'wrong-type']);
+    const pushedLocally = await pushFile(trace, store, { path, metadata: file.metadata, data: fileData });
+    // (trace, store, path, fileData, file.metadata);
+    if (!pushedLocally.ok) {
+      return generalizeFailureResult(trace, pushedLocally, 'not-found');
     }
 
     return makeSuccess(undefined);

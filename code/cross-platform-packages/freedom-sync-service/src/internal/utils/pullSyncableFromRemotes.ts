@@ -40,8 +40,9 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
         skipErrorCodes: ['generic', 'not-found']
       },
       async (trace, remoteId): PR<'ok', 'not-found'> => {
+        const strategy = await syncService.getSyncStrategyForPath('pull', path);
         const pulled = await disableLam(trace, 'not-found', (trace) =>
-          pullSyncableFromRemote(trace, { store, syncService }, { remoteId, ...args })
+          pullSyncableFromRemote(trace, { store, syncService }, { ...args, remoteId, strategy })
         );
         if (!pulled.ok) {
           if (pulled.value.errorCode === 'not-found') {

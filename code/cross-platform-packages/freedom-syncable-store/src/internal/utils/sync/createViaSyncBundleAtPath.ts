@@ -5,8 +5,8 @@ import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 import type { MutableFileStore, MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
-import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
+import { getMutableParentSyncable } from '../../../utils/get/getMutableParentSyncable.ts';
+import { isSyncableValidationEnabledProvider } from '../../context/isSyncableValidationEnabled.ts';
 
 export const createViaSyncBundleAtPath = makeAsyncResultFunc(
   [import.meta.filename],

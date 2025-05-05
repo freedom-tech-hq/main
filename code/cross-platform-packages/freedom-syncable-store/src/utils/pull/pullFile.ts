@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { InSyncFile, OutOfSyncFile, SyncablePath } from 'freedom-sync-types';
+import type { InSyncFile, OutOfSyncFile, SyncablePath, SyncStrategy } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
@@ -13,7 +13,7 @@ export const pullFile = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    { hash: downstreamHash, path, sendData = false }: { path: SyncablePath; hash?: Sha256Hash; sendData?: boolean }
+    { hash: downstreamHash, path, sendData = false }: { path: SyncablePath; hash?: Sha256Hash; sendData?: boolean; strategy: SyncStrategy }
   ): PR<InSyncFile | OutOfSyncFile, 'not-found'> => {
     const file = await getSyncableAtPath(trace, store, path, 'file');
     if (!file.ok) {

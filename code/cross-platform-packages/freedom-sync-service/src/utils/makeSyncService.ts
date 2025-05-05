@@ -12,6 +12,7 @@ import { DEFAULT_MAX_PULL_CONCURRENCY, DEFAULT_MAX_PUSH_CONCURRENCY } from '../c
 import { attachSyncServiceToSyncableStore } from '../internal/utils/attachSyncServiceToSyncableStore.ts';
 import { pullSyncableFromRemotes } from '../internal/utils/pullSyncableFromRemotes.ts';
 import { pushSyncableToRemotes } from '../internal/utils/pushSyncableToRemotes.ts';
+import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
 import type { ShouldSyncWithAllRemotesFunc } from '../types/ShouldSyncWithAllRemotesFunc.ts';
 import type { SyncService } from '../types/SyncService.ts';
 import type { SyncServiceLogEntry } from '../types/SyncServiceLogEntry.ts';
@@ -21,6 +22,7 @@ export interface MakeSyncServiceArgs {
   deviceNotificationClients: () => DeviceNotificationClient[];
   getRemotesAccessors: () => Partial<Record<RemoteId, RemoteAccessor>>;
   shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
+  getSyncStrategyForPath: GetSyncStrategyForPathFunc;
   shouldRecordLogs?: boolean;
 }
 
@@ -28,7 +30,14 @@ export const makeSyncService = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { store, deviceNotificationClients, getRemotesAccessors, shouldSyncWithAllRemotes, shouldRecordLogs = false }: MakeSyncServiceArgs
+    {
+      store,
+      deviceNotificationClients,
+      getRemotesAccessors,
+      shouldSyncWithAllRemotes,
+      getSyncStrategyForPath,
+      shouldRecordLogs = false
+    }: MakeSyncServiceArgs
   ): PR<SyncService> => {
     const pullQueue = new TaskQueue(trace);
     const pushQueue = disableLam(trace, 'not-found', (trace) => new TaskQueue(trace));
@@ -41,6 +50,8 @@ export const makeSyncService = makeAsyncResultFunc(
       getRemotesAccessors,
 
       shouldSyncWithAllRemotes,
+
+      getSyncStrategyForPath,
 
       pullFromRemotes: (args) => {
         const { path, hash } = args;

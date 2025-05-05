@@ -10,8 +10,8 @@ import type { SaltedId } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { DateTime } from 'luxon';
 
-import { extractNumberFromPlainSyncableId } from '../internal/utils/extractNumberFromPlainSyncableId.ts';
 import type { EmailAccess } from '../types/EmailAccess.ts';
+import { extractNumberFromPlainSyncableId } from './extractNumberFromPlainSyncableId.ts';
 import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourOrLessPrecisionValue, HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
 

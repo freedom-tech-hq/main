@@ -8,8 +8,8 @@ import type { MutableSyncableFileAccessor, MutableSyncableStore } from 'freedom-
 import { ACCESS_CONTROL_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { lastIndexOf } from 'lodash-es';
 
-import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
-import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
+import { getMutableParentSyncable } from '../../../utils/get/getMutableParentSyncable.ts';
+import { isSyncableValidationEnabledProvider } from '../../context/isSyncableValidationEnabled.ts';
 
 export const createViaSyncPreEncodedBinaryFileAtPath = makeAsyncResultFunc(
   [import.meta.filename],

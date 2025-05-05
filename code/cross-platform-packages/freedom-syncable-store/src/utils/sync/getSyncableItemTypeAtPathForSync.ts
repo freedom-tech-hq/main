@@ -7,7 +7,7 @@ import type { SyncableStore } from 'freedom-syncable-store-types';
 import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
 
-export const getSyncableItemTypeAtPathForPush = makeAsyncResultFunc(
+export const getSyncableItemTypeAtPathForSync = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore, path: SyncablePath) =>
     await isSyncableValidationEnabledProvider(trace, false, async (trace): PR<SyncableItemType> => {

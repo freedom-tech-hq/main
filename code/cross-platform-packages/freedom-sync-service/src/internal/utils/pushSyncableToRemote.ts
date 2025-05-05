@@ -5,10 +5,10 @@ import { objectEntries } from 'freedom-cast';
 import { InternalStateError } from 'freedom-common-errors';
 import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
 import {
-  getBundleAtPathForPush,
-  getFileAtPathForPush,
-  getFolderAtPathForPush,
-  getSyncableItemTypeAtPathForPush
+  getBundleAtPathForSync,
+  getFileAtPathForSync,
+  getFolderAtPathForSync,
+  getSyncableItemTypeAtPathForSync
 } from 'freedom-syncable-store';
 import { ACCESS_CONTROL_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -32,7 +32,9 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
     }
 
     // Not logging this pull since we're really just using this as a status check
-    const pulled = await disableLam(trace, 'not-found', (trace) => pullFromRemote(trace, { ...args, sendData: false }));
+    const pulled = await disableLam(trace, 'not-found', (trace) =>
+      pullFromRemote(trace, { ...args, sendData: false, strategy: 'default' })
+    );
     if (!pulled.ok) {
       if (pulled.value.errorCode === 'not-found') {
         DEV: debugTopic('SYNC', (log) => log(`Pulled ${args.path.toString()}: nothing found on remote.  Will try to push everything`));
@@ -91,7 +93,7 @@ const pushEverything = makeAsyncResultFunc(
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
     { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined, 'not-found'> => {
-    const localItemType = await getSyncableItemTypeAtPathForPush(trace, store, path);
+    const localItemType = await getSyncableItemTypeAtPathForSync(trace, store, path);
     if (!localItemType.ok) {
       return localItemType;
     }
@@ -129,7 +131,8 @@ const pushBundle = makeAsyncResultFunc(
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
   ): PR<undefined, 'not-found'> => {
-    const localBundle = await getBundleAtPathForPush(trace, store, path);
+    const strategy = await syncService.getSyncStrategyForPath('push', path);
+    const localBundle = await getBundleAtPathForSync(trace, store, path, { strategy });
     if (!localBundle.ok) {
       return localBundle;
     }
@@ -140,7 +143,13 @@ const pushBundle = makeAsyncResultFunc(
         return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
       }
 
-      const pushed = await pushToRemote(trace, { type: 'bundle', path, metadata: localBundle.value.metadata });
+      const pushed = await pushToRemote(trace, {
+        type: 'bundle',
+        path,
+        metadata: localBundle.value.metadata,
+        // TODO: TEMP dont include if undefined
+        batchContents: localBundle.value.batchContents ?? {}
+      });
       if (!pushed.ok) {
         return pushed;
       }
@@ -181,7 +190,8 @@ const pushFolder = makeAsyncResultFunc(
       pulledHashesById?: Partial<Record<string, Sha256Hash>>;
     }
   ): PR<undefined, 'not-found'> => {
-    const localFolder = await getFolderAtPathForPush(trace, store, path);
+    const strategy = await syncService.getSyncStrategyForPath('push', path);
+    const localFolder = await getFolderAtPathForSync(trace, store, path, { strategy });
     if (!localFolder.ok) {
       return localFolder;
     }
@@ -192,7 +202,13 @@ const pushFolder = makeAsyncResultFunc(
         return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
       }
 
-      const pushedFolder = await pushToRemote(trace, { type: 'folder', path, metadata: localFolder.value.metadata });
+      const pushedFolder = await pushToRemote(trace, {
+        type: 'folder',
+        path,
+        metadata: localFolder.value.metadata,
+        // TODO: TEMP dont include if undefined
+        batchContents: localFolder.value.batchContents ?? {}
+      });
       if (!pushedFolder.ok) {
         return pushedFolder;
       }
@@ -237,7 +253,7 @@ const pushFile = makeAsyncResultFunc(
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
     }
 
-    const localFile = await getFileAtPathForPush(trace, store, path);
+    const localFile = await getFileAtPathForSync(trace, store, path, { strategy: 'default' });
     if (!localFile.ok) {
       return localFile;
     }

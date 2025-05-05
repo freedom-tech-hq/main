@@ -20,7 +20,13 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
   async (
     trace,
     syncService: SyncService,
-    { store, deviceNotificationClients }: { store: MutableSyncableStore; deviceNotificationClients: DeviceNotificationClient[] }
+    {
+      store,
+      deviceNotificationClients
+    }: {
+      store: MutableSyncableStore;
+      deviceNotificationClients: DeviceNotificationClient[];
+    }
   ): PR<{ detach: () => void }> => {
     // TODO: probably separate this from the other syncing stuff
     let removeListenersByFolderPath: Partial<Record<string, (() => void)[]>> = {};
@@ -86,6 +92,10 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       return makeSuccess(undefined);
     };
 
+    const onItemAdded = ({ path, hash }: { path: SyncablePath; hash: Sha256Hash }) => {
+      syncService.pushToRemotes({ path, hash });
+    };
+
     const rootAdded = await onFolderAdded(trace, store.path);
     if (!rootAdded.ok) {
       return rootAdded;
@@ -121,9 +131,9 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     });
 
     DEV: debugTopic('SYNC', (log) => log(`Added itemAdded listener for ${store.path.toString()}`));
-    const removeLocalItemAddedListener = store.addListener('itemAdded', ({ path, hash }) => {
+    const removeLocalItemAddedListener = store.addListener('itemAdded', async ({ path, hash }) => {
       DEV: debugTopic('SYNC', (log) => log(`Received itemAdded for ${path.toString()}: ${hash}`));
-      syncService.pushToRemotes({ path, hash });
+      onItemAdded({ path, hash });
     });
 
     const recursiveManualSyncFunc = makeManualSyncFunc(syncService, store);

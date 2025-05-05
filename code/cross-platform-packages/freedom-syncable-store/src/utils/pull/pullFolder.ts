@@ -3,9 +3,10 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { InSyncFolder, OutOfSyncFolder, SyncableId, SyncablePath } from 'freedom-sync-types';
+import type { InSyncFolder, OutOfSyncFolder, SyncableId, SyncablePath, SyncBatchContents, SyncStrategy } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
+import { getSyncBatchContentsForPath } from '../../internal/utils/getSyncBatchContentsForPath.ts';
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
 
 export const pullFolder = makeAsyncResultFunc(
@@ -13,7 +14,7 @@ export const pullFolder = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    { hash: downstreamHash, path }: { path: SyncablePath; hash?: Sha256Hash }
+    { hash: downstreamHash, path, strategy }: { path: SyncablePath; hash?: Sha256Hash; strategy: SyncStrategy }
   ): PR<InSyncFolder | OutOfSyncFolder, 'not-found'> => {
     const folder = await getSyncableAtPath(trace, store, path, 'folder');
     if (!folder.ok) {
@@ -52,11 +53,25 @@ export const pullFolder = makeAsyncResultFunc(
       {} as Partial<Record<SyncableId, Sha256Hash>>
     );
 
+    let batchContents: SyncBatchContents | undefined;
+    switch (strategy) {
+      case 'default':
+        break; // Nothing special to do
+      case 'batch': {
+        // Loading batches is always best effort
+        const loaded = await getSyncBatchContentsForPath(trace, store, path);
+        if (loaded.ok) {
+          batchContents = loaded.value;
+        }
+      }
+    }
+
     return makeSuccess({
       type: 'folder',
       outOfSync: true,
       hashesById,
-      metadata: metadata.value
+      metadata: metadata.value,
+      batchContents
     } satisfies OutOfSyncFolder);
   },
   { disableLam: 'not-found' }

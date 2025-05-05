@@ -1,15 +1,15 @@
 import type { PR } from 'freedom-async';
 import { allResultsNamed, makeAsyncResultFunc } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
+import type { SyncableItemMetadata, SyncablePath, SyncStrategy } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
 import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
 
-export const getFileAtPathForPush = makeAsyncResultFunc(
+export const getFileAtPathForSync = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, path: SyncablePath) =>
+  async (trace, store: SyncableStore, path: SyncablePath, _options: { strategy: SyncStrategy }) =>
     await isSyncableValidationEnabledProvider(trace, false, async (trace): PR<{ data: Uint8Array; metadata: SyncableItemMetadata }> => {
       const file = await getSyncableAtPath(trace, store, path, 'file');
       if (!file.ok) {

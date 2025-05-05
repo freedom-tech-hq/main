@@ -3,12 +3,15 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import type { DevLoggingSupport } from 'freedom-dev-logging-support';
 import type { RemoteAccessor, RemoteId, SyncablePath } from 'freedom-sync-types';
 
+import type { GetSyncStrategyForPathFunc } from './GetSyncStrategyForPathFunc.ts';
 import type { ShouldSyncWithAllRemotesFunc } from './ShouldSyncWithAllRemotesFunc.ts';
 import type { SyncServiceLogEntry } from './SyncServiceLogEntry.ts';
 
 export interface SyncService {
   readonly getRemotesAccessors: () => Partial<Record<RemoteId, RemoteAccessor>>;
   readonly shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
+
+  readonly getSyncStrategyForPath: GetSyncStrategyForPathFunc;
 
   readonly pullFromRemotes: (args: { path: SyncablePath; hash?: Sha256Hash }) => void;
 

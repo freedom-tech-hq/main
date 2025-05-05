@@ -30,6 +30,6 @@ export * from './markSyncableNeedsRecomputeHashAtPath.ts';
 export * from './pull/exports.ts';
 export * from './push/exports.ts';
 export * from './shouldUseTrustedTimeIdsInPath.ts';
+export * from './sync/exports.ts';
 export * from './validation/exports.ts';
 export * from './verifyAndDecryptBinary.ts';
-export * from './via-sync/exports.ts';

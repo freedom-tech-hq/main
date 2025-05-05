@@ -4,8 +4,8 @@ import { ConflictError, generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableFolderAccessor, MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
-import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
+import { getMutableParentSyncable } from '../../../utils/get/getMutableParentSyncable.ts';
+import { isSyncableValidationEnabledProvider } from '../../context/isSyncableValidationEnabled.ts';
 
 export const createViaSyncFolderAtPath = makeAsyncResultFunc(
   [import.meta.filename],

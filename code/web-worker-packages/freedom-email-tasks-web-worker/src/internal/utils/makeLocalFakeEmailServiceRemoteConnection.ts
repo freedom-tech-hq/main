@@ -19,7 +19,6 @@ import {
   type SyncPusher
 } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
-import type { InferHttpRequestBodyType } from 'yaschema-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 const registerWithRemote = makeApiFetchTask([import.meta.filename, 'registerWithRemote'], api.register.POST);
@@ -69,9 +68,9 @@ export const makeLocalFakeEmailServiceRemoteConnection = makeAsyncResultFunc(
 
     const puller: SyncPuller = makeAsyncResultFunc(
       [import.meta.filename, 'puller'],
-      async (trace, { path, hash, sendData = false }): PR<SyncPullResponse, 'not-found'> => {
+      async (trace, body): PR<SyncPullResponse, 'not-found'> => {
         const pulled = await disableLam(trace, 'not-found', (trace) =>
-          pullFromRemote(trace, { body: { path, hash, sendData }, context: getDefaultApiRoutingContext() })
+          pullFromRemote(trace, { body: { ...body, sendData: body.sendData ?? false }, context: getDefaultApiRoutingContext() })
         );
         if (!pulled.ok) {
           return pulled;
@@ -84,9 +83,7 @@ export const makeLocalFakeEmailServiceRemoteConnection = makeAsyncResultFunc(
 
     const pusher: SyncPusher = makeAsyncResultFunc(
       [import.meta.filename, 'pusher'],
-      async (trace, { type, path, data, metadata }): PR<undefined, 'not-found'> => {
-        const body = { type, path, data, metadata } as InferHttpRequestBodyType<typeof api.push.POST>;
-
+      async (trace, body): PR<undefined, 'not-found'> => {
         // not-found happens during push fairly commonly when doing an initial sync to a server and simultaneously updating the client,
         // because the client will try to push newer content before the base folders have been initially pushed -- but this will
         // automatically get resolved as the initial sync continues
