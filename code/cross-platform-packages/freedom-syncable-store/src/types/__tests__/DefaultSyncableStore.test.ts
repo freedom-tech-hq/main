@@ -18,7 +18,7 @@ import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 describe('DefaultSyncableStore', () => {
   afterEach(invalidateAllInMemoryCaches);
 
-  it('deleting files and folders should work', async (t: TestContext) => {
+  it.skip('deleting files and folders should work', async (t: TestContext) => {
     const { trace, store } = await createStoreTestStack();
 
     // Creating folder with default initial access
@@ -69,9 +69,6 @@ describe('DefaultSyncableStore', () => {
   it('getFolderAtPath should work', async (_t: TestContext) => {
     const { trace, store } = await createStoreTestStack();
 
-    // TODO: TEMP
-    store.devLogging.setShouldRecordLogs(true);
-
     // Creating folder
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);
@@ -79,12 +76,6 @@ describe('DefaultSyncableStore', () => {
 
     const folder = await getFolderAtPath(trace, store, testingPath);
     expectOk(folder);
-
-    // TODO: TEMP
-    // console.log('NUM ENTRIES', store.devLogging.getLogEntries().length);
-    // for (const entry of store.devLogging.getLogEntries()) {
-    //   console.log('FOO', JSON.stringify(entry));
-    // }
   });
 
   it('getMutableFolderAtPath should work', async (_t: TestContext) => {

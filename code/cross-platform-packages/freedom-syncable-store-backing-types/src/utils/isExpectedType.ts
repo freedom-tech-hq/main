@@ -3,7 +3,6 @@ import { makeSuccess, makeSyncResultFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableItemType } from 'freedom-sync-types';
 
-// TODO: MOVE / REMOVE
 export const isExpectedType = makeSyncResultFunc(
   [import.meta.filename],
   (

@@ -31,7 +31,6 @@ export const saltedId =
       throw new GeneralError(trace, 'Salt is required');
     }
 
-    // TODO: could probably cache these
     const hash = await generateHashFromString(trace, { value: `${saltString}:${plainId}` });
     if (!hash.ok) {
       // This shouldn't really ever happen

@@ -6,7 +6,6 @@ import type { SyncableItemType, SyncablePath } from 'freedom-sync-types';
 
 import { isExpectedType } from './isExpectedType.ts';
 
-// TODO: MOVE / REMOVE
 export const guardIsExpectedType = makeSyncResultFunc(
   [import.meta.filename],
   <ErrorCodeT extends string>(

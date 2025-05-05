@@ -16,24 +16,21 @@ export const syncPushArgsSchema = schema.oneOf3(
     type: schema.string('folder'),
     data: schema.undefinedValue().optional(),
     metadata: syncableItemMetadataSchema,
-    // TODO: temp, make optional
-    batchContents: syncBatchContentsSchema
+    batchContents: syncBatchContentsSchema.optional()
   }),
   schema.object({
     ...syncPushBaseSchema.map,
     type: schema.string('bundle'),
     data: schema.undefinedValue().optional(),
     metadata: syncableItemMetadataSchema,
-    // TODO: temp, make optional
-    batchContents: syncBatchContentsSchema
+    batchContents: syncBatchContentsSchema.optional()
   }),
   schema.object({
     ...syncPushBaseSchema.map,
     type: schema.string('file'),
     data: uint8ArraySchema,
     metadata: syncableItemMetadataSchema,
-    // TODO: temp, make optional
-    batchContents: schema.undefinedValue()
+    batchContents: schema.undefinedValue().optional()
   })
 );
 export type SyncPushArgs = typeof syncPushArgsSchema.valueType;

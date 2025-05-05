@@ -147,8 +147,7 @@ const pushBundle = makeAsyncResultFunc(
         type: 'bundle',
         path,
         metadata: localBundle.value.metadata,
-        // TODO: TEMP dont include if undefined
-        batchContents: localBundle.value.batchContents ?? {}
+        batchContents: localBundle.value.batchContents
       });
       if (!pushed.ok) {
         return pushed;
@@ -206,8 +205,7 @@ const pushFolder = makeAsyncResultFunc(
         type: 'folder',
         path,
         metadata: localFolder.value.metadata,
-        // TODO: TEMP dont include if undefined
-        batchContents: localFolder.value.batchContents ?? {}
+        batchContents: localFolder.value.batchContents
       });
       if (!pushedFolder.ok) {
         return pushedFolder;

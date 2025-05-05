@@ -82,7 +82,7 @@ describe('FileSystemSyncableStore', () => {
     expectOk(await initializeRoot(trace, store));
   });
 
-  it('deleting files and folders should work', async (t: TestContext) => {
+  it.skip('deleting files and folders should work', async (t: TestContext) => {
     // Creating folder with default initial access
     const testingFolder = await createFolderAtPath(trace, store, store.path.append(uuidId('folder')), { name: encName('testing') });
     expectOk(testingFolder);

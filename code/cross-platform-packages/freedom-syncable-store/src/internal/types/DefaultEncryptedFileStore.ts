@@ -43,7 +43,6 @@ export class DefaultEncryptedFileStore extends DefaultFileStoreBase {
 
   // DefaultBundleBase Abstract Method Implementations
 
-  // TODO: should cache
   protected override decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array> {
     DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'decode-data', pathString: this.path.toString() });
 

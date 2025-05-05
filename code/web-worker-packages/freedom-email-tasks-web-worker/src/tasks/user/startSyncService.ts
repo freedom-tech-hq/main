@@ -17,7 +17,7 @@ import { grantAppenderAccessOnStorageFolderToRemote } from '../../internal/tasks
 import { grantEditorAccessOnOutFolderToRemote } from '../../internal/tasks/storage/grantEditorAccessOnOutFolderToRemote.ts';
 import { makeSyncServiceForUserSyncables } from '../../internal/tasks/storage/makeSyncServiceForUserSyncables.ts';
 import { getOrCreateEmailAccessForUser } from '../../internal/tasks/user/getOrCreateEmailAccessForUser.ts';
-import { makeLocalFakeEmailServiceRemoteConnection } from '../../internal/utils/makeLocalFakeEmailServiceRemoteConnection.ts';
+import { makeEmailServiceRemoteConnection } from '../../internal/utils/makeEmailServiceRemoteConnection.ts';
 
 const getPublicKeysForRemote = makeApiFetchTask([import.meta.filename, 'getPublicKeysForRemote'], fakeEmailServiceApi.publicKeys.GET);
 
@@ -34,8 +34,7 @@ export const startSyncService = makeAsyncResultFunc(
 
     const userFs = access.userFs;
 
-    // TODO: remove once real services are ready
-    const remoteConnection = await makeLocalFakeEmailServiceRemoteConnection(trace);
+    const remoteConnection = await makeEmailServiceRemoteConnection(trace);
     if (!remoteConnection.ok) {
       return remoteConnection;
     }
