@@ -296,11 +296,11 @@ describe('ConflictFreeDocument', () => {
   });
 
   describe('clone', () => {
-    it('should work', (t: TestContext) => {
+    it('should work', async (t: TestContext) => {
       const doc = new ConflictFreeTestDocument();
       doc.title.replace(0, 'hello');
 
-      const doc2 = doc.clone();
+      const doc2 = await doc.clone();
       t.assert.strictEqual(doc2.title.getString(), 'hello');
     });
   });
@@ -345,11 +345,11 @@ describe('ConflictFreeDocument', () => {
   });
 
   describe('deltas', () => {
-    it('regular deltas should work', (t: TestContext) => {
+    it('regular deltas should work', async (t: TestContext) => {
       const doc = new ConflictFreeTestDocument();
       doc.title.replace(0, 'hello');
 
-      const doc2 = doc.clone();
+      const doc2 = await doc.clone();
 
       doc.title.replace(5, ' world');
       doc.age.set(6.28);
@@ -365,11 +365,11 @@ describe('ConflictFreeDocument', () => {
       t.assert.deepStrictEqual(doc2.meta.get(), { name: 'Testing', age: 25 });
     });
 
-    it('diff should work', (t: TestContext) => {
+    it('diff should work', async (t: TestContext) => {
       const doc = new ConflictFreeTestDocument();
       doc.title.replace(0, 'hello');
 
-      const doc2 = doc.clone();
+      const doc2 = await doc.clone();
 
       doc.title.replace(5, ' world');
 
@@ -381,11 +381,11 @@ describe('ConflictFreeDocument', () => {
       t.assert.strictEqual(doc2.title.getString(), 'hello world');
     });
 
-    it('merge should work', (t: TestContext) => {
+    it('merge should work', async (t: TestContext) => {
       const doc = new ConflictFreeTestDocument();
       doc.title.replace(0, 'hello');
 
-      const doc2 = doc.clone();
+      const doc2 = await doc.clone();
 
       doc.title.replace(5, ' world');
 

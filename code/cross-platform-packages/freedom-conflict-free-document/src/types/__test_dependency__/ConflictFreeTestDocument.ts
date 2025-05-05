@@ -32,8 +32,8 @@ export class ConflictFreeTestDocument extends ConflictFreeDocument<'TEST'> {
 
   // Overridden Public Methods
 
-  public override clone(out?: ConflictFreeTestDocument): ConflictFreeTestDocument {
-    return super.clone(out ?? new ConflictFreeTestDocument()) as ConflictFreeTestDocument;
+  public override async clone(out?: ConflictFreeTestDocument): Promise<ConflictFreeTestDocument> {
+    return (await super.clone(out ?? new ConflictFreeTestDocument())) as ConflictFreeTestDocument;
   }
 
   // Field Access Methods

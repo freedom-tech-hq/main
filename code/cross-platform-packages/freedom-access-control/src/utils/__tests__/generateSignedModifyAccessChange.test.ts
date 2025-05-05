@@ -47,7 +47,8 @@ describe('generateSignedModifyAccessChange', () => {
 
     assert.deepStrictEqual(deserializedInitialAccessState.value, { [cryptoKeys1.id]: 'creator' });
 
-    accessControlDoc = new TestAccessControlDocument({ initialAccess: initialAccess.value });
+    accessControlDoc = new TestAccessControlDocument();
+    await accessControlDoc.initialize({ access: initialAccess.value });
 
     const internalCryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(internalCryptoKeys2);
@@ -95,7 +96,10 @@ describe('generateSignedModifyAccessChange', () => {
     const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
-    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
+    const accessControlState = await accessControlDoc.getAccessControlState(trace);
+    expectOk(accessControlState);
+
+    expectDeepStrictEqual(accessControlState.value, {
       [cryptoKeys1.id]: 'creator',
       [cryptoKeys2.id]: 'viewer'
     });
@@ -150,7 +154,10 @@ describe('generateSignedModifyAccessChange', () => {
     const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
-    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
+    const accessControlState = await accessControlDoc.getAccessControlState(trace);
+    expectOk(accessControlState);
+
+    expectDeepStrictEqual(accessControlState.value, {
       [cryptoKeys1.id]: 'creator',
       [cryptoKeys2.id]: 'appender'
     });
@@ -205,7 +212,10 @@ describe('generateSignedModifyAccessChange', () => {
     const accessModified = await accessControlDoc.addChange(trace, signedModifyAccessChange.value.signedAccessChange);
     expectOk(accessModified);
 
-    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
+    const accessControlState = await accessControlDoc.getAccessControlState(trace);
+    expectOk(accessControlState);
+
+    expectDeepStrictEqual(accessControlState.value, {
       [cryptoKeys1.id]: 'creator',
       [cryptoKeys2.id]: 'viewer'
     });

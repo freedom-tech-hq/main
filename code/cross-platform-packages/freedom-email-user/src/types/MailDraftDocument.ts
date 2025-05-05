@@ -28,8 +28,8 @@ export class MailDraftDocument extends ConflictFreeDocument<MailDraftDocumentPre
 
   // Overridden Public Methods
 
-  public override clone(out?: MailDraftDocument): MailDraftDocument {
-    return super.clone(out ?? new MailDraftDocument()) as MailDraftDocument;
+  public override async clone(out?: MailDraftDocument): Promise<MailDraftDocument> {
+    return (await super.clone(out ?? new MailDraftDocument())) as MailDraftDocument;
   }
 
   // ConflictFreeDocumentEvaluator Methods

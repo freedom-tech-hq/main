@@ -17,16 +17,15 @@ import { checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrder } from
 type DocEval = ConflictFreeDocumentEvaluator<AccessControlDocumentPrefix, SyncableStoreAccessControlDocument>;
 
 export class SyncableStoreAccessControlDocument extends AccessControlDocument<SyncableStoreRole> {
-  constructor(
-    fwd:
-      | { initialAccess: InitialAccess<SyncableStoreRole>; snapshot?: undefined }
-      | { initialAccess?: undefined; snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> } }
-  ) {
+  constructor(fwd?: { snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> } }) {
     super({ roleSchema: syncableStoreRoleSchema, ...fwd });
   }
 
-  public static newDocument = (initialAccess: InitialAccess<SyncableStoreRole>) =>
-    new SyncableStoreAccessControlDocument({ initialAccess });
+  public static newDocument = async (initialAccess: InitialAccess<SyncableStoreRole>) => {
+    const doc = new SyncableStoreAccessControlDocument({});
+    await doc.initialize({ access: initialAccess });
+    return doc;
+  };
 
   // ConflictFreeDocumentEvaluator Methods
 
@@ -53,17 +52,29 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
 
   // Overridden Public Methods
 
-  public override clone(out?: SyncableStoreAccessControlDocument): SyncableStoreAccessControlDocument {
-    return super.clone(
-      out ?? new SyncableStoreAccessControlDocument({ initialAccess: this.initialAccess_ })
-    ) as SyncableStoreAccessControlDocument;
+  public override async clone(out?: SyncableStoreAccessControlDocument): Promise<SyncableStoreAccessControlDocument> {
+    if (out === undefined) {
+      return (await super.clone(out)) as SyncableStoreAccessControlDocument;
+    } else {
+      const doc = new SyncableStoreAccessControlDocument();
+      await doc.initialize({ access: await this.initialAccess_ });
+      return (await super.clone(doc)) as SyncableStoreAccessControlDocument;
+    }
   }
 
   // Public Methods
 
-  public get creatorCryptoKeySetId(): CryptoKeySetId | undefined {
-    const foundCreator = objectEntries(this.initialState_.get()?.value ?? {}).find(([_cryptoKeySetId, role]) => role === 'creator');
-    return foundCreator?.[0];
+  private cacheCreatorCryptoKeySetId_: Promise<CryptoKeySetId | undefined> | undefined;
+  public get creatorCryptoKeySetId(): Promise<CryptoKeySetId | undefined> {
+    if (this.cacheCreatorCryptoKeySetId_ === undefined) {
+      this.cacheCreatorCryptoKeySetId_ = inline(async (): Promise<CryptoKeySetId | undefined> => {
+        const initialState = await this.initialState_.get();
+        const foundCreator = objectEntries(initialState?.value ?? {}).find(([_cryptoKeySetId, role]) => role === 'creator');
+        return foundCreator?.[0];
+      });
+    }
+
+    return this.cacheCreatorCryptoKeySetId_;
   }
 
   // Private Methods
@@ -158,7 +169,7 @@ export class SyncableStoreAccessControlDocument extends AccessControlDocument<Sy
       }
       const deltaFileTimeMSec = timeIdInfo.extractTimeMSec(timeId);
       for (const addedChange of addedChanges) {
-        const deserializedChange = await deserialize(trace, addedChange.value);
+        const deserializedChange = await deserialize(trace, (await addedChange).value);
         if (!deserializedChange.ok) {
           return makeSuccess(false);
         }

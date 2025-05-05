@@ -79,8 +79,14 @@ export const generateSignedModifyAccessChange = makeAsyncResultFunc(
       } else {
         // If the user is losing read access, we need to create a new set of shared keys (and could eventually reencrypt old data)
 
+        const accessControlState = await accessControlDoc.getAccessControlState(trace);
+        if (!accessControlState.ok) {
+          return accessControlState;
+        }
+
         const usersWithReadAccessEncryptingKeySets: EncryptingKeySet[] = [];
-        for (const [publicKeyId, role] of objectEntries(await accessControlDoc.accessControlState)) {
+
+        for (const [publicKeyId, role] of objectEntries(accessControlState.value)) {
           if (publicKeyId === params.publicKeyId) {
             continue; // Skip the user we're modifying, since we know they're losing read access
           } else if (role === undefined) {

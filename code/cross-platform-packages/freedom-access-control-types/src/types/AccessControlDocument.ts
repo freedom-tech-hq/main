@@ -1,14 +1,14 @@
 import type { PR } from 'freedom-async';
-import { inline, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { AsyncTransient, inline, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { makeSerializedValueSchema, type SerializedValue } from 'freedom-basic-data';
 import { ConflictError, NotFoundError } from 'freedom-common-errors';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
-import { makeTrace, type Trace } from 'freedom-contexts';
+import { type Trace } from 'freedom-contexts';
 import type { CombinationCryptoKeySet, CryptoKeySetId, EncryptedValue, SignedValue } from 'freedom-crypto-data';
 import { makeSignedValueSchema, publicKeysByIdSchema } from 'freedom-crypto-data';
 import { deserialize } from 'freedom-serialization';
-import type { Schema, TypeOrPromisedType } from 'yaschema';
+import type { Schema } from 'yaschema';
 
 import type { AccessControlState } from './AccessControlState.ts';
 import { makeAccessControlStateSchema } from './AccessControlState.ts';
@@ -27,39 +27,58 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   private readonly publicKeysByIdSchema_: Schema<SignedValue<SerializedValue<Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>>>>>;
   private readonly changeSchema_: Schema<SignedValue<SerializedValue<TimedAccessChange<RoleT>>>>;
 
-  private needsRebuildTransients_: boolean;
-  private state_: AccessControlState<RoleT> = {};
-  private publicKeysById_: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> = {};
+  private readonly transients_ = new AsyncTransient(async (trace) => {
+    const initialTransients = await this.getInitialTransients_(trace);
+    if (!initialTransients.ok) {
+      return initialTransients;
+    }
+    const { state, publicKeysById } = initialTransients.value;
+
+    const transients = { state, publicKeysById };
+    for (const change of this.changes_.values()) {
+      const deserializedChange = await deserialize(trace, (await change).value);
+      if (!deserializedChange.ok) {
+        return deserializedChange;
+      }
+
+      applyChangeToTransients(transients, deserializedChange.value);
+    }
+
+    return makeSuccess(transients);
+  });
 
   constructor({
     roleSchema,
-    initialAccess,
     snapshot
-  }: { roleSchema: Schema<RoleT> } & (
-    | { initialAccess: InitialAccess<RoleT>; snapshot?: undefined }
-    | { initialAccess?: undefined; snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> } }
-  )) {
+  }: {
+    roleSchema: Schema<RoleT>;
+    snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> };
+  }) {
     super(ACCESS_CONTROL_DOCUMENT_PREFIX, snapshot);
 
     this.stateSchema_ = makeSignedValueSchema(makeSerializedValueSchema(makeAccessControlStateSchema({ roleSchema })), undefined);
     this.publicKeysByIdSchema_ = makeSignedValueSchema(makeSerializedValueSchema(publicKeysByIdSchema), undefined);
     this.changeSchema_ = makeSignedValueSchema(makeSerializedValueSchema(makeTimedAccessChangeSchema({ roleSchema })), undefined);
-
-    if (snapshot === undefined) {
-      this.initialState_.set(initialAccess.state);
-      this.initialPublicKeysById_.set(initialAccess.publicKeysById);
-      this.sharedKeys_.append(initialAccess.sharedKeys);
-    }
-
-    this.needsRebuildTransients_ = true;
   }
 
-  protected get initialAccess_(): InitialAccess<RoleT> {
-    return {
-      state: this.initialState_.get()!,
-      publicKeysById: this.initialPublicKeysById_.get()!,
-      sharedKeys: Array.from(this.sharedKeys_.values())
-    };
+  public async initialize({ access }: { access: InitialAccess<RoleT> }) {
+    await this.initialState_.set(access.state);
+    await this.initialPublicKeysById_.set(access.publicKeysById);
+    this.sharedKeys_.append(access.sharedKeys);
+  }
+
+  private cachedInitialAccess_: Promise<InitialAccess<RoleT>> | undefined;
+  protected get initialAccess_(): Promise<InitialAccess<RoleT>> {
+    if (this.cachedInitialAccess_ === undefined) {
+      this.cachedInitialAccess_ = inline(
+        async (): Promise<InitialAccess<RoleT>> => ({
+          state: (await this.initialState_.get())!,
+          publicKeysById: (await this.initialPublicKeysById_.get())!,
+          sharedKeys: Array.from(this.sharedKeys_.values())
+        })
+      );
+    }
+    return this.cachedInitialAccess_;
   }
 
   // Overridden Public Methods
@@ -70,23 +89,22 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   ): void {
     super.applyDeltas(deltas, options);
 
-    this.needsRebuildTransients_ = true;
+    this.transients_.markNeedsUpdate();
   }
 
   // Field Helpers
 
-  public get accessControlState(): TypeOrPromisedType<AccessControlState<RoleT>> {
-    if (this.needsRebuildTransients_) {
-      return inline(async () => {
-        const trace = makeTrace(import.meta.filename, 'accessControlState');
-        await this.rebuildTransientValues_(trace);
+  public readonly getAccessControlState = makeAsyncResultFunc(
+    [import.meta.filename, 'getAccessControlState'],
+    async (trace): PR<Readonly<AccessControlState<RoleT>>> => {
+      const transients = await this.transients_.getValue(trace);
+      if (!transients.ok) {
+        return transients;
+      }
 
-        return { ...this.state_ };
-      });
+      return makeSuccess(transients.value.state);
     }
-
-    return { ...this.state_ };
-  }
+  );
 
   // TODO: this is inefficient
   public readonly didHaveRoleAtTimeMSec = makeAsyncResultFunc(
@@ -111,7 +129,7 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
 
       const transients = { state, publicKeysById };
       for (const change of this.changes_.values()) {
-        const deserializedChange = await deserialize(trace, change.value);
+        const deserializedChange = await deserialize(trace, (await change).value);
         if (!deserializedChange.ok) {
           return deserializedChange;
         }
@@ -129,11 +147,14 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   public readonly getPublicKeysById = makeAsyncResultFunc(
     [import.meta.filename, 'getKeysById'],
     async (trace, publicKeyId: CryptoKeySetId): PR<CombinationCryptoKeySet, 'not-found'> => {
-      if (this.needsRebuildTransients_) {
-        await this.rebuildTransientValues_(trace);
+      const transients = await this.transients_.getValue(trace);
+      if (!transients.ok) {
+        return transients;
       }
 
-      const found = this.publicKeysById_[publicKeyId];
+      const publicKeysById_ = transients.value.publicKeysById;
+
+      const found = publicKeysById_[publicKeyId];
       if (found === undefined) {
         return makeFailure(new NotFoundError(trace, { message: `No public keys found for ID: ${publicKeyId}`, errorCode: 'not-found' }));
       }
@@ -154,12 +175,13 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
         return makeFailure(new ConflictError(trace, { message: "Initial state isn't set" }));
       }
 
-      if (this.needsRebuildTransients_) {
-        await this.rebuildTransientValues_(trace);
+      const transients = await this.transients_.getValue(trace);
+      if (!transients.ok) {
+        return transients;
       }
 
-      const transients = { state: this.state_, publicKeysById: this.publicKeysById_ };
-      if (!applyChangeToTransients(transients, deserializedChange.value)) {
+      // Directly modifying the transients
+      if (!applyChangeToTransients(transients.value, deserializedChange.value)) {
         return makeFailure(new ConflictError(trace, { message: 'Change is invalid', errorCode: 'conflict' }));
       }
 
@@ -204,18 +226,18 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
   // Protected Field Access Methods
 
   protected get initialState_() {
-    return this.generic.getObjectField<SignedValue<SerializedValue<AccessControlState<RoleT>>>>('initialState', this.stateSchema_);
+    return this.generic.getAsyncObjectField<SignedValue<SerializedValue<AccessControlState<RoleT>>>>('initialState', this.stateSchema_);
   }
 
   protected get initialPublicKeysById_() {
-    return this.generic.getObjectField<SignedValue<SerializedValue<Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>>>>>(
+    return this.generic.getAsyncObjectField<SignedValue<SerializedValue<Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>>>>>(
       'initialPublicKeysById',
       this.publicKeysByIdSchema_
     );
   }
 
   protected get changes_() {
-    return this.generic.getArrayField<SignedValue<SerializedValue<TimedAccessChange<RoleT>>>>('changes', this.changeSchema_);
+    return this.generic.getAsyncArrayField<SignedValue<SerializedValue<TimedAccessChange<RoleT>>>>('changes', this.changeSchema_);
   }
 
   protected get sharedKeys_() {
@@ -229,8 +251,8 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
     async (
       trace: Trace
     ): PR<{ state: AccessControlState<RoleT>; publicKeysById: Partial<Record<CryptoKeySetId, CombinationCryptoKeySet>> }> => {
-      const serializedState = this.initialState_.get()!.value;
-      const serializedPublicKeysById = this.initialPublicKeysById_.get()!.value;
+      const serializedState = (await this.initialState_.get())!.value;
+      const serializedPublicKeysById = (await this.initialPublicKeysById_.get())!.value;
 
       const deserializedState = await deserialize(trace, serializedState);
       if (!deserializedState.ok) {
@@ -261,35 +283,6 @@ export abstract class AccessControlDocument<RoleT extends string> extends Confli
       }
     }
   }
-
-  // TODO: should have some coordination locking
-  private readonly rebuildTransientValues_ = makeAsyncResultFunc(
-    [import.meta.filename, 'rebuildTransientValues_'],
-    async (trace): PR<undefined> => {
-      this.needsRebuildTransients_ = false;
-
-      const initialTransients = await this.getInitialTransients_(trace);
-      if (!initialTransients.ok) {
-        return initialTransients;
-      }
-      const { state, publicKeysById } = initialTransients.value;
-
-      const transients = { state, publicKeysById };
-      for (const change of this.changes_.values()) {
-        const deserializedChange = await deserialize(trace, change.value);
-        if (!deserializedChange.ok) {
-          return deserializedChange;
-        }
-
-        applyChangeToTransients(transients, deserializedChange.value);
-      }
-
-      this.state_ = transients.state;
-      this.publicKeysById_ = transients.publicKeysById;
-
-      return makeSuccess(undefined);
-    }
-  );
 }
 
 // Helpers

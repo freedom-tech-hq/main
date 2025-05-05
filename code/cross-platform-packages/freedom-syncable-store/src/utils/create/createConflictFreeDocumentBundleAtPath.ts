@@ -7,6 +7,7 @@ import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } fro
 import { isSyncableItemEncrypted, timeId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
+import type { TypeOrPromisedType } from 'yaschema';
 
 import { createBundleAtPath } from './createBundleAtPath.ts';
 import { createStringFileAtPath } from './createStringFileAtPath.ts';
@@ -22,7 +23,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
       trustedTimeSignature,
       newDocument
     }: Partial<SyncableOriginOptions> & {
-      newDocument: () => DocumentT;
+      newDocument: () => TypeOrPromisedType<DocumentT>;
       name?: DynamicSyncableItemName;
     }
   ): PR<undefined, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
@@ -59,7 +60,7 @@ export const createConflictFreeDocumentBundleAtPath = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const document = newDocument();
+    const document = await newDocument();
     const encodedSnapshot = document.encodeSnapshot(initialSnapshotId);
 
     const savedSnapshot = await createStringFileAtPath(trace, store, snapshotsPath.append(initialSnapshotId), {

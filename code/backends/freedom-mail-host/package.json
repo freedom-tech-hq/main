@@ -5,7 +5,9 @@
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-db": "0.0.0",
+    "freedom-email-server": "0.0.0",
     "freedom-email-sync": "0.0.0",
+    "freedom-syncable-store-server": "0.0.0",
     "mailparser": "3.7.2",
     "nodemailer": "6.10.1",
     "smtp-server": "3.13.6"
