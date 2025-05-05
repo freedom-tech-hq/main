@@ -1,9 +1,10 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { findUserByEmail } from 'freedom-db';
 import { addMail, type StoredMail } from 'freedom-email-sync';
-import { createEmailSyncableStore1 } from 'freedom-syncable-store-server';
+
+import { getEmailAgentSyncableStore } from './getEmailAgentSyncableStore.ts';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
@@ -13,17 +14,12 @@ export const addIncomingEmail = makeAsyncResultFunc(
       return generalizeFailureResult(trace, userResult, 'not-found');
     }
 
-    const { userId, publicKeys, defaultSalt } = userResult.value;
+    const syncableStoreResult = await getEmailAgentSyncableStore(trace, userResult.value);
+    if (!syncableStoreResult.ok) {
+      return syncableStoreResult;
+    }
 
-    const syncableStore = await uncheckedResult(
-      createEmailSyncableStore1(trace, {
-        userId,
-        publicKeys: publicKeys,
-        saltsById: { SALT_default: defaultSalt }
-      })
-    );
-
-    const added = await addMail(trace, syncableStore, mail);
+    const added = await addMail(trace, syncableStoreResult.value, mail);
     if (!added.ok) {
       return added;
     }
