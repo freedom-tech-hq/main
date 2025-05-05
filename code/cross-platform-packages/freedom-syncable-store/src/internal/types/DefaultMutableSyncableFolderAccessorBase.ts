@@ -599,7 +599,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       }
       /* node:coverage enable */
 
-      return makeSuccess(await accessControlDoc.value.accessControlState);
+      return await accessControlDoc.value.getAccessControlState(trace);
     }
   );
 

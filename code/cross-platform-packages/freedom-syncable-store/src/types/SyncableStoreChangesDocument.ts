@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { allResultsMapped, AsyncTransient, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentDelta, EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
@@ -24,12 +24,19 @@ export type SyncableStoreChangesDocumentPrefix = typeof SYNCABLE_STORE_CHANGES_D
 type DocEval = ConflictFreeDocumentEvaluator<SyncableStoreChangesDocumentPrefix, SyncableStoreChangesDocument>;
 
 export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableStoreChangesDocumentPrefix> {
-  private deletedPathStrings_: Set<string> = new Set();
+  private transients_ = new AsyncTransient(async () => {
+    const deletedPathStrings = new Set<string>();
+
+    const transients = { deletedPathStrings };
+    for (const change of this.changes_.values()) {
+      applyChangeToTransients(transients, (await change).value);
+    }
+
+    return transients;
+  });
 
   constructor(snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<SyncableStoreChangesDocumentPrefix> }) {
     super(SYNCABLE_STORE_CHANGES_DOCUMENT_PREFIX, snapshot);
-
-    this.rebuildState_();
   }
 
   public static newDocument = () => new SyncableStoreChangesDocument();
@@ -59,8 +66,8 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
 
   // Overridden Public Methods
 
-  public override clone(out?: SyncableStoreChangesDocument): SyncableStoreChangesDocument {
-    return super.clone(out ?? new SyncableStoreChangesDocument()) as SyncableStoreChangesDocument;
+  public override async clone(out?: SyncableStoreChangesDocument): Promise<SyncableStoreChangesDocument> {
+    return (await super.clone(out ?? new SyncableStoreChangesDocument())) as SyncableStoreChangesDocument;
   }
 
   public override applyDeltas(
@@ -69,19 +76,27 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
   ): void {
     super.applyDeltas(deltas, options);
 
-    this.rebuildState_();
+    this.transients_.markNeedsUpdate();
   }
 
   // Field Helpers
 
-  public readonly isDeletedPath = (path: SyncablePath) => {
-    return this.deletedPathStrings_.has(path.toString());
-  };
+  public readonly isDeletedPath = makeAsyncResultFunc(
+    [import.meta.filename, 'isDeletedPath'],
+    async (trace, path: SyncablePath): PR<boolean> => {
+      const transients = await this.transients_.getValue(trace);
+
+      return makeSuccess(transients.deletedPathStrings.has(path.toString()));
+    }
+  );
 
   public readonly addChange = makeAsyncResultFunc(
     [import.meta.filename, 'addChange'],
-    async (_trace: Trace, change: SignedValue<SyncableStoreChange>): PR<undefined> => {
-      this.applyChangeToState_(change.value);
+    async (trace: Trace, change: SignedValue<SyncableStoreChange>): PR<undefined> => {
+      const transients = await this.transients_.getValue(trace);
+
+      // Directly modifying the transients
+      applyChangeToTransients(transients, change.value);
 
       this.changes_.append([change]);
 
@@ -92,21 +107,10 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
   // Private Field Access Methods
 
   private get changes_() {
-    return this.generic.getArrayField<SignedValue<SyncableStoreChange>>('changes', signedStoreChangeSchema);
+    return this.generic.getAsyncArrayField<SignedValue<SyncableStoreChange>>('changes', signedStoreChangeSchema);
   }
 
   // Private Methods
-
-  private readonly applyChangeToState_ = (change: SyncableStoreChange) => {
-    switch (change.type) {
-      case 'delete':
-        for (const path of change.paths) {
-          this.deletedPathStrings_.add(path.toString());
-        }
-
-        break;
-    }
-  };
 
   private readonly isDeltaValidForRole_ = makeAsyncResultFunc(
     [import.meta.filename, 'isDeltaValidForRole_'],
@@ -154,9 +158,10 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
       }
 
       for (const addedChange of addedChanges) {
-        switch (addedChange.value.type) {
+        const addedChangeValue = (await addedChange).value;
+        switch (addedChangeValue.type) {
           case 'delete': {
-            const checked = await allResultsMapped(trace, addedChange.value.paths, {}, async (trace, path) => {
+            const checked = await allResultsMapped(trace, addedChangeValue.paths, {}, async (trace, path) => {
               // Checking that the path being deleted is directly associated with the folder associated with this store change document
               const nearestFolderPath = await getNearestFolderPath(trace, store, path);
               if (!nearestFolderPath.ok) {
@@ -192,12 +197,17 @@ export class SyncableStoreChangesDocument extends ConflictFreeDocument<SyncableS
       return makeSuccess(true);
     }
   );
-
-  private readonly rebuildState_ = () => {
-    this.deletedPathStrings_ = new Set<string>();
-
-    for (const change of this.changes_.values()) {
-      this.applyChangeToState_(change.value);
-    }
-  };
 }
+
+// Helpers
+
+const applyChangeToTransients = ({ deletedPathStrings }: { deletedPathStrings: Set<string> }, change: SyncableStoreChange) => {
+  switch (change.type) {
+    case 'delete':
+      for (const path of change.paths) {
+        deletedPathStrings.add(path.toString());
+      }
+
+      break;
+  }
+};

@@ -83,7 +83,7 @@ export class ConflictFreeDocument<PrefixT extends string> implements Notifiable<
 
   /** If no output document is specified, the cloned document will have the same id as this document.  One may call like
    * `clone(new ConflictFreeDocument('new-id'))` to clone but with a new document ID. */
-  public clone(out?: ConflictFreeDocument<PrefixT>): ThisType<PrefixT> {
+  public async clone(out?: ConflictFreeDocument<PrefixT>): Promise<ThisType<PrefixT>> {
     const cloned = out ?? new ConflictFreeDocument<PrefixT>(this.prefix);
     cloned.#yDoc = cloneYDoc(this.#yDoc);
     cloned.#deltaBasisYDoc = cloneYDoc(this.#deltaBasisYDoc);

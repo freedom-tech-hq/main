@@ -86,7 +86,7 @@ export class FolderOperationsHandler {
         return makeSuccess(false);
       }
 
-      return makeSuccess(storeChangesDoc.value.document.isDeletedPath(path));
+      return await storeChangesDoc.value.document.isDeletedPath(trace, path);
     }
   );
 

@@ -1,5 +1,6 @@
 import { buildMode } from 'freedom-contexts';
 
+export * from './classes/exports.ts';
 export * from './config/exports.ts';
 export * from './consts/exports.ts';
 export * from './contexts/exports.ts';

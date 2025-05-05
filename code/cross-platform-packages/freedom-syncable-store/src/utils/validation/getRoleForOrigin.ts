@@ -20,8 +20,11 @@ export const getRoleForOrigin = makeAsyncResultFunc(
       return makeSuccess('creator' as const);
     }
 
-    const accessControlState = await accessControlDoc.accessControlState;
+    const accessControlState = await accessControlDoc.getAccessControlState(trace);
+    if (!accessControlState.ok) {
+      return accessControlState;
+    }
 
-    return makeSuccess(accessControlState[signedByKeyId.value]);
+    return makeSuccess(accessControlState.value[signedByKeyId.value]);
   }
 );

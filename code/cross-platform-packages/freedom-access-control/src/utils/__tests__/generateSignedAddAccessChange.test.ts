@@ -34,11 +34,13 @@ describe('generateSignedAddAccessChange', () => {
 
     expectDeepStrictEqual(deserializedInitialAccessState.value, { [cryptoKeys1.value.id]: 'creator' });
 
-    const accessControlDoc = new TestAccessControlDocument({ initialAccess: initialAccess.value });
+    const accessControlDoc = new TestAccessControlDocument();
+    await accessControlDoc.initialize({ access: initialAccess.value });
 
-    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
-      [cryptoKeys1.value.id]: 'creator'
-    });
+    const accessControlState1 = await accessControlDoc.getAccessControlState(trace);
+    expectOk(accessControlState1);
+
+    expectDeepStrictEqual(accessControlState1.value, { [cryptoKeys1.value.id]: 'creator' });
 
     const cryptoKeys2 = await generateCryptoCombinationKeySet(trace);
     expectOk(cryptoKeys2);
@@ -61,7 +63,10 @@ describe('generateSignedAddAccessChange', () => {
     const accessAdded = await accessControlDoc.addChange(trace, signedAddAccessChange.value.signedAccessChange);
     expectOk(accessAdded);
 
-    expectDeepStrictEqual(await accessControlDoc.accessControlState, {
+    const accessControlState2 = await accessControlDoc.getAccessControlState(trace);
+    expectOk(accessControlState2);
+
+    expectDeepStrictEqual(accessControlState2.value, {
       [cryptoKeys1.value.id]: 'creator',
       [cryptoKeys2.value.id]: 'editor'
     });

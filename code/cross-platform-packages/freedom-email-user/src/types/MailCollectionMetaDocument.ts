@@ -11,8 +11,8 @@ export class MailCollectionMetaDocument extends ConflictFreeDocument<MailCollect
 
   // Overridden Public Methods
 
-  public override clone(out?: MailCollectionMetaDocument): MailCollectionMetaDocument {
-    return super.clone(out ?? new MailCollectionMetaDocument()) as MailCollectionMetaDocument;
+  public override async clone(out?: MailCollectionMetaDocument): Promise<MailCollectionMetaDocument> {
+    return (await super.clone(out ?? new MailCollectionMetaDocument())) as MailCollectionMetaDocument;
   }
 
   // Field Access Methods

@@ -1,21 +1,17 @@
 {
   "dependencies": {
-    "freedom-access-control-types": "0.0.0",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
+    "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
-    "freedom-crypto-service": "0.0.0",
     "freedom-db": "0.0.0",
-    "freedom-dev-logging-support": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "freedom-file-system-syncable-store-backing": "0.0.0",
     "freedom-sync-types": "0.0.0",
-    "freedom-syncable-store": "0.0.0",
-    "freedom-syncable-store-types": "0.0.0",
-    "yaschema": "5.0.0"
+    "freedom-syncable-store": "0.0.0"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

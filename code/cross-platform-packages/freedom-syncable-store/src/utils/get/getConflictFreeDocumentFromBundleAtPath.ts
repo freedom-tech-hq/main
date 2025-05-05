@@ -354,7 +354,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                     return makeFailure(new ForbiddenError(trace, { message: 'No role found' }));
                   }
 
-                  const deltaValid = await isDeltaValidForDocument(trace, document.clone() as DocumentT, {
+                  const deltaValid = await isDeltaValidForDocument(trace, (await document.clone()) as DocumentT, {
                     store,
                     path: deltaFile.value.path,
                     validatedProvenance: deltaProvenance.value,

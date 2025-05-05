@@ -1,6 +1,6 @@
 /* node:coverage disable */
 
-import type { AccessControlDocumentPrefix, InitialAccess } from 'freedom-access-control-types';
+import type { AccessControlDocumentPrefix } from 'freedom-access-control-types';
 import { AccessControlDocument } from 'freedom-access-control-types';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
@@ -12,18 +12,20 @@ export type TestRole = (typeof testStoreRoles)[0];
 export const testStoreRoleSchema = schema.string(...testStoreRoles);
 
 export class TestAccessControlDocument extends AccessControlDocument<TestRole> {
-  constructor(
-    fwd:
-      | { initialAccess: InitialAccess<TestRole>; snapshot?: undefined }
-      | { initialAccess?: undefined; snapshot: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> } }
-  ) {
+  constructor(fwd?: { snapshot?: { id: string; encoded: EncodedConflictFreeDocumentSnapshot<AccessControlDocumentPrefix> } }) {
     super({ roleSchema: testStoreRoleSchema, ...fwd });
   }
 
   // Overridden Public Methods
 
-  public override clone(out?: TestAccessControlDocument): TestAccessControlDocument {
-    return super.clone(out ?? new TestAccessControlDocument({ initialAccess: this.initialAccess_ })) as TestAccessControlDocument;
+  public override async clone(out?: TestAccessControlDocument): Promise<TestAccessControlDocument> {
+    if (out === undefined) {
+      return (await super.clone(out)) as TestAccessControlDocument;
+    } else {
+      const doc = new TestAccessControlDocument();
+      await doc.initialize({ access: await this.initialAccess_ });
+      return (await super.clone(doc)) as TestAccessControlDocument;
+    }
   }
 
   // Public Methods
