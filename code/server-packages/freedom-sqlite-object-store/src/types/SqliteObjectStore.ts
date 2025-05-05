@@ -5,14 +5,7 @@ import { ConflictError, InternalSchemaValidationError, NotFoundError } from 'fre
 import type { Trace } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import type { IndexStore } from 'freedom-indexing-types';
-import type {
-  MutableObjectAccessor,
-  MutableObjectStore,
-  ObjectAccessor,
-  ObjectStoreManagement,
-  StorableObject
-} from 'freedom-object-store-types';
-import type { PageToken, Paginated } from 'freedom-paginated-data';
+import type { MutableObjectAccessor, MutableObjectStore, ObjectAccessor, StorableObject } from 'freedom-object-store-types';
 import { deserialize, serialize } from 'freedom-serialization';
 import { get } from 'lodash-es';
 import type { JsonValue, Schema } from 'yaschema';
@@ -26,7 +19,7 @@ export type SqliteObjectStoreConstructorArgs<KeyT extends string, T> = {
   _keyType?: KeyT;
 };
 
-export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T>, ObjectStoreManagement<KeyT, T> {
+export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T> {
   public readonly uid = makeUuid();
 
   public readonly keys: IndexStore<KeyT, unknown>;
@@ -49,15 +42,8 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
       CREATE TABLE IF NOT EXISTS ${this.tableName_} (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL,
-        isDeleted INTEGER NOT NULL,
         updateCount INTEGER NOT NULL
       );
-    `);
-    this.db_.exec(`
-      CREATE INDEX IF NOT EXISTS ${this.tableName_}_index_deleted
-      ON ${this.tableName_}
-      (key, isDeleted)
-      WHERE (isDeleted = 1);
     `);
 
     return makeSuccess(undefined);
@@ -93,12 +79,12 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
 
         const prepared = this.db_.prepare(`
           INSERT INTO ${this.tableName_}
-          (key, value, isDeleted, updateCount)
+          (key, value, updateCount)
           VALUES
-          (?, ?, ?, ?)
+          (?, ?, ?)
         `);
         try {
-          const result = prepared.run(key, jsonString, 0, 0);
+          const result = prepared.run(key, jsonString, 0);
 
           /* node:coverage disable */
           if (result.changes === 0) {
@@ -124,7 +110,7 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
         const prepared = this.db_.prepare<[KeyT], { value: string; updateCount: number }>(`
           SELECT value, updateCount
           FROM ${this.tableName_}
-          WHERE isDeleted = 0 AND key = ?
+          WHERE key = ?
         `);
         const result = prepared.get(key);
 
@@ -153,11 +139,10 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
 
       delete: makeAsyncResultFunc([import.meta.filename, 'mutableObject', 'delete'], async (trace): PR<undefined, 'not-found'> => {
         const prepared = this.db_.prepare(`
-          UPDATE ${this.tableName_}
-          SET isDeleted = ?
-          WHERE isDeleted = 0 AND key = ?
+          DELETE FROM ${this.tableName_}
+          WHERE key = ?
         `);
-        const result = prepared.run(1, key);
+        const result = prepared.run(key);
 
         if (result.changes === 0) {
           return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
@@ -183,7 +168,7 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
           const prepared = this.db_.prepare(`
             UPDATE ${this.tableName_}
             SET value = ?, updateCount = ?
-            WHERE isDeleted = 0 AND key = ? AND updateCount = ?
+            WHERE key = ? AND updateCount = ?
           `);
           const result = prepared.run(jsonString, newValue.updateCount + 1, key, newValue.updateCount);
 
@@ -210,7 +195,7 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
         const prepared = this.db_.prepare<[KeyT], { count: number }>(`
           SELECT count(*) AS count
           FROM ${this.tableName_}
-          WHERE isDeleted = 0 AND key = ?
+          WHERE key = ?
         `);
         const result = prepared.get(key);
 
@@ -221,7 +206,7 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
         const prepared = this.db_.prepare<[KeyT], { value: string }>(`
           SELECT value
           FROM ${this.tableName_}
-          WHERE isDeleted = 0 AND key = ?
+          WHERE key = ?
         `);
         const result = prepared.get(key);
 
@@ -250,7 +235,7 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
     const prepared = this.db_.prepare<KeyT[], { key: KeyT; value: string }>(`
       SELECT key, value
       FROM ${this.tableName_}
-      WHERE isDeleted = 0 AND key IN (${Array(keys.length).fill('?').join(',')})
+      WHERE key IN (${Array(keys.length).fill('?').join(',')})
     `);
     const rows = prepared.all(...keys);
 
@@ -268,48 +253,6 @@ export class SqliteObjectStore<KeyT extends string, T> implements MutableObjectS
 
     return makeSuccess({ found, notFound });
   }
-
-  // ObjectStoreManagementAccessor Methods
-
-  public readonly getDeletedKeys = makeAsyncResultFunc(
-    [import.meta.filename, 'getDeletedKeys'],
-    async (_trace: Trace, startFromPageToken?: PageToken): PR<Paginated<KeyT>> => {
-      /* node:coverage disable */
-      if (startFromPageToken !== undefined) {
-        return makeSuccess({ items: [] });
-      }
-      /* node:coverage enable */
-
-      const prepared = this.db_.prepare<[], { key: KeyT }>(`
-        SELECT key
-        FROM ${this.tableName_}
-        WHERE isDeleted = 1
-      `);
-      const rows = prepared.all();
-
-      const deletedKeys = rows.map(({ key }) => key);
-
-      return makeSuccess({ items: deletedKeys, estCount: deletedKeys.length });
-    }
-  );
-
-  public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (trace: Trace): PR<KeyT[]> => {
-    const deletedKeys = await this.getDeletedKeys(trace);
-    /* node:coverage disable */
-    if (!deletedKeys.ok) {
-      return deletedKeys;
-    }
-    /* node:coverage enable */
-
-    const prepared = this.db_.prepare<KeyT[]>(`
-      DELETE
-      FROM ${this.tableName_}
-      WHERE key IN (${Array(deletedKeys.value.items.length).fill('?').join(',')})
-    `);
-    prepared.run(...deletedKeys.value.items);
-
-    return makeSuccess(deletedKeys.value.items);
-  });
 
   // Private Methods
 

@@ -5,14 +5,7 @@ import type { Trace } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import type { IndexStore } from 'freedom-indexing-types';
 import { withAcquiredLock } from 'freedom-locking-types';
-import type {
-  MutableObjectAccessor,
-  MutableObjectStore,
-  ObjectAccessor,
-  ObjectStoreManagement,
-  StorableObject
-} from 'freedom-object-store-types';
-import type { PageToken, Paginated } from 'freedom-paginated-data';
+import type { MutableObjectAccessor, MutableObjectStore, ObjectAccessor, StorableObject } from 'freedom-object-store-types';
 import { deserialize, serialize } from 'freedom-serialization';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { JsonValue, Schema } from 'yaschema';
@@ -36,7 +29,7 @@ export type IndexedDbObjectStoreConstructorArgs<KeyT extends string, T> = {
   _keyType?: KeyT;
 };
 
-export class IndexedDbObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T>, ObjectStoreManagement<KeyT, T> {
+export class IndexedDbObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T> {
   public readonly uid = makeUuid();
 
   public readonly keys: IndexStore<KeyT, unknown>;
@@ -231,7 +224,9 @@ export class IndexedDbObjectStore<KeyT extends string, T> implements MutableObje
   public object(key: KeyT): ObjectAccessor<T> {
     return {
       exists: makeAsyncResultFunc([import.meta.filename, 'object', 'exists'], async (trace): PR<boolean> => {
-        const found = await readKv<KeyT, JsonValue>(trace, this.db_, { storeName: this.storeName_, key });
+        const found = await disableLam(trace, 'not-found', (trace) =>
+          readKv<KeyT, JsonValue>(trace, this.db_, { storeName: this.storeName_, key })
+        );
         if (!found.ok) {
           if (found.value.errorCode === 'not-found') {
             return makeSuccess(false);
@@ -284,14 +279,4 @@ export class IndexedDbObjectStore<KeyT extends string, T> implements MutableObje
 
     return makeSuccess({ found, notFound });
   }
-
-  // ObjectStoreManagementAccessor Methods
-
-  // Deletes are immediate, so we don't need to look them up
-  public readonly getDeletedKeys = makeAsyncResultFunc(
-    [import.meta.filename, 'getDeletedKeys'],
-    async (_trace: Trace, _startFromPageToken?: PageToken): PR<Paginated<KeyT>> => makeSuccess({ items: [] })
-  );
-
-  public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (_trace: Trace): PR<KeyT[]> => makeSuccess([]));
 }

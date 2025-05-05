@@ -12,8 +12,8 @@ export const getProvenanceOfSyncable = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    pathOrAccessor: SyncablePath | ChainableResult<SyncableItemAccessor, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'>
-  ): PR<SyncableProvenance, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+    pathOrAccessor: SyncablePath | ChainableResult<SyncableItemAccessor, 'not-found' | 'untrusted' | 'wrong-type'>
+  ): PR<SyncableProvenance, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const item = await (pathOrAccessor instanceof SyncablePath
       ? getSyncableAtPath(trace, store, pathOrAccessor)
       : resolveChain(pathOrAccessor));

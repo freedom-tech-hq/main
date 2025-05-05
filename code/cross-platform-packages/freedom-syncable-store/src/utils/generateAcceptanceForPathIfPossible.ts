@@ -18,7 +18,7 @@ export const generateAcceptanceForPathIfPossible = makeAsyncResultFunc(
     trace,
     store: SyncableStore,
     { path, getSha256ForItemProvenance }: { path: SyncablePath; getSha256ForItemProvenance: PRFunc<Sha256Hash> }
-  ): PR<SignedSyncableAcceptance | undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<SignedSyncableAcceptance | undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const roleAndCryptoKeySetId = await getCryptoKeyIdForHighestCurrentUserRoleAtPath(trace, store, {
       // Acceptance is relative to the permissions of the parent folder since the item is being added to it
       path: path.parentPath ?? new SyncablePath(path.storageRootId)

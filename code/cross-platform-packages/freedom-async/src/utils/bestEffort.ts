@@ -1,4 +1,5 @@
 import { log, type Trace } from 'freedom-contexts';
+import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 
 import type { PR } from '../types/PR.ts';
 import type { PRFunc } from '../types/PRFunc.ts';
@@ -14,7 +15,10 @@ export const bestEffort = makeAsyncFunc(
     try {
       const res = await (typeof result === 'function' ? callAsyncResultFunc(trace, {}, result) : result);
       if (!res.ok) {
-        log().warn?.(trace, 'An error occurred in a best effort evaluator', res.value);
+        const lamControl = useLamControl(trace);
+        if (!shouldDisableErrorForLoggingAndMetrics(lamControl.disable, { error: undefined, errorCode: res.value.errorCode })) {
+          log().warn?.(trace, 'An error occurred in a best effort evaluator', res.value);
+        }
         return undefined;
       }
 

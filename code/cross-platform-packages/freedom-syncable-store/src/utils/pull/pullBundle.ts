@@ -1,11 +1,12 @@
-import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
-import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { InSyncBundle, OutOfSyncBundle, SyncableId, SyncablePath } from 'freedom-sync-types';
+import type { InSyncBundle, OutOfSyncBundle, SyncableId, SyncablePath, SyncBatchContents, SyncStrategy } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
+import { getSyncBatchContentsForPath } from '../../internal/utils/getSyncBatchContentsForPath.ts';
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
 
 export const pullBundle = makeAsyncResultFunc(
@@ -13,15 +14,11 @@ export const pullBundle = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    { hash: downstreamHash, path }: { path: SyncablePath; hash?: Sha256Hash }
+    { hash: downstreamHash, path, strategy }: { path: SyncablePath; hash?: Sha256Hash; strategy: SyncStrategy }
   ): PR<InSyncBundle | OutOfSyncBundle, 'not-found'> => {
     const bundle = await getSyncableAtPath(trace, store, path, 'bundle');
     if (!bundle.ok) {
-      if (bundle.value.errorCode === 'deleted') {
-        // Treating deleted as not found
-        return makeFailure(new NotFoundError(trace, { cause: bundle.value, errorCode: 'not-found' }));
-      }
-      return generalizeFailureResult(trace, excludeFailureResult(bundle, 'deleted'), ['untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, bundle, ['untrusted', 'wrong-type']);
     }
 
     const hash = await bundle.value.getHash(trace);
@@ -56,11 +53,26 @@ export const pullBundle = makeAsyncResultFunc(
       {} as Partial<Record<SyncableId, Sha256Hash>>
     );
 
+    let batchContents: SyncBatchContents | undefined;
+    switch (strategy) {
+      case 'default':
+        break; // Nothing special to do
+      case 'batch': {
+        // Loading batches is always best effort
+        const loaded = await getSyncBatchContentsForPath(trace, store, path);
+        if (loaded.ok) {
+          batchContents = loaded.value;
+        }
+      }
+    }
+
     return makeSuccess({
       type: 'bundle',
       outOfSync: true,
       hashesById,
-      metadata: metadata.value
+      metadata: metadata.value,
+      batchContents
     } satisfies OutOfSyncBundle);
-  }
+  },
+  { disableLam: 'not-found' }
 );

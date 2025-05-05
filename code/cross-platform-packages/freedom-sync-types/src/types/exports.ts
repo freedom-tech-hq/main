@@ -10,5 +10,7 @@ export * from './SyncableItemType.ts';
 export * from './SyncableOrigin.ts';
 export * from './SyncablePath.ts';
 export * from './SyncableProvenance.ts';
+export * from './SyncBatchContents.ts';
 export * from './SyncPuller.ts';
 export * from './SyncPusher.ts';
+export * from './SyncStrategy.ts';

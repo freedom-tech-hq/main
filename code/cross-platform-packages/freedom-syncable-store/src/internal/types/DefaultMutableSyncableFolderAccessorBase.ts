@@ -1,7 +1,7 @@
 import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 'freedom-access-control';
 import type { AccessChangeParams, AccessControlState, TrustedTimeSignedAccessChange } from 'freedom-access-control-types';
 import type { PR, Result } from 'freedom-async';
-import { allResults, allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { allResultsNamed, GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { type Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
@@ -30,15 +30,13 @@ import type {
   SyncTracker,
   SyncTrackerNotifications
 } from 'freedom-syncable-store-types';
-import { ACCESS_CONTROL_BUNDLE_ID, STORE_CHANGES_BUNDLE_ID, syncableStoreRoleSchema } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
+import { ACCESS_CONTROL_BUNDLE_ID, syncableStoreRoleSchema } from 'freedom-syncable-store-types';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 import { getDefaultInMemoryTrustedTimeSource } from 'freedom-trusted-time-source';
 import { pick } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
-import { SyncableStoreChangesDocument } from '../../types/SyncableStoreChangesDocument.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../../utils/create/createConflictFreeDocumentBundleAtPath.ts';
 import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableStoreRoleHaveReadAccess.ts';
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
@@ -228,16 +226,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // AccessControlledFolderAccessor Methods
 
-  public readonly canPushToRemotes = makeAsyncResultFunc([import.meta.filename, 'canPushToRemotes'], async (trace): PR<boolean> => {
-    const store = this.weakStore_.deref();
-    if (store === undefined) {
-      return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
-    }
-
-    const accessControlDoc = await disableLam(trace, true, (trace) => getAccessControlDocument(trace, store, this.path));
-    return makeSuccess(accessControlDoc.ok);
-  });
-
   public readonly didCryptoKeyHaveRoleAtTimeMSec = makeAsyncResultFunc(
     [import.meta.filename, 'didCryptoKeyHaveRoleAtTimeMSec'],
     async (
@@ -293,16 +281,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         return initialAccess;
       }
 
-      // Syncable Store Changes
-      const createdStoreChanges = await createConflictFreeDocumentBundleAtPath(trace, store, this.path.append(STORE_CHANGES_BUNDLE_ID), {
-        newDocument: () => SyncableStoreChangesDocument.newDocument()
-      });
-      /* node:coverage disable */
-      if (!createdStoreChanges.ok) {
-        return generalizeFailureResult(trace, createdStoreChanges, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
-      }
-      /* node:coverage enable */
-
       // Access Control (should be created last since syncing will be allowed once this is created)
       const createdAccessControlDoc = await createConflictFreeDocumentBundleAtPath(
         trace,
@@ -349,9 +327,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
-    async (trace: Trace, id: SyncableId): PR<undefined, 'not-found'> => {
-      const store = this.selectStoreForId_(id);
-      return await store.delete(trace, id);
+    async (trace: Trace, _id: SyncableId): PR<undefined, 'not-found'> => {
+      // TODO: reimplement
+      return makeFailure(new GeneralError(trace, { message: 'delete is not supported' }));
+      // const store = this.selectStoreForId_(id);
+      // return await store.delete(trace, id);
     }
   );
 
@@ -448,7 +428,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         const marked = await markSyncableNeedsRecomputeHashAtPath(trace, store, parentPath);
         /* node:coverage disable */
         if (!marked.ok) {
-          return generalizeFailureResult(trace, marked, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
       }
@@ -482,7 +462,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
       const store = this.selectStoreForId_(id);
       return await store.getMutable(trace, id, expectedType);
     }
@@ -515,25 +495,12 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-      await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
 
-  // BundleManagement Methods
-
-  public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (trace: Trace) => {
-    const swept = await allResults(trace, [
-      this.folderStore_.sweep(trace),
-      this.plainFileStore_.sweep(trace),
-      this.encryptedFileStore_.sweep(trace)
-    ]);
-    /* node:coverage disable */
-    if (!swept.ok) {
-      return swept;
-    }
-    /* node:coverage enable */
-
-    return makeSuccess(undefined);
+  public readonly isDeleted = makeAsyncResultFunc([import.meta.filename, 'isDeleted'], async (trace, id: SyncableId): PR<boolean> => {
+    const store = this.selectStoreForId_(id);
+    return await store.isDeleted(trace, id);
   });
 
   // Public Methods
@@ -550,9 +517,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
     return new FolderOperationsHandler({
       store,
-      getAccessControlDocument: (trace: Trace): PR<SyncableStoreAccessControlDocument> => getAccessControlDocument(trace, store, path),
-      getMutableSyncableStoreChangesDocument: (trace: Trace): PR<SaveableDocument<SyncableStoreChangesDocument>> =>
-        getMutableSyncableStoreChangesDocument(trace, store, path)
+      getAccessControlDocument: (trace: Trace): PR<SyncableStoreAccessControlDocument> => getAccessControlDocument(trace, store, path)
     });
   }
 
@@ -647,24 +612,7 @@ const getMutableAccessControlDocument = makeAsyncResultFunc(
     );
     /* node:coverage disable */
     if (!doc.ok) {
-      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
-    }
-    /* node:coverage enable */
-
-    return makeSuccess(doc.value);
-  }
-);
-
-const getMutableSyncableStoreChangesDocument = makeAsyncResultFunc(
-  [import.meta.filename, 'getMutableSyncableStoreChangesDocument'],
-  async (trace, store: MutableSyncableStore, path: SyncablePath): PR<SaveableDocument<SyncableStoreChangesDocument>> => {
-    const storeChangesBundlePath = path.append(STORE_CHANGES_BUNDLE_ID);
-
-    // TODO: doc can be modified directly by changing bundle.  this should track that probably
-    const doc = await getMutableConflictFreeDocumentFromBundleAtPath(trace, store, storeChangesBundlePath, SyncableStoreChangesDocument);
-    /* node:coverage disable */
-    if (!doc.ok) {
-      return generalizeFailureResult(trace, doc, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, doc, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
     }
     /* node:coverage enable */
 

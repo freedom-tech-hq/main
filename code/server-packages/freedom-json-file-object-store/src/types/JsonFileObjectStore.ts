@@ -11,10 +11,8 @@ import {
   type MutableObjectAccessor,
   type MutableObjectStore,
   type ObjectAccessor,
-  type ObjectStoreManagement,
   type StorableObject
 } from 'freedom-object-store-types';
-import type { PageToken, Paginated } from 'freedom-paginated-data';
 import { parse, stringify } from 'freedom-serialization';
 import { TaskQueue } from 'freedom-task-queue';
 import { once } from 'lodash-es';
@@ -26,7 +24,7 @@ export type JsonFileObjectStoreConstructorArgs<KeyT extends string, T> = {
   _keyType?: KeyT;
 };
 
-export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T>, ObjectStoreManagement<KeyT, T> {
+export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T> {
   public readonly uid = makeUuid();
 
   public readonly inMemoryStore_: InMemoryObjectStore<KeyT, T>;
@@ -150,23 +148,6 @@ export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjec
 
     return await this.inMemoryStore_.getMultiple(trace, keys);
   }
-
-  // ObjectStoreManagementAccessor Methods
-
-  public readonly getDeletedKeys = makeAsyncResultFunc(
-    [import.meta.filename, 'getDeletedKeys'],
-    async (trace: Trace, startFromPageToken?: PageToken): PR<Paginated<KeyT>> => {
-      await uncheckedResult(this.loadIfNeeded_(trace));
-
-      return await this.inMemoryStore_.getDeletedKeys(trace, startFromPageToken);
-    }
-  );
-
-  public readonly sweep = makeAsyncResultFunc([import.meta.filename, 'sweep'], async (trace: Trace): PR<KeyT[]> => {
-    await uncheckedResult(this.loadIfNeeded_(trace));
-
-    return await this.inMemoryStore_.sweep(trace);
-  });
 
   // Private Methods
 

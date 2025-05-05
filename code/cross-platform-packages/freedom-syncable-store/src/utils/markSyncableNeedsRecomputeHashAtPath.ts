@@ -8,7 +8,7 @@ import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
 
 export const markSyncableNeedsRecomputeHashAtPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, path: SyncablePath): PR<undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: SyncableStore, path: SyncablePath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
     // Disabling validation since we're creating something new -- and this might be a new access control bundle for example, which would
     // make checking it impossible anyway
     const itemAccessor = await isSyncableValidationEnabledProvider(

@@ -3,8 +3,9 @@ import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
-import { createViaSyncPreEncodedBinaryFileAtPath } from '../via-sync/createViaSyncPreEncodedBinaryFileAtPath.ts';
+import { createViaSyncPreEncodedBinaryFileAtPath } from '../../internal/utils/sync/createViaSyncPreEncodedBinaryFileAtPath.ts';
 
 export const pushFile = makeAsyncResultFunc(
   [import.meta.filename],
@@ -21,18 +22,19 @@ export const pushFile = makeAsyncResultFunc(
       metadata: SyncableItemMetadata;
     }
   ): PR<undefined, 'not-found'> => {
-    const file = await createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, data, metadata);
+    const file = await disableLam(trace, 'conflict', (trace) =>
+      createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, data, metadata)
+    );
     if (!file.ok) {
-      if (file.value.errorCode === 'deleted') {
-        // Was locally (with respect to the mock remote) deleted, so not interested in this content
-        return makeSuccess(undefined);
+      // Treating conflicts as ok since this will often be the case when syncing with predicable ids
+      if (file.value.errorCode !== 'conflict') {
+        return generalizeFailureResult(
+          trace,
+          excludeFailureResult(file, 'conflict'),
+          ['untrusted', 'wrong-type'],
+          `Failed to push flat file: ${path.toString()}`
+        );
       }
-      return generalizeFailureResult(
-        trace,
-        excludeFailureResult(file, 'deleted'),
-        ['conflict', 'untrusted', 'wrong-type'],
-        `Failed to push flat file: ${path.toString()}`
-      );
     }
 
     return makeSuccess(undefined);

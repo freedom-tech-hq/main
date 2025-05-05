@@ -67,7 +67,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
     path: SyncablePath,
     { loadDocument, isSnapshotValid, isDeltaValidForDocument }: ConflictFreeDocumentEvaluator<PrefixT, DocumentT>,
     { watch = 'auto' }: GetConflictFreeDocumentFromBundleAtPathArgs = {}
-  ): PR<WatchableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<WatchableDocument<DocumentT>, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const pathString = path.toString();
 
     // When watch = true, we only want one in-flight operation per path so that caching can be handled properly
@@ -75,7 +75,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
       trace,
       globalLockStore.lock(watch !== false ? pathString : makeUuid()),
       {},
-      async (trace): PR<WatchableDocument<DocumentT>, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+      async (trace): PR<WatchableDocument<DocumentT>, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
         switch (watch) {
           case false:
             // No caching is used
@@ -122,7 +122,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         let getSnapshotId = (): string | undefined => undefined;
 
         let applyDeltasToDocument:
-          | PRFunc<undefined, 'not-found' | 'deleted' | 'untrusted' | 'wrong-type' | 'format-error', [deltaPaths: SyncablePath[]]>
+          | PRFunc<undefined, 'not-found' | 'untrusted' | 'wrong-type' | 'format-error', [deltaPaths: SyncablePath[]]>
           | undefined;
 
         // TODO: this doesn't reevaluate permissions changes or previously rejected deltas etc
@@ -147,7 +147,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
                 const appliedDeltas = await applyDeltasToDocument?.(trace, deltaPaths);
                 if (!appliedDeltas.ok) {
-                  return generalizeFailureResult(trace, appliedDeltas, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
+                  return generalizeFailureResult(trace, appliedDeltas, ['format-error', 'not-found', 'untrusted', 'wrong-type']);
                 }
                 numDeltasApplied += deltaPaths.length;
               }
@@ -227,10 +227,10 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
             return snapshotFile;
           }
 
-          const encodedSnapshot = await getStringFromFile(trace, store, snapshotFile.value);
+          const encodedSnapshot = await getStringFromFile(trace, store, snapshotFile.value, { checkForDeletion: false });
           /* node:coverage disable */
           if (!encodedSnapshot.ok) {
-            return encodedSnapshot;
+            return generalizeFailureResult(trace, encodedSnapshot, 'deleted');
           }
           /* node:coverage enable */
 
@@ -299,21 +299,18 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
 
           applyDeltasToDocument = makeAsyncResultFunc(
             [import.meta.filename, 'applyDeltasToDocument'],
-            async (
-              trace,
-              deltaPaths: SyncablePath[]
-            ): PR<undefined, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+            async (trace, deltaPaths: SyncablePath[]): PR<undefined, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
               const encodedDataByPathString: Partial<Record<string, string>> = {};
               const loaded = await allResultsMapped(
                 trace,
                 deltaPaths,
                 {},
-                async (trace, deltaPath): PR<undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type' | 'format-error'> => {
+                async (trace, deltaPath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type' | 'format-error'> => {
                   const encodedDelta = await isSyncableValidationEnabledProvider(trace, false, (trace) =>
-                    getStringFromFile(trace, store, deltaPath)
+                    getStringFromFile(trace, store, deltaPath, { checkForDeletion: false })
                   );
                   if (!encodedDelta.ok) {
-                    return encodedDelta;
+                    return generalizeFailureResult(trace, encodedDelta, 'deleted');
                   }
 
                   encodedDataByPathString[deltaPath.toString()] = encodedDelta.value;

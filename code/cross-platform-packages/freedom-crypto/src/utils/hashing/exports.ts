@@ -6,4 +6,3 @@ export * from './generateSha256HashFromBase64String.ts';
 export * from './generateSha256HashFromBuffer.ts';
 export * from './generateSha256HashFromHashesById.ts';
 export * from './generateSha256HashFromString.ts';
-export * from './getCoordinatedHashSalt.ts';

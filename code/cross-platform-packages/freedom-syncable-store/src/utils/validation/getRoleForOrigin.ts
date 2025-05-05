@@ -10,7 +10,7 @@ export const getRoleForOrigin = makeAsyncResultFunc(
     trace,
     store: SyncableStore,
     { origin, accessControlDoc }: { origin: SignedSyncableOrigin; accessControlDoc: ISyncableStoreAccessControlDocument }
-  ): PR<SyncableStoreRole | undefined, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<SyncableStoreRole | undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
     const signedByKeyId = extractKeyIdFromSignedValue(trace, { signedValue: origin });
     if (!signedByKeyId.ok) {
       return signedByKeyId;

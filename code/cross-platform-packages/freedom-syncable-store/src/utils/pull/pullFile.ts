@@ -1,9 +1,9 @@
 import type { PR } from 'freedom-async';
-import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { InSyncFile, OutOfSyncFile, SyncablePath } from 'freedom-sync-types';
+import type { InSyncFile, OutOfSyncFile, SyncablePath, SyncStrategy } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
 import { getSyncableAtPath } from '../get/getSyncableAtPath.ts';
@@ -13,15 +13,11 @@ export const pullFile = makeAsyncResultFunc(
   async (
     trace: Trace,
     store: SyncableStore,
-    { hash: downstreamHash, path, sendData = false }: { path: SyncablePath; hash?: Sha256Hash; sendData?: boolean }
+    { hash: downstreamHash, path, sendData = false }: { path: SyncablePath; hash?: Sha256Hash; sendData?: boolean; strategy: SyncStrategy }
   ): PR<InSyncFile | OutOfSyncFile, 'not-found'> => {
     const file = await getSyncableAtPath(trace, store, path, 'file');
     if (!file.ok) {
-      if (file.value.errorCode === 'deleted') {
-        // Treating deleted as not found
-        return makeFailure(new NotFoundError(trace, { cause: file.value, errorCode: 'not-found' }));
-      }
-      return generalizeFailureResult(trace, excludeFailureResult(file, 'deleted'), ['untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, file, ['untrusted', 'wrong-type']);
     }
 
     const hash = await file.value.getHash(trace);
@@ -55,5 +51,6 @@ export const pullFile = makeAsyncResultFunc(
         metadata: metadata.value
       } satisfies OutOfSyncFile);
     }
-  }
+  },
+  { disableLam: 'not-found' }
 );

@@ -1,14 +1,5 @@
 import type { PR } from 'freedom-async';
-import {
-  allResults,
-  allResultsMapped,
-  allResultsReduced,
-  debugTopic,
-  excludeFailureResult,
-  makeAsyncResultFunc,
-  makeFailure,
-  makeSuccess
-} from 'freedom-async';
+import { allResultsMapped, debugTopic, GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
@@ -25,7 +16,6 @@ import {
 import type { LocalItemMetadata, SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import { guardIsExpectedType } from 'freedom-syncable-store-backing-types';
 import type {
-  FolderManagement,
   GenerateNewSyncableItemNameFunc,
   MutableFolderStore,
   MutableSyncableFolderAccessor,
@@ -34,18 +24,18 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
+import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
-export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderManagement {
+export class DefaultFolderStore implements Partial<MutableFolderStore> {
   public readonly type = 'folder';
   public readonly path: SyncablePath;
 
@@ -106,6 +96,13 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
           const id = args.id ?? uuidId('folder');
           const newPath = this.path.append(id);
 
+          const isDeleted = await isSyncableDeleted(trace, store, newPath, { recursive: false });
+          if (!isDeleted.ok) {
+            return isDeleted;
+          } else if (isDeleted.value) {
+            return makeFailure(new NotFoundError(trace, { message: `${newPath.toString()} was deleted`, errorCode: 'deleted' }));
+          }
+
           const name = await this.folderOperationsHandler_.generateNewSyncableItemName(trace, {
             name: args.name ?? id,
             path: newPath,
@@ -147,52 +144,50 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
-    async (trace, id: SyncableId): PR<undefined, 'not-found'> => {
-      const removePath = this.path.append(id);
+    async (trace, _id: SyncableId): PR<undefined, 'not-found'> => {
+      // TODO: reimplement
+      return makeFailure(new GeneralError(trace, { message: 'delete is not supported' }));
+      // const removePath = this.path.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'delete', pathString: removePath.toString() });
+      // DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'delete', pathString: removePath.toString() });
 
-      // Checking that the requested file exists in the backing
-      const exists = await this.backing_.existsAtPath(trace, removePath);
-      /* node:coverage disable */
-      if (!exists.ok) {
-        return exists;
-      } else if (!exists.value) {
-        return makeFailure(
-          new NotFoundError(trace, {
-            message: `No folder found for ID: ${id} in ${this.path.toString()}`,
-            errorCode: 'not-found'
-          })
-        );
-      }
-      /* node:coverage enable */
+      // // Checking that the requested file exists in the backing
+      // const exists = await this.backing_.existsAtPath(trace, removePath);
+      // /* node:coverage disable */
+      // if (!exists.ok) {
+      //   return exists;
+      // } else if (!exists.value) {
+      //   return makeFailure(
+      //     new NotFoundError(trace, {
+      //       message: `No folder found for ID: ${id} in ${this.path.toString()}`,
+      //       errorCode: 'not-found'
+      //     })
+      //   );
+      // }
+      // /* node:coverage enable */
 
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, removePath);
-      if (!isDeleted.ok) {
-        return isDeleted;
-      } else if (isDeleted.value) {
-        // Already deleted
-        return makeSuccess(undefined);
-      }
+      // const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, removePath);
+      // if (!isDeleted.ok) {
+      //   return isDeleted;
+      // } else if (isDeleted.value) {
+      //   // Already deleted
+      //   return makeSuccess(undefined);
+      // }
 
-      const markedAsDeleted = await this.folderOperationsHandler_.markPathAsDeleted(trace, removePath);
-      /* node:coverage disable */
-      if (!markedAsDeleted.ok) {
-        return markedAsDeleted;
-      }
-      /* node:coverage enable */
+      // const markedAsDeleted = await this.folderOperationsHandler_.markPathAsDeleted(trace, removePath);
+      // /* node:coverage disable */
+      // if (!markedAsDeleted.ok) {
+      //   return markedAsDeleted;
+      // }
+      // /* node:coverage enable */
 
-      const markedNeedsRecomputedHash = await this.markNeedsRecomputeHash(trace);
-      /* node:coverage disable */
-      if (!markedNeedsRecomputedHash.ok) {
-        return markedNeedsRecomputedHash;
-      }
-      /* node:coverage enable */
+      // // Note: the actual files aren't deleted directly.  Only when the approval of the deletion change is detected will the data actually
+      // // be removed
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying folderRemoved for folder ${removePath.toString()}`));
-      this.syncTracker_.notify('folderRemoved', { path: removePath });
+      // DEV: debugTopic('SYNC', (log) => log(`Notifying folderRemoved for folder ${removePath.toString()}`));
+      // this.syncTracker_.notify('folderRemoved', { path: removePath });
 
-      return makeSuccess(undefined);
+      // return makeSuccess(undefined);
     }
   );
 
@@ -211,14 +206,6 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     }
     /* node:coverage enable */
 
-    const guards = await disableLam(trace, true, (trace) => this.guardNotDeleted_(trace, checkingPath, 'deleted'));
-    if (!guards.ok) {
-      if (guards.value.errorCode === 'deleted') {
-        return makeSuccess(false);
-      }
-      return excludeFailureResult(guards, 'deleted');
-    }
-
     return makeSuccess(true);
   });
 
@@ -228,7 +215,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+    ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
       const getPath = this.path.append(id);
 
       const store = this.weakStore_.deref();
@@ -237,15 +224,11 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       }
 
       const itemType = extractSyncableItemTypeFromId(id);
-      const guards = await allResults(trace, [
-        this.guardNotDeleted_(trace, getPath, 'deleted'),
-        guardIsExpectedType(trace, getPath, itemType, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type')
-      ]);
+      const guards = guardIsExpectedType(trace, getPath, itemType, intersectSyncableItemTypes(expectedType, 'folder'), 'wrong-type');
       if (!guards.ok) {
         return guards;
       }
 
-      // Checking existence after deletion check because we want to return a 'deleted' errorCode explicitly if deleted
       const exists = await this.exists(trace, id);
       if (!exists.ok) {
         return exists;
@@ -371,7 +354,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
         return generalizeFailureResult(trace, ids, ['not-found', 'wrong-type']);
       }
 
-      return await this.filterOutDeletedIds_(trace, ids.value);
+      return makeSuccess(ids.value);
     }
   );
 
@@ -381,9 +364,19 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       trace: Trace,
       id: SyncableId,
       expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
-      await this.getMutable(trace, id, expectedType)
+    ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
   );
+
+  public readonly isDeleted = makeAsyncResultFunc([import.meta.filename, 'isDeleted'], async (_trace, _id: SyncableId): PR<boolean> => {
+    // TODO: reimplement
+    return makeSuccess(false);
+    // const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
+    // if (!isDeleted.ok) {
+    //   return isDeleted;
+    // }
+
+    // return makeSuccess(isDeleted.value);
+  });
 
   public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeHash'],
@@ -401,7 +394,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
         const marked = await markSyncableNeedsRecomputeHashAtPath(trace, store, parentPath);
         /* node:coverage disable */
         if (!marked.ok) {
-          return generalizeFailureResult(trace, marked, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
       }
@@ -458,51 +451,6 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
     return makeSuccess(flatten(recursiveLs.value));
   });
 
-  // FileStoreManagementAccessor Methods
-
-  public async sweep(trace: Trace): PR<undefined> {
-    const allItemIds = await this.backing_.getIdsInPath(trace, this.path, { type: 'folder' });
-    if (!allItemIds.ok) {
-      return generalizeFailureResult(trace, allItemIds, ['not-found', 'wrong-type']);
-    } else if (allItemIds.value.length === 0) {
-      return makeSuccess(undefined);
-    }
-
-    const deleteIds = new Set<SyncableId>();
-    for (const id of allItemIds.value) {
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
-      if (!isDeleted.ok) {
-        return isDeleted;
-      }
-      if (isDeleted.value) {
-        deleteIds.add(id);
-      }
-    }
-
-    const deletedInBacking = await allResultsMapped(trace, Array.from(deleteIds), {}, (trace, itemId) =>
-      this.backing_.deleteAtPath(trace, this.path.append(itemId))
-    );
-    if (!deletedInBacking.ok) {
-      return generalizeFailureResult(trace, deletedInBacking, ['not-found', 'wrong-type']);
-    }
-
-    const subFolderIds = await this.backing_.getIdsInPath(trace, this.path, { type: 'folder' });
-    if (!subFolderIds.ok) {
-      return generalizeFailureResult(trace, subFolderIds, ['not-found', 'wrong-type']);
-    }
-    const recursivelySwept = await allResultsMapped(trace, subFolderIds.value, {}, async (trace, folderId) => {
-      const itemAccessor = this.makeMutableItemAccessor_(this.path.append(folderId), 'folder');
-      return await itemAccessor.sweep(trace);
-    });
-    /* node:coverage disable */
-    if (!recursivelySwept.ok) {
-      return recursivelySwept;
-    }
-    /* node:coverage enable */
-
-    return makeSuccess(undefined);
-  }
-
   // Private Methods
 
   private readonly computeHash_ = makeAsyncResultFunc([import.meta.filename, 'computeHash_'], async (trace): PR<Sha256Hash> => {
@@ -537,7 +485,7 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       trace,
       id: SyncableId,
       metadata: SyncableItemMetadata & LocalItemMetadata
-    ): PR<DefaultMutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
+    ): PR<DefaultMutableSyncableFolderAccessor, 'conflict'> => {
       const newPath = this.path.append(id);
 
       DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-folder', pathString: newPath.toString() });
@@ -552,11 +500,6 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
         return exists;
       } else if (exists.value) {
         return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
-      }
-
-      const guards = await this.guardNotDeleted_(trace, newPath, 'deleted');
-      if (!guards.ok) {
-        return guards;
       }
 
       const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata });
@@ -596,45 +539,6 @@ export class DefaultFolderStore implements Partial<MutableFolderStore>, FolderMa
       });
 
       return makeSuccess(folder);
-    }
-  );
-
-  private readonly filterOutDeletedIds_ = makeAsyncResultFunc(
-    [import.meta.filename, 'filterOutDeletedIds_'],
-    async (trace, encodedIds: SyncableId[]) => {
-      return await allResultsReduced(
-        trace,
-        encodedIds,
-        {},
-        async (_trace, id) => makeSuccess(id),
-        async (trace, out, id) => {
-          const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, this.path.append(id));
-          if (!isDeleted.ok) {
-            return isDeleted;
-          }
-
-          if (!isDeleted.value) {
-            out.push(id);
-          }
-
-          return makeSuccess(out);
-        },
-        [] as SyncableId[]
-      );
-    }
-  );
-
-  private readonly guardNotDeleted_ = makeAsyncResultFunc(
-    [import.meta.filename, 'guardNotDeleted_'],
-    async <ErrorCodeT extends string>(trace: Trace, path: SyncablePath, errorCode: ErrorCodeT): PR<undefined, ErrorCodeT> => {
-      const isDeleted = await this.folderOperationsHandler_.isPathMarkedAsDeleted(trace, path);
-      if (!isDeleted.ok) {
-        return isDeleted;
-      } else if (isDeleted.value) {
-        return makeFailure(new NotFoundError(trace, { message: `${path.toString()} was deleted`, errorCode }));
-      }
-
-      return makeSuccess(undefined);
     }
   );
 

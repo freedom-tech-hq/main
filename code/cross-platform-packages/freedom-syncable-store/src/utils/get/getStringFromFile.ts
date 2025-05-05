@@ -6,16 +6,16 @@ import type { SyncableFileAccessor, SyncableStore } from 'freedom-syncable-store
 
 import { getBinaryFromFile } from './getBinaryFromFile.ts';
 
+/** `checkForDeletion` defaults to `true` */
 export const getStringFromFile = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace: Trace,
     store: SyncableStore,
-    pathOrAccessor:
-      | SyncablePath
-      | ChainableResult<SyncableFileAccessor, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>
+    pathOrAccessor: SyncablePath | ChainableResult<SyncableFileAccessor, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>,
+    options: { checkForDeletion?: boolean } = {}
   ): PR<string, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const binary = await getBinaryFromFile(trace, store, pathOrAccessor);
+    const binary = await getBinaryFromFile(trace, store, pathOrAccessor, options);
     if (!binary.ok) {
       return binary;
     }

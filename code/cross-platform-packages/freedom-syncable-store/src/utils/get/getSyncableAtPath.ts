@@ -17,7 +17,7 @@ export const getSyncableAtPath = makeAsyncResultFunc(
     store: SyncableStore,
     path: SyncablePath,
     expectedType?: SingleOrArray<T>
-  ): PR<SyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
     if (store.path.storageRootId !== path.storageRootId) {
       return makeFailure(new NotFoundError(trace, { message: 'Wrong storage root ID', errorCode: 'not-found' }));
     }

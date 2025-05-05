@@ -3,7 +3,7 @@ import { afterEach, describe, it } from 'node:test';
 
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { encName, uuidId } from 'freedom-sync-types';
-import { expectErrorCode, expectIncludes, expectOk } from 'freedom-testing-tools';
+import { expectErrorCode, expectIncludes, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
 import { createStoreTestStack } from '../../tests/createStoreTestStack.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
@@ -12,6 +12,8 @@ import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.t
 import { getFolderAtPath } from '../../utils/get/getFolderAtPath.ts';
 import { getMutableFolderAtPath } from '../../utils/get/getMutableFolderAtPath.ts';
 import { getStringFromFile } from '../../utils/get/getStringFromFile.ts';
+import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
+import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 
 describe('DefaultSyncableStore', () => {
   afterEach(invalidateAllInMemoryCaches);
@@ -39,12 +41,17 @@ describe('DefaultSyncableStore', () => {
     // Deleting file
     expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
 
+    const helloWorldTxtItem = await getSyncableAtPath(trace, store, helloWorldTxtPath);
+    expectOk(helloWorldTxtItem);
+
+    expectStrictEqual((await isSyncableDeleted(trace, store, helloWorldTxtPath, { recursive: false })).value, true);
+
     expectErrorCode(await getStringFromFile(trace, store, helloWorldTxtPath), 'deleted');
 
     // Deleting folder
     expectOk(await deleteSyncableItemAtPath(trace, store, testingPath));
 
-    expectErrorCode(await getFolderAtPath(trace, store, testingPath), 'deleted');
+    expectStrictEqual((await isSyncableDeleted(trace, store, testingPath, { recursive: false })).value, true);
   });
 
   it('getIds should work', async (_t: TestContext) => {

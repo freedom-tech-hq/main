@@ -7,10 +7,11 @@ import type { SyncableId, SyncablePath } from 'freedom-sync-types';
 import { syncableItemTypes } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
 import type { SaltedId } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { DateTime } from 'luxon';
 
-import { extractNumberFromPlainSyncableId } from '../internal/utils/extractNumberFromPlainSyncableId.ts';
 import type { EmailAccess } from '../types/EmailAccess.ts';
+import { extractNumberFromPlainSyncableId } from './extractNumberFromPlainSyncableId.ts';
 import type { TimeOrganizedPaths } from './getMailPaths.ts';
 import type { HourOrLessPrecisionValue, HourOrLessTimeObject } from './HourPrecisionTimeUnitValue.ts';
 
@@ -64,13 +65,15 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
     const getSameOrPreviousYear = makeAsyncResultFunc(
       [import.meta.filename, 'getSameOrPreviousYear'],
       async (trace, cursorYear: number): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
-        const baseFolderLike = await getSyncableAtPath(trace, userFs, timeOrganizedPaths.value, syncableItemTypes.exclude('file'));
+        const baseFolderLike = await disableLam(trace, 'not-found', (trace) =>
+          getSyncableAtPath(trace, userFs, timeOrganizedPaths.value, syncableItemTypes.exclude('file'))
+        );
         if (!baseFolderLike.ok) {
-          if (baseFolderLike.value.errorCode === 'deleted' || baseFolderLike.value.errorCode === 'not-found') {
+          if (baseFolderLike.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
           }
 
-          return generalizeFailureResult(trace, excludeFailureResult(baseFolderLike, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, excludeFailureResult(baseFolderLike, 'not-found'), ['untrusted', 'wrong-type']);
         }
 
         const syncableIdsInBase = await baseFolderLike.value.getIds(trace, { type: 'bundle' });
@@ -118,13 +121,13 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, 1, 1, 0));
         const yearPath = baseYearPath.value;
 
-        const yearBundle = await getSyncableAtPath(trace, userFs, yearPath, 'bundle');
+        const yearBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, userFs, yearPath, 'bundle'));
         if (!yearBundle.ok) {
-          if (yearBundle.value.errorCode === 'deleted' || yearBundle.value.errorCode === 'not-found') {
+          if (yearBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
           }
 
-          return generalizeFailureResult(trace, excludeFailureResult(yearBundle, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, excludeFailureResult(yearBundle, 'not-found'), ['untrusted', 'wrong-type']);
         }
 
         const syncableIdsInYear = await yearBundle.value.getIds(trace, { type: 'bundle' });
@@ -184,13 +187,13 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, 1, 0));
         const monthPath = baseYearPath.month.value;
 
-        const monthBundle = await getSyncableAtPath(trace, userFs, monthPath, 'bundle');
+        const monthBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, userFs, monthPath, 'bundle'));
         if (!monthBundle.ok) {
-          if (monthBundle.value.errorCode === 'deleted' || monthBundle.value.errorCode === 'not-found') {
+          if (monthBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
           }
 
-          return generalizeFailureResult(trace, excludeFailureResult(monthBundle, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, excludeFailureResult(monthBundle, 'not-found'), ['untrusted', 'wrong-type']);
         }
 
         const syncableIdsInMonth = await monthBundle.value.getIds(trace, { type: 'bundle' });
@@ -252,13 +255,13 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, cursorDay, 0));
         const dayPath = baseYearPath.month.day.value;
 
-        const dayBundle = await getSyncableAtPath(trace, userFs, dayPath, 'bundle');
+        const dayBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, userFs, dayPath, 'bundle'));
         if (!dayBundle.ok) {
-          if (dayBundle.value.errorCode === 'deleted' || dayBundle.value.errorCode === 'not-found') {
+          if (dayBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
           }
 
-          return generalizeFailureResult(trace, excludeFailureResult(dayBundle, 'deleted', 'not-found'), ['untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, excludeFailureResult(dayBundle, 'not-found'), ['untrusted', 'wrong-type']);
         }
 
         const syncableIdsInDay = await dayBundle.value.getIds(trace, { type: 'bundle' });

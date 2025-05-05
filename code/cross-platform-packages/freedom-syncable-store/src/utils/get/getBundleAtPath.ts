@@ -7,10 +7,6 @@ import { getSyncableAtPath } from './getSyncableAtPath.ts';
 
 export const getBundleAtPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    store: SyncableStore,
-    path: SyncablePath
-  ): PR<FileStore, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+  async (trace, store: SyncableStore, path: SyncablePath): PR<FileStore, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
     await getSyncableAtPath(trace, store, path, 'bundle')
 );

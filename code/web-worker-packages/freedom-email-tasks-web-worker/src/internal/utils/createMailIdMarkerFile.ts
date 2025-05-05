@@ -21,6 +21,7 @@ export const createMailIdMarkerFile = makeAsyncResultFunc(
     const createdStructure = await getOrCreateBundlesAtPaths(
       trace,
       userFs,
+      paths.value,
       yearPath.value,
       yearPath.month.value,
       yearPath.month.day.value,

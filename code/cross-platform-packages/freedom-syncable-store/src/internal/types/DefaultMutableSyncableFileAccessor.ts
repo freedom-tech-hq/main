@@ -17,6 +17,7 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
   public readonly path: SyncablePath;
 
   protected readonly weakStore_: WeakRef<MutableSyncableStore>;
+
   protected readonly backing_: SyncableStoreBacking;
 
   private readonly decode_: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
@@ -80,7 +81,7 @@ export class DefaultMutableSyncableFileAccessor implements MutableSyncableFileAc
         const marked = await markSyncableNeedsRecomputeHashAtPath(trace, store, parentPath);
         /* node:coverage disable */
         if (!marked.ok) {
-          return generalizeFailureResult(trace, marked, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+          return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
         }
         /* node:coverage enable */
       }

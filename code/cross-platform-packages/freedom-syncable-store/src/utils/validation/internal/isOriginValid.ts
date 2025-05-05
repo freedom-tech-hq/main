@@ -78,7 +78,7 @@ export const isOriginValid = makeAsyncResultFunc(
 
     const role = await getRoleForOrigin(trace, store, { origin, accessControlDoc });
     if (!role.ok) {
-      return generalizeFailureResult(trace, role, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, role, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     // Making sure the origin user had write access

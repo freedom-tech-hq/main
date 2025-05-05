@@ -9,17 +9,17 @@ import type { JsonValue, Schema } from 'yaschema';
 
 import { getStringFromFile } from './getStringFromFile.ts';
 
+/** `checkForDeletion` defaults to `true` */
 export const getJsonFromFile = makeAsyncResultFunc(
   [import.meta.filename],
   async <T>(
     trace: Trace,
     store: SyncableStore,
-    pathOrAccessor:
-      | SyncablePath
-      | ChainableResult<SyncableFileAccessor, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>,
-    schema: Schema<T>
+    pathOrAccessor: SyncablePath | ChainableResult<SyncableFileAccessor, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'>,
+    schema: Schema<T>,
+    options: { checkForDeletion?: boolean } = {}
   ): PR<T, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
-    const jsonString = await getStringFromFile(trace, store, pathOrAccessor);
+    const jsonString = await getStringFromFile(trace, store, pathOrAccessor, options);
     /* node:coverage disable */
     if (!jsonString.ok) {
       return jsonString;

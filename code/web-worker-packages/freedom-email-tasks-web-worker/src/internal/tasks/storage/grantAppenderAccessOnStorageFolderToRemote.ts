@@ -19,7 +19,7 @@ export const grantAppenderAccessOnStorageFolderToRemote = makeAsyncResultFunc(
     const storageFolderPath = mailPaths.storage.value;
     const storageFolder = await getMutableFolderAtPath(trace, userFs, storageFolderPath);
     if (!storageFolder.ok) {
-      return generalizeFailureResult(trace, storageFolder, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, storageFolder, ['not-found', 'untrusted', 'wrong-type']);
     }
 
     const remoteCurrentStorageFolderRoles = await storageFolder.value.getRolesByCryptoKeySetId(trace, {

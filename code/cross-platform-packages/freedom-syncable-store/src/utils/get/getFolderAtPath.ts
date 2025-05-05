@@ -7,10 +7,6 @@ import { getSyncableAtPath } from './getSyncableAtPath.ts';
 
 export const getFolderAtPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    store: SyncableStore,
-    path: SyncablePath
-  ): PR<SyncableFolderAccessor, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> =>
+  async (trace, store: SyncableStore, path: SyncablePath): PR<SyncableFolderAccessor, 'not-found' | 'untrusted' | 'wrong-type'> =>
     await getSyncableAtPath(trace, store, path, 'folder')
 );

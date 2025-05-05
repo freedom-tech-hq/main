@@ -4,12 +4,14 @@ import { schema } from 'yaschema';
 
 import type { SyncPullResponse } from './pull-responses/SyncPullResponse.ts';
 import { syncablePathSchema } from './SyncablePath.ts';
+import { syncStrategies } from './SyncStrategy.ts';
 
 export const syncPullArgsSchema = schema.object({
   path: syncablePathSchema,
   hash: sha256HashInfo.schema.optional(),
-  /** `false` by default */
-  sendData: schema.boolean().optional()
+  /** @defaultValue `false` */
+  sendData: schema.boolean().optional(),
+  strategy: schema.string(...syncStrategies)
 });
 export type SyncPullArgs = typeof syncPullArgsSchema.valueType;
 

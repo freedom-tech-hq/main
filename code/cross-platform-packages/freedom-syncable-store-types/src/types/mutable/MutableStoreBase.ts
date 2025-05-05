@@ -17,5 +17,5 @@ export interface MutableStoreBase extends StoreBase, MutableSyncableItemAccessor
     trace: Trace,
     id: SyncableId,
     expectedType?: SingleOrArray<T>
-  ) => PR<MutableSyncableItemAccessor & { type: T }, 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'>;
+  ) => PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'>;
 }

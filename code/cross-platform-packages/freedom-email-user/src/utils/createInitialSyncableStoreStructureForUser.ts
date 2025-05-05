@@ -25,12 +25,6 @@ export const createInitialSyncableStoreStructureForUser = makeAsyncResultFunc(
       return generalizeFailureResult(trace, mailOutFolder, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
 
-    // Mail Collections Bundle
-    const mailCollectionsBundle = await createBundleAtPath(trace, userFs, paths.collections.value);
-    if (!mailCollectionsBundle.ok) {
-      return generalizeFailureResult(trace, mailCollectionsBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
-    }
-
     // Mail Drafts Bundle
     const mailDraftsBundle = await createBundleAtPath(trace, userFs, paths.drafts.value);
     if (!mailDraftsBundle.ok) {

@@ -1,5 +1,6 @@
 export * from './addMail.ts';
 export * from './deleteOutboundMailById.ts';
+export * from './extractNumberFromPlainSyncableId.ts';
 export * from './getMailPaths.ts';
 export * from './getOutboundMailById.ts';
 export * from './HourPrecisionTimeUnitValue.ts';

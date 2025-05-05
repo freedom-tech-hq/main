@@ -1,9 +1,9 @@
 import type { TestContext } from 'node:test';
 import { describe, it } from 'node:test';
 
-import { makeSuccess } from 'freedom-async';
+import { GeneralError, makeFailure, makeSuccess } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
-import { expectAsyncThrows, expectErrorCode, expectOk, sleep } from 'freedom-testing-tools';
+import { expectAsyncThrows, expectErrorCode, expectNotOk, expectOk, sleep } from 'freedom-testing-tools';
 
 import { InMemoryLockStore } from '../../types/InMemoryLockStore.ts';
 import { withAcquiredLock } from '../withAcquiredLock.ts';
@@ -33,6 +33,21 @@ describe('withAcquiredLock', () => {
 
     await sleep(200);
 
+    expectOk(await locksStore.lock('a').release(trace, lockToken1.value));
+  });
+
+  it('should release lock even if callback returns a failure result', async (_t: TestContext) => {
+    const trace = makeTrace('test');
+    const locksStore = new InMemoryLockStore();
+
+    expectNotOk(
+      await withAcquiredLock(trace, locksStore.lock('a'), { timeoutMSec: 1000 }, async () => {
+        return makeFailure(new GeneralError(trace, undefined));
+      })
+    );
+
+    const lockToken1 = await locksStore.lock('a').acquire(trace, { timeoutMSec: 0 });
+    expectOk(lockToken1);
     expectOk(await locksStore.lock('a').release(trace, lockToken1.value));
   });
 

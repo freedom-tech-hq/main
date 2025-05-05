@@ -1,10 +1,12 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
+import type { SyncableItemMetadata, SyncablePath, SyncBatchContents } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
-import { createViaSyncFolderAtPath } from '../via-sync/createViaSyncFolderAtPath.ts';
+import { createViaSyncFolderAtPath } from '../../internal/utils/sync/createViaSyncFolderAtPath.ts';
+import { pushBatchContents } from './internal/pushBatchContents.ts';
 
 export const pushFolder = makeAsyncResultFunc(
   [import.meta.filename],
@@ -13,10 +15,12 @@ export const pushFolder = makeAsyncResultFunc(
     store: MutableSyncableStore,
     {
       path,
-      metadata
+      metadata,
+      batchContents
     }: {
       path: SyncablePath;
       metadata: SyncableItemMetadata;
+      batchContents?: SyncBatchContents;
     }
   ): PR<undefined, 'not-found'> => {
     if (path.ids.length === 0) {
@@ -24,18 +28,21 @@ export const pushFolder = makeAsyncResultFunc(
       return makeSuccess(undefined);
     }
 
-    const folder = await createViaSyncFolderAtPath(trace, store, path, metadata);
+    const folder = await disableLam(trace, 'conflict', (trace) => createViaSyncFolderAtPath(trace, store, path, metadata));
     if (!folder.ok) {
-      if (folder.value.errorCode === 'deleted') {
-        // Was locally (with respect to the mock remote) deleted, so not interested in this content
-        return makeSuccess(undefined);
+      // Treating conflicts as ok since this will often be the case when using a batch strategy or when syncing with predicable ids
+      if (folder.value.errorCode !== 'conflict') {
+        return generalizeFailureResult(
+          trace,
+          excludeFailureResult(folder, 'conflict'),
+          ['untrusted', 'wrong-type'],
+          `Failed to push folder: ${path.toString()}`
+        );
       }
-      return generalizeFailureResult(
-        trace,
-        excludeFailureResult(folder, 'deleted'),
-        ['conflict', 'untrusted', 'wrong-type'],
-        `Failed to push folder: ${path.toString()}`
-      );
+    }
+
+    if (batchContents !== undefined) {
+      return await pushBatchContents(trace, store, path, batchContents);
     }
 
     return makeSuccess(undefined);

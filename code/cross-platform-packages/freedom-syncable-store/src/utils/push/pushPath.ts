@@ -23,7 +23,7 @@ export const pushPath = makeAsyncResultFunc(
           return await pushFile(trace, store, args);
       }
     }),
-  // not-found happens during push fairly commonly when doing an initial sync to a server and simultaneously updating the client, because
+  // 'not-found' happens during push fairly commonly when doing an initial sync to a server and simultaneously updating the client, because
   // the client will try to push newer content before the base folders have been initially pushed -- but this will automatically get
   // resolved as the initial sync continues
   { disableLam: 'not-found' }

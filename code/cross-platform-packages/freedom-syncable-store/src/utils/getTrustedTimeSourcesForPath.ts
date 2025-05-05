@@ -8,11 +8,7 @@ import { getNearestFolder } from './get/getNearestFolder.ts';
 
 export const getTrustedTimeSourcesForPath = makeAsyncResultFunc(
   [import.meta.filename],
-  async (
-    trace,
-    store: SyncableStore,
-    path: SyncablePath
-  ): PR<TrustedTimeSource[], 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
+  async (trace, store: SyncableStore, path: SyncablePath): PR<TrustedTimeSource[], 'not-found' | 'untrusted' | 'wrong-type'> => {
     const nearestFolder = await getNearestFolder(trace, store, path);
     if (!nearestFolder.ok) {
       return nearestFolder;

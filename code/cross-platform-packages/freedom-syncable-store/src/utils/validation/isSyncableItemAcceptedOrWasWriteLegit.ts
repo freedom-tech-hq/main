@@ -53,7 +53,7 @@ export const isSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(
 
     const originRole = await getRoleForOrigin(trace, store, { origin: provenance.origin, accessControlDoc: accessControlDoc.value });
     if (!originRole.ok) {
-      return generalizeFailureResult(trace, originRole, ['deleted', 'not-found', 'wrong-type']);
+      return generalizeFailureResult(trace, originRole, ['not-found', 'wrong-type']);
     } else if (originRole.value === undefined) {
       // This shouldn't happen
       return makeFailure(new ForbiddenError(trace, { message: 'No role found' }));

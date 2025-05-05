@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailAccess } from 'freedom-email-sync';
-import { createBundleAtPath } from 'freedom-syncable-store';
+import { getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
 
 import { mailCollectionTypes } from '../types/MailCollectionType.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
@@ -17,10 +17,17 @@ export const createDefaultCollectionsForUser = makeAsyncResultFunc(
       trace,
       mailCollectionTypes,
       {},
-      async (trace, collectionType) => await createBundleAtPath(trace, userFs, paths.collections[collectionType].value)
+      async (trace, collectionType) =>
+        await getOrCreateBundlesAtPaths(trace, userFs, paths.collections.value, paths.collections[collectionType].value)
     );
     if (!createdAllCollectionsBundles.ok) {
-      return generalizeFailureResult(trace, createdAllCollectionsBundles, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
+      return generalizeFailureResult(trace, createdAllCollectionsBundles, [
+        'deleted',
+        'format-error',
+        'not-found',
+        'untrusted',
+        'wrong-type'
+      ]);
     }
 
     return makeSuccess(undefined);
