@@ -10,7 +10,7 @@ export async function prettyStoreLs(store: StoreBase, { returnOnly = false }: { 
   // Ls
   const lines = await uncheckedResult(
     store.ls(trace, {
-      format: ({ itemId, dynamicName }) => {
+      formatter: ({ itemType, itemId, dynamicName }) => {
         // Make the name readable and paint it
         let readableName: string;
         let readableId: string | undefined;
@@ -31,7 +31,7 @@ export async function prettyStoreLs(store: StoreBase, { returnOnly = false }: { 
         }
 
         // Append the ID only when informative. Faint color
-        return readableName + (readableId === undefined ? '' : ` \x1b[2m${itemId}\x1b[0m`);
+        return readableName + (itemType !== 'file' ? '/' : '') + (readableId === undefined ? '' : ` \x1b[2m${itemId}\x1b[0m`);
       }
     })
   );
@@ -41,7 +41,7 @@ export async function prettyStoreLs(store: StoreBase, { returnOnly = false }: { 
   for (let i = 0; i < lines.length; i++) {
     lines[i] = `  ${lines[i]}`; // Indent
   }
-  lines.unshift(`${store.path.storageRootId} \x1b[90m${root.name}\x1b[0m`);
+  lines.unshift(`\x1b[90m${store.path.storageRootId}\x1b[0m \x1b[2m${root.name}\x1b[0m`);
 
   // Log by default
   if (!returnOnly) {

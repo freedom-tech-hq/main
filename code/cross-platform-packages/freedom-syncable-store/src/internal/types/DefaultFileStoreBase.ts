@@ -511,16 +511,18 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
         const itemPath = this.path.append(itemId);
 
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
-        const lsFormat = options?.format ?? defaultLsFormatter;
+        const lsFormatter = options?.formatter ?? defaultLsFormatter;
+        const itemType = extractSyncableItemTypeFromId(itemId);
 
         const output: string[] = [
-          lsFormat({
+          lsFormatter({
+            itemType,
             itemId,
             metadata,
             dynamicName: dynamicName.ok ? dynamicName.value : undefined
           })
         ];
-        const itemType = extractSyncableItemTypeFromId(itemId);
+
         switch (itemType) {
           case 'folder':
             break; // This won't happen
