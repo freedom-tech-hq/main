@@ -5,7 +5,6 @@ import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { isEqual } from 'lodash-es';
 
 import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.ts';
-import { getPublicKeyStore } from '../internal/utils/getPublicKeyStore.ts';
 import { getUserStore } from '../internal/utils/getUserStore.ts';
 import type { User } from '../types/User.ts';
 
@@ -77,14 +76,6 @@ export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], as
   ]);
   if (!setResult.ok) {
     return setResult;
-  }
-
-  // Not merged with previous allResults(), moved from createSyncableStore.ts. Revise everything
-  const publicKeyStore = await uncheckedResult(getPublicKeyStore(trace));
-  const storedPublicKey = await publicKeyStore.mutableObject(user.publicKeys.id).create(trace, user.publicKeys);
-  if (!storedPublicKey.ok && storedPublicKey.value.errorCode !== 'conflict') {
-    // Ignoring if the public key was already stored
-    return storedPublicKey;
   }
 
   return makeSuccess(user);

@@ -5,12 +5,12 @@ import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-cry
 import { type UserKeys } from 'freedom-crypto-service';
 import { once } from 'lodash-es';
 
-import { getServerPrivateKeys } from './getServerPrivateKeys.ts';
+import { getMailAgentPrivateKeys } from './getMailAgentPrivateKeys.ts';
 
 export const getMailAgentUserKeys = makeAsyncResultFunc(
   [import.meta.filename],
   once(async (trace): PR<UserKeys> => {
-    const serverPrivateKeys = await getServerPrivateKeys(trace);
+    const serverPrivateKeys = await getMailAgentPrivateKeys(trace);
     if (!serverPrivateKeys.ok) {
       return generalizeFailureResult(trace, serverPrivateKeys, 'not-found');
     }
