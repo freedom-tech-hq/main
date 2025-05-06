@@ -8,14 +8,8 @@ import { generalizeFailureResult, InternalStateError } from 'freedom-common-erro
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import {
-  extractSyncableIdParts,
-  isSyncableItemEncrypted,
-  type SyncableId,
-  type SyncableItemMetadata,
-  type SyncableItemType,
-  type SyncablePath
-} from 'freedom-sync-types';
+import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableIdParts } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
@@ -43,9 +37,9 @@ import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAc
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
-import { type DefaultEncryptedFileStore, getOrCreateDefaultEncryptedFileStore } from './DefaultEncryptedFileStore.ts';
+import type { DefaultFileStore } from './DefaultFileStore.ts';
+import { getOrCreateDefaultFileStore } from './DefaultFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
-import { type DefaultPlainFileStore, getOrCreateDefaultPlainFileStore } from './DefaultPlainFileStore.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 // TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
@@ -81,45 +75,25 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     return this.folderStore__;
   }
 
-  private plainFileStore__: DefaultPlainFileStore | undefined;
-  private get plainFileStore_(): DefaultPlainFileStore {
-    if (this.plainFileStore__ === undefined) {
+  private fileStore__: DefaultFileStore | undefined;
+  private get fileStore_(): DefaultFileStore {
+    if (this.fileStore__ === undefined) {
       const store = this.weakStore_.deref();
       if (store === undefined) {
         throw new Error('store was released');
       }
 
-      this.plainFileStore__ = getOrCreateDefaultPlainFileStore({
+      this.fileStore__ = getOrCreateDefaultFileStore({
         store,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
         path: this.path,
-        folderOperationsHandler: this.folderOperationsHandler_,
-        supportsDeletion: false
-      });
-    }
-
-    return this.plainFileStore__;
-  }
-
-  private encryptedFileStore__: DefaultEncryptedFileStore | undefined;
-  private get encryptedFileStore_(): DefaultEncryptedFileStore {
-    if (this.encryptedFileStore__ === undefined) {
-      const store = this.weakStore_.deref();
-      if (store === undefined) {
-        throw new Error('store was released');
-      }
-
-      this.encryptedFileStore__ = getOrCreateDefaultEncryptedFileStore({
-        store,
-        backing: this.backing_,
-        syncTracker: this.syncTracker_,
-        path: this.path,
+        isEncryptedByDefault: true,
         folderOperationsHandler: this.folderOperationsHandler_
       });
     }
 
-    return this.encryptedFileStore__;
+    return this.fileStore__;
   }
 
   private needsRecomputeHashCount_ = 0;
@@ -300,30 +274,9 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   public readonly createFolder: MutableFolderStore['createFolder'] = (trace, args) => this.folderStore_.createFolder(trace, args);
 
-  public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = (trace, args) =>
-    this.encryptedFileStore_.createBinaryFile(trace, args);
+  public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = (trace, args) => this.fileStore_.createBinaryFile(trace, args);
 
-  public readonly createBundle: MutableFileStore['createBundle'] = (trace, args) => {
-    switch (args.mode) {
-      case 'via-sync': {
-        if (isSyncableItemEncrypted(args.id)) {
-          return this.encryptedFileStore_.createBundle(trace, args);
-        } else {
-          return this.plainFileStore_.createBundle(trace, args);
-        }
-      }
-
-      case undefined:
-      case 'local': {
-        const isItemEncrypted = (args.id !== undefined ? isSyncableItemEncrypted(args.id) : undefined) ?? true;
-        if (isItemEncrypted) {
-          return this.encryptedFileStore_.createBundle(trace, args);
-        } else {
-          return this.plainFileStore_.createBundle(trace, args);
-        }
-      }
-    }
-  };
+  public readonly createBundle: MutableFileStore['createBundle'] = (trace, args) => this.fileStore_.createBundle(trace, args);
 
   public readonly delete = makeAsyncResultFunc(
     [import.meta.filename, 'delete'],
@@ -386,18 +339,17 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         trace,
         {},
         {
-          idsFromFolder: this.folderStore_.getIds(trace, options),
-          idsFromPlainBundle: this.plainFileStore_.getIds(trace, options),
-          idsFromEncryptedBundle: this.encryptedFileStore_.getIds(trace, options)
+          idsFromFolderStore: this.folderStore_.getIds(trace, options),
+          idsFromFileStore: this.fileStore_.getIds(trace, options)
         }
       );
       if (!results.ok) {
         return results;
       }
 
-      const { idsFromPlainBundle, idsFromFolder, idsFromEncryptedBundle } = results.value;
+      const { idsFromFolderStore, idsFromFileStore } = results.value;
 
-      return makeSuccess([...idsFromPlainBundle, ...idsFromFolder, ...idsFromEncryptedBundle]);
+      return makeSuccess([...idsFromFolderStore, ...idsFromFileStore]);
     }
   );
 
@@ -442,16 +394,17 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       trace,
       {},
       {
-        folderLs: this.folderStore_.ls(trace),
-        plainBundleLs: this.plainFileStore_.ls(trace),
-        encryptedBundleLs: this.encryptedFileStore_.ls(trace)
+        folderStoreLs: this.folderStore_.ls(trace),
+        fileStoreLs: this.fileStore_.ls(trace)
       }
     );
     if (!results.ok) {
       return results;
     }
 
-    return makeSuccess([...results.value.folderLs, ...results.value.plainBundleLs, ...results.value.encryptedBundleLs]);
+    const { folderStoreLs, fileStoreLs } = results.value;
+
+    return makeSuccess([...folderStoreLs, ...fileStoreLs]);
   };
 
   // MutableBundleAccessor Methods
@@ -476,17 +429,16 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       {},
       {
         folderStore: this.folderStore_.getMetadataById(trace),
-        plainFileStore: this.plainFileStore_.getMetadataById(trace),
-        encryptedFileStore: this.encryptedFileStore_.getMetadataById(trace)
+        fileStore: this.fileStore_.getMetadataById(trace)
       }
     );
     if (!results.ok) {
       return results;
     }
 
-    const { folderStore, plainFileStore, encryptedFileStore } = results.value;
+    const { folderStore, fileStore } = results.value;
 
-    return makeSuccess({ ...folderStore, ...plainFileStore, ...encryptedFileStore });
+    return makeSuccess({ ...folderStore, ...fileStore });
   });
 
   public readonly get = makeAsyncResultFunc(
@@ -574,11 +526,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
       return this.folderStore_;
     }
 
-    if (idParts.encrypted) {
-      return this.encryptedFileStore_;
-    } else {
-      return this.plainFileStore_;
-    }
+    return this.fileStore_;
   };
 }
 

@@ -17,7 +17,6 @@ import type { getMailForThread } from './mail/getMailForThread.ts';
 import type { getMailThread } from './mail/getMailThread.ts';
 import type { getMailThreadsForCollection } from './mail/getMailThreadsForCollection.ts';
 import type { createUser } from './user/createUser.ts';
-import type { restoreUser } from './user/restoreUser.ts';
 import type { startSyncService } from './user/startSyncService.ts';
 
 export type Tasks = Omit<InstanceType<typeof TasksImpl>, '#trace'>;
@@ -99,9 +98,6 @@ class TasksImpl {
 
   public readonly createUser = async (...args: ParametersExceptFirst<typeof createUser>) =>
     await (await import('./user/createUser.ts')).createUser(this.#trace, ...args);
-
-  public readonly restoreUser = async (...args: ParametersExceptFirst<typeof restoreUser>) =>
-    await (await import('./user/restoreUser.ts')).restoreUser(this.#trace, ...args);
 
   public readonly startSyncService = async (...args: ParametersExceptFirst<typeof startSyncService>) =>
     await (await import('./user/startSyncService.ts')).startSyncService(this.#trace, ...args);

@@ -16,7 +16,15 @@ import type { SyncableItemType } from './SyncableItemType.ts';
 import { abbreviatedSyncableItemType } from './SyncableItemType.ts';
 
 export interface SyncableIdConfig {
-  /** @defaultValue `true` */
+  /**
+   * For folders, this must always be `true`.
+   *
+   * For bundles, this is the default encryption mode for the bundle.  Individual sub-bundles / files may have their own modes.
+   *
+   * For files, if this is `true`, the file is encrypted.  Otherwise it is plain.
+   *
+   * @defaultValue `true`
+   */
   encrypted?: boolean;
   type: SyncableItemType;
 }

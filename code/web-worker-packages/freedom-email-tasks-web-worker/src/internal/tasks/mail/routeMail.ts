@@ -167,6 +167,8 @@ const routeSingleMail = makeAsyncResultFunc(
 
     // TODO: handle routing into spam or custom collections as well
 
+    console.log('FOOBARBLA paths.collections.inbox', paths.collections.inbox.value.toString());
+
     const createdCollectionMembershipMarker = await createMailIdMarkerFile(trace, syncableStore, paths.collections.inbox, mailId);
     if (!createdCollectionMembershipMarker.ok) {
       return createdCollectionMembershipMarker;

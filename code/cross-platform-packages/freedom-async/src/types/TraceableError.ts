@@ -57,13 +57,20 @@ export abstract class TraceableError<ErrorCodeT extends string = never> extends 
     }
 
     try {
+      const suffix = this.newErrorMessageSuffix() ?? '';
       return `new error [${this.type}] [${this.errorCode ?? 'generic'}] ${this.apiMessage}: ${this.message.replace(/[\r\n]/g, '    ')} at ${getTraceStack(this.trace).join('>')}${
         this.cause !== undefined ? ` caused by ${this.cause.toString(true)}` : ''
-      } (${this.errorId_})`;
+      } (${this.errorId_})${suffix.length > 0 ? ' ' : ''}${suffix}`;
     } finally {
       this.markAsAlreadyLogged_();
       this.cause?.markAsAlreadyLogged_();
     }
+  }
+
+  /** Override to provide additional info in toString for new errors (ignored if `alreadyLogged_` is `true` unless
+   * `allowAlreadyLogged = true` is passed to `toString`) */
+  protected newErrorMessageSuffix(): string | undefined {
+    return undefined;
   }
 
   private markAsAlreadyLogged_() {

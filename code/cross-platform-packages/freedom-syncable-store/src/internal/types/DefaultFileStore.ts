@@ -1,10 +1,11 @@
-import type { PR } from 'freedom-async';
+import type { PR, PRFunc } from 'freedom-async';
 import { allResultsMapped, debugTopic, GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
+import { InMemoryCache } from 'freedom-in-memory-cache';
 import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableItemTypeFromId, isSyncableItemEncrypted, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import { guardIsExpectedType, type LocalItemMetadata, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
@@ -26,22 +27,24 @@ import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateP
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
+import { CACHE_DURATION_MSEC } from '../consts/timing.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
+import { getOrCreateDefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
-export interface DefaultFileStoreBaseConstructorArgs {
+export interface DefaultFileStoreConstructorArgs {
   store: MutableSyncableStore;
   backing: SyncableStoreBacking;
   syncTracker: SyncTracker;
   folderOperationsHandler: FolderOperationsHandler;
   path: SyncablePath;
-  supportsDeletion: boolean;
+  isEncryptedByDefault: boolean;
 }
 
-export abstract class DefaultFileStoreBase implements MutableFileStore {
+export class DefaultFileStore implements MutableFileStore {
   public readonly type = 'bundle';
   public readonly path: SyncablePath;
-  public readonly supportsDeletion: boolean;
+  public readonly isEncryptedByDefault: boolean;
 
   protected readonly weakStore_: WeakRef<MutableSyncableStore>;
   protected readonly syncTracker_: SyncTracker;
@@ -51,13 +54,19 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
 
   private needsRecomputeHashCount_ = 0;
 
-  constructor({ store, backing, syncTracker, folderOperationsHandler, path, supportsDeletion }: DefaultFileStoreBaseConstructorArgs) {
-    this.supportsDeletion = supportsDeletion;
+  constructor({ store, backing, syncTracker, folderOperationsHandler, path, isEncryptedByDefault }: DefaultFileStoreConstructorArgs) {
+    this.isEncryptedByDefault = isEncryptedByDefault;
     this.weakStore_ = new WeakRef(store);
     this.backing_ = backing;
     this.syncTracker_ = syncTracker;
     this.folderOperationsHandler_ = folderOperationsHandler;
     this.path = path;
+  }
+
+  // Public Methods
+
+  public toString() {
+    return `DefaultFileStore(${this.path.toString()})`;
   }
 
   // Abstract Methods
@@ -71,11 +80,33 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
     }
   );
 
-  protected abstract decodeData_(trace: Trace, encodedData: Uint8Array): PR<Uint8Array>;
-  protected abstract encodeData_(trace: Trace, rawData: Uint8Array): PR<Uint8Array>;
-  protected abstract makeBundleAccessor_(args: { path: SyncablePath }): MutableSyncableBundleAccessor;
-  protected abstract makeFileAccessor_(args: { path: SyncablePath }): MutableSyncableFileAccessor;
-  protected abstract isEncrypted_(): boolean;
+  protected makeBundleAccessor_({ path }: { path: SyncablePath }): MutableSyncableBundleAccessor {
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      throw new Error('store was released');
+    }
+
+    return getOrCreateDefaultFileStore({
+      store,
+      backing: this.backing_,
+      syncTracker: this.syncTracker_,
+      path,
+      isEncryptedByDefault: this.isEncryptedByDefault,
+      folderOperationsHandler: this.folderOperationsHandler_
+    });
+  }
+
+  protected makeFileAccessor_({ path }: { path: SyncablePath }): MutableSyncableFileAccessor {
+    const store = this.weakStore_.deref();
+    if (store === undefined) {
+      throw new Error('store was released');
+    }
+
+    const decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]> = isSyncableItemEncrypted(path.lastId!)
+      ? this.verifyAndDecryptBuffer_
+      : passThroughData;
+    return getOrCreateDefaultMutableSyncableFileAccessor({ store, backing: this.backing_, path, decode });
+  }
 
   // MutableFileStore Methods
 
@@ -92,7 +123,11 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const encodedData = await this.encodeData_(trace, args.value);
+          const id = args.id ?? uuidId({ type: 'file', encrypted: this.isEncryptedByDefault });
+          const newPath = this.path.append(id);
+
+          const encode = isSyncableItemEncrypted(id) ? this.encryptAndSignBuffer_ : passThroughData;
+          const encodedData = await encode(trace, args.value);
           /* node:coverage disable */
           if (!encodedData.ok) {
             return encodedData;
@@ -100,9 +135,6 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
           /* node:coverage enable */
 
           const getSha256ForItemProvenance = (trace: Trace) => generateSha256HashFromBuffer(trace, encodedData.value);
-
-          const id = args.id ?? uuidId('file');
-          const newPath = this.path.append(id);
 
           const isDeleted = await isSyncableDeleted(trace, store, newPath, { recursive: false });
           if (!isDeleted.ok) {
@@ -152,7 +184,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
             return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
           }
 
-          const id = args.id ?? uuidId('bundle');
+          const id = args.id ?? uuidId({ type: 'bundle', encrypted: this.isEncryptedByDefault });
           const newPath = this.path.append(id);
 
           const isDeleted = await isSyncableDeleted(trace, store, newPath, { recursive: false });
@@ -424,10 +456,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
         return generalizeFailureResult(trace, ids, ['not-found', 'wrong-type']);
       }
 
-      const isEncrypted = this.isEncrypted_();
-      const idsWithMatchingEncryptionMode = ids.value.filter((id) => isSyncableItemEncrypted(id) === isEncrypted);
-
-      return makeSuccess(idsWithMatchingEncryptionMode);
+      return makeSuccess(ids.value);
     }
   );
 
@@ -539,6 +568,26 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
 
     return makeSuccess(flatten(recursiveLs.value));
   });
+
+  // Private Encrypt / Decrypt Methods
+
+  protected readonly encryptAndSignBuffer_ = makeAsyncResultFunc(
+    [import.meta.filename, 'encryptAndSignBuffer_'],
+    async (trace: Trace, rawData: Uint8Array): PR<Uint8Array> => {
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'encode-data', pathString: this.path.toString() });
+
+      return await this.folderOperationsHandler_.encryptAndSignBuffer(trace, rawData);
+    }
+  );
+
+  private verifyAndDecryptBuffer_ = makeAsyncResultFunc(
+    [import.meta.filename, 'verifyAndDecryptBuffer_'],
+    (trace: Trace, encodedData: Uint8Array): PR<Uint8Array> => {
+      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'decode-data', pathString: this.path.toString() });
+
+      return this.folderOperationsHandler_.verifyAndDecryptBuffer(trace, encodedData);
+    }
+  );
 
   // Private Methods
 
@@ -660,7 +709,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
   private makeMutableItemAccessor_<T extends SyncableItemType>(path: SyncablePath, itemType: T): MutableSyncableItemAccessor & { type: T } {
     switch (itemType) {
       case 'folder':
-        throw new Error("Folders can't be managed by DefaultBundleBase");
+        throw new Error("Folders can't be managed by DefaultBundle");
 
       case 'bundle':
         return this.makeBundleAccessor_({ path }) as any as MutableSyncableItemAccessor & { type: T };
@@ -670,3 +719,33 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
     }
   }
 }
+
+const globalCache = new InMemoryCache<string, DefaultFileStore, MutableSyncableStore>({
+  cacheDurationMSec: CACHE_DURATION_MSEC,
+  shouldResetIntervalOnGet: true
+});
+
+export const getOrCreateDefaultFileStore = ({
+  store,
+  backing,
+  syncTracker,
+  path,
+  isEncryptedByDefault,
+  folderOperationsHandler
+}: {
+  store: MutableSyncableStore;
+  backing: SyncableStoreBacking;
+  syncTracker: SyncTracker;
+  path: SyncablePath;
+  isEncryptedByDefault: boolean;
+  folderOperationsHandler: FolderOperationsHandler;
+}) =>
+  globalCache.getOrCreate(
+    store,
+    path.toString(),
+    () => new DefaultFileStore({ store, backing, syncTracker, path, isEncryptedByDefault, folderOperationsHandler })
+  );
+
+// Helpers
+
+const passThroughData = (_trace: Trace, data: Uint8Array): PR<Uint8Array> => Promise.resolve(makeSuccess(data));

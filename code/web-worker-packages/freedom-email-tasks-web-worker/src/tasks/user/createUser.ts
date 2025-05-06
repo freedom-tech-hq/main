@@ -73,20 +73,19 @@ export const createUser = makeAsyncResultFunc(
     if (!syncableStoreResult.ok) {
       return syncableStoreResult;
     }
+    const userFs = syncableStoreResult.value;
 
-    const syncableStore = syncableStoreResult.value;
-
-    const initializedStore = await initializeRoot(trace, syncableStore);
+    const initializedStore = await initializeRoot(trace, userFs);
     if (!initializedStore.ok) {
       return generalizeFailureResult(trace, initializedStore, ['conflict', 'not-found']);
     }
 
-    const createdStructure = await createInitialSyncableStoreStructureForUser(trace, syncableStoreResult.value);
+    const createdStructure = await createInitialSyncableStoreStructureForUser(trace, userFs);
     if (!createdStructure.ok) {
       return createdStructure;
     }
 
-    const welcomeContentAdded = await createWelcomeContentForUser(trace, syncableStoreResult.value);
+    const welcomeContentAdded = await createWelcomeContentForUser(trace, userFs);
     if (!welcomeContentAdded.ok) {
       return welcomeContentAdded;
     }

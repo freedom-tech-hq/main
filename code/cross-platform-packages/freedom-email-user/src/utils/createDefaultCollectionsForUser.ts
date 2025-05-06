@@ -7,6 +7,7 @@ import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { mailCollectionTypes } from '../types/MailCollectionType.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
+/** Ignores conflicts if some of the structure already exists */
 export const createDefaultCollectionsForUser = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, syncableStore: MutableSyncableStore): PR<undefined> => {

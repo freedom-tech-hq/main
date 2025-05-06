@@ -70,6 +70,9 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
   ): PR<WatchableDocument<DocumentT>, 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     const pathString = path.toString();
 
+    // Snapshots and deltas are encrypted if their parent bundle is encrypted
+    const isEncrypted = isSyncableItemEncrypted(path.lastId!);
+
     // When watch = true, we only want one in-flight operation per path so that caching can be handled properly
     const result = await withAcquiredLock(
       trace,
@@ -101,9 +104,6 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         const isSyncableValidationEnabled = useIsSyncableValidationEnabled(trace).enabled;
         const isAccessControlBundle = path.lastId === ACCESS_CONTROL_BUNDLE_ID;
 
-        // Snapshots are encrypted if their parent bundle is encrypted
-        const areSnapshotsEncrypted = isSyncableItemEncrypted(path.lastId!);
-
         const notificationManager = new NotificationManager<ConflictFreeDocumentBundleNotifications>();
         const onCacheInvalidatedSteps: Array<() => void> = [];
         const onCacheInvalidated: OnCacheEntryInvalidatedCallback<string, WatchableDocument<any>> = (_key, value) => {
@@ -116,7 +116,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
           }
         };
 
-        const snapshotsBundlePath = path.append(SNAPSHOTS_BUNDLE_ID({ encrypted: areSnapshotsEncrypted }));
+        const snapshotsBundlePath = path.append(SNAPSHOTS_BUNDLE_ID({ encrypted: isEncrypted }));
 
         // This function is replaced once the document is initially loaded
         let getSnapshotId = (): string | undefined => undefined;
@@ -175,9 +175,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                   needsReload = true;
                 }
               } else if (event.type === 'file') {
-                const currentSnapshotDeltasBundlePath = path.append(
-                  makeDeltasBundleId({ encrypted: areSnapshotsEncrypted }, currentSnapshotId)
-                );
+                const currentSnapshotDeltasBundlePath = path.append(makeDeltasBundleId({ encrypted: isEncrypted }, currentSnapshotId));
 
                 if (event.path.startsWith(currentSnapshotDeltasBundlePath)) {
                   pendingDeltaPaths.push(event.path);
@@ -195,7 +193,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         }
         /* node:coverage enable */
 
-        const snapshots = await docBundle.value.get(trace, SNAPSHOTS_BUNDLE_ID({ encrypted: areSnapshotsEncrypted }), 'bundle');
+        const snapshots = await docBundle.value.get(trace, SNAPSHOTS_BUNDLE_ID({ encrypted: isEncrypted }), 'bundle');
         /* node:coverage disable */
         if (!snapshots.ok) {
           return snapshots;
@@ -379,9 +377,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
             }
           );
 
-          // Deltas are encrypted if their parent bundle is encrypted
-          const areDeltaEncrypted = isSyncableItemEncrypted(path.lastId!);
-          const deltas = await docBundle.value.get(trace, makeDeltasBundleId({ encrypted: areDeltaEncrypted }, snapshotId), 'bundle');
+          const deltas = await docBundle.value.get(trace, makeDeltasBundleId({ encrypted: isEncrypted }, snapshotId), 'bundle');
           /* node:coverage disable */
           if (!deltas.ok) {
             return deltas;
