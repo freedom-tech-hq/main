@@ -16,8 +16,8 @@ export async function prettyStoreLs(store: StoreBase, { returnOnly = false }: { 
         let readableId: string | undefined;
 
         if (dynamicName === undefined) {
-          // Encrypted and unable to decrypt
-          readableName = '\x1b[90m[NOT DECRYPTED]\x1b[0m'; // Gray
+          // Should not happen
+          readableName = '\x1b[90m[NO dynamicName]\x1b[0m'; // Gray
           readableId = itemId;
         } else if (isString(dynamicName)) {
           // Plain
@@ -30,8 +30,18 @@ export async function prettyStoreLs(store: StoreBase, { returnOnly = false }: { 
           readableId = itemId;
         }
 
+        // Icon
+        let icon: string = '?';
+        if (itemType === 'file') {
+          icon = '📄';
+        } else if (itemType === 'folder') {
+          icon = '📂';
+        } else if (itemType === 'bundle') {
+          icon = '📦';
+        }
+
         // Append the ID only when informative. Faint color
-        return readableName + (itemType !== 'file' ? '/' : '') + (readableId === undefined ? '' : ` \x1b[2m${itemId}\x1b[0m`);
+        return icon + readableName + (itemType !== 'file' ? '/' : '') + (readableId === undefined ? '' : `  \x1b[2m${itemId}\x1b[0m`);
       }
     })
   );
@@ -54,22 +64,24 @@ export async function prettyStoreLs(store: StoreBase, { returnOnly = false }: { 
 function humanizeItemName(dynamicName: SyncableItemName): string {
   // EnTb._EnTfT_2025-05-05T22:23:03.490Z-7cf3650c-5d15-4a9d-ae63-f12353057dde-deltas
   let matches = dynamicName.match(
-    /(EnTb\._EnTfT)_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)-([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})(.*)/
+    /^(E[yn]Tb\._E[yn]TfT)_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)-([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})(.*)/
   );
   if (matches !== null) {
     return `${matches[2].replace('T', ' ').replace('Z', '')}${matches[4]}`;
   }
 
   // EnTfT_2025-05-06T17:00:03.365Z-836596df-aabb-4dc9-a9a6-3a9342140ab9
+  // EyTfMAIL_2025-05-06T18:45:09.855Z-e21bb166-7f31-48ba-91c2-369c0d5488ce
   matches = dynamicName.match(
-    /(EnTfT)_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)-([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})(.*)/
+    /^(E[yn]Tf)(T|MAIL)_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)-([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})(.*)/
   );
   if (matches !== null) {
-    return `${matches[2].replace('T', ' ').replace('Z', '')}${matches[4]}`;
+    return `${matches[2]} ${matches[3].replace('T', ' ').replace('Z', '')}${matches[5]}`;
   }
 
   // EnTb._access-control
-  matches = dynamicName.match(/(EnTb)(\._.+)/);
+  // EyTb._2025
+  matches = dynamicName.match(/^(E[yn]Tb)(\._.+)/);
   if (matches !== null) {
     return matches[2];
   }

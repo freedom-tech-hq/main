@@ -115,6 +115,9 @@ const main = makeAsyncResultFunc(
     // Expose
     await prettyStoreLs(store);
 
+    // Express memory clean up
+    process.exit(0);
+
     return makeSuccess(undefined);
   },
   {

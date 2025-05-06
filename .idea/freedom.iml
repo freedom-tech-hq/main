@@ -72,6 +72,8 @@
       <excludeFolder url="file://$MODULE_DIR$/code/web-worker-packages/freedom-opfs-syncable-store-backing/lib" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-in-memory-syncable-store-backing/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/data" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
