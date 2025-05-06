@@ -1,11 +1,17 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath, SyncStrategy } from 'freedom-sync-types';
-import { getBundleAtPathForSync, getFolderAtPathForSync, pushBundle, pushFile, pushFolder } from 'freedom-syncable-store';
+import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
+import {
+  getBundleAtPathForSync,
+  getFolderAtPathForSync,
+  getSyncableHashAtPath,
+  pushBundle,
+  pushFile,
+  pushFolder
+} from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
@@ -16,18 +22,19 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: MutableSyncableStore; syncService: SyncService },
-    args: { remoteId: RemoteId; path: SyncablePath; hash?: Sha256Hash; strategy: SyncStrategy }
+    { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined, 'not-found'> => {
-    const pullFromRemote = syncService.getRemotesAccessors()[args.remoteId]?.puller;
+    const pullFromRemote = syncService.remoteAccessors[remoteId]?.puller;
     if (pullFromRemote === undefined) {
-      return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${args.remoteId}` }));
+      return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
     }
 
-    const { remoteId, path } = args;
+    const strategy = await syncService.getSyncStrategyForPath('pull', path);
+    const hash = await getSyncableHashAtPath(trace, store, path);
 
     // TODO: everything pulled needs to be validated -- approved content: just validate the approval itself; not-yet approved content:
     // validate the change against the access control document
-    const pulled = await pullFromRemote(trace, { ...args, sendData: true });
+    const pulled = await pullFromRemote(trace, { path, hash: hash.ok ? hash.value : undefined, sendData: true, strategy });
     if (!pulled.ok) {
       return pulled;
     }
@@ -80,10 +87,8 @@ const onBundlePulled = makeAsyncResultFunc(
   async (
     trace: Trace,
     { store, syncService, file }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncBundle },
-    fwd: { remoteId: RemoteId; path: SyncablePath }
+    { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
-    const path = fwd.path;
-
     const pushedLocally = await pushBundle(trace, store, { path, metadata: file.metadata, batchContents: file.batchContents });
     if (!pushedLocally.ok) {
       return generalizeFailureResult(trace, pushedLocally, 'not-found');
@@ -103,11 +108,11 @@ const onBundlePulled = makeAsyncResultFunc(
         continue;
       }
 
-      syncService.pullFromRemotes({ path: path.append(id), hash: localMetadata?.hash });
+      syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadata?.hash });
     }
 
     // Pushing any missing content to the remote
-    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, fwd);
+    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, { remoteId, path });
     if (!pushed.ok) {
       return generalizeFailureResult(trace, pushed, 'not-found');
     }
@@ -121,10 +126,8 @@ const onFolderPulled = makeAsyncResultFunc(
   async (
     trace: Trace,
     { store, syncService, folder }: { store: MutableSyncableStore; syncService: SyncService; folder: OutOfSyncFolder },
-    fwd: { remoteId: RemoteId; path: SyncablePath }
+    { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
-    const path = fwd.path;
-
     const pushedLocally = await pushFolder(trace, store, { path, metadata: folder.metadata, batchContents: folder.batchContents });
     if (!pushedLocally.ok) {
       return generalizeFailureResult(trace, pushedLocally, 'not-found');
@@ -141,12 +144,12 @@ const onFolderPulled = makeAsyncResultFunc(
     for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(folder.hashesById))) {
       const localMetadata = localMetadataById[id];
       if (remoteHash !== undefined && localMetadata?.hash !== remoteHash) {
-        syncService.pullFromRemotes({ path: path.append(id), hash: localMetadata?.hash });
+        syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadata?.hash });
       }
     }
 
     // Pushing any missing content to the remote
-    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: folder }, fwd);
+    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: folder }, { remoteId, path });
     if (!pushed.ok) {
       return generalizeFailureResult(trace, pushed, 'not-found');
     }

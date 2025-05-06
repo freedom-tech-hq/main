@@ -8,14 +8,14 @@ import type { ShouldSyncWithAllRemotesFunc } from './ShouldSyncWithAllRemotesFun
 import type { SyncServiceLogEntry } from './SyncServiceLogEntry.ts';
 
 export interface SyncService {
-  readonly getRemotesAccessors: () => Partial<Record<RemoteId, RemoteAccessor>>;
-  readonly shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
+  readonly remoteAccessors: Partial<Record<RemoteId, RemoteAccessor>>;
 
+  /** Should return `true` if the specified content should be pushed to all remotes rather than stopping on the first successful push */
+  readonly shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
   readonly getSyncStrategyForPath: GetSyncStrategyForPathFunc;
 
-  readonly pullFromRemotes: (args: { path: SyncablePath; hash?: Sha256Hash }) => void;
-
-  readonly pushToRemotes: (args: { path: SyncablePath; hash: Sha256Hash }) => void;
+  readonly pullFromRemotes: (args: { remoteId?: RemoteId; path: SyncablePath; hash?: Sha256Hash }) => void;
+  readonly pushToRemotes: (args: { remoteId?: RemoteId; path: SyncablePath; hash: Sha256Hash }) => void;
 
   readonly areQueuesEmpty: () => boolean;
   readonly start: PRFunc<undefined, never, [options?: { maxPushConcurrency?: number; maxPullConcurrency?: number }]>;

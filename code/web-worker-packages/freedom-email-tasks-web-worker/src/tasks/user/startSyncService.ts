@@ -2,11 +2,9 @@ import type { PR } from 'freedom-async';
 import { allResults, bestEffort, makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { InternalStateError } from 'freedom-common-errors';
-import type { DeviceNotificationClient } from 'freedom-device-notification-types';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api as fakeEmailServiceApi } from 'freedom-store-api-server-api';
-import type { RemoteAccessor } from 'freedom-sync-types';
-import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TypeOrPromisedType } from 'yaschema';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
@@ -36,8 +34,6 @@ export const startSyncService = makeAsyncResultFunc(
     if (!remoteConnection.ok) {
       return remoteConnection;
     }
-
-    const mockRemotes: { deviceNotificationClient: DeviceNotificationClient; remoteAccessor: RemoteAccessor } = remoteConnection.value;
 
     const rootMetadata = await syncableStore.getMetadata(trace);
     if (!rootMetadata.ok) {
@@ -80,8 +76,7 @@ export const startSyncService = makeAsyncResultFunc(
     const syncService = await makeSyncServiceForUserSyncables(trace, {
       credential,
       shouldRecordLogs: false,
-      deviceNotificationClients: () => [mockRemotes.deviceNotificationClient],
-      getRemotesAccessors: () => ({ [remoteIdInfo.make('default')]: mockRemotes.remoteAccessor })
+      remoteConnections: [remoteConnection.value]
     });
     if (!syncService.ok) {
       return syncService;

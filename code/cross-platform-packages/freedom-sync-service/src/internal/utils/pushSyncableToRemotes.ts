@@ -1,9 +1,8 @@
 import type { PR, TraceableError } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import type { Sha256Hash } from 'freedom-basic-data';
 import { Cast, objectKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { RemoteId, SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
@@ -15,16 +14,16 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: SyncableStore; syncService: SyncService },
-    { path, hash }: { path: SyncablePath; hash: Sha256Hash }
+    { remoteId, path }: { remoteId?: RemoteId; path: SyncablePath }
   ): PR<undefined, 'not-found'> => {
-    const remoteIds = objectKeys(syncService.getRemotesAccessors());
+    const remoteIds = remoteId !== undefined ? [remoteId] : objectKeys(syncService.remoteAccessors);
 
     if (remoteIds.length === 0) {
       // If there are no remotes setup, there's nothing to do, which is ok
       return makeSuccess(undefined);
     }
 
-    const shouldSyncWithAllRemotes = await syncService.shouldSyncWithAllRemotes(trace, { store, path, hash });
+    const shouldSyncWithAllRemotes = await syncService.shouldSyncWithAllRemotes(trace, { store, path });
     if (!shouldSyncWithAllRemotes.ok) {
       return generalizeFailureResult(trace, shouldSyncWithAllRemotes, 'not-found');
     }
@@ -43,7 +42,7 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
       },
       async (trace, remoteId): PR<'ok', 'not-found'> => {
         const pushed = await disableLam(trace, 'not-found', (trace) =>
-          pushSyncableToRemote(trace, { store, syncService }, { remoteId, path, hash })
+          pushSyncableToRemote(trace, { store, syncService }, { remoteId, path })
         );
         if (!pushed.ok) {
           if (pushed.value.errorCode === 'not-found') {

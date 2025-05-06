@@ -1,9 +1,8 @@
 import type { PR, TraceableError } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import type { Sha256Hash } from 'freedom-basic-data';
 import { Cast, objectKeys } from 'freedom-cast';
 import { InternalStateError } from 'freedom-common-errors';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { RemoteId, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
@@ -15,19 +14,14 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
   async (
     trace,
     { store, syncService }: { store: MutableSyncableStore; syncService: SyncService },
-    args: {
-      path: SyncablePath;
-      hash?: Sha256Hash;
-    }
+    { remoteId, path }: { remoteId?: RemoteId; path: SyncablePath }
   ): PR<undefined, 'not-found'> => {
-    const remoteIds = objectKeys(syncService.getRemotesAccessors());
+    const remoteIds = remoteId !== undefined ? [remoteId] : objectKeys(syncService.remoteAccessors);
 
     if (remoteIds.length === 0) {
       // If there are no remotes setup, there's nothing to do, which is ok
       return makeSuccess(undefined);
     }
-
-    const { path } = args;
 
     let lastNotFoundError: TraceableError<'not-found'> | undefined;
     const pulled = await allResultsMappedSkipFailures(
@@ -40,9 +34,8 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
         skipErrorCodes: ['generic', 'not-found']
       },
       async (trace, remoteId): PR<'ok', 'not-found'> => {
-        const strategy = await syncService.getSyncStrategyForPath('pull', path);
         const pulled = await disableLam(trace, 'not-found', (trace) =>
-          pullSyncableFromRemote(trace, { store, syncService }, { ...args, remoteId, strategy })
+          pullSyncableFromRemote(trace, { store, syncService }, { path, remoteId })
         );
         if (!pulled.ok) {
           if (pulled.value.errorCode === 'not-found') {
