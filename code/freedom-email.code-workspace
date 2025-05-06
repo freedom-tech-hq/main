@@ -49,9 +49,6 @@
             "path": "cross-platform-packages/freedom-dev-logging-support"
         },
         {
-            "path": "cross-platform-packages/freedom-device-notification-types"
-        },
-        {
             "path": "cross-platform-packages/freedom-do-soon"
         },
         {

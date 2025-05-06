@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { objectKeys } from 'freedom-cast';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
-import type { DeviceNotificationClient } from 'freedom-device-notification-types';
-import type { RemoteAccessor, RemoteId } from 'freedom-sync-types';
+import type { RemoteAccessor, RemoteConnection, RemoteId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -19,8 +19,7 @@ import type { SyncServiceLogEntry } from '../types/SyncServiceLogEntry.ts';
 
 export interface MakeSyncServiceArgs {
   store: MutableSyncableStore;
-  deviceNotificationClients: () => DeviceNotificationClient[];
-  getRemotesAccessors: () => Partial<Record<RemoteId, RemoteAccessor>>;
+  remoteConnections: RemoteConnection[];
   shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
   getSyncStrategyForPath: GetSyncStrategyForPathFunc;
   shouldRecordLogs?: boolean;
@@ -30,37 +29,39 @@ export const makeSyncService = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    {
-      store,
-      deviceNotificationClients,
-      getRemotesAccessors,
-      shouldSyncWithAllRemotes,
-      getSyncStrategyForPath,
-      shouldRecordLogs = false
-    }: MakeSyncServiceArgs
+    { store, remoteConnections, shouldSyncWithAllRemotes, getSyncStrategyForPath, shouldRecordLogs = false }: MakeSyncServiceArgs
   ): PR<SyncService> => {
     const pullQueue = new TaskQueue(trace);
     const pushQueue = disableLam(trace, 'not-found', (trace) => new TaskQueue(trace));
 
     let detachSyncService: () => void = noop;
 
+    const remoteAccessors = remoteConnections.reduce((out: Partial<Record<RemoteId, RemoteAccessor>>, connection) => {
+      out[connection.accessor.remoteId] = connection.accessor;
+      return out;
+    }, {});
+    const remoteChangeNotificationClients = remoteConnections.map((connection) => connection.changeNotificationClient);
+
+    // If there's exactly one remote, we should always default to that one (which will simplify the queue deduping)
+    const remoteIds = objectKeys(remoteAccessors);
+    const defaultRemoteId: RemoteId | undefined = remoteIds.length === 1 ? remoteIds[0] : undefined;
+
     const service = {
       // External
 
-      getRemotesAccessors,
+      remoteAccessors,
 
       shouldSyncWithAllRemotes,
 
       getSyncStrategyForPath,
 
-      pullFromRemotes: (args) => {
-        const { path, hash } = args;
+      pullFromRemotes: ({ remoteId = defaultRemoteId, path, hash }) => {
         const key = path.toString();
-        const version = hash;
+        const version = JSON.stringify({ remoteId, hash });
 
         pullQueue.add({ key, version }, async (trace) => {
           const pulled = await disableLam(trace, 'not-found', (trace) =>
-            pullSyncableFromRemotes(trace, { store, syncService: service }, args)
+            pullSyncableFromRemotes(trace, { store, syncService: service }, { remoteId, path })
           );
           if (!pulled.ok) {
             if (pulled.value.errorCode === 'not-found') {
@@ -73,13 +74,12 @@ export const makeSyncService = makeAsyncResultFunc(
         });
       },
 
-      pushToRemotes: (args) => {
-        const { path, hash } = args;
+      pushToRemotes: ({ remoteId = defaultRemoteId, path, hash }) => {
         const key = path.toString();
-        const version = hash;
+        const version = JSON.stringify({ remoteId, hash });
 
         pushQueue.add({ key, version }, async (trace) => {
-          const pushed = await pushSyncableToRemotes(trace, { store, syncService: service }, args);
+          const pushed = await pushSyncableToRemotes(trace, { store, syncService: service }, { remoteId, path });
           if (!pushed.ok) {
             return pushed;
           }
@@ -98,7 +98,7 @@ export const makeSyncService = makeAsyncResultFunc(
 
           const attached = await attachSyncServiceToSyncableStore(trace, service, {
             store,
-            deviceNotificationClients: deviceNotificationClients()
+            remoteChangeNotificationClients
           });
           if (!attached.ok) {
             return attached;

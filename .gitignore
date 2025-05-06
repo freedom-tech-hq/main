@@ -11,6 +11,7 @@ coverage
 .ssl
 !.gitkeep
 .firebase
+firebase-debug.log
 
 # Dev-time storage
 /data
