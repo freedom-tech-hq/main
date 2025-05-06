@@ -17,7 +17,7 @@ import { emailAppSaltedId } from '../utils/emailAppSaltedId.ts';
 // The server doesn't need to know about any of the following, so they'll use a different salt
 
 const markerFileIds = {
-  mailId: (mailId: MailId): SyncableId => prefixedUuidId('file', mailId)
+  mailId: (mailId: MailId): SyncableId => prefixedUuidId({ type: 'file', encrypted: false }, mailId)
 };
 export type MarkerFileIds = typeof markerFileIds;
 

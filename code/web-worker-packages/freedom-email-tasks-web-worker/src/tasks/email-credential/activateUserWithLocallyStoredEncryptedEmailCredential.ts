@@ -4,9 +4,10 @@ import { base64String, type Uuid } from 'freedom-basic-data';
 import { NotFoundError } from 'freedom-common-errors';
 import { decryptBufferWithPassword } from 'freedom-crypto';
 import type { EmailUserId } from 'freedom-email-sync';
-import { decryptEmailCredentialWithPassword } from 'freedom-email-user';
+import { createInitialSyncableStoreStructureForUser, decryptEmailCredentialWithPassword } from 'freedom-email-user';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
+import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 import type { LocallyStoredEncryptedEmailCredentialPasswordType } from '../../types/email-credential/LocallyStoredEncryptedEmailCredentialPasswordType.ts';
 
@@ -60,6 +61,18 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
     });
     if (!decryptedCredential.ok) {
       return decryptedCredential;
+    }
+
+    const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, decryptedCredential.value);
+    if (!syncableStoreResult.ok) {
+      return syncableStoreResult;
+    }
+    const userFs = syncableStoreResult.value;
+
+    // Calling this every time we activate a user in case our code has changed to need a different structure.  This ignores conflicts
+    const createdStructure = await createInitialSyncableStoreStructureForUser(trace, userFs);
+    if (!createdStructure.ok) {
+      return createdStructure;
     }
 
     activeCredential.credential = decryptedCredential.value;

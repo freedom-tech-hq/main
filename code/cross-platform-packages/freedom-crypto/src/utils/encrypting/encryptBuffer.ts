@@ -24,7 +24,8 @@ export const encryptBuffer = makeAsyncResultFunc(
     try {
       switch (mode) {
         case 'RSA-OAEP/4096/SHA-256+AES/256/GCM': {
-          const singleStageMode = value.byteLength <= MAX_RSA_OAEP_4096_PAYLOAD_LENGTH_BYTES;
+          // Safari doesn't support encrypting 0 bytes with RSA-OAEP/4096/SHA-256 (though Chrome does)
+          const singleStageMode = value.byteLength > 0 && value.byteLength <= MAX_RSA_OAEP_4096_PAYLOAD_LENGTH_BYTES;
 
           if (singleStageMode) {
             // Single stage mode is used for encrypting short messages, using RSA encryption directly
