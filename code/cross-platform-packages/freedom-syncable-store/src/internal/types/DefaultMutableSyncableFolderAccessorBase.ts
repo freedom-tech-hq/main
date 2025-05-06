@@ -19,7 +19,7 @@ import {
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
-  LsArgs,
+  LsFormatterArgs,
   MutableFileStore,
   MutableFolderStore,
   MutableSyncableFolderAccessor,
@@ -438,7 +438,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     }
   );
 
-  public readonly ls = async (trace: Trace, options?: LsArgs): PR<string[]> => {
+  public readonly ls = async (trace: Trace, options?: LsFormatterArgs): PR<string[]> => {
     const results = await allResultsNamed(
       trace,
       {},

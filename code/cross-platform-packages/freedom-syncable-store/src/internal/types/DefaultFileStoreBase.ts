@@ -10,7 +10,7 @@ import { extractSyncableItemTypeFromId, isSyncableItemEncrypted, syncableItemTyp
 import { guardIsExpectedType, type LocalItemMetadata, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
-  LsArgs,
+  LsFormatterArgs,
   MutableFileStore,
   MutableSyncableBundleAccessor,
   MutableSyncableFileAccessor,
@@ -19,7 +19,6 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import { defaultLsFormat } from 'freedom-syncable-store-types';
 import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
@@ -28,6 +27,7 @@ import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateP
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
 import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
 import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
+import { defaultLsFormatter } from '../consts/ls.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
@@ -493,7 +493,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
     }
   );
 
-  public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace, options?: LsArgs): PR<string[]> => {
+  public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace, options?: LsFormatterArgs): PR<string[]> => {
     const metadataById = await this.getMetadataById(trace);
     if (!metadataById.ok) {
       return metadataById;
@@ -511,7 +511,7 @@ export abstract class DefaultFileStoreBase implements MutableFileStore {
         const itemPath = this.path.append(itemId);
 
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
-        const lsFormat = options?.format ?? defaultLsFormat;
+        const lsFormat = options?.format ?? defaultLsFormatter;
 
         const output: string[] = [
           lsFormat({

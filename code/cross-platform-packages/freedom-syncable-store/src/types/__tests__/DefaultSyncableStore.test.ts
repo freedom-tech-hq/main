@@ -8,6 +8,7 @@ import { expectErrorCode, expectIncludes, expectOk, expectStrictEqual } from 'fr
 import { isString } from 'lodash-es';
 
 import { createStoreTestStack } from '../../tests/createStoreTestStack.ts';
+import { prettyStoreLs } from '../../tests/prettyStoreLs.ts';
 import { createFolderAtPath } from '../../utils/create/createFolderAtPath.ts';
 import { createStringFileAtPath } from '../../utils/create/createStringFileAtPath.ts';
 import { deleteSyncableItemAtPath } from '../../utils/deleteSyncableItemAtPath.ts';
@@ -40,26 +41,7 @@ describe('DefaultSyncableStore', () => {
     expectOk(helloWorldStringContent);
     t.assert.strictEqual(helloWorldStringContent.value, 'hello world');
 
-    console.log(
-      (
-        await uncheckedResult(
-          store.ls(trace, {
-            format: ({ itemId, dynamicName }) => {
-              let readableName = dynamicName !== undefined ? `${isString(dynamicName) ? dynamicName : dynamicName.plainName}` : '[NO NAME]';
-              const readableId = readableName === itemId ? '=ID' : itemId;
-
-              if (readableId === '=ID') {
-                readableName = `\x1b[33m${readableName}\x1b[0m`;
-              } else {
-                readableName = `\x1b[34m${readableName}\x1b[0m`;
-              }
-              return `${readableName} \x1b[2m${readableId}\x1b[0m`;
-            }
-          })
-        )
-      ).join('\n')
-    );
-    // renderStoreFiles(trace, store);
+    await prettyStoreLs(store);
 
     // // Deleting file
     // expectOk(await deleteSyncableItemAtPath(trace, store, helloWorldTxtPath));
