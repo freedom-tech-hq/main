@@ -1,3 +1,4 @@
+import { promises as fs } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import readline from 'node:readline/promises';
 
@@ -22,6 +23,8 @@ if (expectedBuildMode !== buildMode) {
   throw new Error(`Build mode mismatch: ${buildMode} !== ${expectedBuildMode}`);
 }
 
+const DEV_MODE_CREDENTIAL_PATH = `${import.meta.dirname}/../.ssl/freedom-mail.credential`;
+
 const main = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace) => {
@@ -31,63 +34,82 @@ const main = makeAsyncResultFunc(
     await uncheckedResult(initApp(trace));
 
     // Input
-    const rl = readline.createInterface({ input, output });
+    let credInput: string = '';
+    let password: string = '';
+    // Check for .ssl/freedom-mail.credential
+    let credentialFileExists = false;
     try {
-      const credInput = (await rl.question('Paste private credentials as JSON (leave blank to use server keys): ')).trim();
-      if (credInput !== '') {
-        const password = await rl.question('Enter password for credential: ');
-
-        const credsResult = await decryptEmailCredentialWithPassword(trace, {
-          encryptedEmailCredential: credInput as Base64String,
-          password
-        });
-        if (!credsResult.ok) {
-          console.error('Failed to decrypt credential:', credsResult.value);
-          process.exit(1);
+      await fs.access(DEV_MODE_CREDENTIAL_PATH);
+      credentialFileExists = true;
+    } catch {
+      // Ok
+    }
+    if (credentialFileExists) {
+      credInput = (await fs.readFile(DEV_MODE_CREDENTIAL_PATH, 'utf8')).trim();
+      password = '1';
+      console.log("Using .ssl/freedom-mail.credential and password '1'");
+    } else {
+      const rl = readline.createInterface({ input, output });
+      try {
+        credInput = (await rl.question('Paste private credentials as JSON (leave blank to use server keys): ')).trim();
+        if (credInput !== '') {
+          password = await rl.question('Enter password for credential: ');
         }
-
-        const creds = credsResult.value;
-        const storeResult = await getServerSyncableStore(trace, {
-          storageRootId: storageRootIdInfo.make(creds.userId),
-          userKeys: {
-            getPrivateCryptoKeySetIds: makeAsyncResultFunc(
-              [import.meta.filename, 'getPrivateCryptoKeySetIds'],
-              async (_trace): PR<CryptoKeySetId[]> => makeSuccess([creds.privateKeys.id])
-            ),
-
-            getPrivateCryptoKeySet: makeAsyncResultFunc(
-              [import.meta.filename, 'getPrivateCryptoKeySet'],
-              async (trace, id?: CryptoKeySetId): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
-                if (id === undefined || id === creds.privateKeys.id) {
-                  return makeSuccess(creds.privateKeys);
-                }
-
-                return makeFailure(new NotFoundError(trace, { message: `No signing key found with ID: ${id}`, errorCode: 'not-found' }));
-              }
-            )
-          } satisfies UserKeys,
-          saltsById: creds.saltsById,
-          creatorPublicKeys: creds.privateKeys.publicOnly()
-        });
-        if (!storeResult.ok) {
-          console.error('Failed to get store:', storeResult.value);
-          process.exit(1);
-        }
-
-        store = storeResult.value;
-      } else {
-        // TODO:
-        // const result = await getMailAgentUserKeys(trace);
-        // if (!result.ok) {
-        //   console.error('Failed to get server keys:', result.value);
-        //   process.exit(1);
-        // }
-        // creds = result.value;
-        // console.log('Loaded server keys:', creds);
-        throw new Error('Not implemented');
+      } finally {
+        rl.close();
       }
-    } finally {
-      rl.close();
+    }
+
+    // Instantiate store
+    if (credInput !== '') {
+      const credsResult = await decryptEmailCredentialWithPassword(trace, {
+        encryptedEmailCredential: credInput as Base64String,
+        password
+      });
+      if (!credsResult.ok) {
+        console.error('Failed to decrypt credential:', credsResult.value);
+        process.exit(1);
+      }
+
+      const creds = credsResult.value;
+      const storeResult = await getServerSyncableStore(trace, {
+        storageRootId: storageRootIdInfo.make(creds.userId),
+        userKeys: {
+          getPrivateCryptoKeySetIds: makeAsyncResultFunc(
+            [import.meta.filename, 'getPrivateCryptoKeySetIds'],
+            async (_trace): PR<CryptoKeySetId[]> => makeSuccess([creds.privateKeys.id])
+          ),
+
+          getPrivateCryptoKeySet: makeAsyncResultFunc(
+            [import.meta.filename, 'getPrivateCryptoKeySet'],
+            async (trace, id?: CryptoKeySetId): PR<PrivateCombinationCryptoKeySet, 'not-found'> => {
+              if (id === undefined || id === creds.privateKeys.id) {
+                return makeSuccess(creds.privateKeys);
+              }
+
+              return makeFailure(new NotFoundError(trace, { message: `No signing key found with ID: ${id}`, errorCode: 'not-found' }));
+            }
+          )
+        } satisfies UserKeys,
+        saltsById: creds.saltsById,
+        creatorPublicKeys: creds.privateKeys.publicOnly()
+      });
+      if (!storeResult.ok) {
+        console.error('Failed to get store:', storeResult.value);
+        process.exit(1);
+      }
+
+      store = storeResult.value;
+    } else {
+      // TODO:
+      // const result = await getMailAgentUserKeys(trace);
+      // if (!result.ok) {
+      //   console.error('Failed to get server keys:', result.value);
+      //   process.exit(1);
+      // }
+      // creds = result.value;
+      // console.log('Loaded server keys:', creds);
+      throw new Error('Not implemented');
     }
 
     // Expose
