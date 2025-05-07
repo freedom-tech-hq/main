@@ -6,16 +6,19 @@ Includes UI and backends.
 Data processing is implemented on top of Syncable Store and should be thoroughly separated.
 
 ### Frontend and Backends
-- freedom-**email-app** (app)
-- freedom-**mail-host** (backend)
-- **delivery-host** (backend)
+- freedom-**email-app** (frontend) [README.md](../../code/apps/freedom-email-app/README.md)
+- freedom-**mail-host** (backend) [README.md](../../code/backends/freedom-mail-host/README.md)
+  Node.js SMTP server for inbound and Syncable Store subscription for outbound emails.
+- **delivery-host** (backend) [README.md](../../code/backends/delivery-host/README.md)
+  Non-TS module. Docker Mailserver configuration as a delivery host.
+- **store-api-server** (see [REST API](#rest-api) section) also contains elements for Email App. 
 
 ### Components
 - freedom-**email-sync** (cross-platform)
 - freedom-**email-user** (cross-platform)
 - freedom-**email-server** (server)
 - freedom-**email-tasks-web-worker** (web-worker)
-- freedom-**db** (server)
+- freedom-**db** (server) [README.md](../../code/server-packages/freedom-db/README.md)
   User properties to route emails. Plus DB layer.
 
 ### Dev Tools
@@ -31,8 +34,11 @@ Data processing is implemented on top of Syncable Store and should be thoroughly
 
 ### REST API
 - freedom-**store-api-server** (backend)
+  Generic Syncable Store endpoints and app-specific ones.
 - freedom-**store-api-server**-api (cross-platform)
+  REST API schema.
 - freedom-**syncable-store**-server (server)
+  Backend implementation of the server. Extracted from the server because also used by `freedom-email-server`.
 
 ### Backings
 - freedom-**syncable-store**-backing-types (cross-platform)
