@@ -15,9 +15,9 @@ Data processing is implemented on top of Syncable Store and should be thoroughly
 
 ### Components
 - freedom-**email-sync** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-email-sync/README.md)
-  Cross-platform email synchronization types and utilities.
+  Functions defining email-app related structure in Syncable Store.
 - freedom-**email-user** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-email-user/README.md)
-  Types and utilities for email credentials and mail management.
+  Functions defining email-app related structure in Syncable Store. On top of `freedom-email-sync`.
 - freedom-**email-server** (server) [README.md](../../code/server-packages/freedom-email-server/README.md)
   Email app backend implementation on top of freedom-syncable-store-server.
   Note: the existence of this package shows a problem in separation of concerns for backends. It is probably temporary.
