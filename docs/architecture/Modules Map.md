@@ -35,15 +35,17 @@ Data processing is implemented on top of Syncable Store and should be thoroughly
 ## Syncable Store
 
 ### Principal Logic
-- freedom-**syncable-store** (cross-platform)
-- freedom-**syncable-store-types** (cross-platform)
+- freedom-**syncable-store** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-syncable-store/README.md)
+  The Cynosure of Everything.
+- freedom-**syncable-store-types** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-syncable-store-types/README.md)
+  Types for Syncable Store packages.
 
 ### REST API
-- freedom-**store-api-server** (backend)
-  Generic Syncable Store endpoints and app-specific ones.
+- freedom-**store-api-server** (backend) [README.md](../../code/backends/freedom-store-api-server/README.md)
+  Generic Syncable Store endpoints and app-specific ones. Connects `freedom-email-server` to expose Email-specific endpoints.
 - freedom-**store-api-server-api** (cross-platform)
   REST API schema.
-- freedom-**syncable-store-server** (server)
+- freedom-**syncable-store-server** (server) [README.md](../../code/server-packages/freedom-syncable-store-server/README.md)
   Backend implementation of the server. Extracted from the server because also used by `freedom-email-server`.
 
 ### Backings
