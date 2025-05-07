@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
-import { objectEntries, objectKeys } from 'freedom-cast';
+import { objectEntries } from 'freedom-cast';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import { InMemoryCache } from 'freedom-in-memory-cache';
@@ -85,6 +85,7 @@ export class DefaultMutableSyncableBundleAccessor extends DefaultMutableSyncable
       /* node:coverage enable */
 
       let sizeBytes = 0;
+      let numDescendants = 0;
       const hashesById = objectEntries(metadataById.value).reduce(
         (out, [id, metadata]) => {
           if (metadata === undefined) {
@@ -93,6 +94,7 @@ export class DefaultMutableSyncableBundleAccessor extends DefaultMutableSyncable
 
           out[id] = metadata.hash;
           sizeBytes += metadata.sizeBytes;
+          numDescendants += 1 + metadata.numDescendants;
 
           return out;
         },
@@ -106,7 +108,7 @@ export class DefaultMutableSyncableBundleAccessor extends DefaultMutableSyncable
       }
       /* node:coverage enable */
 
-      const localItemMetadata: LocalItemMetadata = { hash: hash.value, numDescendants: objectKeys(hashesById).length, sizeBytes };
+      const localItemMetadata: LocalItemMetadata = { hash: hash.value, numDescendants, sizeBytes };
 
       return makeSuccess(localItemMetadata);
     }

@@ -110,7 +110,16 @@ const onBundlePulled = makeAsyncResultFunc(
     );
 
     if (outOfSyncEntries.length > 0) {
-      await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
+      DEV: debugTopic('SYNC', (log) =>
+        log(
+          `Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to pull ${outOfSyncEntries.length} items: ${outOfSyncEntries
+            .slice(0, 3)
+            .map(([id, _localMetadata]) => id)
+            .join(',')}${outOfSyncEntries.length > 3 ? '…' : ''}`
+        )
+      );
+
+      const enqueued = await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
         const shouldPullFromRemote = await syncService.shouldPullFromRemote({ store, remoteId, path: path.append(id) });
         if (!shouldPullFromRemote) {
           return makeSuccess(undefined);
@@ -120,6 +129,11 @@ const onBundlePulled = makeAsyncResultFunc(
 
         return makeSuccess(undefined);
       });
+      if (!enqueued.ok) {
+        return enqueued;
+      }
+    } else {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local has all remote content`));
     }
 
     // Pushing any missing content to the remote
@@ -156,7 +170,16 @@ const onFolderPulled = makeAsyncResultFunc(
     );
 
     if (outOfSyncEntries.length > 0) {
-      await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
+      DEV: debugTopic('SYNC', (log) =>
+        log(
+          `Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to pull ${outOfSyncEntries.length} items: ${outOfSyncEntries
+            .slice(0, 3)
+            .map(([id, _localMetadata]) => id)
+            .join(',')}${outOfSyncEntries.length > 3 ? '…' : ''}`
+        )
+      );
+
+      const enqueued = await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
         const shouldPullFromRemote = await syncService.shouldPullFromRemote({ store, remoteId, path: path.append(id) });
         if (!shouldPullFromRemote) {
           return makeSuccess(undefined);
@@ -166,6 +189,11 @@ const onFolderPulled = makeAsyncResultFunc(
 
         return makeSuccess(undefined);
       });
+      if (!enqueued.ok) {
+        return enqueued;
+      }
+    } else {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local has all remote content`));
     }
 
     // Pushing any missing content to the remote

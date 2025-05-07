@@ -13,6 +13,7 @@ export const makeManualSyncFunc = (syncService: SyncService, store: MutableSynca
     }
 
     syncService.pullFromRemotes({ path: store.path, hash: rootMetadata.value.hash });
+
     syncService.pushToRemotes({ path: store.path, hash: rootMetadata.value.hash });
 
     return makeSuccess(undefined);

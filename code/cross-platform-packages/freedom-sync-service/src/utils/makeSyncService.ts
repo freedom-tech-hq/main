@@ -75,6 +75,10 @@ export const makeSyncService = makeAsyncResultFunc(
         const key = path.toString();
         const version = JSON.stringify({ remoteId, hash });
 
+        DEV: debugTopic('SYNC', (log) =>
+          log(`Pull enqueued ${path.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
+        );
+
         pullQueue.add({ key, version, priority }, async (trace) => {
           const pulled = await disableLam('not-found', pullSyncableFromRemotes)(trace, { store, syncService: service }, { remoteId, path });
           if (!pulled.ok) {

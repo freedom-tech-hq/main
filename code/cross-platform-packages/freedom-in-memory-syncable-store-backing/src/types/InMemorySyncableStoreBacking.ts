@@ -2,8 +2,8 @@ import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, ty
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { LocalItemMetadata, SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, syncableItemTypes } from 'freedom-sync-types';
+import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, mergeLocalItemMetadata, syncableItemTypes } from 'freedom-sync-types';
 import type {
   SyncableStoreBacking,
   SyncableStoreBackingFileAccessor,
@@ -13,7 +13,6 @@ import type {
 } from 'freedom-syncable-store-backing-types';
 import { isExpectedType } from 'freedom-syncable-store-backing-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
-import { merge } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { ROOT_FOLDER_ID } from '../internal/consts/special-ids.ts';
@@ -25,13 +24,13 @@ import { makeItemAccessor } from '../internal/utils/makeItemAccessor.ts';
 import { traversePath } from '../internal/utils/traversePath.ts';
 
 export interface InMemorySyncableStoreBackingConstructorArgs {
-  metadata: Omit<SyncableItemMetadata, 'name'> & Partial<LocalItemMetadata>;
+  metadata: Omit<SyncableStoreBackingItemMetadata, 'name'>;
 }
 
 export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   private readonly root_: InMemorySyncableStoreBackingFolderItem;
 
-  constructor(metadata: Omit<SyncableItemMetadata, 'name'> & Partial<LocalItemMetadata>) {
+  constructor(metadata: Omit<SyncableStoreBackingItemMetadata, 'name'>) {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
@@ -239,7 +238,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return found;
       }
 
-      merge(found.value.metadata, metadataChanges);
+      mergeLocalItemMetadata(found.value.metadata, metadataChanges);
 
       return makeSuccess(undefined);
     }

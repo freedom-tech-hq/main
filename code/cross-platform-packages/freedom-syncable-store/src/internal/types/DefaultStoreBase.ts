@@ -4,7 +4,7 @@ import { objectEntries, objectKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { LocalItemMetadata, SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, isCompleteLocalItemMetadata } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
 import { guardIsExpectedType, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
@@ -17,7 +17,7 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import { flatten, merge } from 'lodash-es';
+import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
@@ -195,7 +195,7 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
           }
 
           // Mutating previously fetched metadata
-          merge(outMetadata, completeMetadata.value);
+          mergeLocalItemMetadata(outMetadata, completeMetadata.value);
 
           return makeSuccess(undefined);
         }

@@ -2,10 +2,9 @@ import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
-import { isCompleteLocalItemMetadata } from 'freedom-sync-types';
+import { isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableItemAccessorBase, MutableSyncableStore } from 'freedom-syncable-store-types';
-import { merge } from 'lodash-es';
 
 import { markSyncableNeedsRecomputeLocalMetadataAtPath } from '../utils/markSyncableNeedsRecomputeLocalMetadataAtPath.ts';
 
@@ -56,7 +55,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
         return localItemMetadata;
       }
 
-      merge(metadata.value, localItemMetadata.value);
+      mergeLocalItemMetadata(metadata.value, localItemMetadata.value);
 
       return makeSuccess(metadata.value as SyncableItemMetadata & LocalItemMetadata);
     }
@@ -65,7 +64,11 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
   public readonly markNeedsRecomputeLocalMetadata = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeLocalMetadata'],
     async (trace): PR<undefined> => {
-      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
+      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, {
+        hash: undefined,
+        numDescendants: 0,
+        sizeBytes: 0
+      });
       if (!updatedHash.ok) {
         return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
       }

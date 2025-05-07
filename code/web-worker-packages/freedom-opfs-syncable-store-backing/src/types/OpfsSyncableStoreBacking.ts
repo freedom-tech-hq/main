@@ -283,14 +283,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
         return found;
       }
 
-      if ('hash' in metadataChanges || 'numDescendants' in metadataChanges || 'sizeBytes' in metadataChanges) {
-        const updated = await updateLocalMetadata(trace, this.rootHandle_, path, metadataChanges);
-        if (!updated.ok) {
-          return updated;
-        }
-      }
-
-      return makeSuccess(undefined);
+      return await updateLocalMetadata(trace, this.rootHandle_, path, metadataChanges);
     }
   );
 }

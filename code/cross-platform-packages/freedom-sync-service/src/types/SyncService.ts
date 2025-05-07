@@ -18,7 +18,7 @@ export interface SyncService {
   readonly shouldPushToAllRemotes: ShouldPushToAllRemotesFunc;
 
   readonly pullFromRemotes: (args: { remoteId?: RemoteId; path: SyncablePath; hash?: Sha256Hash; priority?: 'default' | 'high' }) => void;
-  readonly pushToRemotes: (args: { remoteId?: RemoteId; path: SyncablePath; hash: Sha256Hash }) => void;
+  readonly pushToRemotes: (args: { remoteId?: RemoteId; path: SyncablePath; hash: Sha256Hash; priority?: 'default' | 'high' }) => void;
 
   readonly areQueuesEmpty: () => boolean;
   readonly start: PRFunc<undefined, never, [options?: { maxPushConcurrency?: number; maxPullConcurrency?: number }]>;

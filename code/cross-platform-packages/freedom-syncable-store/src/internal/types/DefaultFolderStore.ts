@@ -4,6 +4,7 @@ import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundErr
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { SyncableId, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import { uuidId } from 'freedom-sync-types';
+import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
 import type {
   MutableFolderStore,
   MutableSyncableBundleAccessor,
@@ -13,7 +14,8 @@ import type {
 
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
-import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
+import type { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
+import { getOrCreateDefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import type { DefaultStoreBaseConstructorArgs } from './DefaultStoreBase.ts';
 import { DefaultStoreBase } from './DefaultStoreBase.ts';
 
@@ -138,6 +140,20 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
       }
       /* node:coverage enable */
 
+      const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash: hash.value, numDescendants: 0, sizeBytes: 0 };
+
+      const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
+      if (!createdFolder.ok) {
+        return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
+      }
+
+      const folder = getOrCreateDefaultMutableSyncableFolderAccessor({
+        store,
+        backing: this.backing_,
+        path: newPath,
+        syncTracker: this.syncTracker_
+      });
+
       const marked = await folder.markNeedsRecomputeLocalMetadata(trace);
       /* node:coverage disable */
       if (!marked.ok) {
@@ -148,7 +164,7 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
       DEV: debugTopic('SYNC', (log) => log(`Notifying folderAdded for folder ${newPath.toShortString()}`));
       this.syncTracker_.notify('folderAdded', { path: newPath });
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for folder ${newPath.toString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for folder ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
 
       return makeSuccess(folder);

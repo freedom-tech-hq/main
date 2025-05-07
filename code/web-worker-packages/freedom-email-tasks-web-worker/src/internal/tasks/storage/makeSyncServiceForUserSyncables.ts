@@ -36,24 +36,21 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
     // TODO: across refreshes?
     // TODO: need to be able to have content expire and fall away
     /** Strings are relative to root */
-    const interestedInPaths = new Set<string>();
+    // const interestedInPaths = new Set<string>();
 
-    let removeItemAccessedListener: (() => void) | undefined;
-    let removeItemNotFoundListener: (() => void) | undefined;
+    // let removeItemAccessedListener: (() => void) | undefined;
+    // let removeItemNotFoundListener: (() => void) | undefined;
 
     return await makeSyncService(trace, {
       ...fwdArgs,
-      shouldPullFromRemote: ({ path }) => {
-        // TODO: TEMP
-        if (Math.random() < 1) {
-          return true;
-        }
-        const parentPath = path.parentPath;
-        return (
-          interestedInPaths.has(path.toRelativePathString(userFs.path)) ||
-          (parentPath !== undefined && interestedInPaths.has(parentPath.toRelativePathString(userFs.path)))
-        );
-      },
+      shouldPullFromRemote: () => true,
+      // shouldPullFromRemote: ({ path }) => {
+      //   const parentPath = path.parentPath;
+      //   return (
+      //     interestedInPaths.has(path.toRelativePathString(userFs.path)) ||
+      //     (parentPath !== undefined && interestedInPaths.has(parentPath.toRelativePathString(userFs.path)))
+      //   );
+      // },
       shouldPushToAllRemotes: () => false,
       getSyncStrategyForPath: async (direction, path) => {
         switch (direction) {
@@ -76,23 +73,21 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
 
         return 'default';
       },
-      onStart: ({ syncService }) => {
-        removeItemAccessedListener = userFs.addListener('itemAccessed', ({ path }) => {
-          interestedInPaths.add(path.toRelativePathString(userFs.path));
+      // onStart: ({ syncService }) => {
+      //   removeItemAccessedListener = userFs.addListener('itemAccessed', ({ path }) => {
+      //     interestedInPaths.add(path.toRelativePathString(userFs.path));
+      //   });
+      //   removeItemNotFoundListener = userFs.addListener('itemNotFound', ({ path }) => {
+      //     syncService.pullFromRemotes({ path });
+      //   });
+      // },
+      // onStop: () => {
+      //   removeItemAccessedListener?.();
+      //   removeItemAccessedListener = undefined;
 
-          console.log('FOOBARBLA interestedInPaths', interestedInPaths);
-        });
-        removeItemNotFoundListener = userFs.addListener('itemNotFound', ({ path }) => {
-          syncService.pullFromRemotes({ path });
-        });
-      },
-      onStop: () => {
-        removeItemAccessedListener?.();
-        removeItemAccessedListener = undefined;
-
-        removeItemNotFoundListener?.();
-        removeItemNotFoundListener = undefined;
-      },
+      //   removeItemNotFoundListener?.();
+      //   removeItemNotFoundListener = undefined;
+      // },
       store: userFs
     });
   }
