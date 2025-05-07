@@ -8,7 +8,7 @@ import { getFileHandleForSyncablePath } from './getFileHandleForSyncablePath.ts'
 
 export const makeExistsFuncForFolderPath = (rootHandle: FileSystemDirectoryHandle, path: SyncablePath) =>
   makeAsyncResultFunc([import.meta.filename], async (trace, id?: SyncableId): PR<boolean, 'wrong-type'> => {
-    const dir = await disableLam(trace, 'not-found', (trace) => getDirectoryHandle(trace, rootHandle, path));
+    const dir = await disableLam('not-found', getDirectoryHandle)(trace, rootHandle, path);
     if (!dir.ok) {
       if (dir.value.errorCode === 'not-found') {
         return makeSuccess(false);
@@ -20,9 +20,7 @@ export const makeExistsFuncForFolderPath = (rootHandle: FileSystemDirectoryHandl
       const itemType = extractSyncableItemTypeFromId(id);
       switch (itemType) {
         case 'file': {
-          const fileHandle = await disableLam(trace, 'not-found', (trace) =>
-            getFileHandleForSyncablePath(trace, rootHandle, path.append(id))
-          );
+          const fileHandle = await disableLam('not-found', getFileHandleForSyncablePath)(trace, rootHandle, path.append(id));
           if (!fileHandle.ok) {
             if (fileHandle.value.errorCode === 'not-found') {
               return makeSuccess(false);
@@ -34,7 +32,7 @@ export const makeExistsFuncForFolderPath = (rootHandle: FileSystemDirectoryHandl
         }
         case 'bundle':
         case 'folder': {
-          const dirHandle = await disableLam(trace, 'not-found', (trace) => getDirectoryHandle(trace, rootHandle, path.append(id)));
+          const dirHandle = await disableLam('not-found', getDirectoryHandle)(trace, rootHandle, path.append(id));
           if (!dirHandle.ok) {
             if (dirHandle.value.errorCode === 'not-found') {
               return makeSuccess(false);

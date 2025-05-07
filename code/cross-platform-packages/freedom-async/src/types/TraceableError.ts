@@ -10,6 +10,7 @@ export interface TraceableErrorOptions<ErrorCodeT extends string = never> {
   httpStatusCode?: number;
   apiMessage?: string;
   logLevel?: keyof Logger;
+  jsStack?: string;
 }
 
 export abstract class TraceableError<ErrorCodeT extends string = never> extends Error {
@@ -23,6 +24,7 @@ export abstract class TraceableError<ErrorCodeT extends string = never> extends 
   public readonly apiMessage: string;
   /** The preferred log level to use */
   public readonly logLevel: keyof Logger;
+  public readonly jsStack?: string;
 
   private errorId_ = makeUuid();
 
@@ -38,7 +40,8 @@ export abstract class TraceableError<ErrorCodeT extends string = never> extends 
       errorCode = 'generic',
       httpStatusCode = StatusCodes.INTERNAL_SERVER_ERROR,
       apiMessage = 'Internal server error',
-      logLevel = 'debug'
+      logLevel = 'debug',
+      jsStack
     }: TraceableErrorOptions<ErrorCodeT> = {}
   ) {
     super(message);
@@ -49,6 +52,7 @@ export abstract class TraceableError<ErrorCodeT extends string = never> extends 
     this.apiMessage = apiMessage;
     this.logLevel = logLevel;
     this.errorCode = errorCode;
+    this.jsStack = jsStack ?? this.stack;
   }
 
   public toString(allowAlreadyLogged = false): string {
@@ -57,10 +61,13 @@ export abstract class TraceableError<ErrorCodeT extends string = never> extends 
     }
 
     try {
+      let jsStackPart = '';
+      DEV: jsStackPart = (this.jsStack?.length ?? 0) > 0 ? ` ${this.jsStack}` : '';
+
       const suffix = this.newErrorMessageSuffix() ?? '';
       return `new error [${this.type}] [${this.errorCode ?? 'generic'}] ${this.apiMessage}: ${this.message.replace(/[\r\n]/g, '    ')} at ${getTraceStack(this.trace).join('>')}${
         this.cause !== undefined ? ` caused by ${this.cause.toString(true)}` : ''
-      } (${this.errorId_})${suffix.length > 0 ? ' ' : ''}${suffix}`;
+      } (${this.errorId_})${jsStackPart}${suffix.length > 0 ? ' ' : ''}${suffix}`;
     } finally {
       this.markAsAlreadyLogged_();
       this.cause?.markAsAlreadyLogged_();

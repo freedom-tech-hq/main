@@ -1,6 +1,7 @@
 import { allResults, makeAsyncResultFunc, makeFailure, makeSuccess, type PR, uncheckedResult } from 'freedom-async';
 import { ConflictError, generalizeFailureResult } from 'freedom-common-errors';
 import { forceSetObjectValue } from 'freedom-object-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { isEqual } from 'lodash-es';
 
 import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.ts';
@@ -18,7 +19,7 @@ export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], as
   //  until that moment - keep it trivial
 
   // Check if a user with this userId already exists
-  const existingEmailResult = await emailByUserIdStore.object(user.userId).get(trace);
+  const existingEmailResult = await disableLam('not-found', emailByUserIdStore.object(user.userId).get)(trace);
   if (existingEmailResult.ok) {
     // A user with this userId exists, check if the email matches
     if (existingEmailResult.value !== user.email) {
@@ -56,7 +57,7 @@ export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], as
   }
 
   // Check if the email is already taken by another userId
-  const userByEmailResult = await userStore.object(user.email).get(trace);
+  const userByEmailResult = await disableLam('not-found', userStore.object(user.email).get)(trace);
   if (userByEmailResult.ok && userByEmailResult.value.userId !== user.userId) {
     return makeFailure(
       new ConflictError(trace, {

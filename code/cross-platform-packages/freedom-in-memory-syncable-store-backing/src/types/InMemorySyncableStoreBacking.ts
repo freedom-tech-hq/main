@@ -42,7 +42,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   public readonly existsAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'existsAtPath'],
     async (trace, path: SyncablePath): PR<boolean> => {
-      const found = disableLam(trace, 'not-found', (trace) => traversePath(trace, this.root_, path));
+      const found = disableLam('not-found', traversePath)(trace, this.root_, path);
       if (!found.ok) {
         if (found.value.errorCode === 'not-found') {
           return makeSuccess(false);

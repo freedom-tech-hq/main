@@ -10,7 +10,7 @@ import { pullPath } from 'freedom-syncable-store';
 
 export default makeHttpApiHandler(
   [import.meta.filename],
-  { api: api.pull.POST, disableLam: 'not-found' },
+  { api: api.pull.POST, deepDisableLam: 'not-found' },
   async (trace, { input: { body: args } }) => {
     const userId = emailUserIdInfo.checked(storageRootIdInfo.removePrefix(args.path.storageRootId));
     if (userId === undefined) {

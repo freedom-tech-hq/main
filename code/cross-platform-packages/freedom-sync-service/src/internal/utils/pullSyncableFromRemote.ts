@@ -77,7 +77,7 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
 
     return makeSuccess(undefined);
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );
 
 // Helpers

@@ -60,13 +60,9 @@ export const startSyncService = makeAsyncResultFunc(
     // These will typically fail if we're recovering an account from the remote -- because the storage folder won't exist locally yet, but
     // that's ok, it means the remote already has the access it needs.
     // Giving Appender Access on the Storage Folder to the Server
-    await disableLam(trace, true, (trace) =>
-      bestEffort(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }))
-    );
+    await disableLam(true, bestEffort)(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }));
     // Giving Editor Access on the Out Folder to the Server
-    await disableLam(trace, true, (trace) =>
-      bestEffort(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }))
-    );
+    await disableLam(true, bestEffort)(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
 
     const startedRoutingMail = await routeMail(trace, credential);
     if (!startedRoutingMail.ok) {

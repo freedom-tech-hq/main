@@ -1,6 +1,6 @@
 import type { Trace } from 'freedom-contexts';
 import { getTraceStackTop, log, LogJson } from 'freedom-contexts';
-import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
+import { disableLam, shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import isPromise from 'is-promise';
 import { once } from 'lodash-es';
 
@@ -58,14 +58,18 @@ export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
       /* node:coverage enable */
     }
 
-    const onStartResult = options?.onStart?.();
+    const onStartResult = options.onStart?.();
     if (onStartResult !== undefined && isPromise(onStartResult)) {
       await onStartResult;
     }
 
-    result = await func(trace, ...args);
+    if (options.deepDisableLam !== undefined) {
+      result = await disableLam(options.deepDisableLam, func)(trace, ...args);
+    } else {
+      result = await func(trace, ...args);
+    }
 
-    const onCompleteResult = options?.onComplete?.(result);
+    const onCompleteResult = options.onComplete?.(result);
     if (onCompleteResult !== undefined && isPromise(onCompleteResult)) {
       await onCompleteResult;
     }
@@ -73,7 +77,7 @@ export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
     return result;
   } catch (e) {
     try {
-      const onErrorResult = options?.onError?.(e);
+      const onErrorResult = options.onError?.(e);
       if (onErrorResult !== undefined && isPromise(onErrorResult)) {
         await onErrorResult;
       }
@@ -97,7 +101,8 @@ export const callAsyncFunc = async <ArgsT extends any[], ReturnT>(
     /* node:coverage disable */
     if (
       errorCode !== undefined &&
-      (shouldDisableErrorForLoggingAndMetrics(options?.disableLam ?? false, { error, errorCode }) ||
+      (shouldDisableErrorForLoggingAndMetrics(options.disableLam ?? false, { error, errorCode }) ||
+        shouldDisableErrorForLoggingAndMetrics(options.deepDisableLam ?? false, { error, errorCode }) ||
         shouldDisableErrorForLoggingAndMetrics(lamControl.disable, { error, errorCode }))
     ) {
       errorCode = undefined;

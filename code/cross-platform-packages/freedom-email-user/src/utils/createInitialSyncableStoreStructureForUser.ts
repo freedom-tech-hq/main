@@ -3,7 +3,6 @@ import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeSuccess } from '
 import { Cast } from 'freedom-cast';
 import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { createDefaultCollectionsForUser } from './createDefaultCollectionsForUser.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
@@ -14,34 +13,33 @@ export const createInitialSyncableStoreStructureForUser = makeAsyncResultFunc(
   async (trace, syncableStore: MutableSyncableStore): PR<undefined> => {
     const paths = await getUserMailPaths(syncableStore);
 
-    await disableLam(trace, 'conflict', (trace) =>
-      allResultsMappedSkipFailures(
-        trace,
-        [
-          // Mail Storage Folder
-          (trace) => createFolderAtPath(trace, syncableStore, paths.storage.value),
-          // Mail Out Folder
-          (trace) => createFolderAtPath(trace, syncableStore, paths.out.value),
-          // Mail Drafts Bundle
-          (trace) => createBundleAtPath(trace, syncableStore, paths.drafts.value),
-          // Mail Indexes Bundle
-          (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.value),
-          // Mail Email Ids by Message Id Index Bundle
-          (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.mailIdsByMessageIdIndex),
-          // Mail Threads Bundle
-          (trace) => createBundleAtPath(trace, syncableStore, paths.threads),
-          // Creating default collections
-          (trace) => createDefaultCollectionsForUser(trace, syncableStore)
-        ] satisfies Array<PRFunc<unknown, 'conflict' | 'not-found' | 'wrong-type' | 'untrusted' | 'deleted'>>,
-        {
-          _successType: Cast<unknown>(),
-          skipErrorCodes: ['conflict'],
-          maxConcurrency: 1
-        },
-        (trace, step) => step(trace)
-      )
+    await allResultsMappedSkipFailures(
+      trace,
+      [
+        // Mail Storage Folder
+        (trace) => createFolderAtPath(trace, syncableStore, paths.storage.value),
+        // Mail Out Folder
+        (trace) => createFolderAtPath(trace, syncableStore, paths.out.value),
+        // Mail Drafts Bundle
+        (trace) => createBundleAtPath(trace, syncableStore, paths.drafts.value),
+        // Mail Indexes Bundle
+        (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.value),
+        // Mail Email Ids by Message Id Index Bundle
+        (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.mailIdsByMessageIdIndex),
+        // Mail Threads Bundle
+        (trace) => createBundleAtPath(trace, syncableStore, paths.threads),
+        // Creating default collections
+        (trace) => createDefaultCollectionsForUser(trace, syncableStore)
+      ] satisfies Array<PRFunc<unknown, 'conflict' | 'not-found' | 'wrong-type' | 'untrusted' | 'deleted'>>,
+      {
+        _successType: Cast<unknown>(),
+        skipErrorCodes: ['conflict'],
+        maxConcurrency: 1
+      },
+      (trace, step) => step(trace)
     );
 
     return makeSuccess(undefined);
-  }
+  },
+  { deepDisableLam: 'conflict' }
 );

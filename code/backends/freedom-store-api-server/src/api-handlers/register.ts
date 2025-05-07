@@ -63,12 +63,7 @@ export default makeHttpApiHandler(
         // Create user's syncable store
         // Conflicts are expected to happen here sometimes because registration is attempted every time a client starts its sync service
         // (because it can't otherwise knows the state of registration on the server)
-        const createSyncableStoreResult = await disableLam(trace, 'conflict', (trace) =>
-          createSyncableStore(trace, {
-            storageRootId,
-            metadata
-          })
-        );
+        const createSyncableStoreResult = await disableLam('conflict', createSyncableStore)(trace, { storageRootId, metadata });
         if (!createSyncableStoreResult.ok) {
           return createSyncableStoreResult;
         }

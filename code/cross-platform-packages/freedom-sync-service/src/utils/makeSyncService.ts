@@ -32,7 +32,7 @@ export const makeSyncService = makeAsyncResultFunc(
     { store, remoteConnections, shouldSyncWithAllRemotes, getSyncStrategyForPath, shouldRecordLogs = false }: MakeSyncServiceArgs
   ): PR<SyncService> => {
     const pullQueue = new TaskQueue(trace);
-    const pushQueue = disableLam(trace, 'not-found', (trace) => new TaskQueue(trace));
+    const pushQueue = disableLam('not-found', (trace) => new TaskQueue(trace))(trace);
 
     let detachSyncService: () => void = noop;
 
@@ -60,9 +60,7 @@ export const makeSyncService = makeAsyncResultFunc(
         const version = JSON.stringify({ remoteId, hash });
 
         pullQueue.add({ key, version }, async (trace) => {
-          const pulled = await disableLam(trace, 'not-found', (trace) =>
-            pullSyncableFromRemotes(trace, { store, syncService: service }, { remoteId, path })
-          );
+          const pulled = await disableLam('not-found', pullSyncableFromRemotes)(trace, { store, syncService: service }, { remoteId, path });
           if (!pulled.ok) {
             if (pulled.value.errorCode === 'not-found') {
               return makeSuccess(undefined);

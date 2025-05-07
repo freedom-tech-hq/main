@@ -43,7 +43,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       async (trace, { remoteId, path, hash: remoteHash }: { remoteId: RemoteId; path: SyncablePath; hash: Sha256Hash }): PR<undefined> => {
         DEV: syncService.devLogging.appendLogEntry?.({ type: 'notified', pathString: path.toString() });
 
-        const localHash = await disableLam(trace, 'not-found', (trace) => getSyncableHashAtPath(trace, store, path));
+        const localHash = await disableLam('not-found', getSyncableHashAtPath)(trace, store, path);
         if (!localHash.ok) {
           // 'not-found' errors are expected in cases where the remote has content that the local doesn't know about yet
           if (localHash.value.errorCode !== 'not-found') {

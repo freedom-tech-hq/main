@@ -24,7 +24,7 @@ import { noop } from 'lodash-es';
 
 import { APPLY_DELTAS_LIMIT_TIME_MSEC, CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';
 import { accessControlDocumentProvider } from '../../internal/context/accessControlDocument.ts';
-import { isSyncableValidationEnabledProvider, useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation, useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import { getRoleForOrigin } from '../validation/getRoleForOrigin.ts';
 import { getBundleAtPath } from './getBundleAtPath.ts';
@@ -304,9 +304,9 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                 deltaPaths,
                 {},
                 async (trace, deltaPath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type' | 'format-error'> => {
-                  const encodedDelta = await isSyncableValidationEnabledProvider(trace, false, (trace) =>
-                    getStringFromFile(trace, store, deltaPath, { checkForDeletion: false })
-                  );
+                  const encodedDelta = await disableSyncableValidation(getStringFromFile)(trace, store, deltaPath, {
+                    checkForDeletion: false
+                  });
                   if (!encodedDelta.ok) {
                     return generalizeFailureResult(trace, encodedDelta, 'deleted');
                   }

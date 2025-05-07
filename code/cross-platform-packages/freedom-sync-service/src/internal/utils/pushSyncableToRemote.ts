@@ -12,7 +12,6 @@ import {
   getSyncableItemTypeAtPathForSync
 } from 'freedom-syncable-store';
 import { ACCESS_CONTROL_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncService } from '../../types/SyncService.ts';
 
@@ -31,9 +30,12 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
     const hash = await getSyncableHashAtPath(trace, store, path);
 
     // Not logging this pull since we're really just using this as a status check
-    const pulled = await disableLam(trace, 'not-found', (trace) =>
-      pullFromRemote(trace, { path, hash: hash.ok ? hash.value : undefined, sendData: false, strategy: 'default' })
-    );
+    const pulled = await pullFromRemote(trace, {
+      path,
+      hash: hash.ok ? hash.value : undefined,
+      sendData: false,
+      strategy: 'default'
+    });
     if (!pulled.ok) {
       if (pulled.value.errorCode === 'not-found') {
         DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toString()}: nothing found on remote.  Will try to push everything`));
@@ -49,7 +51,7 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
     DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toString()}: local and remote are out of sync.  Will try to push missing content`));
     return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: pulled.value }, { remoteId, path });
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );
 
 export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
@@ -78,7 +80,7 @@ export const pushMissingSyncableContentToRemote = makeAsyncResultFunc(
         return await pushBundle(trace, { remoteId, store, syncService, path, pulledHashesById: pulled.hashesById });
     }
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );
 
 // Helpers
@@ -107,7 +109,7 @@ const pushEverything = makeAsyncResultFunc(
       }
     }
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );
 
 const pushBundle = makeAsyncResultFunc(
@@ -164,7 +166,7 @@ const pushBundle = makeAsyncResultFunc(
 
     return makeSuccess(undefined);
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );
 
 const pushFolder = makeAsyncResultFunc(
@@ -233,7 +235,7 @@ const pushFolder = makeAsyncResultFunc(
 
     return makeSuccess(undefined);
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );
 
 const pushFile = makeAsyncResultFunc(
@@ -260,5 +262,5 @@ const pushFile = makeAsyncResultFunc(
 
     return makeSuccess(undefined);
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );

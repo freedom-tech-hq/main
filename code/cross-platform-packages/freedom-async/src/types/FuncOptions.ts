@@ -5,6 +5,8 @@ export interface FuncOptions<ReturnT, SpecialCallbackReturnT extends TypeOrPromi
   /** Specify error types or strings for error codes, to disable conditionally for logging and metrics.  Example:
    * `[UserAuthenticationError, 'username-already-taken']` */
   disableLam?: DisableErrorsForLoggingAndMetrics;
+  /** Like `disableLam` but affects all recursive calls as well */
+  deepDisableLam?: DisableErrorsForLoggingAndMetrics;
 
   /** Called when the function is first called */
   onStart?: () => SpecialCallbackReturnT;
