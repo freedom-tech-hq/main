@@ -1,5 +1,6 @@
 import type { PRFunc } from 'freedom-async';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
+import type { LocalItemMetadata, SyncableItemMetadata } from 'freedom-sync-types';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 
 import type { ISyncableStoreAccessControlDocument } from '../ISyncableStoreAccessControlDocument.ts';
@@ -20,6 +21,9 @@ export interface SyncableFolderAccessor extends SyncableItemAccessorBase, FileSt
 
   /** Gets the access control document */
   readonly getAccessControlDocument: PRFunc<ISyncableStoreAccessControlDocument>;
+
+  /** Gets the metadata */
+  readonly getMetadata: PRFunc<SyncableItemMetadata & LocalItemMetadata>;
 
   /** Gets the roles, if any, currently associated with the specified crypto key set IDs */
   readonly getRolesByCryptoKeySetId: PRFunc<

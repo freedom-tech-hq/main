@@ -1,7 +1,7 @@
 import type { PRFunc } from 'freedom-async';
-import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
+import type { SyncableId } from 'freedom-sync-types';
+import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
 
-import type { FileSystemLocalItemMetadata } from './FileSystemLocalItemMetadata.ts';
 import type { FileSystemSyncableStoreBackingItem } from './FileSystemSyncableStoreBackingItem.ts';
 
 export interface FileSystemSyncableStoreBackingFolderItem {
@@ -9,6 +9,6 @@ export interface FileSystemSyncableStoreBackingFolderItem {
   readonly id: SyncableId;
   readonly exists: PRFunc<boolean, 'wrong-type', [id?: SyncableId]>;
   readonly get: PRFunc<FileSystemSyncableStoreBackingItem, 'not-found' | 'wrong-type', [id: SyncableId]>;
-  readonly metadata: PRFunc<SyncableItemMetadata & FileSystemLocalItemMetadata, 'not-found' | 'wrong-type'>;
+  readonly metadata: PRFunc<SyncableStoreBackingItemMetadata, 'not-found' | 'wrong-type'>;
   readonly contents: PRFunc<Partial<Record<SyncableId, FileSystemSyncableStoreBackingItem>>, 'not-found' | 'wrong-type'>;
 }

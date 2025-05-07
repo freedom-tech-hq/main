@@ -90,7 +90,7 @@ export class DefaultMutableSyncableFileAccessor extends DefaultMutableSyncableIt
         return hash;
       }
 
-      const localItemMetadata: LocalItemMetadata = { hash: hash.value };
+      const localItemMetadata: LocalItemMetadata = { hash: hash.value, numDescendants: 0, sizeBytes: encodedBinary.value.byteLength };
 
       return makeSuccess(localItemMetadata);
     }

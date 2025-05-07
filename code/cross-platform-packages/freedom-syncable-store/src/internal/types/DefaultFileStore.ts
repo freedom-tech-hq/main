@@ -233,7 +233,12 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash: hash.value };
+      const backingMetadata: SyncableStoreBackingItemMetadata = {
+        ...metadata,
+        hash: hash.value,
+        numDescendants: 0,
+        sizeBytes: encodedData.byteLength
+      };
 
       const createdFile = await this.backing_.createBinaryFileWithPath(trace, newPath, {
         data: encodedData,
@@ -252,7 +257,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for file ${newPath.toShortString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for file ${newPath.toString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
 
       return makeSuccess(itemAccessor);
@@ -285,7 +290,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash: hash.value };
+      const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash: hash.value, numDescendants: 0, sizeBytes: 0 };
 
       const createdBundle = await this.backing_.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
       if (!createdBundle.ok) {
@@ -301,7 +306,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for bundle ${newPath.toShortString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for bundle ${newPath.toString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
 
       return makeSuccess(itemAccessor);

@@ -23,6 +23,15 @@ export const disableLam =
   (trace: Trace, ...args: ArgsT) =>
     lamControlModifier(trace, { disable }, (trace) => callback(trace, ...args));
 
+// TODO: replace all disableLam with disableLam2 and then rename this to disableLam
+/** Disable logging and metrics for sub-trace */
+export const disableLam2 = <ArgsT extends any[], ReturnT>(
+  disable: DisableErrorsForLoggingAndMetrics,
+  callback: (trace: Trace, ...args: ArgsT) => ReturnT,
+  trace: Trace,
+  ...args: ArgsT
+) => lamControlModifier(trace, { disable }, (trace) => callback(trace, ...args));
+
 export const lamControlModifier = <ReturnT>(
   trace: Trace,
   {

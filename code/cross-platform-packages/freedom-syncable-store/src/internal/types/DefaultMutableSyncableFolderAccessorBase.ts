@@ -3,7 +3,7 @@ import type { AccessChangeParams, AccessControlState, TrustedTimeSignedAccessCha
 import type { PR, Result } from 'freedom-async';
 import { allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { type Sha256Hash } from 'freedom-basic-data';
-import { objectEntries } from 'freedom-cast';
+import { objectEntries, objectKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
@@ -368,6 +368,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
       }
       /* node:coverage enable */
 
+      let sizeBytes = 0;
       const hashesById = objectEntries(metadataById.value).reduce(
         (out, [id, metadata]) => {
           if (metadata === undefined) {
@@ -375,6 +376,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
           }
 
           out[id] = metadata.hash;
+          sizeBytes += metadata.sizeBytes;
 
           return out;
         },
@@ -388,7 +390,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
       }
       /* node:coverage enable */
 
-      const localItemMetadata: LocalItemMetadata = { hash: hash.value };
+      const localItemMetadata: LocalItemMetadata = { hash: hash.value, numDescendants: objectKeys(hashesById).length, sizeBytes };
 
       return makeSuccess(localItemMetadata);
     }

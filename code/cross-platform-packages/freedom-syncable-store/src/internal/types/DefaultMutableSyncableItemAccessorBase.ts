@@ -2,9 +2,10 @@ import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
-import { isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
+import { isCompleteLocalItemMetadata } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableItemAccessorBase, MutableSyncableStore } from 'freedom-syncable-store-types';
+import { merge } from 'lodash-es';
 
 import { markSyncableNeedsRecomputeLocalMetadataAtPath } from '../utils/markSyncableNeedsRecomputeLocalMetadataAtPath.ts';
 
@@ -55,7 +56,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
         return localItemMetadata;
       }
 
-      mergeLocalItemMetadata(metadata.value, localItemMetadata.value);
+      merge(metadata.value, localItemMetadata.value);
 
       return makeSuccess(metadata.value as SyncableItemMetadata & LocalItemMetadata);
     }

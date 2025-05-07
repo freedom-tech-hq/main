@@ -4,7 +4,7 @@ import { objectEntries, objectKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { LocalItemMetadata, SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, isCompleteLocalItemMetadata } from 'freedom-sync-types';
 import { guardIsExpectedType, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
@@ -17,7 +17,7 @@ import type {
   SyncableItemAccessor,
   SyncTracker
 } from 'freedom-syncable-store-types';
-import { flatten } from 'lodash-es';
+import { flatten, merge } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
@@ -195,7 +195,7 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
           }
 
           // Mutating previously fetched metadata
-          mergeLocalItemMetadata(outMetadata, completeMetadata.value);
+          merge(outMetadata, completeMetadata.value);
 
           return makeSuccess(undefined);
         }
@@ -217,6 +217,8 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
     ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
       const getPath = this.path_.append(id);
 
+      this.syncTracker_.notify('itemAccessed', { path: getPath });
+
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -232,6 +234,7 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
       if (!exists.ok) {
         return exists;
       } else if (!exists.value) {
+        this.syncTracker_.notify('itemNotFound', { path: getPath });
         return makeFailure(new NotFoundError(trace, { message: `${getPath.toString()} not found`, errorCode: 'not-found' }));
       }
 
