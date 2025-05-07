@@ -55,12 +55,20 @@ Data processing is implemented on top of Syncable Store and should be thoroughly
 - freedom-**google-storage-syncable-store-backing** (server)
 - freedom-**opfs-syncable-store-backing** (web-worker)
 
-### Conflict Resolution & Document Management
-- freedom-**conflict-free-document** (cross-platform)
-- freedom-**conflict-free-document-data** (cross-platform)
-- freedom-**sync-service** (cross-platform)
-- freedom-**sync-types** (cross-platform)
-- freedom-**sync-service-testing-tools** (dev)
+### CRDT & Synchronization Protocol
+- freedom-**sync-types** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-sync-types/README.md)
+  Core types and interfaces for sync operations, defining contracts between components.
+- freedom-**sync-service** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-sync-service/README.md)
+  Client handler for push/pull REST API.
+  Note: does not seem actually belonging to cross-platform.
+
+- freedom-**conflict-free-document-data** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-conflict-free-document-data/README.md)
+  Basic data types and schemas for conflict-free documents, separate from implementation details.
+- freedom-**conflict-free-document** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-conflict-free-document/README.md)
+  Implementation of conflict-free editing built on top of freedom-conflict-free-document-data using Yjs.
+
+- freedom-**sync-service-testing-tools** (dev) [README.md](../../code/dev-packages/freedom-sync-service-testing-tools/README.md)
+  Testing utilities for sync operations without requiring full backend implementations.
 
 ---
 
