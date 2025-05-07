@@ -1,6 +1,6 @@
 import type { Trace } from 'freedom-contexts';
 import { getTraceStackTop, log, LogJson } from 'freedom-contexts';
-import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
+import { disableLam, shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import { once } from 'lodash-es';
 import type { Logger } from 'yaschema';
 
@@ -64,34 +64,38 @@ export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT ext
       /* node:coverage enable */
     }
 
-    options?.onStart?.();
+    options.onStart?.();
 
-    result = func(trace, ...args);
+    if (options.deepDisableLam !== undefined) {
+      result = disableLam(options.deepDisableLam, func)(trace, ...args);
+    } else {
+      result = func(trace, ...args);
+    }
 
-    options?.onComplete?.(result);
+    options.onComplete?.(result);
 
     if (!result.ok) {
-      options?.onFailure?.(result.value);
+      options.onFailure?.(result.value);
 
       error = result.value;
       errorCode = result.value.errorCode ?? 'generic';
       errorMessage = () => (result!.value as TraceableError<ErrorCodeT>).toString();
       logLevel = result.value.wasAlreadyLogged() ? 'debug' : result.value.logLevel;
     } else {
-      options?.onSuccess?.(result.value);
+      options.onSuccess?.(result.value);
     }
 
     return result;
   } catch (e) {
     try {
-      options?.onError?.(e);
+      options.onError?.(e);
     } catch (e2) {
       /* node:coverage ignore next */
       log().error?.(trace, e2);
     }
 
     try {
-      options?.onFailure?.(new GeneralError(trace, e));
+      options.onFailure?.(new GeneralError(trace, e));
     } catch (e2) {
       /* node:coverage ignore next */
       log().error?.(trace, e2);
@@ -112,7 +116,8 @@ export const callSyncResultFunc = <ArgsT extends any[], SuccessT, ErrorCodeT ext
     /* node:coverage disable */
     if (
       errorCode !== undefined &&
-      (shouldDisableErrorForLoggingAndMetrics(options?.disableLam ?? false, { error, errorCode }) ||
+      (shouldDisableErrorForLoggingAndMetrics(options.disableLam ?? false, { error, errorCode }) ||
+        shouldDisableErrorForLoggingAndMetrics(options.deepDisableLam ?? false, { error, errorCode }) ||
         shouldDisableErrorForLoggingAndMetrics(lamControl.disable, { error, errorCode }))
     ) {
       errorCode = undefined;

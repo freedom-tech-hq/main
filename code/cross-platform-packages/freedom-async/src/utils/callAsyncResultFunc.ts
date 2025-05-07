@@ -1,6 +1,6 @@
 import type { Trace } from 'freedom-contexts';
 import { getTraceStackTop, log, LogJson } from 'freedom-contexts';
-import { shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
+import { disableLam, shouldDisableErrorForLoggingAndMetrics, useLamControl } from 'freedom-trace-logging-and-metrics';
 import isPromise from 'is-promise';
 import { once } from 'lodash-es';
 import type { Logger } from 'yaschema';
@@ -75,20 +75,24 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
         /* node:coverage enable */
       }
 
-      const onStartResult = options?.onStart?.();
+      const onStartResult = options.onStart?.();
       if (onStartResult !== undefined && isPromise(onStartResult)) {
         await onStartResult;
       }
 
-      result = await func(trace, ...args);
+      if (options.deepDisableLam !== undefined) {
+        result = await disableLam(options.deepDisableLam, func)(trace, ...args);
+      } else {
+        result = await func(trace, ...args);
+      }
 
-      const onCompleteResult = options?.onComplete?.(result);
+      const onCompleteResult = options.onComplete?.(result);
       if (onCompleteResult !== undefined && isPromise(onCompleteResult)) {
         await onCompleteResult;
       }
 
       if (!result.ok) {
-        const onFailureResult = options?.onFailure?.(result.value);
+        const onFailureResult = options.onFailure?.(result.value);
         if (onFailureResult !== undefined && isPromise(onFailureResult)) {
           await onFailureResult;
         }
@@ -98,7 +102,7 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
         errorMessage = () => (result!.value as TraceableError<ErrorCodeT>).toString();
         logLevel = result.value.wasAlreadyLogged() ? 'debug' : result.value.logLevel;
       } else {
-        const onSuccessResult = options?.onSuccess?.(result.value);
+        const onSuccessResult = options.onSuccess?.(result.value);
         if (onSuccessResult !== undefined && isPromise(onSuccessResult)) {
           await onSuccessResult;
         }
@@ -107,7 +111,7 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
       return result;
     } catch (e) {
       try {
-        const onErrorResult = options?.onError?.(e);
+        const onErrorResult = options.onError?.(e);
         if (onErrorResult !== undefined && isPromise(onErrorResult)) {
           await onErrorResult;
         }
@@ -117,7 +121,7 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
       }
 
       try {
-        const onFailureResult = options?.onFailure?.(new GeneralError(trace, e));
+        const onFailureResult = options.onFailure?.(new GeneralError(trace, e));
         if (onFailureResult !== undefined && isPromise(onFailureResult)) {
           await onFailureResult;
         }
@@ -141,7 +145,8 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
       /* node:coverage disable */
       if (
         errorCode !== undefined &&
-        (shouldDisableErrorForLoggingAndMetrics(options?.disableLam ?? false, { error, errorCode }) ||
+        (shouldDisableErrorForLoggingAndMetrics(options.disableLam ?? false, { error, errorCode }) ||
+          shouldDisableErrorForLoggingAndMetrics(options.deepDisableLam ?? false, { error, errorCode }) ||
           shouldDisableErrorForLoggingAndMetrics(lamControl.disable, { error, errorCode }))
       ) {
         errorCode = undefined;
@@ -177,5 +182,5 @@ export const callAsyncResultFunc = async <ArgsT extends any[], SuccessT, ErrorCo
     }
   };
 
-  return await callWithRetrySupport<SuccessT, ErrorCodeT>(options?.shouldRetry, attempt);
+  return await callWithRetrySupport<SuccessT, ErrorCodeT>(options.shouldRetry, attempt);
 };

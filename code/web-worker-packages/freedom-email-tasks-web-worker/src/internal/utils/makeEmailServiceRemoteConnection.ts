@@ -1,7 +1,6 @@
 import { excludeFailureResult, type PR, type PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ONE_SEC_MSEC, sha256HashInfo } from 'freedom-basic-data';
-import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { makeApiFetchTask } from 'freedom-fetching';
@@ -50,9 +49,10 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
       async (trace, args: RegisterArgs): PR<undefined, 'email-is-unavailable'> => {
         storageRootId = args.storageRootId;
 
-        const registered = await disableLam(trace, ['already-created', 'conflict', 'email-is-unavailable'], (trace) =>
-          registerWithRemote(trace, { body: args, context: getDefaultApiRoutingContext() })
-        );
+        const registered = await disableLam(['already-created', 'conflict', 'email-is-unavailable'], registerWithRemote)(trace, {
+          body: args,
+          context: getDefaultApiRoutingContext()
+        });
         if (!registered.ok) {
           // TODO: TEMP treating conflict as success until updated service is deployed
           if (registered.value.errorCode === 'conflict' || registered.value.errorCode === 'already-created') {
@@ -60,7 +60,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
             return makeSuccess(undefined);
           }
           // Pass through validation and not-found errors
-          return generalizeFailureResult(trace, excludeFailureResult(registered, 'already-created'), 'conflict');
+          return excludeFailureResult(registered, 'already-created', 'conflict');
         }
 
         return makeSuccess(undefined);
@@ -70,16 +70,17 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
     const puller: SyncPuller = makeAsyncResultFunc(
       [import.meta.filename, 'puller'],
       async (trace, body): PR<SyncPullResponse, 'not-found'> => {
-        const pulled = await disableLam(trace, 'not-found', (trace) =>
-          pullFromRemote(trace, { body: { ...body, sendData: body.sendData ?? false }, context: getDefaultApiRoutingContext() })
-        );
+        const pulled = await pullFromRemote(trace, {
+          body: { ...body, sendData: body.sendData ?? false },
+          context: getDefaultApiRoutingContext()
+        });
         if (!pulled.ok) {
           return pulled;
         }
 
         return makeSuccess(pulled.value.body);
       },
-      { disableLam: 'not-found' }
+      { deepDisableLam: 'not-found' }
     );
 
     const pusher: SyncPusher = makeAsyncResultFunc(
@@ -88,16 +89,14 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
         // not-found happens during push fairly commonly when doing an initial sync to a server and simultaneously updating the client,
         // because the client will try to push newer content before the base folders have been initially pushed -- but this will
         // automatically get resolved as the initial sync continues
-        const pushed = await disableLam(trace, 'not-found', (trace) =>
-          pushToRemote(trace, { body, context: getDefaultApiRoutingContext() })
-        );
+        const pushed = await pushToRemote(trace, { body, context: getDefaultApiRoutingContext() });
         if (!pushed.ok) {
           return pushed;
         }
 
         return makeSuccess(undefined);
       },
-      { disableLam: 'not-found' }
+      { deepDisableLam: 'not-found' }
     );
 
     // TODO: hook up a way to listen for changes

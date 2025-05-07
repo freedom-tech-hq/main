@@ -33,7 +33,7 @@ export const createMailIdMarkerFile = makeAsyncResultFunc(
 
     const markerPath = yearPath.month.day.hour.mailId(mailId);
 
-    const created = await disableLam(trace, 'conflict', (trace) => createBinaryFileAtPath(trace, userFs, markerPath, { value: MARKER }));
+    const created = await disableLam('conflict', createBinaryFileAtPath)(trace, userFs, markerPath, { value: MARKER });
     if (!created.ok) {
       // Treating conflict as success, since it means the file already exists
       if (created.value.errorCode !== 'conflict') {

@@ -22,9 +22,7 @@ export const pushFile = makeAsyncResultFunc(
       metadata: SyncableItemMetadata;
     }
   ): PR<undefined, 'not-found'> => {
-    const file = await disableLam(trace, 'conflict', (trace) =>
-      createViaSyncPreEncodedBinaryFileAtPath(trace, store, path, data, metadata)
-    );
+    const file = await disableLam('conflict', createViaSyncPreEncodedBinaryFileAtPath)(trace, store, path, data, metadata);
     if (!file.ok) {
       // Treating conflicts as ok since this will often be the case when syncing with predicable ids
       if (file.value.errorCode !== 'conflict') {

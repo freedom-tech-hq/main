@@ -18,8 +18,10 @@ const LoggingAndMetricsControlContext = createTraceContext<LoggingAndMetricsCont
 export const useLamControl = (trace: Trace) => useTraceContext(trace, LoggingAndMetricsControlContext);
 
 /** Disable logging and metrics for sub-trace */
-export const disableLam = <ReturnT>(trace: Trace, disable: DisableErrorsForLoggingAndMetrics, callback: (trace: Trace) => ReturnT) =>
-  lamControlModifier(trace, { disable }, callback);
+export const disableLam =
+  <ArgsT extends any[], ReturnT>(disable: DisableErrorsForLoggingAndMetrics, callback: (trace: Trace, ...args: ArgsT) => ReturnT) =>
+  (trace: Trace, ...args: ArgsT) =>
+    lamControlModifier(trace, { disable }, (trace) => callback(trace, ...args));
 
 export const lamControlModifier = <ReturnT>(
   trace: Trace,

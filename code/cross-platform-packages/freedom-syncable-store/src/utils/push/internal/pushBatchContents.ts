@@ -24,7 +24,7 @@ export const pushBatchContents = makeAsyncResultFunc(
           }
 
           const newPath = parentPath.append(id);
-          const created = await disableLam(trace, 'conflict', (trace) => createViaSyncFolderAtPath(trace, store, newPath, folder.metadata));
+          const created = await disableLam('conflict', createViaSyncFolderAtPath)(trace, store, newPath, folder.metadata);
           if (!created.ok) {
             return generalizeFailureResult(trace, created, ['untrusted', 'wrong-type'], `Failed to push folder: ${newPath.toString()}`);
           }
@@ -48,7 +48,7 @@ export const pushBatchContents = makeAsyncResultFunc(
           }
 
           const newPath = parentPath.append(id);
-          const created = await disableLam(trace, 'conflict', (trace) => createViaSyncBundleAtPath(trace, store, newPath, bundle.metadata));
+          const created = await disableLam('conflict', createViaSyncBundleAtPath)(trace, store, newPath, bundle.metadata);
           if (!created.ok) {
             return generalizeFailureResult(trace, created, ['untrusted', 'wrong-type'], `Failed to push bundle: ${newPath.toString()}`);
           }
@@ -72,8 +72,12 @@ export const pushBatchContents = makeAsyncResultFunc(
           }
 
           const newPath = parentPath.append(id);
-          const created = await disableLam(trace, 'conflict', (trace) =>
-            createViaSyncPreEncodedBinaryFileAtPath(trace, store, newPath, file.data, file.metadata)
+          const created = await disableLam('conflict', createViaSyncPreEncodedBinaryFileAtPath)(
+            trace,
+            store,
+            newPath,
+            file.data,
+            file.metadata
           );
           if (!created.ok) {
             return generalizeFailureResult(trace, created, ['untrusted', 'wrong-type'], `Failed to push file: ${newPath.toString()}`);

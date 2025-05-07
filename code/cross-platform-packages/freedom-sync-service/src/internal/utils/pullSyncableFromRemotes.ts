@@ -4,7 +4,6 @@ import { Cast, objectKeys } from 'freedom-cast';
 import { InternalStateError } from 'freedom-common-errors';
 import type { RemoteId, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { SyncService } from '../../types/SyncService.ts';
 import { pullSyncableFromRemote } from './pullSyncableFromRemote.ts';
@@ -34,9 +33,7 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
         skipErrorCodes: ['generic', 'not-found']
       },
       async (trace, remoteId): PR<'ok', 'not-found'> => {
-        const pulled = await disableLam(trace, 'not-found', (trace) =>
-          pullSyncableFromRemote(trace, { store, syncService }, { path, remoteId })
-        );
+        const pulled = await pullSyncableFromRemote(trace, { store, syncService }, { path, remoteId });
         if (!pulled.ok) {
           if (pulled.value.errorCode === 'not-found') {
             lastNotFoundError = pulled.value;
@@ -67,5 +64,5 @@ export const pullSyncableFromRemotes = makeAsyncResultFunc(
 
     return makeSuccess(undefined);
   },
-  { disableLam: 'not-found' }
+  { deepDisableLam: 'not-found' }
 );

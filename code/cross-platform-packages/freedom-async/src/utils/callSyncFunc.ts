@@ -57,16 +57,20 @@ export const callSyncFunc = <ArgsT extends any[], ReturnT>(
       /* node:coverage enable */
     }
 
-    options?.onStart?.();
+    options.onStart?.();
 
-    result = func(trace, ...args);
+    if (options.deepDisableLam !== undefined) {
+      result = func(trace, ...args);
+    } else {
+      result = func(trace, ...args);
+    }
 
-    options?.onComplete?.(result);
+    options.onComplete?.(result);
 
     return result;
   } catch (e) {
     try {
-      options?.onError?.(e);
+      options.onError?.(e);
     } catch (e2) {
       /* node:coverage ignore next */
       log().error?.(trace, e2);
@@ -87,7 +91,8 @@ export const callSyncFunc = <ArgsT extends any[], ReturnT>(
     /* node:coverage disable */
     if (
       errorCode !== undefined &&
-      (shouldDisableErrorForLoggingAndMetrics(options?.disableLam ?? false, { error, errorCode }) ||
+      (shouldDisableErrorForLoggingAndMetrics(options.disableLam ?? false, { error, errorCode }) ||
+        shouldDisableErrorForLoggingAndMetrics(options.deepDisableLam ?? false, { error, errorCode }) ||
         shouldDisableErrorForLoggingAndMetrics(lamControl.disable, { error, errorCode }))
     ) {
       errorCode = undefined;

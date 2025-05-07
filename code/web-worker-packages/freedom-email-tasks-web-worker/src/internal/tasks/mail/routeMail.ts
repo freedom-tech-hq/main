@@ -115,9 +115,7 @@ const hasMailBeenProcessedForRoutingAlready = makeAsyncResultFunc(
     const paths = await getUserMailPaths(syncableStore);
 
     const routeProcessedMarkerFilePath = paths.routeProcessing.year(mailDate).month.day.hour.mailId(mailId);
-    const syncableItem = await disableLam(trace, 'not-found', (trace) =>
-      getSyncableAtPath(trace, syncableStore, routeProcessedMarkerFilePath, 'file')
-    );
+    const syncableItem = await disableLam('not-found', getSyncableAtPath)(trace, syncableStore, routeProcessedMarkerFilePath, 'file');
     if (!syncableItem.ok) {
       if (syncableItem.value.errorCode === 'not-found') {
         return makeSuccess(false);

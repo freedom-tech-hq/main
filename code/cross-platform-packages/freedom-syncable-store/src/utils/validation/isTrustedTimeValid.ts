@@ -50,7 +50,7 @@ export const isTrustedTimeValid = makeAsyncResultFunc(
       });
     }
 
-    const trustedTimeSources = await disableLam(trace, 'untrusted', (trace) => getTrustedTimeSourcesForPath(trace, store, parentPath));
+    const trustedTimeSources = await disableLam('untrusted', getTrustedTimeSourcesForPath)(trace, store, parentPath);
     if (!trustedTimeSources.ok) {
       if (trustedTimeSources.value.errorCode === 'untrusted') {
         return makeSuccess(false);

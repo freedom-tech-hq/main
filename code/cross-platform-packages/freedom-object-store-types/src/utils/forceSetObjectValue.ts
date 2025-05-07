@@ -19,13 +19,11 @@ export const forceSetObjectValue = makeAsyncResultFunc(
     { getMutable, update, create, maxAttempts }: ForceSetObjectValueArgs<T, ErrorCodeT>,
     newValue: T
   ): PR<undefined, Exclude<ErrorCodeT, 'conflict' | 'not-found' | 'out-of-date'>> => {
-    const result = await disableLam(trace, 'not-found', (trace) =>
-      forceReplaceObjectValue(trace, { getMutable, update, maxAttempts }, newValue)
-    );
+    const result = await disableLam('not-found', forceReplaceObjectValue)(trace, { getMutable, update, maxAttempts }, newValue);
     if (!result.ok) {
       if (result.value.errorCode === 'not-found') {
         // If the object doesn't exist, try to create it
-        const created = await disableLam(trace, 'conflict', (trace) => create(trace, newValue));
+        const created = await disableLam('conflict', create)(trace, newValue);
         if (!created.ok) {
           if (created.value.errorCode === 'conflict') {
             // If there's a conflict, it was likely just created, so try to get it again

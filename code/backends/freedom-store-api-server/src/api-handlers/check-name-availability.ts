@@ -19,7 +19,7 @@ export default makeHttpApiHandler(
   ) => {
     // Check if the name is already taken by constructing the email
     const email = `${name}@${config.EMAIL_DOMAIN}`;
-    const existingUserResult = await disableLam(trace, 'not-found', (trace) => findUserByEmail(trace, email));
+    const existingUserResult = await disableLam('not-found', findUserByEmail)(trace, email);
 
     // Expected outcomes
     if (existingUserResult.ok || existingUserResult.value.errorCode === 'not-found') {

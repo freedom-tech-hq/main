@@ -3,7 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableFolderAccessor, MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { isSyncableValidationEnabledProvider } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { getMutableSyncableAtPath } from '../get/getMutableSyncableAtPath.ts';
 
 export const createFolderAtPath = makeAsyncResultFunc(
@@ -16,11 +16,7 @@ export const createFolderAtPath = makeAsyncResultFunc(
   ): PR<MutableSyncableFolderAccessor, 'conflict' | 'deleted' | 'not-found' | 'untrusted' | 'wrong-type'> => {
     // Disabling validation since we're creating something new -- and this might be a new access control bundle for example, which would
     // make checking it impossible anyway
-    const parent = await isSyncableValidationEnabledProvider(
-      trace,
-      false,
-      async (trace) => await getMutableSyncableAtPath(trace, store, path.parentPath!, 'folder')
-    );
+    const parent = await disableSyncableValidation(getMutableSyncableAtPath)(trace, store, path.parentPath!, 'folder');
     if (!parent.ok) {
       return parent;
     }

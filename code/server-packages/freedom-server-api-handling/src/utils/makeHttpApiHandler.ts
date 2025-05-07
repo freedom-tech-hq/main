@@ -6,7 +6,7 @@ import { callAsyncFunc } from 'freedom-async';
 import { Cast } from 'freedom-cast';
 import { attachToTrace, log, LogJson, makeTrace } from 'freedom-contexts';
 import { authTokenProvider } from 'freedom-server-trace-auth-token';
-import { disableLam as disableLamProvider } from 'freedom-trace-logging-and-metrics';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { getOrCreateServiceContext, traceServiceContextProvider } from 'freedom-trace-service-context';
 import { StatusCodes } from 'http-status-codes';
 import type { AnyBody, AnyHeaders, AnyParams, AnyQuery, AnyStatus, HttpApi, OptionalIfPossiblyUndefined } from 'yaschema-api';
@@ -36,10 +36,11 @@ export const makeHttpApiHandler =
     idStack: string[],
     {
       api,
-      disableLam,
+      disableLam: disableLamOption,
+      deepDisableLam: deepDisableLamOption,
       ...handlerOptions
     }: HttpApiHandlerOptions &
-      Pick<AsyncFuncOptions<any>, 'disableLam'> & {
+      Pick<AsyncFuncOptions<any>, 'disableLam' | 'deepDisableLam'> & {
         api: HttpApi<
           ReqHeadersT,
           ReqParamsT,
@@ -74,7 +75,10 @@ export const makeHttpApiHandler =
     }
     /* node:coverage enable */
 
-    const options: AsyncFuncOptions<void | Response<any, Record<string, any>>> = { disableLam };
+    const options: AsyncFuncOptions<void | Response<any, Record<string, any>>> = {
+      disableLam: disableLamOption,
+      deepDisableLam: deepDisableLamOption
+    };
 
     return registerHttpApiHandler<
       ReqHeadersT,
@@ -109,9 +113,7 @@ export const makeHttpApiHandler =
             if (selectedAuthToken !== undefined && !selectedAuthToken.ok) {
               ok = false;
               express.res.setHeader('Cache-Control', 'no-store');
-              return disableLamProvider(trace, options.disableLam ?? [], (trace) =>
-                httpError(trace, genericOutput, selectedAuthToken.value)
-              );
+              return disableLam(options.disableLam ?? [], httpError)(trace, genericOutput, selectedAuthToken.value);
             }
             /* node:coverage enable */
 
@@ -137,7 +139,11 @@ export const makeHttpApiHandler =
               }
               /* node:coverage enable */
 
-              const handlerResult = await handler(trace, { express, input, output, extras: extras as ExtrasT });
+              const handlerArgs = { express, input, output, extras: extras as ExtrasT };
+
+              const handlerResult = await (deepDisableLamOption !== undefined
+                ? disableLam(deepDisableLamOption, handler)(trace, handlerArgs)
+                : handler(trace, handlerArgs));
               /* node:coverage disable */
               if (handlerResult === undefined) {
                 return; // Result must have been returned using output
@@ -153,7 +159,7 @@ export const makeHttpApiHandler =
                 );
               } else {
                 ok = false;
-                disableLamProvider(trace, options.disableLam ?? [], (trace) => httpError(trace, genericOutput, handlerResult.value));
+                disableLam(disableLamOption ?? [], httpError)(trace, genericOutput, handlerResult.value);
               }
             });
           } catch (e) {

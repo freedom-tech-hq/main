@@ -10,7 +10,7 @@ export const getOrCreate = makeAsyncResultFunc(
     trace: Trace,
     { get, create }: { get: PRFunc<T, ErrorCodeT | 'not-found'>; create: PRFunc<T | undefined, ErrorCodeT | 'conflict'> }
   ): PR<T, Exclude<ErrorCodeT, 'conflict' | 'not-found'>> => {
-    const found = await disableLam(trace, 'not-found', (trace) => get(trace));
+    const found = await disableLam('not-found', get)(trace);
     if (found.ok) {
       return found;
     } /* node:coverage disable */ else if (found.value.errorCode !== 'not-found') {
@@ -18,7 +18,7 @@ export const getOrCreate = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const created = await disableLam(trace, 'conflict', (trace) => create(trace));
+    const created = await disableLam('conflict', create)(trace);
     /* node:coverage disable */
     if (!created.ok) {
       // Try to get the bundle again if there's a conflict, since it might have just been created

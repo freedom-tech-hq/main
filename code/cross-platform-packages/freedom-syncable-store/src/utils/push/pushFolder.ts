@@ -28,7 +28,7 @@ export const pushFolder = makeAsyncResultFunc(
       return makeSuccess(undefined);
     }
 
-    const folder = await disableLam(trace, 'conflict', (trace) => createViaSyncFolderAtPath(trace, store, path, metadata));
+    const folder = await disableLam('conflict', createViaSyncFolderAtPath)(trace, store, path, metadata);
     if (!folder.ok) {
       // Treating conflicts as ok since this will often be the case when using a batch strategy or when syncing with predicable ids
       if (folder.value.errorCode !== 'conflict') {

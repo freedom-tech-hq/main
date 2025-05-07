@@ -23,7 +23,7 @@ export const pushBundle = makeAsyncResultFunc(
       batchContents?: SyncBatchContents;
     }
   ): PR<undefined, 'not-found'> => {
-    const bundle = await disableLam(trace, 'conflict', (trace) => createViaSyncBundleAtPath(trace, store, path, metadata));
+    const bundle = await disableLam('conflict', createViaSyncBundleAtPath)(trace, store, path, metadata);
     if (!bundle.ok) {
       // Treating conflicts as ok since this will often be the case when using a batch strategy or when syncing with predicable ids
       if (bundle.value.errorCode !== 'conflict') {

@@ -7,7 +7,7 @@ import { getFileHandleForSyncablePath } from './getFileHandleForSyncablePath.ts'
 
 export const makeExistsFuncForFilePath = (rootHandle: FileSystemDirectoryHandle, path: SyncablePath) =>
   makeAsyncResultFunc([import.meta.filename], async (trace): PR<boolean, 'wrong-type'> => {
-    const fileHandle = await disableLam(trace, 'not-found', (trace) => getFileHandleForSyncablePath(trace, rootHandle, path));
+    const fileHandle = await disableLam('not-found', getFileHandleForSyncablePath)(trace, rootHandle, path);
     if (!fileHandle.ok) {
       if (fileHandle.value.errorCode === 'not-found') {
         return makeSuccess(false);

@@ -62,8 +62,11 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
     const getSameOrPreviousYear = makeAsyncResultFunc(
       [import.meta.filename, 'getSameOrPreviousYear'],
       async (trace, cursorYear: number): PR<TimeOrganizedMailStorageTraverserAccessor | undefined> => {
-        const baseFolderLike = await disableLam(trace, 'not-found', (trace) =>
-          getSyncableAtPath(trace, syncableStore, timeOrganizedPaths.value, syncableItemTypes.exclude('file'))
+        const baseFolderLike = await disableLam('not-found', getSyncableAtPath)(
+          trace,
+          syncableStore,
+          timeOrganizedPaths.value,
+          syncableItemTypes.exclude('file')
         );
         if (!baseFolderLike.ok) {
           if (baseFolderLike.value.errorCode === 'not-found') {
@@ -118,7 +121,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, 1, 1, 0));
         const yearPath = baseYearPath.value;
 
-        const yearBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, syncableStore, yearPath, 'bundle'));
+        const yearBundle = await disableLam('not-found', getSyncableAtPath)(trace, syncableStore, yearPath, 'bundle');
         if (!yearBundle.ok) {
           if (yearBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
@@ -184,7 +187,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, 1, 0));
         const monthPath = baseYearPath.month.value;
 
-        const monthBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, syncableStore, monthPath, 'bundle'));
+        const monthBundle = await disableLam('not-found', getSyncableAtPath)(trace, syncableStore, monthPath, 'bundle');
         if (!monthBundle.ok) {
           if (monthBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
@@ -252,7 +255,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
         const baseYearPath = timeOrganizedPaths.year(makeDate(cursorYear, cursorMonth, cursorDay, 0));
         const dayPath = baseYearPath.month.day.value;
 
-        const dayBundle = await disableLam(trace, 'not-found', (trace) => getSyncableAtPath(trace, syncableStore, dayPath, 'bundle'));
+        const dayBundle = await disableLam('not-found', getSyncableAtPath)(trace, syncableStore, dayPath, 'bundle');
         if (!dayBundle.ok) {
           if (dayBundle.value.errorCode === 'not-found') {
             return makeSuccess(undefined);
