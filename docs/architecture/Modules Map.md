@@ -1,28 +1,32 @@
 # Modules Map
 
+Our packages, grouped by aspect.
+
 ## Email App
 
 Includes UI and backends.
 Data processing is implemented on top of Syncable Store and should be thoroughly separated.
 
 ### Frontend and Backends
-- freedom-**email-app** (frontend) [README.md](../../code/apps/freedom-email-app/README.md)
+- freedom-**email-app** (app) [README.md](../../code/apps/freedom-email-app/README.md)
+  Email frontend. The only frontend for now.
 - freedom-**mail-host** (backend) [README.md](../../code/backends/freedom-mail-host/README.md)
-  Node.js SMTP server for inbound and Syncable Store subscription for outbound emails.
+  Node.js SMTP server for inbound emails.
+  Syncable Store subscription for outbound emails.
+- Parts of freedom-**store-api-server** (see [REST API](#rest-api) section) are related to the Email App.
 - **delivery-host** (backend) [README.md](../../code/backends/delivery-host/README.md)
   Non-TS module. Docker Mailserver configuration as a delivery host.
-- **store-api-server** (see [REST API](#rest-api) section) also contains elements for Email App.
 
 ### Components
 - freedom-**email-sync** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-email-sync/README.md)
-  Functions defining email-app related structure in Syncable Store.
+  Functions defining email-app related structure in Syncable Store, client-and-server part.
 - freedom-**email-user** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-email-user/README.md)
-  Functions defining email-app related structure in Syncable Store. On top of `freedom-email-sync`.
+  Client-only extension of `freedom-email-sync` (same scope).
+- freedom-**email-tasks-web-worker** (web-worker) [README.md](../../code/web-worker-packages/freedom-email-tasks-web-worker/README.md)
+  Client-side REST API handlers.
 - freedom-**email-server** (server) [README.md](../../code/server-packages/freedom-email-server/README.md)
   Email app backend implementation on top of freedom-syncable-store-server.
   Note: the existence of this package shows a problem in separation of concerns for backends. It is probably temporary.
-- freedom-**email-tasks-web-worker** (web-worker) [README.md](../../code/web-worker-packages/freedom-email-tasks-web-worker/README.md)
-  Client-side REST API handlers.
 - freedom-**db** (server) [README.md](../../code/server-packages/freedom-db/README.md)
   User properties to route emails. Plus DB layer.
 
@@ -40,20 +44,11 @@ Data processing is implemented on top of Syncable Store and should be thoroughly
 - freedom-**syncable-store-types** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-syncable-store-types/README.md)
   Types for Syncable Store packages.
 
-### REST API
-- freedom-**store-api-server** (backend) [README.md](../../code/backends/freedom-store-api-server/README.md)
-  Generic Syncable Store endpoints and app-specific ones. Connects `freedom-email-server` to expose Email-specific endpoints.
-- freedom-**store-api-server-api** (cross-platform)
-  REST API schema.
-- freedom-**syncable-store-server** (server) [README.md](../../code/server-packages/freedom-syncable-store-server/README.md)
-  Backend implementation of the server. Extracted from the server because also used by `freedom-email-server`.
-
-### Backings
-- freedom-**syncable-store-backing-types** (cross-platform)
-- freedom-**in-memory-syncable-store-backing** (cross-platform)
-- freedom-**file-system-syncable-store-backing** (server)
-- freedom-**google-storage-syncable-store-backing** (server)
-- freedom-**opfs-syncable-store-backing** (web-worker)
+### Access Control
+- freedom-**access-control-types** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-access-control-types/README.md)
+  Type definitions for access control, independent of implementation details.
+- freedom-**access-control** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-access-control/README.md)
+  Access control implementation that enforces permissions using the crypto packages.
 
 ### CRDT & Synchronization Protocol
 - freedom-**sync-types** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-sync-types/README.md)
@@ -70,26 +65,36 @@ Data processing is implemented on top of Syncable Store and should be thoroughly
 - freedom-**sync-service-testing-tools** (dev) [README.md](../../code/dev-packages/freedom-sync-service-testing-tools/README.md)
   Testing utilities for sync operations without requiring full backend implementations.
 
+### REST API
+- freedom-**store-api-server** (backend) [README.md](../../code/backends/freedom-store-api-server/README.md)
+  Generic Syncable Store endpoints and app-specific ones. Connects `freedom-email-server` to expose Email-specific endpoints.
+- freedom-**store-api-server-api** (cross-platform)
+  REST API schema.
+- freedom-**syncable-store-server** (server) [README.md](../../code/server-packages/freedom-syncable-store-server/README.md)
+  Backend implementation of the server. Extracted from the server because also used by `freedom-email-server`.
+
+### Backings
+- freedom-**syncable-store-backing-types** (cross-platform)
+- freedom-**in-memory-syncable-store-backing** (cross-platform)
+- freedom-**file-system-syncable-store-backing** (server)
+- freedom-**google-storage-syncable-store-backing** (server)
+- freedom-**opfs-syncable-store-backing** (web-worker)
+
 ---
 
-### Security & Cryptography
-- freedom-**crypto** (cross-platform)
-- freedom-**crypto-data** (cross-platform)
-- freedom-**crypto-service** (cross-platform)
-- freedom-**access-control** (cross-platform)
-- freedom-**access-control-types** (cross-platform)
-- freedom-**server-auth** (server)
-- freedom-**server-trace-auth-token** (server)
-
----
-
-## Object Store
-Seems not used. It is currently only used in the server part that is being replaced with Postgres.
-
-- freedom-**object-store-types** (cross-platform)
-- freedom-**json-file-object-store** (server)
-- freedom-**sqlite-object-store** (server)
-- freedom-**indexeddb-object-store** (web)
+### Cryptography
+These packages do not implement parts of the store, but may implement atomic transformations demanded by the store implementation.
+- freedom-**crypto-data** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-crypto-data/README.md)
+  See `freedom-crypto` description below. 
+- freedom-**crypto** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-crypto/README.md)
+  General-purpose cryptographic operations. Encryption, decryption, signing, and verification functionality.
+  Brian: Data should be mostly serializable types. Crypto is mostly utils and non serializable types.
+  Pavel: The distinction is not clear. A non-serializable object becomes serializable via yaschema. A serializable object is not always being serialized.  I propose merging them in one package.
+- freedom-**crypto-service** (cross-platform) [README.md](../../code/cross-platform-packages/freedom-crypto-service/README.md)
+  Defines:
+  `UserKeys` interface - user keys enumerator.
+  `decryptOneEncryptedValue` function - connects `freedom-crypto.decryptEncryptedValue()` with `UserKeys`.
+  TODO: Consider merging into a package that introduces the idea of a user of a store. Also, the need in a enumerator as a service is not obvious, UserKeys might be a record, so the functions that encrypt expect one key, the functions that decrypt expect an array of keys, the functions (or constructors) that assume both operations - expect a record with one+array. Keys do not need lazy-loading, do they?
 
 ---
 
@@ -125,8 +130,8 @@ Seems not used. It is currently only used in the server part that is being repla
 - freedom-**locking-types** (cross-platform)
 - freedom-**notification-types** (cross-platform)
 
-### Data Structures & Utilities
-#### Common Use Utils
+### General Purpose Utils
+#### Ubiquitous Utils
 - freedom-**async** (cross-platform)
 - freedom-**basic-data** (cross-platform)
 - freedom-**cast** (cross-platform)
@@ -150,6 +155,12 @@ Seems not used. It is currently only used in the server part that is being repla
 ### Caching
 - freedom-**in-memory-cache** (cross-platform)
 
+### API Server
+- freedom-**server-auth** (server) [README.md](../../code/server-packages/freedom-server-auth/README.md)
+  Types extracted from `freedom-server-api-handling`. Pavel's opinion: merge this and `freedom-server-trace-auth-token` into `freedom-server-api-handling`.  
+- freedom-**server-trace-auth-token** (server) [README.md](../../code/server-packages/freedom-server-trace-auth-token/README.md)
+  Implementation for `freedom-server-auth` extracted from `freedom-server-api-handling`. See the comment on `freedom-server-auth`.
+
 ### Tracing, Logging & Metrics
 - freedom-**logging-types** (cross-platform)
 - freedom-**metrics-types** (cross-platform)
@@ -158,3 +169,13 @@ Seems not used. It is currently only used in the server part that is being repla
 - freedom-**trace-service-context** (cross-platform)
 - freedom-**dev-logging-support** (cross-platform)
 - freedom-**profiler** (dev)
+
+---
+
+## Object Store
+Seems not used. It is currently only used in the server part that is being replaced with Postgres.
+
+- freedom-**object-store-types** (cross-platform)
+- freedom-**json-file-object-store** (server)
+- freedom-**sqlite-object-store** (server)
+- freedom-**indexeddb-object-store** (web)
