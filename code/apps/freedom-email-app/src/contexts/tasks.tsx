@@ -19,6 +19,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       console.log('App environment:', appEnv);
 
       const tasks = await getTasks();
+
+      DEV: (window as Record<string, any>).freedom_logUserFsLs = tasks.logUserFsLs;
+
       const configured = await tasks.setConfig(taskWorkerConfigs[appEnv]);
       if (!configured.ok) {
         log().error?.('Failed to configure tasks worker', configured.value);

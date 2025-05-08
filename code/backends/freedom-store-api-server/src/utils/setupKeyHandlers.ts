@@ -1,8 +1,11 @@
 import readline from 'node:readline';
 
 import type { PR } from 'freedom-async';
-import { bestEffort, inline, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { bestEffort, inline, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { getUserById } from 'freedom-db';
+import { getEmailAgentSyncableStore } from 'freedom-email-server';
 import type { EmailUserId } from 'freedom-email-sync';
+import { logLs } from 'freedom-syncable-store';
 
 import { addDemoEmail } from './addDemoEmail.ts';
 
@@ -23,6 +26,7 @@ export const setupKeyHandlers = makeAsyncResultFunc(
 
     console.log('Keyboard Shortcuts Enabled:');
     console.log('===========================');
+    console.log('l – Log User FS (ls)');
     console.log('n – Add a new demo email');
     console.log('q – Quit');
 
@@ -33,6 +37,10 @@ export const setupKeyHandlers = makeAsyncResultFunc(
 
     const keyPressHandler: KeyPressHandler = (_chunk, key) => {
       switch (key?.name ?? '') {
+        case 'l':
+          console.log('Got list command');
+          inline(async () => await bestEffort(trace, logUserFsLs(trace, { userId })));
+          break;
         case 'n':
           console.log('Got new demo email command');
           inline(async () => await bestEffort(trace, addDemoEmail(trace, { userId })));
@@ -52,6 +60,18 @@ export const setupKeyHandlers = makeAsyncResultFunc(
     globalLastKeyPressHandler = keyPressHandler;
     process.stdin.on('keypress', keyPressHandler);
 
+    return makeSuccess(undefined);
+  }
+);
+
+// Helpers
+
+const logUserFsLs = makeAsyncResultFunc(
+  [import.meta.filename, 'logUserFsLs'],
+  async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
+    const user = await uncheckedResult(getUserById(trace, userId));
+    const syncableStore = await uncheckedResult(getEmailAgentSyncableStore(trace, user));
+    await logLs(trace, syncableStore, console.log, { prefix: 'user fs: ' });
     return makeSuccess(undefined);
   }
 );

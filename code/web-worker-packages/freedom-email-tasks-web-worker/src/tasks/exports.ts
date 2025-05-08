@@ -5,6 +5,7 @@ import { makeTrace } from 'freedom-contexts';
 
 import type { setConfig } from './config/setConfig.ts';
 import type { devFwdEnv } from './dev/devFwdEnv.ts';
+import type { logUserFsLs } from './dev/logUserFsLs.ts';
 import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './email-credential/activateUserWithLocallyStoredEncryptedEmailCredential.ts';
 import type { addEncryptionForBiometricsToLocallyStoredEmailCredential } from './email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts';
 import type { getLocallyStoredEncryptedEmailCredential } from './email-credential/getLocallyStoredEncryptedEmailCredential.ts';
@@ -36,6 +37,9 @@ class TasksImpl {
 
   public readonly devFwdEnv = async (...args: ParametersExceptFirst<typeof devFwdEnv>) =>
     await (await import('./dev/devFwdEnv.ts')).devFwdEnv(this.#trace, ...args);
+
+  public readonly logUserFsLs = async (...args: ParametersExceptFirst<typeof logUserFsLs>) =>
+    await (await import('./dev/logUserFsLs.ts')).logUserFsLs(this.#trace, ...args);
 
   // Email Credential
 
