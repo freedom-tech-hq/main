@@ -3,12 +3,12 @@ import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-asyn
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncablePath } from 'freedom-sync-types';
-import type { FolderStore } from 'freedom-syncable-store-types';
+import type { FolderStore, SyncableFolderAccessor } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
 
 export const getRecursiveFolderPaths = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: FolderStore): PR<SyncablePath[]> => {
+  async (trace, folder: SyncableFolderAccessor): PR<SyncablePath[]> => {
     const queue = new TaskQueue('getRecursiveFolderPaths', trace);
 
     const out: SyncablePath[] = [];
@@ -43,8 +43,8 @@ export const getRecursiveFolderPaths = makeAsyncResultFunc(
         return makeSuccess(undefined);
       };
 
-    const rootPath = store.path;
-    queue.add(rootPath.toString(), makeProcessPathFunc({ store, path: rootPath }));
+    const rootPath = folder.path;
+    queue.add(rootPath.toString(), makeProcessPathFunc({ store: folder, path: rootPath }));
 
     queue.start();
     try {

@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
@@ -7,7 +7,7 @@ import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, Syncabl
 import {
   getBundleAtPathForSync,
   getFolderAtPathForSync,
-  getSyncableHashAtPath,
+  getMetadataAtPath,
   pushBundle,
   pushFile,
   pushFolder
@@ -30,11 +30,11 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
     }
 
     const strategy = await syncService.getSyncStrategyForPath('pull', path);
-    const hash = await getSyncableHashAtPath(trace, store, path);
+    const metadata = await getMetadataAtPath(trace, store, path);
 
     // TODO: everything pulled needs to be validated -- approved content: just validate the approval itself; not-yet approved content:
     // validate the change against the access control document
-    const pulled = await pullFromRemote(trace, { path, hash: hash.ok ? hash.value : undefined, sendData: true, strategy });
+    const pulled = await pullFromRemote(trace, { path, hash: metadata.ok ? metadata.value.hash : undefined, sendData: true, strategy });
     if (!pulled.ok) {
       return pulled;
     }
@@ -47,6 +47,8 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
     });
 
     if (pulled.value.outOfSync) {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local and remote are out of sync`));
+
       switch (pulled.value.type) {
         case 'folder': {
           const handled = await onFolderPulled(trace, { store, syncService, folder: pulled.value }, { remoteId, path });
@@ -65,7 +67,7 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
           break;
         }
         case 'bundle': {
-          const handled = await onBundlePulled(trace, { store, syncService, file: pulled.value }, { remoteId, path });
+          const handled = await onBundlePulled(trace, { store, syncService, bundle: pulled.value }, { remoteId, path });
           if (!handled.ok) {
             return handled;
           }
@@ -73,6 +75,8 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
           break;
         }
       }
+    } else {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local and remote are in sync`));
     }
 
     return makeSuccess(undefined);
@@ -86,10 +90,10 @@ const onBundlePulled = makeAsyncResultFunc(
   [import.meta.filename, 'onBundlePulled'],
   async (
     trace: Trace,
-    { store, syncService, file }: { store: MutableSyncableStore; syncService: SyncService; file: OutOfSyncBundle },
+    { store, syncService, bundle }: { store: MutableSyncableStore; syncService: SyncService; bundle: OutOfSyncBundle },
     { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
-    const pushedLocally = await pushBundle(trace, store, { path, metadata: file.metadata, batchContents: file.batchContents });
+    const pushedLocally = await pushBundle(trace, store, { path, metadata: bundle.metadata, batchContents: bundle.batchContents });
     if (!pushedLocally.ok) {
       return generalizeFailureResult(trace, pushedLocally, 'not-found');
     }
@@ -101,18 +105,34 @@ const onBundlePulled = makeAsyncResultFunc(
 
     const localMetadataById = localBundle.value.metadataById;
 
-    // Trying to pull in sorted key order for better determinism
-    for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(file.hashesById))) {
-      const localMetadata = localMetadataById[id];
-      if (remoteHash === undefined || localMetadata?.hash === remoteHash) {
-        continue;
-      }
+    const outOfSyncEntries = objectEntries(objectWithSortedKeys(bundle.hashesById)).filter(
+      ([id, remoteHash]) => remoteHash !== undefined && localMetadataById[id]?.hash !== remoteHash
+    );
 
-      syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadata?.hash });
+    if (outOfSyncEntries.length > 0) {
+      DEV: debugTopic('SYNC', (log) =>
+        log(
+          `Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to pull ${outOfSyncEntries.length} items: ${outOfSyncEntries
+            .slice(0, 3)
+            .map(([id, _localMetadata]) => id)
+            .join(',')}${outOfSyncEntries.length > 3 ? '…' : ''}`
+        )
+      );
+
+      const enqueued = await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
+        syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadataById[id]?.hash });
+
+        return makeSuccess(undefined);
+      });
+      if (!enqueued.ok) {
+        return enqueued;
+      }
+    } else {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local has all remote content`));
     }
 
     // Pushing any missing content to the remote
-    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: file }, { remoteId, path });
+    const pushed = await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: bundle }, { remoteId, path });
     if (!pushed.ok) {
       return generalizeFailureResult(trace, pushed, 'not-found');
     }
@@ -140,12 +160,30 @@ const onFolderPulled = makeAsyncResultFunc(
 
     const localMetadataById = localFolder.value.metadataById;
 
-    // Trying to pull in sorted key order for better determinism
-    for (const [id, remoteHash] of objectEntries(objectWithSortedKeys(folder.hashesById))) {
-      const localMetadata = localMetadataById[id];
-      if (remoteHash !== undefined && localMetadata?.hash !== remoteHash) {
-        syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadata?.hash });
+    const outOfSyncEntries = objectEntries(objectWithSortedKeys(folder.hashesById)).filter(
+      ([id, remoteHash]) => remoteHash !== undefined && localMetadataById[id]?.hash !== remoteHash
+    );
+
+    if (outOfSyncEntries.length > 0) {
+      DEV: debugTopic('SYNC', (log) =>
+        log(
+          `Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to pull ${outOfSyncEntries.length} items: ${outOfSyncEntries
+            .slice(0, 3)
+            .map(([id, _localMetadata]) => id)
+            .join(',')}${outOfSyncEntries.length > 3 ? '…' : ''}`
+        )
+      );
+
+      const enqueued = await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
+        syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadataById[id]?.hash });
+
+        return makeSuccess(undefined);
+      });
+      if (!enqueued.ok) {
+        return enqueued;
       }
+    } else {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local has all remote content`));
     }
 
     // Pushing any missing content to the remote
@@ -168,6 +206,8 @@ const onFilePulled = makeAsyncResultFunc(
     if (fileData === undefined) {
       return makeFailure(new InternalStateError(trace, { message: 'File data is missing' }));
     }
+
+    DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}.  Will store`));
 
     const pushedLocally = await pushFile(trace, store, { path, metadata: file.metadata, data: fileData });
     // (trace, store, path, fileData, file.metadata);

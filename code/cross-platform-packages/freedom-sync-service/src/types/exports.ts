@@ -1,4 +1,4 @@
 export * from './GetSyncStrategyForPathFunc.ts';
-export * from './ShouldSyncWithAllRemotesFunc.ts';
+export * from './ShouldPushToAllRemotesFunc.ts';
 export * from './SyncService.ts';
 export * from './SyncServiceLogEntry.ts';

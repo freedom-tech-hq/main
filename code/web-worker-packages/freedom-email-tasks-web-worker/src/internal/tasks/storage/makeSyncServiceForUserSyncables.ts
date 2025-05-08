@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc } from 'freedom-async';
 import { extractNumberFromPlainSyncableId } from 'freedom-email-sync';
 import type { EmailCredential, UserMailPaths } from 'freedom-email-user';
 import { getUserMailPaths, mailCollectionTypes } from 'freedom-email-user';
@@ -8,6 +8,7 @@ import { makeSyncService } from 'freedom-sync-service';
 import type { SyncablePath } from 'freedom-sync-types';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { DateTime } from 'luxon';
 
 import { getOrCreateEmailSyncableStore } from '../user/getOrCreateEmailSyncableStore.ts';
@@ -19,7 +20,7 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
     {
       credential,
       ...fwdArgs
-    }: Omit<MakeSyncServiceArgs, 'getSyncStrategyForPath' | 'shouldSyncWithAllRemotes' | 'store'> & {
+    }: Omit<MakeSyncServiceArgs, 'getSyncStrategyForPath' | 'shouldPushToAllRemotes' | 'store'> & {
       credential: EmailCredential;
     }
   ): PR<SyncService> => {
@@ -28,16 +29,16 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
       return syncableStoreResult;
     }
 
-    const syncableStore = syncableStoreResult.value;
-    const paths = await getUserMailPaths(syncableStore);
+    const userFs = syncableStoreResult.value;
+    const paths = await getUserMailPaths(userFs);
 
     return await makeSyncService(trace, {
       ...fwdArgs,
-      shouldSyncWithAllRemotes: async () => makeSuccess(false),
+      shouldPushToAllRemotes: () => false,
       getSyncStrategyForPath: async (direction, path) => {
         switch (direction) {
           case 'pull': {
-            const found = await getSyncableAtPath(trace, syncableStore, path);
+            const found = await disableLam('not-found', getSyncableAtPath)(trace, userFs, path);
             if (!found.ok) {
               if (found.value.errorCode === 'not-found') {
                 return 'batch';
@@ -55,7 +56,7 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
 
         return 'default';
       },
-      store: syncableStore
+      store: userFs
     });
   }
 );

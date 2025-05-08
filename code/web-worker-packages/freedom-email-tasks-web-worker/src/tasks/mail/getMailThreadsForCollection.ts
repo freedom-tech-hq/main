@@ -8,7 +8,7 @@ import type { CollectionLikeId, ThreadLikeId } from 'freedom-email-user';
 import { getUserMailPaths, mailCollectionTypes } from 'freedom-email-user';
 import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
 import type { PageToken } from 'freedom-paginated-data';
-import { extractUnmarkedSyncableId } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, extractUnmarkedSyncableId } from 'freedom-sync-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -52,8 +52,8 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     const initiallyLoadedMailIds: ThreadLikeId[] = pagedMailIds.value.items;
 
     const pendingMailIds: MailId[] = [];
-    const removeCollectionChangeListener = syncableStore.addListener('itemAdded', ({ type, path }) => {
-      if (type !== 'file') {
+    const removeCollectionChangeListener = syncableStore.addListener('itemAdded', ({ path }) => {
+      if (path.lastId === undefined || extractSyncableItemTypeFromId(path.lastId) !== 'file') {
         return;
       } else if (!path.startsWith(collectionPaths.value)) {
         return;
@@ -109,7 +109,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
           return pagedMailIds;
         }
 
-        await withAcquiredLock(trace, lockStore.lock('process'), {}, async (): PR<undefined> => {
+        await withAcquiredLock(trace, lockStore.lock('process'), {}, async (_trace): PR<undefined> => {
           await onData({ ok: true, value: { type: 'mail-added' as const, threadIds: pagedMailIds.value.items } });
           return makeSuccess(undefined);
         });

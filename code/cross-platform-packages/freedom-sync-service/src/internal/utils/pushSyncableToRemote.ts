@@ -8,7 +8,7 @@ import {
   getBundleAtPathForSync,
   getFileAtPathForSync,
   getFolderAtPathForSync,
-  getSyncableHashAtPath,
+  getMetadataAtPath,
   getSyncableItemTypeAtPathForSync
 } from 'freedom-syncable-store';
 import { ACCESS_CONTROL_BUNDLE_ID, type SyncableStore } from 'freedom-syncable-store-types';
@@ -27,28 +27,29 @@ export const pushSyncableToRemote = makeAsyncResultFunc(
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
     }
 
-    const hash = await getSyncableHashAtPath(trace, store, path);
+    const metadata = await getMetadataAtPath(trace, store, path);
 
     // Not logging this pull since we're really just using this as a status check
     const pulled = await pullFromRemote(trace, {
       path,
-      hash: hash.ok ? hash.value : undefined,
+      hash: metadata.ok ? metadata.value.hash : undefined,
       sendData: false,
       strategy: 'default'
     });
     if (!pulled.ok) {
       if (pulled.value.errorCode === 'not-found') {
-        DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toString()}: nothing found on remote.  Will try to push everything`));
+        DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: nothing found on remote.  Will try to push everything`));
         return await pushEverything(trace, { store, syncService }, { remoteId, path });
       }
 
       return excludeFailureResult(pulled, 'not-found');
     } else if (!pulled.value.outOfSync) {
-      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toString()}: local and remote are in sync`));
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local and remote are in sync`));
       return makeSuccess(undefined); // Nothing to do, already in sync
     }
 
-    DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toString()}: local and remote are out of sync.  Will try to push missing content`));
+    DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: local and remote are out of sync`));
+
     return await pushMissingSyncableContentToRemote(trace, { store, syncService, pulled: pulled.value }, { remoteId, path });
   },
   { deepDisableLam: 'not-found' }
@@ -156,12 +157,25 @@ const pushBundle = makeAsyncResultFunc(
 
     const localMetadataById = localBundle.value.metadataById;
 
-    for (const [id, localMetadata] of objectEntries(localMetadataById)) {
-      if (localMetadata?.hash === undefined || pulledHashesById?.[id] === localMetadata.hash) {
-        continue;
-      }
+    const outOfSyncEntries = objectEntries(localMetadataById).filter(
+      ([id, localMetadata]) => localMetadata !== undefined && pulledHashesById?.[id] !== localMetadata.hash
+    );
 
-      syncService.pushToRemotes({ remoteId, path: path.append(id), hash: localMetadata.hash });
+    if (outOfSyncEntries.length > 0) {
+      DEV: debugTopic('SYNC', (log) =>
+        log(
+          `Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to push ${outOfSyncEntries.length} items: ${outOfSyncEntries
+            .slice(0, 3)
+            .map(([id, _localMetadata]) => id)
+            .join(',')}${outOfSyncEntries.length > 3 ? '…' : ''}`
+        )
+      );
+
+      for (const [id, localMetadata] of outOfSyncEntries) {
+        syncService.pushToRemotes({ remoteId, path: path.append(id), hash: localMetadata!.hash });
+      }
+    } else {
+      DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: remote has all local content`));
     }
 
     return makeSuccess(undefined);
@@ -217,6 +231,10 @@ const pushFolder = makeAsyncResultFunc(
       localMetadataById[ACCESS_CONTROL_BUNDLE_ID] !== undefined &&
       localMetadataById[ACCESS_CONTROL_BUNDLE_ID]!.hash !== pulledHashesById?.[ACCESS_CONTROL_BUNDLE_ID]
     ) {
+      DEV: debugTopic('SYNC', (log) =>
+        log(`Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to push missing access control bundle`)
+      );
+
       // If the remote doesn't have the access control bundle, we need to push that first
       syncService.pushToRemotes({
         remoteId,
@@ -224,12 +242,25 @@ const pushFolder = makeAsyncResultFunc(
         hash: localMetadataById[ACCESS_CONTROL_BUNDLE_ID]!.hash!
       });
     } else {
-      for (const [id, localMetadata] of objectEntries(localMetadataById)) {
-        if (localMetadata?.hash === undefined || pulledHashesById?.[id] === localMetadata.hash) {
-          continue;
-        }
+      const outOfSyncEntries = objectEntries(localMetadataById).filter(
+        ([id, localMetadata]) => localMetadata !== undefined && pulledHashesById?.[id] !== localMetadata.hash
+      );
 
-        syncService.pushToRemotes({ remoteId, path: path.append(id), hash: localMetadata.hash });
+      if (outOfSyncEntries.length > 0) {
+        DEV: debugTopic('SYNC', (log) =>
+          log(
+            `Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to push ${outOfSyncEntries.length} items: ${outOfSyncEntries
+              .slice(0, 3)
+              .map(([id, _localMetadata]) => id)
+              .join(',')}${outOfSyncEntries.length > 3 ? '…' : ''}`
+          )
+        );
+
+        for (const [id, localMetadata] of outOfSyncEntries) {
+          syncService.pushToRemotes({ remoteId, path: path.append(id), hash: localMetadata!.hash });
+        }
+      } else {
+        DEV: debugTopic('SYNC', (log) => log(`Pulled ${path.toShortString()}: remote has all local content`));
       }
     }
 
@@ -253,6 +284,10 @@ const pushFile = makeAsyncResultFunc(
     if (!localFile.ok) {
       return localFile;
     }
+
+    DEV: debugTopic('SYNC', (log) =>
+      log(`Pulled ${path.toShortString()}: local and remote are out of sync.  Will try to push missing file`)
+    );
 
     const pushed = await pushToRemote(trace, { type: 'file', path, metadata: localFile.value.metadata, data: localFile.value.data });
     if (!pushed.ok) {

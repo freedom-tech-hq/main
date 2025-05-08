@@ -7,13 +7,14 @@ import type { SyncService } from '../../types/SyncService.ts';
 
 export const makeManualSyncFunc = (syncService: SyncService, store: MutableSyncableStore) =>
   makeAsyncResultFunc([import.meta.filename], async (trace: Trace): PR<undefined> => {
-    const rootHash = await store.getHash(trace);
-    if (!rootHash.ok) {
-      return rootHash;
+    const rootMetadata = await store.getMetadata(trace);
+    if (!rootMetadata.ok) {
+      return rootMetadata;
     }
 
-    syncService.pullFromRemotes({ path: store.path, hash: rootHash.value });
-    syncService.pushToRemotes({ path: store.path, hash: rootHash.value });
+    syncService.pullFromRemotes({ path: store.path, hash: rootMetadata.value.hash });
+
+    syncService.pushToRemotes({ path: store.path, hash: rootMetadata.value.hash });
 
     return makeSuccess(undefined);
   });

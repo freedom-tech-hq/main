@@ -3,11 +3,6 @@ export interface SyncableStoreLogEntryCheckExists {
   pathString: string;
 }
 
-export interface SyncableStoreLogEntryComputeHash {
-  type: 'compute-hash';
-  pathString: string;
-}
-
 export interface SyncableStoreLogEntryCreateBinary {
   type: 'create-binary';
   pathString: string;
@@ -63,7 +58,6 @@ export type SyncableStoreLogEntry =
   | SyncableStoreLogEntryCreateBinary
   | SyncableStoreLogEntryCreateBundle
   | SyncableStoreLogEntryCreateFolder
-  | SyncableStoreLogEntryComputeHash
   | SyncableStoreLogEntryDecodeData
   | SyncableStoreLogEntryDelete
   | SyncableStoreLogEntryEncodeData

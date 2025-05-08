@@ -24,18 +24,13 @@ export const pullBundle = makeAsyncResultFunc(
         return generalizeFailureResult(trace, bundle, ['untrusted', 'wrong-type']);
       }
 
-      const hash = await bundle.value.getHash(trace);
-      if (!hash.ok) {
-        return hash;
-      }
-
-      if (hash.value === downstreamHash) {
-        return makeSuccess({ type: 'bundle', outOfSync: false } satisfies InSyncBundle);
-      }
-
       const metadata = await bundle.value.getMetadata(trace);
       if (!metadata.ok) {
         return metadata;
+      }
+
+      if (metadata.value.hash === downstreamHash) {
+        return makeSuccess({ type: 'bundle', outOfSync: false } satisfies InSyncBundle);
       }
 
       const metadataById = await bundle.value.getMetadataById(trace);

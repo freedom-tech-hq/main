@@ -1,28 +1,21 @@
 import { generateSignedAddAccessChange, generateSignedModifyAccessChange } from 'freedom-access-control';
 import type { AccessChangeParams, AccessControlState, TrustedTimeSignedAccessChange } from 'freedom-access-control-types';
 import type { PR, Result } from 'freedom-async';
-import { allResultsNamed, GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { allResultsNamed, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { type Sha256Hash } from 'freedom-basic-data';
 import { objectEntries } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import { type Trace } from 'freedom-contexts';
+import type { Trace } from 'freedom-contexts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableIdParts } from 'freedom-sync-types';
-import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
-  GenerateNewSyncableItemNameFunc,
-  MutableFileStore,
-  MutableFolderStore,
   MutableSyncableFolderAccessor,
-  MutableSyncableItemAccessor,
   MutableSyncableStore,
   SaveableDocument,
-  SyncableItemAccessor,
   SyncableStoreRole,
-  SyncTracker,
-  SyncTrackerNotifications
+  SyncTracker
 } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID, syncableStoreRoleSchema } from 'freedom-syncable-store-types';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
@@ -36,23 +29,27 @@ import { doesSyncableStoreRoleHaveReadAccess } from '../../utils/doesSyncableSto
 import { generateInitialFolderAccess } from '../../utils/generateInitialFolderAccess.ts';
 import { generateTrustedTimeForSyncableStoreAccessChange } from '../../utils/generateTrustedTimeForSyncableStoreAccessChange.ts';
 import { getMutableConflictFreeDocumentFromBundleAtPath } from '../../utils/get/getMutableConflictFreeDocumentFromBundleAtPath.ts';
-import { markSyncableNeedsRecomputeHashAtPath } from '../../utils/markSyncableNeedsRecomputeHashAtPath.ts';
-import type { DefaultFileStore } from './DefaultFileStore.ts';
-import { getOrCreateDefaultFileStore } from './DefaultFileStore.ts';
+import { DefaultFileStore } from './DefaultFileStore.ts';
 import { DefaultFolderStore } from './DefaultFolderStore.ts';
+import type { DefaultMutableSyncableItemAccessorBaseConstructorArgs } from './DefaultMutableSyncableItemAccessorBase.ts';
+import { DefaultMutableSyncableItemAccessorBase } from './DefaultMutableSyncableItemAccessorBase.ts';
 import { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
-// TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
-export abstract class DefaultMutableSyncableFolderAccessorBase implements MutableSyncableFolderAccessor {
-  public readonly type = 'folder';
-  public readonly path: SyncablePath;
+export interface DefaultMutableSyncableFolderAccessorBaseConstructorArgs extends DefaultMutableSyncableItemAccessorBaseConstructorArgs {
+  syncTracker: SyncTracker;
+}
 
-  private weakStore_!: WeakRef<MutableSyncableStore>;
+// TODO: need to figure out reasonable way of handling partially loaded data, especially for .access-control bundles, since both uploads and downloads are multi-part and async
+export abstract class DefaultMutableSyncableFolderAccessorBase
+  extends DefaultMutableSyncableItemAccessorBase
+  implements MutableSyncableFolderAccessor
+{
+  public readonly type = 'folder';
+
+  protected readonly syncTracker_: SyncTracker;
+
   private folderOperationsHandler_!: FolderOperationsHandler;
   private makeFolderAccessor_!: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
-  private readonly syncTracker_: SyncTracker;
-
-  private readonly backing_: SyncableStoreBacking;
 
   private folderStore__: DefaultFolderStore | undefined;
   private get folderStore_(): DefaultFolderStore {
@@ -83,12 +80,11 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
         throw new Error('store was released');
       }
 
-      this.fileStore__ = getOrCreateDefaultFileStore({
+      this.fileStore__ = new DefaultFileStore({
         store,
         backing: this.backing_,
         syncTracker: this.syncTracker_,
         path: this.path,
-        isEncryptedByDefault: true,
         folderOperationsHandler: this.folderOperationsHandler_
       });
     }
@@ -96,22 +92,21 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     return this.fileStore__;
   }
 
-  private needsRecomputeHashCount_ = 0;
+  constructor({ syncTracker, ...args }: DefaultMutableSyncableFolderAccessorBaseConstructorArgs) {
+    super(args);
 
-  constructor({ backing, syncTracker, path }: { backing: SyncableStoreBacking; syncTracker: SyncTracker; path: SyncablePath }) {
-    this.backing_ = backing;
     this.syncTracker_ = syncTracker;
-    this.path = path;
   }
 
-  protected deferredInit_({
+  protected override deferredInit_({
     store,
     makeFolderAccessor
   }: {
     store: MutableSyncableStore;
     makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
-    this.weakStore_ = new WeakRef(store);
+    super.deferredInit_({ store });
+
     this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);
     this.makeFolderAccessor_ = makeFolderAccessor;
   }
@@ -242,6 +237,23 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
   // MutableFolderStore Methods
 
+  public readonly createBinaryFile: MutableSyncableFolderAccessor['createBinaryFile'] = (trace, args) =>
+    this.fileStore_.createBinaryFile(trace, args);
+  public readonly createBundle: MutableSyncableFolderAccessor['createBundle'] = (trace, args) => this.fileStore_.createBundle(trace, args);
+  public readonly createFolder: MutableSyncableFolderAccessor['createFolder'] = (trace, args) =>
+    this.folderStore_.createFolder(trace, args);
+  public readonly delete: MutableSyncableFolderAccessor['delete'] = (trace: Trace, id: SyncableId) =>
+    this.selectStoreForId_(id).delete(trace, id);
+  public readonly exists: MutableSyncableFolderAccessor['exists'] = (trace, id) => this.selectStoreForId_(id).exists(trace, id);
+  public readonly generateNewSyncableItemName: MutableSyncableFolderAccessor['generateNewSyncableItemName'] = (trace: Trace, args) =>
+    this.folderOperationsHandler_.generateNewSyncableItemName(trace, args);
+  public readonly get: MutableSyncableFolderAccessor['get'] = (trace: Trace, id: SyncableId, ...args) =>
+    this.getMutable(trace, id, ...args);
+  public readonly getMutable: MutableSyncableFolderAccessor['getMutable'] = (trace: Trace, id: SyncableId, ...args) =>
+    this.selectStoreForId_(id).getMutable(trace, id, ...args);
+  public readonly isDeleted: MutableSyncableFolderAccessor['isDeleted'] = (trace, id: SyncableId) =>
+    this.selectStoreForId_(id).isDeleted(trace, id);
+
   public readonly initialize = makeAsyncResultFunc(
     [import.meta.filename, 'initialize'],
     async (trace: Trace): PR<undefined, 'conflict'> => {
@@ -272,65 +284,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     }
   );
 
-  public readonly createFolder: MutableFolderStore['createFolder'] = (trace, args) => this.folderStore_.createFolder(trace, args);
-
-  public readonly createBinaryFile: MutableFileStore['createBinaryFile'] = (trace, args) => this.fileStore_.createBinaryFile(trace, args);
-
-  public readonly createBundle: MutableFileStore['createBundle'] = (trace, args) => this.fileStore_.createBundle(trace, args);
-
-  public readonly delete = makeAsyncResultFunc(
-    [import.meta.filename, 'delete'],
-    async (trace: Trace, _id: SyncableId): PR<undefined, 'not-found'> => {
-      // TODO: reimplement
-      return makeFailure(new GeneralError(trace, { message: 'delete is not supported' }));
-      // const store = this.selectStoreForId_(id);
-      // return await store.delete(trace, id);
-    }
-  );
-
-  public readonly exists = makeAsyncResultFunc([import.meta.filename, 'exists'], async (trace: Trace, id: SyncableId) => {
-    const store = this.selectStoreForId_(id);
-    return await store.exists(trace, id);
-  });
-
-  public readonly generateNewSyncableItemName: GenerateNewSyncableItemNameFunc = async (trace: Trace, args) =>
-    await this.folderOperationsHandler_.generateNewSyncableItemName(trace, args);
-
   // FolderStore Methods
-
-  public readonly getHash = makeAsyncResultFunc([import.meta.filename, 'getHash'], async (trace): PR<Sha256Hash> => {
-    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
-
-    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
-    if (!metadata.ok) {
-      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
-    }
-
-    const hash = metadata.value.hash;
-    if (hash !== undefined) {
-      return makeSuccess(hash);
-    }
-
-    do {
-      const needsRecomputeHashCount = this.needsRecomputeHashCount_;
-
-      const hash = await this.computeHash_(trace);
-      /* node:coverage disable */
-      if (!hash.ok) {
-        return hash;
-      }
-      /* node:coverage enable */
-
-      if (this.needsRecomputeHashCount_ === needsRecomputeHashCount) {
-        const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: hash.value });
-        if (!updatedHash.ok) {
-          return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
-        }
-
-        return makeSuccess(hash.value);
-      }
-    } while (true);
-  });
 
   public readonly getIds = makeAsyncResultFunc(
     [import.meta.filename, 'getIds'],
@@ -353,42 +307,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     }
   );
 
-  public readonly getMetadata = makeAsyncResultFunc([import.meta.filename, 'getMetadata'], async (trace): PR<SyncableItemMetadata> => {
-    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
-
-    const metadata = await this.backing_.getMetadataAtPath(trace, this.path);
-    if (!metadata.ok) {
-      return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
-    }
-
-    return makeSuccess(metadata.value);
-  });
-
-  public readonly markNeedsRecomputeHash = makeAsyncResultFunc(
-    [import.meta.filename, 'markNeedsRecomputeHash'],
-    async (trace): PR<undefined> => {
-      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
-      if (!updatedHash.ok) {
-        return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
-      }
-
-      this.needsRecomputeHashCount_ += 1;
-
-      const store = this.weakStore_.deref();
-      const parentPath = this.path.parentPath;
-      if (store !== undefined && parentPath !== undefined) {
-        const marked = await markSyncableNeedsRecomputeHashAtPath(trace, store, parentPath);
-        /* node:coverage disable */
-        if (!marked.ok) {
-          return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
-        }
-        /* node:coverage enable */
-      }
-
-      return makeSuccess(undefined);
-    }
-  );
-
   public readonly ls = async (trace: Trace): PR<string[]> => {
     const results = await allResultsNamed(
       trace,
@@ -406,20 +324,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
 
     return makeSuccess([...folderStoreLs, ...fileStoreLs]);
   };
-
-  // MutableBundleAccessor Methods
-
-  public readonly getMutable = makeAsyncResultFunc(
-    [import.meta.filename, 'getMutable'],
-    async <T extends SyncableItemType = SyncableItemType>(
-      trace: Trace,
-      id: SyncableId,
-      expectedType?: SingleOrArray<T>
-    ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
-      const store = this.selectStoreForId_(id);
-      return await store.getMutable(trace, id, expectedType);
-    }
-  );
 
   // BundleAccessor Methods
 
@@ -441,27 +345,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     return makeSuccess({ ...folderStore, ...fileStore });
   });
 
-  public readonly get = makeAsyncResultFunc(
-    [import.meta.filename, 'get'],
-    async <T extends SyncableItemType = SyncableItemType>(
-      trace: Trace,
-      id: SyncableId,
-      expectedType?: SingleOrArray<T>
-    ): PR<SyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => await this.getMutable(trace, id, expectedType)
-  );
-
-  public readonly isDeleted = makeAsyncResultFunc([import.meta.filename, 'isDeleted'], async (trace, id: SyncableId): PR<boolean> => {
-    const store = this.selectStoreForId_(id);
-    return await store.isDeleted(trace, id);
-  });
-
-  // Public Methods
-
-  public readonly addListener = <TypeT extends keyof SyncTrackerNotifications>(
-    type: TypeT,
-    callback: (args: SyncTrackerNotifications[TypeT]) => void
-  ) => this.syncTracker_.addListener(type, callback);
-
   // Protected Methods
 
   protected makeFolderOperationsHandler_(store: MutableSyncableStore) {
@@ -473,33 +356,45 @@ export abstract class DefaultMutableSyncableFolderAccessorBase implements Mutabl
     });
   }
 
-  // Private Methods
+  // DefaultMutableSyncableItemAccessorBase Abstract Methods Overrides
 
-  private readonly computeHash_ = makeAsyncResultFunc([import.meta.filename, 'computeHash_'], async (trace): PR<Sha256Hash> => {
-    DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'compute-hash', pathString: this.path.toString() });
+  protected override readonly computeLocalItemMetadata_ = makeAsyncResultFunc(
+    [import.meta.filename, 'computeLocalItemMetadata_'],
+    async (trace: Trace): PR<LocalItemMetadata> => {
+      const metadataById = await this.getMetadataById(trace);
+      /* node:coverage disable */
+      if (!metadataById.ok) {
+        return metadataById;
+      }
+      /* node:coverage enable */
 
-    const metadataById = await this.getMetadataById(trace);
-    /* node:coverage disable */
-    if (!metadataById.ok) {
-      return metadataById;
-    }
-    /* node:coverage enable */
+      const hashesById = objectEntries(metadataById.value).reduce(
+        (out, [id, metadata]) => {
+          if (metadata === undefined) {
+            return out;
+          }
 
-    const hashesById = objectEntries(metadataById.value).reduce(
-      (out, [id, metadata]) => {
-        if (metadata === undefined) {
+          out[id] = metadata.hash;
+
           return out;
-        }
+        },
+        {} as Partial<Record<SyncableId, Sha256Hash>>
+      );
 
-        out[id] = metadata.hash;
+      const hash = await generateSha256HashFromHashesById(trace, hashesById);
+      /* node:coverage disable */
+      if (!hash.ok) {
+        return hash;
+      }
+      /* node:coverage enable */
 
-        return out;
-      },
-      {} as Partial<Record<SyncableId, Sha256Hash>>
-    );
+      const localItemMetadata: LocalItemMetadata = { hash: hash.value };
 
-    return await generateSha256HashFromHashesById(trace, hashesById);
-  });
+      return makeSuccess(localItemMetadata);
+    }
+  );
+
+  // Private Methods
 
   private readonly getAccessControlState_ = makeAsyncResultFunc(
     [import.meta.filename, 'getAccessControlState'],

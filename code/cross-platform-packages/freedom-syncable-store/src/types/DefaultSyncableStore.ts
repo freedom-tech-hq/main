@@ -50,5 +50,12 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
     return `Store(${this.path.toString()})`;
   }
 
+  // SyncableStore Methods
+
+  public readonly addListener = <TypeT extends keyof SyncTrackerNotifications>(
+    type: TypeT,
+    callback: (args: SyncTrackerNotifications[TypeT]) => void
+  ) => this.syncTracker_.addListener(type, callback);
+
   public readonly devLogging = makeDevLoggingSupport<SyncableStoreLogEntry>(false);
 }

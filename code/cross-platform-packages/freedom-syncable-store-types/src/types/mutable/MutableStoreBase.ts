@@ -5,9 +5,8 @@ import type { SingleOrArray } from 'yaschema';
 
 import type { StoreBase } from '../immutable/StoreBase.ts';
 import type { MutableSyncableItemAccessor } from './MutableSyncableItemAccessor.ts';
-import type { MutableSyncableItemAccessorBase } from './MutableSyncableItemAccessorBase.ts';
 
-export interface MutableStoreBase extends StoreBase, MutableSyncableItemAccessorBase {
+export interface MutableStoreBase extends StoreBase {
   /** Marks the file or access controlled folder for deletion.  A future sweep operation on the file store will actually delete the entry.
    * Stores may support different retention periods. */
   readonly delete: PRFunc<undefined, 'not-found', [id: SyncableId]>;
