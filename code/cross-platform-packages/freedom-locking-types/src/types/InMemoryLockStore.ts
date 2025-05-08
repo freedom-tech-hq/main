@@ -22,6 +22,7 @@ export class InMemoryLockStore<KeyT extends string> implements LockStore<KeyT> {
 
   public lock(key: KeyT): Lock {
     return {
+      uid: `${this.uid}.${key}`,
       acquire: makeAsyncResultFunc(
         [import.meta.filename, 'acquire'],
         async (
