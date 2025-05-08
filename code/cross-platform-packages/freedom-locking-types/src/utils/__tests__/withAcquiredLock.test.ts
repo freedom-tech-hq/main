@@ -21,6 +21,23 @@ describe('withAcquiredLock', () => {
     expectOk(result);
   });
 
+  it('should work with nesting', async (_t: TestContext) => {
+    const trace = makeTrace('test');
+    const locksStore = new InMemoryLockStore();
+
+    const result1 = await withAcquiredLock(trace, locksStore.lock('a'), { timeoutMSec: 1000 }, async (trace) => {
+      const result2 = await withAcquiredLock(trace, locksStore.lock('a'), { timeoutMSec: 1000 }, async (_trace) => {
+        await sleep(Math.random() * 100);
+        return makeSuccess(undefined);
+      });
+      expectOk(result2);
+
+      return makeSuccess(undefined);
+    });
+
+    expectOk(result1);
+  });
+
   it('should return timeout error if lock cannot be acquired before the specified timeout', async (_t: TestContext) => {
     const trace = makeTrace('test');
     const locksStore = new InMemoryLockStore();

@@ -4,6 +4,8 @@ import type { LockOptions } from './LockOptions.ts';
 import type { LockToken } from './LockToken.ts';
 
 export interface Lock {
+  readonly uid: string;
+
   /**
    * Attempts to acquire this lock.
    *
