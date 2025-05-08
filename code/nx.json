@@ -1,43 +1,42 @@
 {
+  "namedInputs": {
+    "generated": [
+      { "dependentTasksOutputFiles": "**/bin/**/*", "transitive": true },
+      { "dependentTasksOutputFiles": "**/build/**/*", "transitive": true },
+      { "dependentTasksOutputFiles": "**/lib/**/*.d.ts", "transitive": true }
+    ]
+  },
   "targetDefaults": {
     "build": {
       "dependsOn": [
         "^build"
       ],
+      "inputs": [
+        { "env": "FREEDOM_BUILD_MODE" },
+        "generated",
+        "default"
+      ],
       "outputs": [
         "{projectRoot}/bin",
         "{projectRoot}/build",
-        "{projectRoot}/deployable-bin",
-        "{projectRoot}/deployable-lib",
         "{projectRoot}/firebase.json",
         "{projectRoot}/functions",
         "{projectRoot}/lib"
       ],
       "cache": true
     },
-    "build:deploy": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "{projectRoot}/bin",
-        "{projectRoot}/build",
-        "{projectRoot}/deployable-bin",
-        "{projectRoot}/deployable-lib",
-        "{projectRoot}/firebase.json",
-        "{projectRoot}/functions",
-        "{projectRoot}/lib"
-      ]
-    },
     "build:tests": {
       "dependsOn": [
         "^build"
       ],
+      "inputs": [
+        { "env": "FREEDOM_BUILD_MODE" },
+        "generated",
+        "default"
+      ],
       "outputs": [
         "{projectRoot}/bin",
         "{projectRoot}/build",
-        "{projectRoot}/deployable-bin",
-        "{projectRoot}/deployable-lib",
         "{projectRoot}/firebase.json",
         "{projectRoot}/functions",
         "{projectRoot}/lib"
@@ -46,16 +45,16 @@
     "clean": {
       "dependsOn": [
         "^clean"
-      ],
-      "outputs": [
-        "{projectRoot}/deployable-bin",
-        "{projectRoot}/deployable-lib",
-        "{projectRoot}/lib"
       ]
     },
     "test": {
       "dependsOn": [
         "^build"
+      ],
+      "inputs": [
+        { "env": "FREEDOM_BUILD_MODE" },
+        "generated",
+        "default"
       ],
       "outputs": [
         "{projectRoot}/coverage"
@@ -65,6 +64,11 @@
     "test:debug": {
       "dependsOn": [
         "^build"
+      ],
+      "inputs": [
+        { "env": "FREEDOM_BUILD_MODE" },
+        "generated",
+        "default"
       ],
       "outputs": [
         "{projectRoot}/coverage"
@@ -80,6 +84,9 @@
     "deploy:extract": {
       "dependsOn": [
         "build"
+      ],
+      "inputs": [
+        { "env": "FREEDOM_BUILD_MODE" }
       ],
       "cache": false
     }

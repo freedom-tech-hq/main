@@ -1,0 +1,12 @@
+{
+  "name": "freedom-email-app",
+  "targets": {
+    "build": {
+      "inputs": [
+        { "env": "FREEDOM_BUILD_MODE" },
+        "^default", 
+        "default"
+      ]
+    }
+  }
+}
