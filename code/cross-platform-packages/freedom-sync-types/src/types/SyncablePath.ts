@@ -57,7 +57,7 @@ export class SyncablePath {
   }
 
   public toRelativePathString(basePath: SyncablePath) {
-    if (basePath.storageRootId !== this.storageRootId) {
+    if (!this.startsWith(basePath)) {
       return this.toString();
     }
 
