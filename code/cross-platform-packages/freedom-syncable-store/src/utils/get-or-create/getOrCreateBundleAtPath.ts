@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import { getOrCreate } from 'freedom-get-or-create';
-import type { SyncablePath } from 'freedom-sync-types';
+import type { DynamicSyncableItemName, SyncablePath } from 'freedom-sync-types';
 import type { MutableFileStore, MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';
@@ -14,11 +14,12 @@ export const getOrCreateBundleAtPath = makeAsyncResultFunc(
     async (
       trace,
       store: MutableSyncableStore,
-      path: SyncablePath
+      path: SyncablePath,
+      options?: { name?: DynamicSyncableItemName }
     ): PR<MutableFileStore, 'deleted' | 'format-error' | 'not-found' | 'untrusted' | 'wrong-type'> =>
       await getOrCreate(trace, {
         get: (trace) => getMutableSyncableAtPath(trace, store, path, 'bundle'),
-        create: (trace) => createBundleAtPath(trace, store, path)
+        create: (trace) => createBundleAtPath(trace, store, path, options)
       })
   )
 );

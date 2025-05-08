@@ -5,7 +5,7 @@ import type { MailId } from 'freedom-email-sync';
 import { mailIdInfo } from 'freedom-email-sync';
 import type { TimeOrganizedMarkerPaths } from 'freedom-email-user';
 import type { Nested } from 'freedom-nest';
-import type { SyncablePath } from 'freedom-sync-types';
+import { encName, type SyncablePath } from 'freedom-sync-types';
 import { createBinaryFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -21,11 +21,10 @@ export const createMailIdMarkerFile = makeAsyncResultFunc(
     const createdStructure = await getOrCreateBundlesAtPaths(
       trace,
       userFs,
-      paths.value,
-      yearPath.value,
-      yearPath.month.value,
-      yearPath.month.day.value,
-      yearPath.month.day.hour.value
+      [yearPath.value, { name: encName(String(mailDate.getUTCFullYear())) }],
+      [yearPath.month.value, { name: encName(String(mailDate.getUTCMonth() + 1)) }],
+      [yearPath.month.day.value, { name: encName(String(mailDate.getUTCDate())) }],
+      [yearPath.month.day.hour.value, { name: encName(String(mailDate.getUTCHours())) }]
     );
     if (!createdStructure.ok) {
       return generalizeFailureResult(trace, createdStructure, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
