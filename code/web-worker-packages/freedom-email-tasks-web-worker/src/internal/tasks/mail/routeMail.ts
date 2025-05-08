@@ -30,7 +30,7 @@ export const routeMail = makeAsyncResultFunc(
     const paths = await getUserMailPaths(syncableStore);
 
     // Used for mail that comes in while the app is already launched
-    const highPriorityQueue = new TaskQueue(trace);
+    const highPriorityQueue = new TaskQueue('route-mail-high-priority', trace);
     highPriorityQueue.start();
 
     const removeItemAddedListener = syncableStore.addListener('itemAdded', async (event: SyncTrackerItemAddedEvent) => {
@@ -49,7 +49,7 @@ export const routeMail = makeAsyncResultFunc(
     });
 
     // Used for historical mail
-    const lowPriorityQueue = new TaskQueue(trace);
+    const lowPriorityQueue = new TaskQueue('route-mail-low-priority', trace);
     lowPriorityQueue.start({ maxConcurrency: 1 });
 
     // Detecting previously-received emails that haven't been routed yet

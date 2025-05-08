@@ -9,7 +9,7 @@ import { TaskQueue } from 'freedom-task-queue';
 export const getRecursiveFolderPaths = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: FolderStore): PR<SyncablePath[]> => {
-    const queue = new TaskQueue(trace);
+    const queue = new TaskQueue('getRecursiveFolderPaths', trace);
 
     const out: SyncablePath[] = [];
 

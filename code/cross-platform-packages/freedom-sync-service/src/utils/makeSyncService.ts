@@ -31,8 +31,8 @@ export const makeSyncService = makeAsyncResultFunc(
     trace,
     { store, remoteConnections, shouldSyncWithAllRemotes, getSyncStrategyForPath, shouldRecordLogs = false }: MakeSyncServiceArgs
   ): PR<SyncService> => {
-    const pullQueue = new TaskQueue(trace);
-    const pushQueue = disableLam('not-found', (trace) => new TaskQueue(trace))(trace);
+    const pullQueue = new TaskQueue('[SYNC] pull-queue', trace);
+    const pushQueue = disableLam('not-found', (trace) => new TaskQueue('[SYNC] push-queue', trace))(trace);
 
     let detachSyncService: () => void = noop;
 
