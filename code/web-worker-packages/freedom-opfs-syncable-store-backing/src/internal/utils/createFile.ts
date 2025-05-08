@@ -1,9 +1,9 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
+import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
 
-import type { OpfsLocalItemMetadata } from '../types/OpfsLocalItemMetadata.ts';
 import { createMetadataFile } from './createMetadataFile.ts';
 import { getFileHandleForSyncablePath } from './getFileHandleForSyncablePath.ts';
 import { writeFile } from './writeFile.ts';
@@ -15,7 +15,7 @@ export const createFile = makeAsyncResultFunc(
     rootHandle: FileSystemDirectoryHandle,
     path: SyncablePath,
     data: Uint8Array,
-    metadata: SyncableItemMetadata & OpfsLocalItemMetadata
+    metadata: SyncableStoreBackingItemMetadata
   ): PR<undefined> => {
     const fileHandle = await getFileHandleForSyncablePath(trace, rootHandle, path, { create: true });
     if (!fileHandle.ok) {

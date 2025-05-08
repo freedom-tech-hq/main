@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { SyncableId, SyncableItemMetadata } from 'freedom-sync-types';
+import type { SyncableId } from 'freedom-sync-types';
+import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
 
-import type { FileSystemLocalItemMetadata } from '../types/FileSystemLocalItemMetadata.ts';
 import { createMetadataFile } from './createMetadataFile.ts';
 import { getFsPath } from './getFsPath.ts';
 import { writeFile } from './writeFile.ts';
@@ -14,7 +14,7 @@ export const createFile = makeAsyncResultFunc(
     rootPath: string,
     ids: readonly SyncableId[],
     data: Uint8Array,
-    metadata: SyncableItemMetadata & FileSystemLocalItemMetadata
+    metadata: SyncableStoreBackingItemMetadata
   ): PR<undefined> => {
     const filePath = getFsPath(rootPath, ids);
 

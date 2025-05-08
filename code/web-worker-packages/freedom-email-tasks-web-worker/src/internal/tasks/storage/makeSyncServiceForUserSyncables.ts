@@ -20,7 +20,7 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
     {
       credential,
       ...fwdArgs
-    }: Omit<MakeSyncServiceArgs, 'getSyncStrategyForPath' | 'shouldPushToAllRemotes' | 'store'> & {
+    }: Omit<MakeSyncServiceArgs, 'getSyncStrategyForPath' | 'shouldPullFromRemote' | 'shouldPushToAllRemotes' | 'store'> & {
       credential: EmailCredential;
     }
   ): PR<SyncService> => {
@@ -32,8 +32,25 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
     const userFs = syncableStoreResult.value;
     const paths = await getUserMailPaths(userFs);
 
+    // TODO: should maybe be LRU / time based
+    // TODO: across refreshes?
+    // TODO: need to be able to have content expire and fall away
+    /** Strings are relative to root */
+    // const interestedInPaths = new Set<string>();
+
+    // let removeItemAccessedListener: (() => void) | undefined;
+    // let removeItemNotFoundListener: (() => void) | undefined;
+
     return await makeSyncService(trace, {
       ...fwdArgs,
+      shouldPullFromRemote: () => true,
+      // shouldPullFromRemote: ({ path }) => {
+      //   const parentPath = path.parentPath;
+      //   return (
+      //     interestedInPaths.has(path.toRelativePathString(userFs.path)) ||
+      //     (parentPath !== undefined && interestedInPaths.has(parentPath.toRelativePathString(userFs.path)))
+      //   );
+      // },
       shouldPushToAllRemotes: () => false,
       getSyncStrategyForPath: async (direction, path) => {
         switch (direction) {
@@ -56,6 +73,21 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
 
         return 'default';
       },
+      // onStart: ({ syncService }) => {
+      //   removeItemAccessedListener = userFs.addListener('itemAccessed', ({ path }) => {
+      //     interestedInPaths.add(path.toRelativePathString(userFs.path));
+      //   });
+      //   removeItemNotFoundListener = userFs.addListener('itemNotFound', ({ path }) => {
+      //     syncService.pullFromRemotes({ path });
+      //   });
+      // },
+      // onStop: () => {
+      //   removeItemAccessedListener?.();
+      //   removeItemAccessedListener = undefined;
+
+      //   removeItemNotFoundListener?.();
+      //   removeItemNotFoundListener = undefined;
+      // },
       store: userFs
     });
   }

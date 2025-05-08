@@ -28,6 +28,8 @@ export type SyncTrackerNotifications = {
   folderRemoved: SyncTrackerFolderRemovedEvent;
   /** Triggered when any item is added, including folders – which also have their own notifications */
   itemAdded: SyncTrackerItemAddedEvent;
+  itemAccessed: SyncTrackerItemAccessedEvent;
+  itemNotFound: SyncTrackerItemNotFoundEvent;
 };
 
 export type SyncTracker = NotificationManager<SyncTrackerNotifications>;

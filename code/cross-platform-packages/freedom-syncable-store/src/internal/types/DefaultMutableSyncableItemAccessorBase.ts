@@ -64,7 +64,11 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
   public readonly markNeedsRecomputeLocalMetadata = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeLocalMetadata'],
     async (trace): PR<undefined> => {
-      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, { hash: undefined });
+      const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, {
+        hash: undefined,
+        numDescendants: 0,
+        sizeBytes: 0
+      });
       if (!updatedHash.ok) {
         return generalizeFailureResult(trace, updatedHash, ['not-found', 'wrong-type']);
       }

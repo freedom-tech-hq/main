@@ -2,20 +2,20 @@ import { allResultsMapped, excludeFailureResult, makeAsyncResultFunc, makeFailur
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableItemTypeFromId, syncableItemTypes } from 'freedom-sync-types';
 import type {
   SyncableStoreBacking,
   SyncableStoreBackingFileAccessor,
   SyncableStoreBackingFolderAccessor,
-  SyncableStoreBackingItemAccessor
+  SyncableStoreBackingItemAccessor,
+  SyncableStoreBackingItemMetadata
 } from 'freedom-syncable-store-backing-types';
 import { isExpectedType } from 'freedom-syncable-store-backing-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { SingleOrArray } from 'yaschema';
 
 import { ROOT_FOLDER_ID } from '../internal/consts/special-ids.ts';
-import type { OpfsLocalItemMetadata } from '../internal/types/OpfsLocalItemMetadata.ts';
 import type { OpfsSyncableStoreBackingFolderItem } from '../internal/types/OpfsSyncableStoreBackingFolderItem.ts';
 import { createFile } from '../internal/utils/createFile.ts';
 import { createFolder } from '../internal/utils/createFolder.ts';
@@ -50,7 +50,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
   /** Initializes the backing for use.  This must be done exactly once for newly-created backings. */
   public readonly initialize = makeAsyncResultFunc(
     [import.meta.filename, 'initialize'],
-    async (trace, metadata: Omit<SyncableItemMetadata, 'name'> & OpfsLocalItemMetadata) => {
+    async (trace, metadata: Omit<SyncableStoreBackingItemMetadata, 'name'>) => {
       const savedMetadata = await createMetadataFile(trace, this.rootHandle_, this.rootPath_, { ...metadata, name: ROOT_FOLDER_ID });
       if (!savedMetadata.ok) {
         return savedMetadata;
@@ -127,7 +127,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly getMetadataAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'getMetadataAtPath'],
-    async (trace, path: SyncablePath): PR<SyncableItemMetadata & OpfsLocalItemMetadata, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath): PR<SyncableStoreBackingItemMetadata, 'not-found' | 'wrong-type'> => {
       if (path.ids.length === 0) {
         return await this.root_.metadata(trace);
       }
@@ -152,7 +152,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
       trace,
       path: SyncablePath,
       ids?: Set<SyncableId>
-    ): PR<Partial<Record<SyncableId, SyncableItemMetadata & OpfsLocalItemMetadata>>, 'not-found' | 'wrong-type'> => {
+    ): PR<Partial<Record<SyncableId, SyncableStoreBackingItemMetadata>>, 'not-found' | 'wrong-type'> => {
       const found = await traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
       if (!found.ok) {
         return found;
@@ -163,7 +163,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
         return contents;
       }
 
-      const metadataById: Partial<Record<SyncableId, SyncableItemMetadata & OpfsLocalItemMetadata>> = {};
+      const metadataById: Partial<Record<SyncableId, SyncableStoreBackingItemMetadata>> = {};
       const didFilterIds = await allResultsMapped(trace, objectEntries(contents.value), {}, async (trace, [id, item]) => {
         if (item === undefined) {
           return makeSuccess(undefined);
@@ -192,7 +192,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { data, metadata }: { data: Uint8Array; metadata: SyncableItemMetadata & OpfsLocalItemMetadata }
+      { data, metadata }: { data: Uint8Array; metadata: SyncableStoreBackingItemMetadata }
     ): PR<SyncableStoreBackingFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
@@ -225,7 +225,7 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { metadata }: { metadata: SyncableItemMetadata & OpfsLocalItemMetadata }
+      { metadata }: { metadata: SyncableStoreBackingItemMetadata }
     ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
@@ -277,20 +277,13 @@ export class OpfsSyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly updateLocalMetadataAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'updateLocalMetadataAtPath'],
-    async (trace, path: SyncablePath, metadata: Partial<OpfsLocalItemMetadata>): PR<undefined, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath, metadataChanges: Partial<LocalItemMetadata>): PR<undefined, 'not-found' | 'wrong-type'> => {
       const found = await traversePath(trace, this.root_, path);
       if (!found.ok) {
         return found;
       }
 
-      if ('hash' in metadata) {
-        const updated = await updateLocalMetadata(trace, this.rootHandle_, path, { hash: metadata.hash });
-        if (!updated.ok) {
-          return updated;
-        }
-      }
-
-      return makeSuccess(undefined);
+      return await updateLocalMetadata(trace, this.rootHandle_, path, metadataChanges);
     }
   );
 }

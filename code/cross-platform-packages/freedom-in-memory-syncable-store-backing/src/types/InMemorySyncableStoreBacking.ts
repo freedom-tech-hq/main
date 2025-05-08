@@ -2,14 +2,14 @@ import { excludeFailureResult, makeAsyncResultFunc, makeFailure, makeSuccess, ty
 import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, syncableItemTypes } from 'freedom-sync-types';
+import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, mergeLocalItemMetadata, syncableItemTypes } from 'freedom-sync-types';
 import type {
-  LocalItemMetadata,
   SyncableStoreBacking,
   SyncableStoreBackingFileAccessor,
   SyncableStoreBackingFolderAccessor,
-  SyncableStoreBackingItemAccessor
+  SyncableStoreBackingItemAccessor,
+  SyncableStoreBackingItemMetadata
 } from 'freedom-syncable-store-backing-types';
 import { isExpectedType } from 'freedom-syncable-store-backing-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -24,13 +24,13 @@ import { makeItemAccessor } from '../internal/utils/makeItemAccessor.ts';
 import { traversePath } from '../internal/utils/traversePath.ts';
 
 export interface InMemorySyncableStoreBackingConstructorArgs {
-  metadata: Omit<SyncableItemMetadata, 'name'> & LocalItemMetadata;
+  metadata: Omit<SyncableStoreBackingItemMetadata, 'name'>;
 }
 
 export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
   private readonly root_: InMemorySyncableStoreBackingFolderItem;
 
-  constructor(metadata: Omit<SyncableItemMetadata, 'name'> & LocalItemMetadata) {
+  constructor(metadata: Omit<SyncableStoreBackingItemMetadata, 'name'>) {
     this.root_ = {
       type: 'folder',
       id: ROOT_FOLDER_ID,
@@ -95,7 +95,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly getMetadataAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'getMetadataAtPath'],
-    async (trace, path: SyncablePath): PR<SyncableItemMetadata & LocalItemMetadata, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath): PR<SyncableStoreBackingItemMetadata, 'not-found' | 'wrong-type'> => {
       if (path.ids.length === 0) {
         return makeSuccess(this.root_.metadata);
       }
@@ -120,7 +120,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
       trace,
       path: SyncablePath,
       ids?: Set<SyncableId>
-    ): PR<Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>, 'not-found' | 'wrong-type'> => {
+    ): PR<Partial<Record<SyncableId, SyncableStoreBackingItemMetadata>>, 'not-found' | 'wrong-type'> => {
       const found = traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
       if (!found.ok) {
         return found;
@@ -139,7 +139,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
             out[id] = item!.metadata;
             return out;
           },
-          {} as Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>
+          {} as Partial<Record<SyncableId, SyncableStoreBackingItemMetadata>>
         );
       return makeSuccess(metadataById);
     }
@@ -150,7 +150,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { data, metadata }: { data: Uint8Array; metadata: SyncableItemMetadata & LocalItemMetadata }
+      { data, metadata }: { data: Uint8Array; metadata: SyncableStoreBackingItemMetadata }
     ): PR<SyncableStoreBackingFileAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
@@ -183,7 +183,7 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
     async (
       trace,
       path: SyncablePath,
-      { metadata }: { metadata: SyncableItemMetadata & LocalItemMetadata }
+      { metadata }: { metadata: SyncableStoreBackingItemMetadata }
     ): PR<SyncableStoreBackingFolderAccessor, 'not-found' | 'wrong-type' | 'conflict'> => {
       const parentPath = path.parentPath;
       if (parentPath === undefined) {
@@ -232,15 +232,13 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
 
   public readonly updateLocalMetadataAtPath = makeAsyncResultFunc(
     [import.meta.filename, 'updateLocalMetadataAtPath'],
-    async (trace, path: SyncablePath, metadata: Partial<LocalItemMetadata>): PR<undefined, 'not-found' | 'wrong-type'> => {
+    async (trace, path: SyncablePath, metadataChanges: Partial<LocalItemMetadata>): PR<undefined, 'not-found' | 'wrong-type'> => {
       const found = traversePath(trace, this.root_, path);
       if (!found.ok) {
         return found;
       }
 
-      if ('hash' in metadata) {
-        found.value.metadata.hash = metadata.hash;
-      }
+      mergeLocalItemMetadata(found.value.metadata, metadataChanges);
 
       return makeSuccess(undefined);
     }

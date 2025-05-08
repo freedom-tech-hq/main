@@ -120,6 +120,11 @@ const onBundlePulled = makeAsyncResultFunc(
       );
 
       const enqueued = await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
+        const shouldPullFromRemote = await syncService.shouldPullFromRemote({ store, remoteId, path: path.append(id) });
+        if (!shouldPullFromRemote) {
+          return makeSuccess(undefined);
+        }
+
         syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadataById[id]?.hash });
 
         return makeSuccess(undefined);
@@ -175,6 +180,11 @@ const onFolderPulled = makeAsyncResultFunc(
       );
 
       const enqueued = await allResultsMapped(trace, outOfSyncEntries, {}, async (_trace, [id, _remoteHash]) => {
+        const shouldPullFromRemote = await syncService.shouldPullFromRemote({ store, remoteId, path: path.append(id) });
+        if (!shouldPullFromRemote) {
+          return makeSuccess(undefined);
+        }
+
         syncService.pullFromRemotes({ remoteId, path: path.append(id), hash: localMetadataById[id]?.hash });
 
         return makeSuccess(undefined);

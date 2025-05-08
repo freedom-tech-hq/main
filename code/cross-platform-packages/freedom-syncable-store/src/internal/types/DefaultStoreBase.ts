@@ -217,6 +217,8 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
     ): PR<MutableSyncableItemAccessor & { type: T }, 'not-found' | 'untrusted' | 'wrong-type'> => {
       const getPath = this.path_.append(id);
 
+      this.syncTracker_.notify('itemAccessed', { path: getPath });
+
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
@@ -232,6 +234,7 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
       if (!exists.ok) {
         return exists;
       } else if (!exists.value) {
+        this.syncTracker_.notify('itemNotFound', { path: getPath });
         return makeFailure(new NotFoundError(trace, { message: `${getPath.toString()} not found`, errorCode: 'not-found' }));
       }
 
