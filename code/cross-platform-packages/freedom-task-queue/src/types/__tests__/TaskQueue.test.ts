@@ -10,7 +10,7 @@ describe('TaskQueue', () => {
   let taskQueue: TaskQueue;
 
   beforeEach(() => {
-    taskQueue = new TaskQueue(makeTrace('test'));
+    taskQueue = new TaskQueue('test', makeTrace('test'));
   });
 
   it('should add and run tasks sequentially', async (t: TestContext) => {
@@ -33,6 +33,30 @@ describe('TaskQueue', () => {
     await taskQueue.wait();
 
     t.assert.deepStrictEqual(results, ['task1', 'task2']);
+
+    t.assert.strictEqual(taskQueue.isEmpty(), true);
+  });
+
+  it('high priority tasks should be run first', async (t: TestContext) => {
+    const results: string[] = [];
+
+    taskQueue.add('task1', async () => {
+      results.push('task1');
+      return makeSuccess(undefined);
+    });
+
+    taskQueue.add({ key: 'task2', priority: 'high' }, async () => {
+      results.push('task2');
+      return makeSuccess(undefined);
+    });
+
+    taskQueue.start({ maxConcurrency: 1 });
+
+    t.assert.strictEqual(taskQueue.isEmpty(), false);
+
+    await taskQueue.wait();
+
+    t.assert.deepStrictEqual(results, ['task2', 'task1']);
 
     t.assert.strictEqual(taskQueue.isEmpty(), true);
   });

@@ -2,8 +2,9 @@ import type { DoubleLinkedListNode } from 'doublell';
 import { DoubleLinkedList } from 'doublell';
 import type { PRFunc } from 'freedom-async';
 import { callAsyncResultFunc, FREEDOM_MAX_CONCURRENCY_DEFAULT, inline, Resolvable } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
-import { makeSubTrace } from 'freedom-contexts';
+import { log, makeSubTrace } from 'freedom-contexts';
 
 interface Entry {
   key: string;
@@ -12,6 +13,8 @@ interface Entry {
 }
 
 export class TaskQueue {
+  public readonly id: string;
+
   private readonly entryNodesByKey_: Partial<Record<string, DoubleLinkedListNode<Entry>>> = {};
   private readonly entries_ = new DoubleLinkedList<Entry>();
   private readonly inFlightVersionsByKey_: Partial<Record<string, string>> = {};
@@ -22,7 +25,11 @@ export class TaskQueue {
   private runNextTrace_: Trace;
   private delayWhenEmptyMSec_: number = 0;
 
-  constructor(trace: Trace) {
+  private reportingInterval_: ReturnType<typeof setInterval> | undefined;
+  private numCompletedSinceLastReport_ = 0;
+
+  constructor(id: string, trace: Trace) {
+    this.id = id;
     this.runNextTrace_ = makeSubTrace(trace, ['runNext_']);
   }
 
@@ -33,33 +40,20 @@ export class TaskQueue {
    *
    * If `keyAndVersion` is a string, the version is assumed to be an empty string.  If `keyAndVersion` is an object, but version is
    * `undefined`, the version is assumed to be an empty string.
+   *
+   * If priority is `'high'`, the task will be added to the front of the queue.  If priority is `default`, the task will be added to the
+   * end.
    */
-  public readonly add = (keyAndVersion: { key: string; version?: string } | string, run: PRFunc<undefined, any>) => {
-    const { key, version } =
+  public readonly add = (
+    keyAndVersion: { key: string; version?: string; priority?: 'default' | 'high' } | string,
+    run: PRFunc<undefined, any>
+  ) => {
+    const { key, version, priority } =
       typeof keyAndVersion === 'string'
-        ? { key: keyAndVersion, version: '' }
-        : { key: keyAndVersion.key, version: keyAndVersion.version ?? '' };
+        ? { key: keyAndVersion, version: '', priority: 'default' as const }
+        : { key: keyAndVersion.key, version: keyAndVersion.version ?? '', priority: keyAndVersion.priority ?? 'default' };
 
-    let entryNode = this.entryNodesByKey_[key];
-    if (entryNode !== undefined) {
-      entryNode.value.version = version;
-      entryNode.value.run = run;
-      return; // Already enqueued the same key, but will now be processed with the new version
-    }
-
-    const inFlightVersion = this.inFlightVersionsByKey_[key];
-    if (inFlightVersion !== undefined && inFlightVersion === version) {
-      return; // Already processing the same key/version
-    }
-
-    entryNode = this.entries_.append({ key, version, run });
-    this.entryNodesByKey_[key] = entryNode;
-
-    if (this.delayWhenEmptyMSec_ > 0 && this.numActive === 0) {
-      setTimeout(() => this.runMore_(), this.delayWhenEmptyMSec_);
-    } else {
-      this.runMore_();
-    }
+    return this.internalAdd_({ key, version, priority }, run);
   };
 
   public readonly start = ({
@@ -83,11 +77,21 @@ export class TaskQueue {
     this.delayWhenEmptyMSec_ = delayWhenEmptyMSec;
     this.isRunning_ = true;
 
+    DEV: {
+      clearInterval(this.reportingInterval_);
+      this.reportingInterval_ = setInterval(this.logReport_, 10 * ONE_SEC_MSEC);
+    }
+
     this.runMore_();
   };
 
   public readonly stop = () => {
     this.isRunning_ = false;
+
+    DEV: {
+      clearInterval(this.reportingInterval_);
+      this.reportingInterval_ = undefined;
+    }
 
     /* node:coverage disable */
     if (this.numActive === 0 && this.pendingWaiter_ !== undefined) {
@@ -123,6 +127,53 @@ export class TaskQueue {
   };
 
   // Private Methods
+
+  private readonly internalAdd_ = (
+    { key, version, priority }: { key: string; version: string; priority: 'default' | 'high' },
+    run: PRFunc<undefined, any>
+  ) => {
+    let entryNode = this.entryNodesByKey_[key];
+    if (entryNode !== undefined) {
+      entryNode.value.version = version;
+      entryNode.value.run = run;
+      return; // Already enqueued the same key, but will now be processed with the new version
+    }
+
+    const inFlightVersion = this.inFlightVersionsByKey_[key];
+    if (inFlightVersion !== undefined && inFlightVersion === version) {
+      return; // Already processing the same key/version
+    }
+
+    switch (priority) {
+      case 'default':
+        entryNode = this.entries_.append({ key, version, run });
+        break;
+      case 'high':
+        entryNode = this.entries_.prepend({ key, version, run });
+        break;
+    }
+
+    this.entryNodesByKey_[key] = entryNode;
+
+    if (this.delayWhenEmptyMSec_ > 0 && this.numActive === 0) {
+      setTimeout(() => this.runMore_(), this.delayWhenEmptyMSec_);
+    } else {
+      this.runMore_();
+    }
+  };
+
+  private readonly logReport_ = () => {
+    const numCompleted = this.numCompletedSinceLastReport_;
+    this.numCompletedSinceLastReport_ = 0;
+
+    const numPending = this.entries_.getLength();
+
+    if (this.numActive > 0 || numPending > 0 || numCompleted > 0) {
+      log().debug?.(
+        `TaskQueue ${this.id}: max-concurrency=${this.maxConcurrency_}, active=${this.numActive}, pending=${numPending}, completed=${numCompleted}`
+      );
+    }
+  };
 
   private readonly resolvePendingWaiter_ = () => {
     const lastPendingWaiter = this.pendingWaiter_;
@@ -184,6 +235,7 @@ export class TaskQueue {
       } finally {
         delete this.inFlightVersionsByKey_[key];
 
+        this.numCompletedSinceLastReport_ += 1;
         this.numActive -= 1;
         this.runMore_();
       }

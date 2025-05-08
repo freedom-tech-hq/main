@@ -33,7 +33,7 @@ export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjec
   }
 
   private readonly path_: string;
-  private readonly persistenceTaskQueue_ = new TaskQueue(makeTrace(import.meta.filename));
+  private readonly persistenceTaskQueue_ = new TaskQueue('json-object-store-persistence', makeTrace(import.meta.filename));
 
   private readonly recordSchema_: Schema<Partial<Record<KeyT, T>>>;
 

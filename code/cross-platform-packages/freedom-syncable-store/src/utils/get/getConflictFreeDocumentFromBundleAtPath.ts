@@ -131,7 +131,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
         let applyPendingDeltas = async () => {};
         if (watch !== false) {
           const pendingDeltaPaths: SyncablePath[] = [];
-          const pendingDeltasTaskQueue = new TaskQueue(trace);
+          const pendingDeltasTaskQueue = new TaskQueue('crdt-pending-deltas', trace);
           pendingDeltasTaskQueue.start({ maxConcurrency: 1, delayWhenEmptyMSec: APPLY_DELTAS_LIMIT_TIME_MSEC });
           onCacheInvalidatedSteps.push(() => pendingDeltasTaskQueue.stop());
 
