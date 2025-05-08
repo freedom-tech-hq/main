@@ -1,6 +1,6 @@
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { NotificationManager } from 'freedom-notification-types';
-import type { SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { SyncablePath } from 'freedom-sync-types';
 
 export interface SyncTrackerFolderAddedEvent {
   path: SyncablePath;
@@ -11,9 +11,16 @@ export interface SyncTrackerFolderRemovedEvent {
 }
 
 export interface SyncTrackerItemAddedEvent {
-  type: SyncableItemType;
   path: SyncablePath;
   hash: Sha256Hash;
+}
+
+export interface SyncTrackerItemAccessedEvent {
+  path: SyncablePath;
+}
+
+export interface SyncTrackerItemNotFoundEvent {
+  path: SyncablePath;
 }
 
 export type SyncTrackerNotifications = {

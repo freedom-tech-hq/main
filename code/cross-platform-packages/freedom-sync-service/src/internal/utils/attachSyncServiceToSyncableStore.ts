@@ -5,7 +5,7 @@ import { objectValues } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { doPeriodic } from 'freedom-periodic';
 import type { RemoteChangeNotificationClient, RemoteId, SyncablePath } from 'freedom-sync-types';
-import { getRecursiveFolderPaths, getSyncableHashAtPath } from 'freedom-syncable-store';
+import { getMetadataAtPath, getRecursiveFolderPaths } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
@@ -43,17 +43,17 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       async (trace, { remoteId, path, hash: remoteHash }: { remoteId: RemoteId; path: SyncablePath; hash: Sha256Hash }): PR<undefined> => {
         DEV: syncService.devLogging.appendLogEntry?.({ type: 'notified', pathString: path.toString() });
 
-        const localHash = await disableLam('not-found', getSyncableHashAtPath)(trace, store, path);
-        if (!localHash.ok) {
+        const localMetadata = await disableLam('not-found', getMetadataAtPath)(trace, store, path);
+        if (!localMetadata.ok) {
           // 'not-found' errors are expected in cases where the remote has content that the local doesn't know about yet
-          if (localHash.value.errorCode !== 'not-found') {
-            return generalizeFailureResult(trace, excludeFailureResult(localHash, 'not-found'), ['untrusted', 'wrong-type']);
+          if (localMetadata.value.errorCode !== 'not-found') {
+            return generalizeFailureResult(trace, excludeFailureResult(localMetadata, 'not-found'), ['untrusted', 'wrong-type']);
           }
-        } else if (localHash.value === remoteHash) {
+        } else if (localMetadata.value.hash === remoteHash) {
           return makeSuccess(undefined);
         }
 
-        syncService.pullFromRemotes({ remoteId, path, hash: localHash.ok ? localHash.value : undefined });
+        syncService.pullFromRemotes({ remoteId, path, hash: localMetadata.ok ? localMetadata.value.hash : undefined });
 
         return makeSuccess(undefined);
       }
@@ -63,7 +63,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       const pathString = path.toString();
       // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
 
-      DEV: debugTopic('SYNC', (log) => log(`Adding contentChange listeners for ${path.toString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Adding contentChange listeners for ${path.toShortString()}`));
       for (const remoteChangeNotificationClient of remoteChangeNotificationClients) {
         removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
         removeListenersByFolderPath[pathString].push(
@@ -117,21 +117,21 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       return foldersAdded;
     }
 
-    DEV: debugTopic('SYNC', (log) => log(`Added folderAdded listener for ${store.path.toString()}`));
+    DEV: debugTopic('SYNC', (log) => log(`Added folderAdded listener for ${store.path.toShortString()}`));
     const removeLocalFolderAddedListener = store.addListener('folderAdded', ({ path }) => {
-      DEV: debugTopic('SYNC', (log) => log(`Received folderAdded for ${path.toString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Received folderAdded for ${path.toShortString()}`));
       onFolderAdded(trace, path);
     });
 
-    DEV: debugTopic('SYNC', (log) => log(`Added folderRemoved listener for ${store.path.toString()}`));
+    DEV: debugTopic('SYNC', (log) => log(`Added folderRemoved listener for ${store.path.toShortString()}`));
     const removeLocalFolderRemovedListener = store.addListener('folderRemoved', ({ path }) => {
-      DEV: debugTopic('SYNC', (log) => log(`Received folderRemoved for ${path.toString()}`));
+      DEV: debugTopic('SYNC', (log) => log(`Received folderRemoved for ${path.toShortString()}`));
       onFolderRemoved(path);
     });
 
-    DEV: debugTopic('SYNC', (log) => log(`Added itemAdded listener for ${store.path.toString()}`));
+    DEV: debugTopic('SYNC', (log) => log(`Added itemAdded listener for ${store.path.toShortString()}`));
     const removeLocalItemAddedListener = store.addListener('itemAdded', async ({ path, hash }) => {
-      DEV: debugTopic('SYNC', (log) => log(`Received itemAdded for ${path.toString()}: ${hash}`));
+      DEV: debugTopic('SYNC', (log) => log(`Received itemAdded for ${path.toShortString()}: ${hash}`));
       onItemAdded({ path, hash });
     });
 

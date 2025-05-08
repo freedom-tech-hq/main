@@ -1,7 +1,7 @@
 import type { PR, TraceableError } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { Cast, objectKeys } from 'freedom-cast';
-import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
+import { InternalStateError } from 'freedom-common-errors';
 import type { RemoteId, SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
@@ -22,12 +22,9 @@ export const pushSyncableToRemotes = makeAsyncResultFunc(
       return makeSuccess(undefined);
     }
 
-    const shouldSyncWithAllRemotes = await syncService.shouldSyncWithAllRemotes(trace, { store, path });
-    if (!shouldSyncWithAllRemotes.ok) {
-      return generalizeFailureResult(trace, shouldSyncWithAllRemotes, 'not-found');
-    }
+    const shouldPushToAllRemotes = await syncService.shouldPushToAllRemotes({ store, path });
 
-    const onSuccess = shouldSyncWithAllRemotes.value ? 'continue' : 'stop';
+    const onSuccess = shouldPushToAllRemotes ? 'continue' : 'stop';
 
     let lastNotFoundError: TraceableError<'not-found'> | undefined;
     const pushed = await allResultsMappedSkipFailures(

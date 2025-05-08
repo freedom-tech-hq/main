@@ -1,12 +1,12 @@
 import type { PR, PRFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType, SyncablePath } from 'freedom-sync-types';
+import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { SyncableStoreBackingFileAccessor } from './accessors/SyncableStoreBackingFileAccessor.ts';
 import type { SyncableStoreBackingFolderAccessor } from './accessors/SyncableStoreBackingFolderAccessor.ts';
 import type { SyncableStoreBackingItemAccessor } from './accessors/SyncableStoreBackingItemAccessor.ts';
-import type { LocalItemMetadata } from './LocalItemMetadata.ts';
+import type { SyncableStoreBackingItemMetadata } from './SyncableStoreBackingItemMetadata.ts';
 
 export interface SyncableStoreBacking {
   readonly existsAtPath: PRFunc<boolean, never, [path: SyncablePath]>;
@@ -23,10 +23,10 @@ export interface SyncableStoreBacking {
     [path: SyncablePath, options?: { type?: SingleOrArray<SyncableItemType> }]
   >;
 
-  readonly getMetadataAtPath: PRFunc<SyncableItemMetadata & LocalItemMetadata, 'not-found' | 'wrong-type', [path: SyncablePath]>;
+  readonly getMetadataAtPath: PRFunc<SyncableStoreBackingItemMetadata, 'not-found' | 'wrong-type', [path: SyncablePath]>;
 
   readonly getMetadataByIdInPath: PRFunc<
-    Partial<Record<SyncableId, SyncableItemMetadata & LocalItemMetadata>>,
+    Partial<Record<SyncableId, SyncableStoreBackingItemMetadata>>,
     'not-found' | 'wrong-type',
     [path: SyncablePath, ids?: Set<SyncableId>]
   >;
@@ -34,13 +34,13 @@ export interface SyncableStoreBacking {
   readonly createBinaryFileWithPath: PRFunc<
     SyncableStoreBackingFileAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: SyncablePath, { data: Uint8Array; metadata: SyncableItemMetadata & LocalItemMetadata }]
+    [path: SyncablePath, { data: Uint8Array; metadata: SyncableStoreBackingItemMetadata }]
   >;
 
   readonly createFolderWithPath: PRFunc<
     SyncableStoreBackingFolderAccessor,
     'not-found' | 'wrong-type' | 'conflict',
-    [path: SyncablePath, { metadata: SyncableItemMetadata & LocalItemMetadata }]
+    [path: SyncablePath, { metadata: SyncableStoreBackingItemMetadata }]
   >;
 
   readonly deleteAtPath: PRFunc<undefined, 'not-found' | 'wrong-type', [path: SyncablePath]>;

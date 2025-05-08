@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { objectKeys } from 'freedom-cast';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
 import type { RemoteAccessor, RemoteConnection, RemoteId } from 'freedom-sync-types';
@@ -13,15 +13,15 @@ import { attachSyncServiceToSyncableStore } from '../internal/utils/attachSyncSe
 import { pullSyncableFromRemotes } from '../internal/utils/pullSyncableFromRemotes.ts';
 import { pushSyncableToRemotes } from '../internal/utils/pushSyncableToRemotes.ts';
 import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
-import type { ShouldSyncWithAllRemotesFunc } from '../types/ShouldSyncWithAllRemotesFunc.ts';
+import type { ShouldPushToAllRemotesFunc } from '../types/ShouldPushToAllRemotesFunc.ts';
 import type { SyncService } from '../types/SyncService.ts';
 import type { SyncServiceLogEntry } from '../types/SyncServiceLogEntry.ts';
 
 export interface MakeSyncServiceArgs {
   store: MutableSyncableStore;
   remoteConnections: RemoteConnection[];
-  shouldSyncWithAllRemotes: ShouldSyncWithAllRemotesFunc;
   getSyncStrategyForPath: GetSyncStrategyForPathFunc;
+  shouldPushToAllRemotes: ShouldPushToAllRemotesFunc;
   shouldRecordLogs?: boolean;
 }
 
@@ -29,7 +29,7 @@ export const makeSyncService = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { store, remoteConnections, shouldSyncWithAllRemotes, getSyncStrategyForPath, shouldRecordLogs = false }: MakeSyncServiceArgs
+    { store, remoteConnections, getSyncStrategyForPath, shouldPushToAllRemotes, shouldRecordLogs = false }: MakeSyncServiceArgs
   ): PR<SyncService> => {
     const pullQueue = new TaskQueue('[SYNC] pull-queue', trace);
     const pushQueue = disableLam('not-found', (trace) => new TaskQueue('[SYNC] push-queue', trace))(trace);
@@ -51,15 +51,18 @@ export const makeSyncService = makeAsyncResultFunc(
 
       remoteAccessors,
 
-      shouldSyncWithAllRemotes,
-
       getSyncStrategyForPath,
+      shouldPushToAllRemotes,
 
-      pullFromRemotes: ({ remoteId = defaultRemoteId, path, hash }) => {
+      pullFromRemotes: ({ remoteId = defaultRemoteId, path, hash, priority = 'default' }) => {
         const key = path.toString();
         const version = JSON.stringify({ remoteId, hash });
 
-        pullQueue.add({ key, version }, async (trace) => {
+        DEV: debugTopic('SYNC', (log) =>
+          log(`Pull enqueued ${path.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
+        );
+
+        pullQueue.add({ key, version, priority }, async (trace) => {
           const pulled = await disableLam('not-found', pullSyncableFromRemotes)(trace, { store, syncService: service }, { remoteId, path });
           if (!pulled.ok) {
             if (pulled.value.errorCode === 'not-found') {
@@ -72,11 +75,15 @@ export const makeSyncService = makeAsyncResultFunc(
         });
       },
 
-      pushToRemotes: ({ remoteId = defaultRemoteId, path, hash }) => {
+      pushToRemotes: ({ remoteId = defaultRemoteId, path, hash, priority = 'default' }) => {
         const key = path.toString();
         const version = JSON.stringify({ remoteId, hash });
 
-        pushQueue.add({ key, version }, async (trace) => {
+        DEV: debugTopic('SYNC', (log) =>
+          log(`Push enqueued ${path.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
+        );
+
+        pushQueue.add({ key, version, priority }, async (trace) => {
           const pushed = await pushSyncableToRemotes(trace, { store, syncService: service }, { remoteId, path });
           if (!pushed.ok) {
             return pushed;

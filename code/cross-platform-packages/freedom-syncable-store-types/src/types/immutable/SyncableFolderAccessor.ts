@@ -1,14 +1,14 @@
 import type { PRFunc } from 'freedom-async';
 import type { CryptoKeySetId } from 'freedom-crypto-data';
-import type { SyncableItemMetadata } from 'freedom-sync-types';
 import type { TrustedTimeSource } from 'freedom-trusted-time-source';
 
 import type { ISyncableStoreAccessControlDocument } from '../ISyncableStoreAccessControlDocument.ts';
 import type { SyncableStoreRole } from '../SyncableStoreRole.ts';
 import type { FileStore } from './FileStore.ts';
 import type { FolderStore } from './FolderStore.ts';
+import type { SyncableItemAccessorBase } from './SyncableItemAccessorBase.ts';
 
-export interface SyncableFolderAccessor extends FileStore, FolderStore {
+export interface SyncableFolderAccessor extends SyncableItemAccessorBase, FileStore, FolderStore {
   readonly type: 'folder';
 
   /** Determines if the specified crypto key set ID was associated with any of the specified roles at the specified time */
@@ -20,9 +20,6 @@ export interface SyncableFolderAccessor extends FileStore, FolderStore {
 
   /** Gets the access control document */
   readonly getAccessControlDocument: PRFunc<ISyncableStoreAccessControlDocument>;
-
-  /** Gets the metadata */
-  readonly getMetadata: PRFunc<SyncableItemMetadata>;
 
   /** Gets the roles, if any, currently associated with the specified crypto key set IDs */
   readonly getRolesByCryptoKeySetId: PRFunc<

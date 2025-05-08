@@ -24,18 +24,13 @@ export const pullFolder = makeAsyncResultFunc(
         return generalizeFailureResult(trace, folder, ['untrusted', 'wrong-type']);
       }
 
-      const hash = await folder.value.getHash(trace);
-      if (!hash.ok) {
-        return hash;
-      }
-
-      if (hash.value === downstreamHash) {
-        return makeSuccess({ type: 'folder', outOfSync: false } satisfies InSyncFolder);
-      }
-
       const metadata = await folder.value.getMetadata(trace);
       if (!metadata.ok) {
         return metadata;
+      }
+
+      if (metadata.value.hash === downstreamHash) {
+        return makeSuccess({ type: 'folder', outOfSync: false } satisfies InSyncFolder);
       }
 
       const metadataById = await folder.value.getMetadataById(trace);

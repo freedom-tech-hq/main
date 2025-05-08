@@ -1,8 +1,14 @@
 import type { PR } from 'freedom-async';
 import { allResultsNamed, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableId, SyncableItemMetadata, SyncablePath, SyncBatchContents, SyncStrategy } from 'freedom-sync-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-backing-types';
+import type {
+  LocalItemMetadata,
+  SyncableId,
+  SyncableItemMetadata,
+  SyncablePath,
+  SyncBatchContents,
+  SyncStrategy
+} from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
 import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';

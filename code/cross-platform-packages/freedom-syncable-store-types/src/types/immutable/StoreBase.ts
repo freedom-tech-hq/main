@@ -1,14 +1,12 @@
 import type { PR, PRFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { SyncableId, SyncableItemMetadata, SyncableItemType } from 'freedom-sync-types';
-import type { LocalItemMetadata } from 'freedom-syncable-store-backing-types';
+import type { LocalItemMetadata, SyncableId, SyncableItemMetadata, SyncableItemType } from 'freedom-sync-types';
 import type { SingleOrArray } from 'yaschema';
 
 import type { GenerateNewSyncableItemNameFunc } from '../GenerateNewSyncableItemNameFunc.ts';
 import type { SyncableItemAccessor } from './SyncableItemAccessor.ts';
-import type { SyncableItemAccessorBase } from './SyncableItemAccessorBase.ts';
 
-export interface StoreBase extends SyncableItemAccessorBase {
+export interface StoreBase {
   /** Determines if the file or access controlled folder exists or not */
   readonly exists: PRFunc<boolean, never, [id: SyncableId]>;
 

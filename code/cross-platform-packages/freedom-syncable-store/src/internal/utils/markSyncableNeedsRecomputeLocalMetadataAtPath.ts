@@ -3,10 +3,10 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
-import { disableSyncableValidation } from '../internal/context/isSyncableValidationEnabled.ts';
-import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
+import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
+import { disableSyncableValidation } from '../context/isSyncableValidationEnabled.ts';
 
-export const markSyncableNeedsRecomputeHashAtPath = makeAsyncResultFunc(
+export const markSyncableNeedsRecomputeLocalMetadataAtPath = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, store: SyncableStore, path: SyncablePath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
     // Disabling validation since we're creating something new -- and this might be a new access control bundle for example, which would
@@ -16,6 +16,6 @@ export const markSyncableNeedsRecomputeHashAtPath = makeAsyncResultFunc(
       return itemAccessor;
     }
 
-    return await itemAccessor.value.markNeedsRecomputeHash(trace);
+    return await itemAccessor.value.markNeedsRecomputeLocalMetadata(trace);
   }
 );

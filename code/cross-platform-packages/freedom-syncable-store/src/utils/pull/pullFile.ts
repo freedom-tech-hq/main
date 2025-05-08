@@ -27,21 +27,16 @@ export const pullFile = makeAsyncResultFunc(
         return generalizeFailureResult(trace, file, ['untrusted', 'wrong-type']);
       }
 
-      const hash = await file.value.getHash(trace);
-      if (!hash.ok) {
-        return hash;
-      }
-
-      if (hash.value === downstreamHash) {
-        return makeSuccess({ type: 'file', outOfSync: false } satisfies InSyncFile);
-      }
-
-      // TODO: changing provenance (by accepting or rejecting) should probably trigger a hash change or something
-
       const metadata = await file.value.getMetadata(trace);
       if (!metadata.ok) {
         return metadata;
       }
+
+      if (metadata.value.hash === downstreamHash) {
+        return makeSuccess({ type: 'file', outOfSync: false } satisfies InSyncFile);
+      }
+
+      // TODO: changing provenance (by accepting or rejecting) should probably trigger a hash change or something
 
       if (!sendData) {
         return makeSuccess({ type: 'file', outOfSync: true, metadata: metadata.value } satisfies OutOfSyncFile);
