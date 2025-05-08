@@ -1,14 +1,14 @@
 import type { PR } from 'freedom-async';
-import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { deserialize, serialize } from 'freedom-serialization';
-import type { SyncablePath } from 'freedom-sync-types';
-import type { JsonValue } from 'yaschema';
+import { withAcquiredLock } from 'freedom-locking-types';
+import { parse, stringify } from 'freedom-serialization';
+import { type LocalItemMetadata, mergeLocalItemMetadata, type SyncablePath } from 'freedom-sync-types';
+import { syncableStoreBackingItemMetadataSchema } from 'freedom-syncable-store-backing-types';
 
-import type { OpfsChangeableLocalItemMetadata } from '../types/OpfsLocalItemMetadata.ts';
-import { storedMetadataSchema } from '../types/StoredMetadata.ts';
 import { getDirectoryHandleAndFilenameForMetadataFile } from './getDirectoryHandleAndFilenameForMetadataFile.ts';
 import { getFileHandleForDirectoryHandleAndFilename } from './getFileHandleForDirectoryHandleAndFilename.ts';
+import { getLockStore } from './getLockStore.ts';
 import { readTextFile } from './readTextFile.ts';
 import { writeTextFile } from './writeTextFile.ts';
 
@@ -18,8 +18,10 @@ export const updateLocalMetadata = makeAsyncResultFunc(
     trace,
     rootHandle: FileSystemDirectoryHandle,
     path: SyncablePath,
-    metadataChanges: Partial<OpfsChangeableLocalItemMetadata>
+    metadataChanges: Partial<LocalItemMetadata>
   ): PR<undefined, 'not-found'> => {
+    const lockStore = getLockStore();
+
     const dirAndFilename = await getDirectoryHandleAndFilenameForMetadataFile(trace, rootHandle, path);
     if (!dirAndFilename.ok) {
       return dirAndFilename;
@@ -32,37 +34,35 @@ export const updateLocalMetadata = makeAsyncResultFunc(
       return fileHandle;
     }
 
-    const metadataJsonString = await readTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey });
-    if (!metadataJsonString.ok) {
-      return generalizeFailureResult(trace, metadataJsonString, 'format-error');
-    }
-    try {
-      const metadataJson = JSON.parse(metadataJsonString.value) as JsonValue;
-      const deserialization = await deserialize(trace, { serializedValue: metadataJson, valueSchema: storedMetadataSchema });
-      if (!deserialization.ok) {
-        return deserialization;
+    const completed = await withAcquiredLock(trace, lockStore.lock(metaFileLockKey), {}, async (trace): PR<undefined> => {
+      const metadataJsonString = await readTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey });
+      if (!metadataJsonString.ok) {
+        return generalizeFailureResult(trace, metadataJsonString, 'format-error');
       }
 
-      const metadata = deserialization.value;
+      const metadata = await parse(trace, metadataJsonString.value, syncableStoreBackingItemMetadataSchema);
+      if (!metadata.ok) {
+        return metadata;
+      }
 
-      if ('hash' in metadataChanges) {
-        metadata.hash = metadataChanges.hash;
+      mergeLocalItemMetadata(metadata.value, metadataChanges);
 
-        const serialization = await serialize(trace, metadata, storedMetadataSchema);
-        if (!serialization.ok) {
-          return serialization;
-        }
+      const outMetadataJsonString = await stringify(trace, metadata.value, syncableStoreBackingItemMetadataSchema);
+      if (!outMetadataJsonString.ok) {
+        return outMetadataJsonString;
+      }
 
-        const outMetadataJsonString = JSON.stringify(serialization.value.serializedValue);
-        const wrote = await writeTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey, stringValue: outMetadataJsonString });
-        if (!wrote.ok) {
-          return wrote;
-        }
+      const wrote = await writeTextFile(trace, fileHandle.value, { lockKey: metaFileLockKey, stringValue: outMetadataJsonString.value });
+      if (!wrote.ok) {
+        return wrote;
       }
 
       return makeSuccess(undefined);
-    } catch (e) {
-      return makeFailure(new GeneralError(trace, e));
+    });
+    if (!completed.ok) {
+      return generalizeFailureResult(trace, completed, 'lock-timeout');
     }
+
+    return makeSuccess(undefined);
   }
 );

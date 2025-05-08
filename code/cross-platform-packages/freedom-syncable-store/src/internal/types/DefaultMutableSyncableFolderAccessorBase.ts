@@ -368,6 +368,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
       }
       /* node:coverage enable */
 
+      let sizeBytes = 0;
+      let numDescendants = 0;
       const hashesById = objectEntries(metadataById.value).reduce(
         (out, [id, metadata]) => {
           if (metadata === undefined) {
@@ -375,6 +377,8 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
           }
 
           out[id] = metadata.hash;
+          sizeBytes += metadata.sizeBytes;
+          numDescendants += 1 + metadata.numDescendants;
 
           return out;
         },
@@ -388,7 +392,7 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
       }
       /* node:coverage enable */
 
-      const localItemMetadata: LocalItemMetadata = { hash: hash.value };
+      const localItemMetadata: LocalItemMetadata = { hash: hash.value, numDescendants, sizeBytes };
 
       return makeSuccess(localItemMetadata);
     }

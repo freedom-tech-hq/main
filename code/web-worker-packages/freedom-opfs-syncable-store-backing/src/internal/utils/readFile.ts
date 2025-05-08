@@ -10,7 +10,7 @@ export const readFile = makeAsyncResultFunc(
   async (trace, fileHandle: FileSystemFileHandle, { lockKey }: { lockKey: string }): PR<Uint8Array> => {
     const lockStore = getLockStore();
 
-    const completed = await withAcquiredLock(trace, lockStore.lock(lockKey), {}, async (): PR<Uint8Array> => {
+    const completed = await withAcquiredLock(trace, lockStore.lock(lockKey), {}, async (_trace): PR<Uint8Array> => {
       const file = await fileHandle.getFile();
       const buffer = await file.arrayBuffer();
       return makeSuccess(Buffer.from(buffer));

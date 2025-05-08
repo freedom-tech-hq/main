@@ -10,7 +10,7 @@ export const writeFile = makeAsyncResultFunc(
   async (trace, fileHandle: FileSystemFileHandle, { lockKey, data }: { lockKey: string; data: Uint8Array }): PR<undefined> => {
     const lockStore = getLockStore();
 
-    const completed = await withAcquiredLock(trace, lockStore.lock(lockKey), {}, async (): PR<undefined> => {
+    const completed = await withAcquiredLock(trace, lockStore.lock(lockKey), {}, async (_trace): PR<undefined> => {
       if (fileHandle.createWritable !== undefined) {
         // Preferring async since it's more parallelizable
 
