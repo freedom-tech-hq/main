@@ -1,5 +1,5 @@
 import type { TestContext } from 'node:test';
-import { beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess, sleep } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
@@ -12,6 +12,8 @@ describe('TaskQueue', () => {
   beforeEach(() => {
     taskQueue = new TaskQueue('test', makeTrace('test'));
   });
+
+  afterEach(() => taskQueue.stop());
 
   it('should add and run tasks sequentially', async (t: TestContext) => {
     const results: string[] = [];
