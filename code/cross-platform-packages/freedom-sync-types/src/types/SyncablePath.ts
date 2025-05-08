@@ -56,6 +56,19 @@ export class SyncablePath {
     return true;
   }
 
+  public toRelativePathString(basePath: SyncablePath) {
+    if (basePath.storageRootId !== this.storageRootId) {
+      return this.toString();
+    }
+
+    return `/${this.ids.slice(basePath.ids.length).map(encodeURIComponent).join('/')}`;
+  }
+
+  /** Same as `toString` except without the storageRootId */
+  public toShortString() {
+    return `/${this.ids.map(encodeURIComponent).join('/')}`;
+  }
+
   public toString() {
     return `${encodeURIComponent(this.storageRootId)}:/${this.ids.map(encodeURIComponent).join('/')}`;
   }
