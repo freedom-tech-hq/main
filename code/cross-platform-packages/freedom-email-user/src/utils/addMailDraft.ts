@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { MailId } from 'freedom-email-sync';
+import { encName } from 'freedom-sync-types';
 import { createBundleAtPath, createConflictFreeDocumentBundleAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
@@ -17,7 +18,7 @@ export const addMailDraft = makeAsyncResultFunc(
 
     const draftId = mailDraftIdInfo.make();
     const draftIdPath = await paths.drafts.draftId(draftId);
-    const draftBundle = await createBundleAtPath(trace, syncableStore, draftIdPath.value);
+    const draftBundle = await createBundleAtPath(trace, syncableStore, draftIdPath.value, { name: encName(draftId) });
     if (!draftBundle.ok) {
       return generalizeFailureResult(trace, draftBundle, ['conflict', 'deleted', 'not-found', 'untrusted', 'wrong-type']);
     }
@@ -34,6 +35,7 @@ export const addMailDraft = makeAsyncResultFunc(
     }
 
     const created = await createConflictFreeDocumentBundleAtPath(trace, syncableStore, draftIdPath.draft, {
+      name: encName('draft'),
       newDocument: () => MailDraftDocument.newDocument({ inReplyToMailId, subject })
     });
     if (!created.ok) {

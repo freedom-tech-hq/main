@@ -3,6 +3,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { MailId, StoredMail } from 'freedom-email-sync';
 import { getMailPaths, mailIdInfo, storedMailSchema } from 'freedom-email-sync';
+import { encName } from 'freedom-sync-types';
 import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
@@ -18,11 +19,11 @@ export const addMailToOutbox = makeAsyncResultFunc(
     const mailBundle = await getOrCreateBundlesAtPaths(
       trace,
       syncableStore,
-      outYearPath.value,
-      outYearPath.month.value,
-      outYearPath.month.day.value,
-      outYearPath.month.day.hour.value,
-      (await outYearPath.month.day.hour.mailId(mailId)).value
+      [outYearPath.value, { name: encName(String(mailDate.getUTCFullYear())) }],
+      [outYearPath.month.value, { name: encName(String(mailDate.getUTCMonth() + 1)) }],
+      [outYearPath.month.day.value, { name: encName(String(mailDate.getUTCDate())) }],
+      [outYearPath.month.day.hour.value, { name: encName(String(mailDate.getUTCHours())) }],
+      [(await outYearPath.month.day.hour.mailId(mailId)).value, { name: encName(mailId) }]
     );
     if (!mailBundle.ok) {
       return generalizeFailureResult(trace, mailBundle, ['deleted', 'format-error', 'not-found', 'untrusted', 'wrong-type']);
@@ -30,6 +31,7 @@ export const addMailToOutbox = makeAsyncResultFunc(
 
     // TODO: should add summary and attachments etc
     const stored = await createJsonFileAtPath(trace, syncableStore, (await outYearPath.month.day.hour.mailId(mailId)).detailed, {
+      name: encName('detailed.json'),
       value: mail,
       schema: storedMailSchema
     });

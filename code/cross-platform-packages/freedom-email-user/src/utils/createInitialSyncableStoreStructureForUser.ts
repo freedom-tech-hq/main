@@ -1,6 +1,8 @@
 import type { PR, PRFunc } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { Cast } from 'freedom-cast';
+import { generalizeFailureResult } from 'freedom-common-errors';
+import { encName } from 'freedom-sync-types';
 import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
@@ -13,23 +15,26 @@ export const createInitialSyncableStoreStructureForUser = makeAsyncResultFunc(
   async (trace, syncableStore: MutableSyncableStore): PR<undefined> => {
     const paths = await getUserMailPaths(syncableStore);
 
-    await allResultsMappedSkipFailures(
+    const created = await allResultsMappedSkipFailures(
       trace,
       [
         // Mail Storage Folder
-        (trace) => createFolderAtPath(trace, syncableStore, paths.storage.value),
+        (trace) => createFolderAtPath(trace, syncableStore, paths.storage.value, { name: encName('storage') }),
         // Mail Out Folder
-        (trace) => createFolderAtPath(trace, syncableStore, paths.out.value),
+        (trace) => createFolderAtPath(trace, syncableStore, paths.out.value, { name: encName('out') }),
         // Mail Drafts Bundle
-        (trace) => createBundleAtPath(trace, syncableStore, paths.drafts.value),
+        (trace) => createBundleAtPath(trace, syncableStore, paths.drafts.value, { name: encName('drafts') }),
         // Mail Indexes Bundle
-        (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.value),
+        (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.value, { name: encName('indexes') }),
         // Mail Email Ids by Message Id Index Bundle
-        (trace) => createBundleAtPath(trace, syncableStore, paths.indexes.mailIdsByMessageIdIndex),
+        (trace) =>
+          createBundleAtPath(trace, syncableStore, paths.indexes.mailIdsByMessageIdIndex, { name: encName('mailIdsByMessageIdIndex') }),
         // Mail Threads Bundle
-        (trace) => createBundleAtPath(trace, syncableStore, paths.threads),
+        (trace) => createBundleAtPath(trace, syncableStore, paths.threads, { name: encName('threads') }),
         // Creating default collections
-        (trace) => createDefaultCollectionsForUser(trace, syncableStore)
+        (trace) => createDefaultCollectionsForUser(trace, syncableStore),
+        // Route Processing
+        (trace) => createBundleAtPath(trace, syncableStore, paths.routeProcessing.value, { name: encName('routeProcessing') })
       ] satisfies Array<PRFunc<unknown, 'conflict' | 'not-found' | 'wrong-type' | 'untrusted' | 'deleted'>>,
       {
         _successType: Cast<unknown>(),
@@ -38,6 +43,9 @@ export const createInitialSyncableStoreStructureForUser = makeAsyncResultFunc(
       },
       (trace, step) => step(trace)
     );
+    if (!created.ok) {
+      return generalizeFailureResult(trace, created, ['deleted', 'not-found', 'untrusted', 'wrong-type']);
+    }
 
     return makeSuccess(undefined);
   },
