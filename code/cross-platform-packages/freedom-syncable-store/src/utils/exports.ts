@@ -22,7 +22,6 @@ export * from './getCryptoKeyIdForHighestCurrentUserRoleAtPath.ts';
 export * from './getMetadataAtPath.ts';
 export * from './getRecursiveFolderPaths.ts';
 export * from './getSha256HashForItemProvenance.ts';
-export * from './getMetadataAtPath.ts';
 export * from './getTrustedTimeSourcesForPath.ts';
 export * from './guards/exports.ts';
 export * from './initializeRoot.ts';
