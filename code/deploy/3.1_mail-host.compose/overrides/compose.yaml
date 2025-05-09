@@ -1,10 +1,10 @@
-name: mail-host
+name: "${DEPLOY_STACK_NAME}"
 
 services:
   # To be implemented as a separate configuration of DMS like 'delivery-host' is.
   #inbound-smtp-server:
 
-  freedom-host:
+  mail-host:
     build: .
 
     env_file: mail-host.env
