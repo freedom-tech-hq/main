@@ -26,6 +26,10 @@ After deploying infrastructure, deploy the application(s) from `deploy/3.N_xxx` 
 Manual commands are also allowed:
 
 ```bash
+# Set vars, including TF_CLI_ARGS
+. ../shared/terraform/1_vars.sh 2.1_deployment.iac <env-name>
+
+# Run commands
 terraform apply
 ```
 

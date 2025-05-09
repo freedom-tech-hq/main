@@ -26,6 +26,10 @@ After deploying the account (layer 1) infrastructure, continue with layer 2 infr
 Manual commands are also allowed:
 
 ```bash
+# Set vars, including TF_CLI_ARGS
+. ../shared/terraform/1_vars.sh 1.1_account.iac <env-name>
+
+# Run commands
 terraform apply
 ```
 
