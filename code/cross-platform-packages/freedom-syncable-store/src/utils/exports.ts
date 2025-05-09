@@ -29,5 +29,6 @@ export * from './initializeRoot.ts';
 export * from './isSyncableDeleted.ts';
 export * from './logLs.ts';
 export * from './shouldUseTrustedTimeIdsInPath.ts';
+export * from './traverse.ts';
 export * from './validation/exports.ts';
 export * from './verifyAndDecryptBinary.ts';

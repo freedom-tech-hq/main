@@ -69,7 +69,13 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
     const decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]> = isSyncableItemEncrypted(path.lastId!)
       ? this.verifyAndDecryptBuffer_
       : passThroughData;
-    return getOrCreateDefaultMutableSyncableFileAccessor({ store, backing: this.backing_, path, decode });
+    return getOrCreateDefaultMutableSyncableFileAccessor({
+      store,
+      backing: this.backing_,
+      path,
+      folderOperationsHandler: this.folderOperationsHandler_,
+      decode
+    });
   }
 
   // MutableFileStore Methods

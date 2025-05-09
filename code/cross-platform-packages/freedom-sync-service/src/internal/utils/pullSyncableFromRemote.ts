@@ -11,14 +11,12 @@ import type {
   RemoteId,
   StructHashes,
   SyncableId,
-  SyncableItemType,
   SyncablePath,
   SyncPullArgs
 } from 'freedom-sync-types';
 import { syncableIdComparator, SyncablePathPattern } from 'freedom-sync-types';
-import { getMetadataAtPath } from 'freedom-syncable-store';
-import type { MutableSyncableStore, SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
-import type { SingleOrArray } from 'yaschema';
+import { findSyncables, getMetadataAtPath } from 'freedom-syncable-store';
+import type { MutableSyncableStore, SyncableStore } from 'freedom-syncable-store-types';
 
 import type { SyncService } from '../../types/SyncService.ts';
 import type { SyncStrategy } from '../../types/SyncStrategy.ts';
@@ -46,7 +44,7 @@ const getHashesRelativeToBasePathWithPatterns = makeAsyncResultFunc(
   ): PR<StructHashes> => {
     const found = await findSyncables(trace, store, { basePath, include, exclude });
     if (!found.ok) {
-      return found;
+      return generalizeFailureResult(trace, found, 'not-found');
     }
 
     const hashes: StructHashes = {};
