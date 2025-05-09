@@ -1,7 +1,7 @@
 import { getEnv } from 'freedom-contexts';
 import { makeStringSubtypeArray } from 'yaschema';
 
-export const appEnvironments = makeStringSubtypeArray('local', 'production');
+export const appEnvironments = makeStringSubtypeArray('local', 'dev', 'production');
 export type AppEnvironment = (typeof appEnvironments)[0];
 
 export const defaultAppEnvironment: AppEnvironment = 'production';
