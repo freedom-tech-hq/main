@@ -1,7 +1,7 @@
 import type { FailureResult, ShouldRetryArgs } from 'freedom-async';
 import { StatusCodes } from 'http-status-codes';
 
-import { dataUploadExponentialBackoffTimeMSec, MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC } from '../internal/consts/retry.ts';
+import { dataUploadExponentialBackoffTimeMSec, MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC } from '../consts/retry.ts';
 
 const dataUploadRetryableStatusCodes = new Set([
   StatusCodes.BAD_GATEWAY,

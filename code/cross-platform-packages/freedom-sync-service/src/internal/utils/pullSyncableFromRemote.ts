@@ -1,21 +1,123 @@
 import type { PR } from 'freedom-async';
 import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import type { Sha256Hash } from 'freedom-basic-data';
 import { objectEntries, objectWithSortedKeys } from 'freedom-cast';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import type { OutOfSyncBundle, OutOfSyncFile, OutOfSyncFolder, RemoteId, SyncablePath } from 'freedom-sync-types';
-import {
-  getBundleAtPathForSync,
-  getFolderAtPathForSync,
-  getMetadataAtPath,
-  pushBundle,
-  pushFile,
-  pushFolder
-} from 'freedom-syncable-store';
-import type { MutableSyncableStore } from 'freedom-syncable-store-types';
+import type {
+  OutOfSyncBundle,
+  OutOfSyncFile,
+  OutOfSyncFolder,
+  RemoteId,
+  StructHashes,
+  SyncableId,
+  SyncableItemType,
+  SyncablePath,
+  SyncPullArgs
+} from 'freedom-sync-types';
+import { syncableIdComparator, SyncablePathPattern } from 'freedom-sync-types';
+import { getMetadataAtPath } from 'freedom-syncable-store';
+import type { MutableSyncableStore, SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
+import type { SingleOrArray } from 'yaschema';
 
 import type { SyncService } from '../../types/SyncService.ts';
+import type { SyncStrategy } from '../../types/SyncStrategy.ts';
 import { pushMissingSyncableContentToRemote } from './pushSyncableToRemote.ts';
+
+// TODO: MOVE
+const getPathPatternsForStrategy = (strategy: SyncStrategy): { include: SyncablePathPattern[]; exclude?: SyncablePathPattern[] } => {
+  switch (strategy) {
+    case 'item':
+      return { include: [new SyncablePathPattern()] };
+    case 'level':
+      return { include: [new SyncablePathPattern(), new SyncablePathPattern('*')] };
+    case 'stack':
+      return { include: [new SyncablePathPattern(), new SyncablePathPattern('**')] };
+  }
+};
+
+// TODO: MOVE
+const getHashesRelativeToBasePathWithPatterns = makeAsyncResultFunc(
+  [import.meta.filename, 'getHashesRelativeToBasePathWithPatterns'],
+  async (
+    trace,
+    store: SyncableStore,
+    { basePath, include, exclude }: { basePath: SyncablePath; include: SyncablePathPattern[]; exclude?: SyncablePathPattern[] }
+  ): PR<StructHashes> => {
+    const found = await findSyncables(trace, store, { basePath, include, exclude });
+    if (!found.ok) {
+      return found;
+    }
+
+    const hashes: StructHashes = {};
+
+    const insertIntoStructHashesWithRelativeIds = (
+      hashes: StructHashes,
+      relativeIds: SyncableId[],
+      relativeIdsOffset: number,
+      hash: Sha256Hash
+    ) => {
+      if (relativeIdsOffset === relativeIds.length - 1) {
+        hashes.hash = hash;
+        return;
+      }
+
+      const id = relativeIds[relativeIdsOffset];
+      if (hashes.contents === undefined) {
+        hashes.contents = {};
+      }
+      if (hashes.contents[id] === undefined) {
+        hashes.contents[id] = {};
+      }
+
+      insertIntoStructHashesWithRelativeIds(hashes.contents[id], relativeIds, relativeIdsOffset + 1, hash);
+    };
+
+    const insertIntoStructHashes = (hashes: StructHashes, basePath: SyncablePath, itemPath: SyncablePath, hash: Sha256Hash) => {
+      const relativeIds = itemPath.relativeTo(basePath);
+      if (relativeIds !== undefined) {
+        insertIntoStructHashesWithRelativeIds(hashes, relativeIds, 0, hash);
+      }
+    };
+
+    const inserted = await allResultsMapped(trace, found.value, {}, async (trace, item) => {
+      const metadata = await getMetadataAtPath(trace, store, item.path);
+      if (metadata.ok) {
+        insertIntoStructHashes(hashes, basePath, item.path, metadata.value.hash);
+      }
+
+      return makeSuccess(undefined);
+    });
+    if (!inserted.ok) {
+      return inserted;
+    }
+
+    return makeSuccess(hashes);
+  }
+);
+
+// TODO: MOVE
+const getSyncPullArgsForStrategy = makeAsyncResultFunc(
+  [import.meta.filename, 'getSyncPullArgsForStrategy'],
+  async (
+    trace,
+    store: SyncableStore,
+    { path, strategy }: { path: SyncablePath; strategy: SyncStrategy }
+  ): PR<SyncPullArgs, 'not-found'> => {
+    const patterns = getPathPatternsForStrategy(strategy);
+    const localHashesRelativeToBasePath = await getHashesRelativeToBasePathWithPatterns(trace, store, { basePath: path, ...patterns });
+    if (!localHashesRelativeToBasePath.ok) {
+      return localHashesRelativeToBasePath;
+    }
+
+    return makeSuccess({
+      basePath: path,
+      localHashesRelativeToBasePath: localHashesRelativeToBasePath.value,
+      sendData: true,
+      ...patterns
+    });
+  }
+);
 
 export const pullSyncableFromRemote = makeAsyncResultFunc(
   [import.meta.filename],
@@ -30,11 +132,15 @@ export const pullSyncableFromRemote = makeAsyncResultFunc(
     }
 
     const strategy = await syncService.getSyncStrategyForPath('pull', path);
-    const metadata = await getMetadataAtPath(trace, store, path);
+
+    const requestArgs = await getSyncPullArgsForStrategy(trace, store, { path, strategy });
+    if (!requestArgs.ok) {
+      return requestArgs;
+    }
 
     // TODO: everything pulled needs to be validated -- approved content: just validate the approval itself; not-yet approved content:
     // validate the change against the access control document
-    const pulled = await pullFromRemote(trace, { path, hash: metadata.ok ? metadata.value.hash : undefined, sendData: true, strategy });
+    const pulled = await pullFromRemote(trace, requestArgs.value);
     if (!pulled.ok) {
       return pulled;
     }
@@ -105,7 +211,7 @@ const onBundlePulled = makeAsyncResultFunc(
 
     const localMetadataById = localBundle.value.metadataById;
 
-    const outOfSyncEntries = objectEntries(objectWithSortedKeys(bundle.hashesById)).filter(
+    const outOfSyncEntries = objectEntries(objectWithSortedKeys(bundle.hashesById, syncableIdComparator)).filter(
       ([id, remoteHash]) => remoteHash !== undefined && localMetadataById[id]?.hash !== remoteHash
     );
 
@@ -165,7 +271,7 @@ const onFolderPulled = makeAsyncResultFunc(
 
     const localMetadataById = localFolder.value.metadataById;
 
-    const outOfSyncEntries = objectEntries(objectWithSortedKeys(folder.hashesById)).filter(
+    const outOfSyncEntries = objectEntries(objectWithSortedKeys(folder.hashesById, syncableIdComparator)).filter(
       ([id, remoteHash]) => remoteHash !== undefined && localMetadataById[id]?.hash !== remoteHash
     );
 

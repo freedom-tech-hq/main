@@ -1,14 +1,7 @@
 import { schema } from 'yaschema';
 
-import { inSyncBundleSchema } from './InSyncBundle.ts';
-import { inSyncFileSchema } from './InSyncFile.ts';
-import { inSyncFolderSchema } from './InSyncFolder.ts';
-import { outOfSyncBundleSchema } from './OutOfSyncBundle.ts';
-import { outOfSyncFileSchema } from './OutOfSyncFile.ts';
-import { outOfSyncFolderSchema } from './OutOfSyncFolder.ts';
+import { inSyncResponseSchema } from './InSyncResponse.ts';
+import { outOfSyncResponseSchema } from './OutOfSyncResponse.ts';
 
-export const syncPullResponseSchema = schema.oneOf(
-  schema.oneOf3(inSyncFolderSchema, inSyncFileSchema, inSyncBundleSchema),
-  schema.oneOf3(outOfSyncFolderSchema, outOfSyncFileSchema, outOfSyncBundleSchema)
-);
+export const syncPullResponseSchema = schema.oneOf(inSyncResponseSchema, outOfSyncResponseSchema);
 export type SyncPullResponse = typeof syncPullResponseSchema.valueType;

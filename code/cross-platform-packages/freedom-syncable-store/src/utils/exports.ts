@@ -3,6 +3,7 @@ export * from './checkAfterArrayIncludesAllBeforeArrayElementsInSameRelativeOrde
 export * from './create/exports.ts';
 export * from './deleteSyncableItemAtPath.ts';
 export * from './encryptAndSignBinary.ts';
+export * from './findSyncables.ts';
 export * from './generateAcceptanceForPathIfPossible.ts';
 export * from './generateContentHashForSyncableStoreAccessChange.ts';
 export * from './generateInitialFolderAccess.ts';
@@ -27,9 +28,6 @@ export * from './guards/exports.ts';
 export * from './initializeRoot.ts';
 export * from './isSyncableDeleted.ts';
 export * from './logLs.ts';
-export * from './pull/exports.ts';
-export * from './push/exports.ts';
 export * from './shouldUseTrustedTimeIdsInPath.ts';
-export * from './sync/exports.ts';
 export * from './validation/exports.ts';
 export * from './verifyAndDecryptBinary.ts';

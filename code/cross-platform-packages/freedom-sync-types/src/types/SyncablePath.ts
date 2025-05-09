@@ -56,12 +56,21 @@ export class SyncablePath {
     return true;
   }
 
-  public toRelativePathString(basePath: SyncablePath) {
+  public relativeTo(basePath: SyncablePath): SyncableId[] | undefined {
     if (!this.startsWith(basePath)) {
+      return undefined;
+    }
+
+    return this.ids.slice(basePath.ids.length);
+  }
+
+  public toRelativePathString(basePath: SyncablePath) {
+    const relativeIds = this.relativeTo(basePath);
+    if (relativeIds === undefined) {
       return this.toString();
     }
 
-    return `/${this.ids.slice(basePath.ids.length).map(encodeURIComponent).join('/')}`;
+    return `${relativeIds.map(encodeURIComponent).join('/')}`;
   }
 
   /** Same as `toString` except without the storageRootId */
@@ -81,7 +90,7 @@ const serializedSchema = schema.object({
 type Serialized = typeof serializedSchema.valueType;
 export const syncablePathSchema = schema.custom<SyncablePath, Serialized>({
   typeName: 'SyncablePath',
-  isContainerType: true,
+  isContainerType: false,
   serDes: {
     isValueType: (value): value is SyncablePath => value instanceof SyncablePath,
     serializedSchema: () => serializedSchema,
