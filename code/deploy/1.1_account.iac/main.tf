@@ -1,39 +1,104 @@
 provider "google" {
-  project = "freedom-dev-454009"
-  region  = "us-central1"
+  project = var.gcp_project_id
+  region  = var.gcp_region
 }
 
-# Create a DNS zone for dev.linefeedr.com
-resource "google_dns_managed_zone" "dev_linefeedr_com" {
-  name     = "dev-linefeedr-com"
-  dns_name = "dev.linefeedr.com."
+# Create a DNS zone
+resource "google_dns_managed_zone" "account" {
+  name     = var.dns_zone_name
+  dns_name = var.dns_zone_dns_name
 
   dnssec_config {
     state = "on"
   }
 }
 
-# TODO: The whole zone should be in the production account
-# a sub-zone e.g. 82.26.157.128/25 should be manageable by the dev account if possible (not critical - every PTR be in production)
-# Create a reverse DNS zone for 82.26.157.0/24
-resource "google_dns_managed_zone" "rdns_82_26_157" {
-  name        = "rdns-82-26-157"
-  dns_name    = "157.26.82.in-addr.arpa."
-  description = "Reverse DNS zone for 82.26.157.0/24"
+# Create a reverse DNS zone for our IPs
+resource "google_dns_managed_zone" "reverse" {
+  # TODO: a sub-zone e.g. 82.26.157.128/25 should be manageable by the dev account via CNAMEs block (not critical - every PTR be in production)
+
+  name        = var.reverse_dns_zone_name
+  dns_name    = var.reverse_dns_zone_dns_name
+  description = "Reverse DNS zone for account IP-address range"
 
   dnssec_config {
     state = "on"
   }
+}
+
+# Add PTR record for SMTP outbound IP of dev server
+# TODO: Set DNS-redirect and move to 2.1_deployment.iac
+resource "google_dns_record_set" "smtp_ptr" {
+  count = var.env_name == "prod" ? 1 : 0
+
+  name = "248.157.26.82.in-addr.arpa."
+  type = "PTR"
+  ttl  = 300
+
+  managed_zone = var.reverse_dns_zone_name
+
+  rrdatas = ["smtp1.dev.linefeedr.com."]
+}
+
+# TODO: Align domain with dev-domain and move to 2.1_deployment.iac
+resource "google_dns_record_set" "ddemo_www" {
+  count = var.env_name == "prod" ? 1 : 0
+
+  name = "ddemo.www.${var.dns_zone_dns_name}"
+  type = "CNAME"
+  ttl  = 300
+
+  managed_zone = var.dns_zone_name
+
+  rrdatas = ["ddemo-web-freedommail.web.app."]
+}
+
+# Redirect freedommail.me using Firebase
+resource "google_dns_record_set" "freedommail_me_a" {
+  count = var.env_name == "prod" ? 1 : 0
+
+  name = "${var.dns_zone_dns_name}"
+  type = "A"
+  ttl  = 300
+
+  managed_zone = var.dns_zone_name
+
+  rrdatas = ["199.36.158.100"]
+}
+
+resource "google_dns_record_set" "www_freedommail_me_a" {
+  count = var.env_name == "prod" ? 1 : 0
+
+  name = "www.${var.dns_zone_dns_name}"
+  type = "CNAME"
+  ttl  = 300
+
+  managed_zone = var.dns_zone_name
+
+  rrdatas = ["${var.dns_zone_dns_name}"]
+}
+
+# Verify freedommail.me in Firebase to make redirect work
+resource "google_dns_record_set" "freedommail_me_txt" {
+  count = var.env_name == "prod" ? 1 : 0
+
+  name = "freedommail.me.${var.dns_zone_dns_name}"
+  type = "TXT"
+  ttl  = 300
+
+  managed_zone = var.dns_zone_name
+
+  rrdatas = ["\"hosting-site=freedommail-website\""]
 }
 
 # Output the DNS zone name servers
-output "dev_linefeedr_com_name_servers" {
-  description = "Name servers for dev.linefeedr.com zone"
-  value       = google_dns_managed_zone.dev_linefeedr_com.name_servers
+output "account_dns_name_servers" {
+  description = "Name servers for the account DNS zone"
+  value       = google_dns_managed_zone.account.name_servers
 }
 
 # Output the reverse DNS zone name servers
-output "rdns_82_26_157_name_servers" {
-  description = "Name servers for 82.26.157.0/24 reverse DNS zone"
-  value       = google_dns_managed_zone.rdns_82_26_157.name_servers
+output "reverse_dns_name_servers" {
+  description = "Name servers for the account reverse DNS zone"
+  value       = google_dns_managed_zone.reverse.name_servers
 }

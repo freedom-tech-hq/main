@@ -7,6 +7,21 @@ Includes:
 - [freedom-store-api-server](../../backends/freedom-store-api-server/README.md)
 - [freedom-mail-host](../../backends/freedom-mail-host/README.md) 
 
+## Usage
+
+### Prerequisites
+
+1. `2.1_deployment.iac` is deployed for the environment.
+2. Secrets are prepared in `/secrets/<env>/3.1_mail-host.compose/`
+
+### Deploy
+
+Using the unified script:
+
+```bash
+./deploy-this.sh
+```
+
 ## Envs
 
 - Local & cloud deployments are supported.
