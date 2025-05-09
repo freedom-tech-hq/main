@@ -75,20 +75,7 @@ resource "google_dns_record_set" "www_freedommail_me_a" {
 
   managed_zone = var.dns_zone_name
 
-  rrdatas = ["${var.dns_zone_dns_name}"]
-}
-
-# Verify freedommail.me in Firebase to make redirect work
-resource "google_dns_record_set" "freedommail_me_txt" {
-  count = var.env_name == "prod" ? 1 : 0
-
-  name = "freedommail.me.${var.dns_zone_dns_name}"
-  type = "TXT"
-  ttl  = 300
-
-  managed_zone = var.dns_zone_name
-
-  rrdatas = ["\"hosting-site=freedommail-website\""]
+  rrdatas = ["freedommail-website.web.app."]
 }
 
 # Output the DNS zone name servers

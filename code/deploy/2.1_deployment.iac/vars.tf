@@ -45,6 +45,11 @@ variable "reverse_dns_zone_name" {
   type        = string
 }
 
+variable "frontend_cname_target" {
+  description = "The target for the frontend CNAME record, from Firebase"
+  type        = string
+}
+
 # Mail
 variable "mail_domain" {
   description = "Mail domain"

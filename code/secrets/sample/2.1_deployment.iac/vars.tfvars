@@ -12,6 +12,7 @@ smtp_outbound_ip = "82.26.157.999"
 smtp_hostname    = "smtp1.domain.com"
 dns_zone_name    = "dev-domain-com"
 reverse_dns_zone_name = "rdns-82-26-157"
+frontend_cname_target = "something.web.app."
 
 # Mail
 mail_domain = "mail-host.dev.domain.com"

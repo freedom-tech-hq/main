@@ -121,13 +121,21 @@ resource "google_dns_record_set" "dkim_record" {
   managed_zone = data.google_dns_managed_zone.account.name
   type         = "TXT"
   ttl          = 300
-
   rrdatas      = [
     # Inner \" are important because we need to create chunks less than 255 characters long
     # join() is imporant because othewise it creates 3 TXT records 1 part each instead of 1 record of 3 parts
     # space in join() is important to match the remote format and thus avoid seeing it always modified in 'apply'
     "\"${join("\" \"", var.mail_dkim_record)}\""
   ]
+}
+
+# Create CNAME record for the frontend app
+resource "google_dns_record_set" "frontend" {
+  name         = "app.${data.google_dns_managed_zone.account.dns_name}"
+  managed_zone = data.google_dns_managed_zone.account.name
+  type         = "CNAME"
+  ttl          = 300
+  rrdatas      = [var.frontend_cname_target]
 }
 
 output "smtp_relay_domain" {
