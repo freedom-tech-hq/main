@@ -11,9 +11,11 @@ import type { MutableSyncableFileAccessor, MutableSyncableStore } from 'freedom-
 import { CACHE_DURATION_MSEC } from '../consts/timing.ts';
 import type { DefaultMutableSyncableItemAccessorBaseConstructorArgs } from './DefaultMutableSyncableItemAccessorBase.ts';
 import { DefaultMutableSyncableItemAccessorBase } from './DefaultMutableSyncableItemAccessorBase.ts';
+import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export interface DefaultMutableSyncableFileAccessorConstructorArgs extends DefaultMutableSyncableItemAccessorBaseConstructorArgs {
   store: MutableSyncableStore;
+  folderOperationsHandler: FolderOperationsHandler;
   decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
 }
 
@@ -22,10 +24,10 @@ export class DefaultMutableSyncableFileAccessor extends DefaultMutableSyncableIt
 
   private readonly decode_: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
 
-  constructor({ store, decode, ...args }: DefaultMutableSyncableFileAccessorConstructorArgs) {
+  constructor({ store, folderOperationsHandler, decode, ...args }: DefaultMutableSyncableFileAccessorConstructorArgs) {
     super(args);
 
-    super.deferredInit_({ store });
+    super.deferredDefaultMutableSyncableItemAccessorBaseInit_({ store, folderOperationsHandler });
 
     this.decode_ = decode;
   }
@@ -106,10 +108,17 @@ export const getOrCreateDefaultMutableSyncableFileAccessor = ({
   store,
   backing,
   path,
+  folderOperationsHandler,
   decode
 }: {
   store: MutableSyncableStore;
   backing: SyncableStoreBacking;
   path: SyncablePath;
+  folderOperationsHandler: FolderOperationsHandler;
   decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]>;
-}) => globalCache.getOrCreate(store, path.toString(), () => new DefaultMutableSyncableFileAccessor({ store, backing, path, decode }));
+}) =>
+  globalCache.getOrCreate(
+    store,
+    path.toString(),
+    () => new DefaultMutableSyncableFileAccessor({ store, backing, path, folderOperationsHandler, decode })
+  );

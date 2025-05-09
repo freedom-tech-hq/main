@@ -48,7 +48,6 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
 
   protected readonly syncTracker_: SyncTracker;
 
-  private folderOperationsHandler_!: FolderOperationsHandler;
   private makeFolderAccessor_!: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
 
   private folderStore__: DefaultFolderStore | undefined;
@@ -98,16 +97,14 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
     this.syncTracker_ = syncTracker;
   }
 
-  protected override deferredInit_({
+  protected deferredDefaultMutableSyncableFolderAccessorBaseInit_({
     store,
     makeFolderAccessor
   }: {
     store: MutableSyncableStore;
     makeFolderAccessor: (args: { path: SyncablePath }) => MutableSyncableFolderAccessor;
   }) {
-    super.deferredInit_({ store });
-
-    this.folderOperationsHandler_ = this.makeFolderOperationsHandler_(store);
+    super.deferredDefaultMutableSyncableItemAccessorBaseInit_({ store, folderOperationsHandler: this.makeFolderOperationsHandler_(store) });
     this.makeFolderAccessor_ = makeFolderAccessor;
   }
 

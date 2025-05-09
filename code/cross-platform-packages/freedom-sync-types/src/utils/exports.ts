@@ -1,3 +1,4 @@
+export * from './checkSyncablePathPatterns.ts';
 export * from './extractSyncableIdParts.ts';
 export * from './extractSyncableItemTypeFromId.ts';
 export * from './extractUnmarkedSyncableId.ts';

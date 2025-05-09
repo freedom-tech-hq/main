@@ -38,7 +38,7 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
     this.userKeys = userKeys;
     this.saltsById = saltsById;
 
-    this.deferredInit_({
+    this.deferredDefaultMutableSyncableFolderAccessorBaseInit_({
       store: this,
       makeFolderAccessor: ({ path }) => getOrCreateDefaultMutableSyncableFolderAccessor({ store: this, backing, path, syncTracker })
     });

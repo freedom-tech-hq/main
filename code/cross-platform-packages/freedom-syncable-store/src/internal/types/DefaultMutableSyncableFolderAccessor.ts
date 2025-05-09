@@ -21,7 +21,7 @@ export class DefaultMutableSyncableFolderAccessor extends DefaultMutableSyncable
   }) {
     super({ backing, syncTracker, path });
 
-    this.deferredInit_({
+    this.deferredDefaultMutableSyncableFolderAccessorBaseInit_({
       store,
       makeFolderAccessor: ({ path }) => getOrCreateDefaultMutableSyncableFolderAccessor({ store, backing, path, syncTracker })
     });

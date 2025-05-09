@@ -264,6 +264,7 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
     // return makeSuccess(isDeleted.value);
   });
 
+  // TODO: replace with traverse?
   public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace): PR<string[]> => {
     const metadataById = await this.getMetadataById(trace);
     if (!metadataById.ok) {

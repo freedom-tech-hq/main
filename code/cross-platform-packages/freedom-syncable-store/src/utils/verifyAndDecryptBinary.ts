@@ -71,7 +71,14 @@ export const verifyAndDecryptBinary = makeAsyncResultFunc(
     }
     /* node:coverage enable */
 
-    const selectedSharedKeys = sharedKeys.value.find((sharedSecret) => sharedSecret.id === selectedSharedKeysId.value)!;
+    const selectedSharedKeys = sharedKeys.value.find((sharedSecret) => sharedSecret.id === selectedSharedKeysId.value);
+    if (selectedSharedKeys === undefined) {
+      return makeFailure(
+        new InternalStateError(trace, {
+          message: 'Unable to find shared key with ID matching the ID used to encrypt the value'
+        })
+      );
+    }
 
     // TODO: could be cached probably
     const decryptedSharedSecretKeys = await decryptOneEncryptedValue(trace, userKeys, selectedSharedKeys.secretKeysEncryptedPerMember);
