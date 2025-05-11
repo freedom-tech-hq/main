@@ -1,13 +1,11 @@
 import { describe, it } from 'node:test';
 import { expect } from 'expect';
-import { makeTrace, makeUuid } from 'freedom-contexts';
+import { makeTrace } from 'freedom-contexts';
 import type { SyncableId, SyncableItemMetadata, SyncableProvenance } from 'freedom-sync-types';
 import { SyncablePath, storageRootIdInfo } from 'freedom-sync-types';
 import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
 
 import { InMemorySyncableStoreBacking } from '../InMemorySyncableStoreBacking.ts';
-import { expectOk } from 'freedom-testing-tools';
-import { ROOT_FOLDER_ID } from '../../internal/consts/special-ids.ts';
 import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import { uncheckedResult } from 'freedom-async';
 
@@ -219,7 +217,67 @@ describe('InMemorySyncableStoreBacking', () => {
     });
 
     //////////// getAtPath ///////////////////////////////////////////////////////////
-    // TODO: later
+    // Act - Get folder without type
+    const getFolderResult = await backing.getAtPath(trace, folderPath);
+
+    // Assert
+    expect(getFolderResult).toStrictEqual({
+      ok: true,
+      value: {
+        type: 'folder',
+        id: folderId
+      }
+    });
+
+    // Act - Get folder with correct type
+    const getFolderWithTypeResult = await backing.getAtPath(trace, folderPath, 'bundle');
+
+    // Assert
+    expect(getFolderWithTypeResult).toStrictEqual({
+      ok: true,
+      value: {
+        type: 'folder', // TODO: Hey, this is requested as 'bundle'
+        id: folderId
+      }
+    });
+
+    // Act - Get folder with correct type
+    const getFolderWithWrongTypeResult = await backing.getAtPath(trace, folderPath, 'folder');
+
+    // Assert
+    expect(getFolderWithWrongTypeResult).toStrictEqual({
+      ok: false,
+      value: expect.objectContaining({
+        errorCode: 'wrong-type'
+      })
+    });
+
+    // Act - Get folder with wrong type
+    const getFolderWrongTypeResult = await backing.getAtPath(trace, folderPath, 'file');
+
+    // Assert
+    expect(getFolderWrongTypeResult).toStrictEqual({
+      ok: false,
+      value: expect.objectContaining({
+        errorCode: 'wrong-type'
+      })
+    });
+
+    // Act - Get non-existent item
+    const getNonExistentResult = await backing.getAtPath(
+      trace,
+      folderPath.append(nonExistentFolderId)
+    );
+
+    // Assert
+    expect(getNonExistentResult).toStrictEqual({
+      ok: false,
+      value: expect.objectContaining({
+        errorCode: 'not-found'
+      })
+    });
+
+    // TODO: Do the same for file, sub-folder, sub-file
 
     //////////// getMetadataAtPath ////////////////////////////////////////////////////
     // Act
