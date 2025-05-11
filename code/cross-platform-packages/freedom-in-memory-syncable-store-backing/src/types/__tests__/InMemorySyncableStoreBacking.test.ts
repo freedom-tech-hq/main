@@ -66,18 +66,12 @@ describe('InMemorySyncableStoreBacking', () => {
     // Backing
     const backing = new InMemorySyncableStoreBacking({ provenance: provenance });
 
-    ///////////////////////////////////////////////////////////////////////////////////
-    //////////// Folder ///////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////
-
     //////////// createFolderWithPath /////////////////////////////////////////////////
     // Arrange
-    const folderId: SyncableId = 'EyTbS_1vDPSdHgVmnWBSgooX+wBKoDDywARCAgg8jZ7mBueKM=';
     const folderMetadata: SyncableItemMetadata = {
-      name: 'E_AbcAbcAbc',
+      name: 'E_the+encrypted+name+base64',
       provenance,
     }
-    const folderPath = rootPath.append(folderId);
     const folderHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
     const folderBackingMetadata: SyncableStoreBackingItemMetadata = { ...folderMetadata, hash: folderHash, numDescendants: 0, sizeBytes: 0 };
 
@@ -87,78 +81,35 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(createFolderResult).toStrictEqual({
       ok: true,
-      value: expect.objectContaining({ type: 'folder' })
-    });
-
-    //////////// existsAtPath /////////////////////////////////////////////////////////
-    // Act, exists
-    const existsResult = await backing.existsAtPath(trace, folderPath);
-
-    // Assert
-    expect(existsResult).toStrictEqual({
-      ok: true,
-      value: true
-    });
-
-    // Act, does not exist
-    const notExistsResult = await backing.existsAtPath(
-      trace,
-      // Different ID
-      folderPath.append('EyTFS_UmIkl8PodtjgIGzZsey1LH7rX1Hrj1z+C+3MBao5l7Y=')
-    );
-
-    // Assert
-    expect(notExistsResult).toStrictEqual({
-      ok: true,
-      value: false
-    });
-
-    //////////// getMetadataAtPath ////////////////////////////////////////////////////
-    // Act
-    const metadataResult = await backing.getMetadataAtPath(trace, folderPath);
-
-    // Assert
-    expect(metadataResult).toStrictEqual({
-      ok: true,
       value: {
-        name: folderMetadata.name
+        type: 'folder',
+        "id": folderId
       }
     });
 
-    //////////// getMetadataByIdInPath ///////////////////////////////////////////////
-    // Act
-    const metadataByIdResult = await backing.getMetadataByIdInPath(trace, rootPath);
-
-    // Assert
-    expect(metadataByIdResult).toStrictEqual({
-      ok: true,
-      value: {
-        [folderId]: {
-          name: folderMetadata.name
-        }
-      }
-    });
-
-    //////////// getIdsInPath /////////////////////////////////////////////////////////
-    // Act
-    const rootListResult = await backing.getIdsInPath(trace, rootPath);
-
-    // Assert
-    expect(rootListResult).toStrictEqual({
-      ok: true,
-      value: [folderId]
-    });
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //////////// File /////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////
     // Arrange
-    const fileId: SyncableId = 'EyTfS_Iz5CW754XOAlXuPWDUbJdvClWPBLKd/S3avqoPjrNC8=';
-    const fileMetadata: SyncableItemMetadata = {
-      name: 'E_AbcAbcAbc',
+    const subFolderMetadata: SyncableItemMetadata = {
+      name: 'E_the+encrypted+subfolder+name+base64',
       provenance,
     }
-    const filePath = rootPath.append(fileId);
+    const subFolderHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
+    const subFolderBackingMetadata: SyncableStoreBackingItemMetadata = { ...subFolderMetadata, hash: subFolderHash, numDescendants: 0, sizeBytes: 0 };
+
+    // Act
+    const createSubFolderResult = await backing.createFolderWithPath(trace, subFolderPath, { metadata: subFolderBackingMetadata });
+
+    // Assert
+    expect(createSubFolderResult).toStrictEqual({
+      ok: true,
+      value: { type: 'folder' }
+    });
+
+    //////////// createBinaryFileWithPath /////////////////////////////////////////////
+    // Arrange
+    const fileMetadata: SyncableItemMetadata = {
+      name: 'E_the+encrypted+file+name+base64',
+      provenance,
+    }
     const fileHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
     const fileBackingMetadata: SyncableStoreBackingItemMetadata = { ...fileMetadata, hash: fileHash, numDescendants: 0, sizeBytes: 0 };
 
@@ -171,16 +122,209 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(createFileResult).toStrictEqual({
       ok: true,
-      value: expect.objectContaining({ type: 'file' })
+      value: { type: 'file' }
+    });
+
+    // Arrange
+    const subFileMetadata: SyncableItemMetadata = {
+      name: 'E_the+encrypted+subfile+name+base64',
+      provenance,
+    }
+    const subFileHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
+    const subFileBackingMetadata: SyncableStoreBackingItemMetadata = { ...subFileMetadata, hash: subFileHash, numDescendants: 0, sizeBytes: 0 };
+
+    // Act
+    const createSubFileResult = await backing.createBinaryFileWithPath(trace, subFilePath, {
+      data: new Uint8Array([1, 2, 3, 4, 5]),
+      metadata: subFileBackingMetadata
+    });
+
+    // Assert
+    expect(createSubFileResult).toStrictEqual({
+      ok: true,
+      value: { type: 'file' }
+    });
+
+    //////////// getIdsInPath /////////////////////////////////////////////////////////
+    // Act
+    const rootListResult = await backing.getIdsInPath(trace, rootPath);
+
+    // Assert
+    expect(rootListResult).toStrictEqual({
+      ok: true,
+      value: [folderId, fileId]
     });
 
     // Act
-    const rootListResult2 = await backing.getIdsInPath(trace, rootPath);
+    const folderListResult = await backing.getIdsInPath(trace, folderPath);
 
     // Assert
-    expect(rootListResult2).toStrictEqual({
+    expect(folderListResult).toStrictEqual({
       ok: true,
-      value: expect.arrayContaining([folderId, fileId])
+      value: [subFolderId, subFileId]
     });
+
+    //////////// existsAtPath /////////////////////////////////////////////////////////
+    // Act, folder exists
+    const folderExistsResult = await backing.existsAtPath(trace, folderPath);
+
+    // Assert
+    expect(folderExistsResult).toStrictEqual({
+      ok: true,
+      value: true
+    });
+
+    // Act, folder does not exist
+    const folderNotExistResult = await backing.existsAtPath(
+      trace,
+      folderPath.append(nonExistentFolderId)
+    );
+
+    // Assert
+    expect(folderNotExistResult).toStrictEqual({
+      ok: true,
+      value: false
+    });
+
+    // Act, file exists
+    const fileExistsResult = await backing.existsAtPath(trace, filePath);
+
+    // Assert
+    expect(fileExistsResult).toStrictEqual({
+      ok: true,
+      value: true
+    });
+
+    // Act, file does not exist
+    const fileNotExistResult = await backing.existsAtPath(
+      trace,
+      filePath.append(nonExistentFileId)
+    );
+
+    // Assert
+    expect(fileNotExistResult).toStrictEqual({
+      ok: true,
+      value: false
+    });
+
+    //////////// getAtPath ///////////////////////////////////////////////////////////
+    // TODO: later
+
+    //////////// getMetadataAtPath ////////////////////////////////////////////////////
+    // Act
+    const folderMetadataResult = await backing.getMetadataAtPath(trace, folderPath);
+
+    // Assert
+    expect(folderMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        name: folderMetadata.name
+      }
+    });
+
+    // Act
+    const fileMetadataResult = await backing.getMetadataAtPath(trace, filePath);
+
+    // Assert
+    expect(fileMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        name: fileMetadata.name
+      }
+    });
+
+    // Act
+    const nonExistentMetadataResult = await backing.getMetadataAtPath(
+      trace,
+      folderPath.append(nonExistentFolderId)
+    );
+
+    // Assert
+    expect(nonExistentMetadataResult).toStrictEqual({
+      ok: false,
+      error: {
+        name: 'not-found'
+      }
+    });
+
+    // Act
+    const subFolderMetadataResult = await backing.getMetadataAtPath(trace, subFolderPath);
+
+    // Assert
+    expect(subFolderMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        name: subFolderMetadata.name
+      }
+    });
+
+    // Act
+    const subFileMetadataResult = await backing.getMetadataAtPath(trace, subFilePath);
+
+    // Assert
+    expect(subFileMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        name: subFileMetadata.name
+      }
+    });
+
+    //////////// getMetadataByIdInPath ///////////////////////////////////////////////
+    // Act
+    const rootMetadataByIdResult = await backing.getMetadataByIdInPath(
+      trace,
+      rootPath,
+      new Set([folderId, fileId])
+    );
+
+    // Assert
+    expect(rootMetadataByIdResult).toStrictEqual({
+      ok: true,
+      value: {
+        [folderId]: {
+          name: folderMetadata.name
+        },
+        [fileId]: {
+          name: fileMetadata.name
+        }
+      }
+    });
+
+    // Act
+    const nonExistentMetadataByIdResult = await backing.getMetadataByIdInPath(
+      trace,
+      rootPath,
+      new Set([nonExistentFolderId, nonExistentFileId])
+    );
+
+    // Assert
+    expect(nonExistentMetadataByIdResult).toStrictEqual({
+      ok: false,
+      value: {}
+    });
+
+    // Act
+    const subMetadataByIdResult = await backing.getMetadataByIdInPath(
+      trace,
+      folderPath,
+      new Set([subFolderId, subFileId])
+    );
+
+    // Assert
+    expect(subMetadataByIdResult).toStrictEqual({
+      ok: true,
+      value: {
+        [subFolderId]: {
+          name: subFolderMetadata.name
+        },
+        [subFileId]: {
+          name: subFileMetadata.name
+        }
+      }
+    });
+
+    // TODO:
+    // deleteAtPath
+    // updateLocalMetadataAtPath
   });
 });
