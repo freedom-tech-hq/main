@@ -344,6 +344,81 @@ describe('InMemorySyncableStoreBacking', () => {
       }
     });
 
+    // Act
+    const updateFileMetadataResult = await backing.updateLocalMetadataAtPath(
+      trace,
+      filePath,
+      {
+        numDescendants: 2,
+        sizeBytes: 2
+      }
+    );
+    const updatedFileMetadataResult = await backing.getMetadataAtPath(trace, filePath);
+
+    // Assert
+    expect(updateFileMetadataResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(updatedFileMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        ...fileBackingMetadata,
+        numDescendants: 2,
+        sizeBytes: 2
+      }
+    });
+
+    // Act
+    const updateSubFolderMetadataResult = await backing.updateLocalMetadataAtPath(
+      trace,
+      subFolderPath,
+      {
+        numDescendants: 3,
+        sizeBytes: 3
+      }
+    );
+    const updatedSubFolderMetadataResult = await backing.getMetadataAtPath(trace, subFolderPath);
+
+    // Assert
+    expect(updateSubFolderMetadataResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(updatedSubFolderMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        ...subFolderBackingMetadata,
+        numDescendants: 3,
+        sizeBytes: 3
+      }
+    });
+
+    // Act
+    const updateSubFileMetadataResult = await backing.updateLocalMetadataAtPath(
+      trace,
+      subFilePath,
+      {
+        numDescendants: 4,
+        sizeBytes: 4
+      }
+    );
+    const updatedSubFileMetadataResult = await backing.getMetadataAtPath(trace, subFilePath);
+
+    // Assert
+    expect(updateSubFileMetadataResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(updatedSubFileMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        ...subFileBackingMetadata,
+        numDescendants: 4,
+        sizeBytes: 4
+      }
+    });
+
     // TODO:
     // deleteAtPath
   });
