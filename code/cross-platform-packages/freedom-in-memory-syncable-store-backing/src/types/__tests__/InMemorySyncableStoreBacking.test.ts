@@ -1,21 +1,20 @@
 import { describe, it } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import { NotFoundError } from 'freedom-common-errors';
-import { makeSyncablePath } from 'freedom-sync-types';
-import { isExpectedType } from 'freedom-syncable-store-backing-types';
+// import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+// import { NotFoundError } from 'freedom-common-errors';
+import { SyncablePath, storageRootIdInfo } from 'freedom-sync-types';
+// import { isExpectedType } from 'freedom-syncable-store-backing-types';
 import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
+import { expect } from 'expect';
 
 import { InMemorySyncableStoreBacking } from '../InMemorySyncableStoreBacking.ts';
-
-// Simple trace object for testing
-const makeTestTrace = () => ({ id: 'test-trace' });
+import { makeTrace } from 'freedom-contexts';
 
 describe('InMemorySyncableStoreBacking', () => {
   // Scenario 1: Basic File Lifecycle
   it('handles complete file lifecycle operations', async () => {
     // Arrange
-    const trace = makeTestTrace();
+    const trace = makeTrace();
     const testMetadata: Omit<SyncableStoreBackingItemMetadata, 'name'> = {
       mtime: new Date(),
       size: 0,
@@ -27,12 +26,17 @@ describe('InMemorySyncableStoreBacking', () => {
     const backing = new InMemorySyncableStoreBacking(testMetadata);
 
     // Create test path
-    const testPath = makeSyncablePath('/test-folder/test-file');
+    const storageRootId = storageRootIdInfo.make('test');
+    const testPath = new SyncablePath(storageRootId, 'test-folder', 'test-file');
 
     // Act - Check if path exists initially
     const initialExistsResult = await backing.existsAtPath(trace, testPath);
 
     // Assert - Should not exist initially
+    expect(initialExistsResult).toEqual({
+      ok: true,
+      value: false
+    });
     assert.equal(initialExistsResult.ok, true);
     assert.equal(initialExistsResult.value, false);
 
@@ -48,6 +52,10 @@ describe('InMemorySyncableStoreBacking', () => {
     });
 
     // Assert - File should be created successfully
+    expect(createResult).toEqual({
+      ok: true,
+      value: 'file'
+    });
     assert.equal(createResult.ok, true);
     assert.equal(createResult.value.type, 'file');
 

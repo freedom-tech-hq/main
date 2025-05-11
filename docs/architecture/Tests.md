@@ -67,3 +67,4 @@ describe('subjectFunction', () => {
 
 - Run single test file: `yarn test /Users/...test.ts`
 - Fixture file path making: `path.resolve(import.meta.dirname, 'fixtures/file.json')`
+- Init trace in Arrange: const trace = makeTrace();
