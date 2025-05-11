@@ -87,6 +87,24 @@ expect(initialExistsResult).toEqual({
 });
 ```
 
+### Mocked strings
+
+Use format `the-<object kind>`. This way every time we see the value we know what it references, even if its variable name shows different aspect when we look at the code.
+
+```ts
+something({
+  // Wrong:
+  userId: 'test',
+  userId: 'dummy',
+  
+  // Right:
+  userId: 'the-user', // In most cases this is better
+  userId: 'the-user-id', // If we accent on the id value processing, not the idea of a user
+  name: 'The User',
+  description: 'The Description'
+});
+```
+
 ## AI Knowledge
 
 - Run single test file: `yarn test /Users/...test.ts`
