@@ -26,16 +26,16 @@ describe('InMemorySyncableStoreBacking', () => {
 
     // Arrange
     const folderId: SyncableId = 'EyTbS_1vDPSdHgVmnWBSgooX+wBKoDDywARCAgg8jZ7mBueKM=';
-    const metadata: SyncableItemMetadata = {
+    const folderMetadata: SyncableItemMetadata = {
       name: 'E_AbcAbcAbc',
       provenance,
     }
-    const newPath = rootPath.append(folderId);
-    const hash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
-    const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash, numDescendants: 0, sizeBytes: 0 };
+    const folderPath = rootPath.append(folderId);
+    const folderHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
+    const folderBackingMetadata: SyncableStoreBackingItemMetadata = { ...folderMetadata, hash: folderHash, numDescendants: 0, sizeBytes: 0 };
 
     // Act
-    const createFolderResult = await backing.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
+    const createFolderResult = await backing.createFolderWithPath(trace, folderPath, { metadata: folderBackingMetadata });
 
     // Assert
     expect(createFolderResult).toStrictEqual({
