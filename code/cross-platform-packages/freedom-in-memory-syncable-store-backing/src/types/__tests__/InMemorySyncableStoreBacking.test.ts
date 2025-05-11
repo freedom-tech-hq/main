@@ -24,6 +24,11 @@ describe('InMemorySyncableStoreBacking', () => {
 
     const backing = new InMemorySyncableStoreBacking({ provenance: provenance });
 
+    ///////////////////////////////////////////////////////////////////////////////////
+    //////////// Folder ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    //////////// createFolderWithPath /////////////////////////////////////////////////
     // Arrange
     const folderId: SyncableId = 'EyTbS_1vDPSdHgVmnWBSgooX+wBKoDDywARCAgg8jZ7mBueKM=';
     const folderMetadata: SyncableItemMetadata = {
@@ -34,7 +39,7 @@ describe('InMemorySyncableStoreBacking', () => {
     const folderHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
     const folderBackingMetadata: SyncableStoreBackingItemMetadata = { ...folderMetadata, hash: folderHash, numDescendants: 0, sizeBytes: 0 };
 
-    // Act
+    // Act, create
     const createFolderResult = await backing.createFolderWithPath(trace, folderPath, { metadata: folderBackingMetadata });
 
     // Assert
@@ -43,7 +48,31 @@ describe('InMemorySyncableStoreBacking', () => {
       value: expect.objectContaining({ type: 'folder' })
     });
 
-    // Act
+    //////////// existsAtPath /////////////////////////////////////////////////////////
+    // Act, exists
+    const existsResult = await backing.existsAtPath(trace, folderPath);
+
+    // Assert
+    expect(existsResult).toStrictEqual({
+      ok: true,
+      value: true
+    });
+
+    // Act, not exists
+    const notExistsResult = await backing.existsAtPath(
+      trace,
+      // Different ID
+      folderPath.append('EyTFS_UmIkl8PodtjgIGzZsey1LH7rX1Hrj1z+C+3MBao5l7Y=')
+    );
+
+    // Assert
+    expect(notExistsResult).toStrictEqual({
+      ok: true,
+      value: false
+    });
+
+    //////////// getIdsInPath /////////////////////////////////////////////////////////
+    // Act, list
     const rootListResult = await backing.getIdsInPath(trace, rootPath);
 
     // Assert
@@ -52,6 +81,9 @@ describe('InMemorySyncableStoreBacking', () => {
       value: [folderId]
     });
 
+    ///////////////////////////////////////////////////////////////////////////////////
+    //////////// File /////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////
     // Arrange
     const fileId: SyncableId = 'EyTfS_Iz5CW754XOAlXuPWDUbJdvClWPBLKd/S3avqoPjrNC8=';
     const fileMetadata: SyncableItemMetadata = {
