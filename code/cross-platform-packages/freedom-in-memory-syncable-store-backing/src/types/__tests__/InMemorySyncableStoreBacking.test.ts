@@ -419,7 +419,78 @@ describe('InMemorySyncableStoreBacking', () => {
       }
     });
 
-    // TODO:
-    // deleteAtPath
+    //////////// deleteAtPath ///////////////////////////////////////////////////////////
+    // Delete sub-file first
+    // Act
+    const deleteSubFileResult = await backing.deleteAtPath(trace, subFilePath);
+    const folderListAfterSubFileDelete = await backing.getIdsInPath(trace, folderPath);
+
+    // Assert
+    expect(deleteSubFileResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(folderListAfterSubFileDelete).toStrictEqual({
+      ok: true,
+      value: [subFolderId]
+    });
+
+    // Delete sub-folder
+    // Act
+    const deleteSubFolderResult = await backing.deleteAtPath(trace, subFolderPath);
+    const folderListAfterSubFolderDelete = await backing.getIdsInPath(trace, folderPath);
+
+    // Assert
+    expect(deleteSubFolderResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(folderListAfterSubFolderDelete).toStrictEqual({
+      ok: true,
+      value: []
+    });
+
+    // Delete root file
+    // Act
+    const deleteFileResult = await backing.deleteAtPath(trace, filePath);
+    const rootListAfterFileDelete = await backing.getIdsInPath(trace, rootPath);
+
+    // Assert
+    expect(deleteFileResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(rootListAfterFileDelete).toStrictEqual({
+      ok: true,
+      value: [folderId]
+    });
+
+    // Delete root folder
+    // Act
+    const deleteFolderResult = await backing.deleteAtPath(trace, folderPath);
+    const rootListAfterFolderDelete = await backing.getIdsInPath(trace, rootPath);
+
+    // Assert
+    expect(deleteFolderResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(rootListAfterFolderDelete).toStrictEqual({
+      ok: true,
+      value: []
+    });
+
+    // Try to delete non-existent item
+    // Act
+    const deleteNonExistentResult = await backing.deleteAtPath(
+      trace,
+      rootPath.append(nonExistentFolderId)
+    );
+
+    // Assert
+    expect(deleteNonExistentResult).toStrictEqual({
+      ok: true, // TODO: check. This is not normal, but tolerable
+      value: undefined
+    });
   });
 });
