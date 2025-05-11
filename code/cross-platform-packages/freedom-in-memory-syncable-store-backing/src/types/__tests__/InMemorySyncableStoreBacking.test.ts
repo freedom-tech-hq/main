@@ -39,7 +39,7 @@ describe('InMemorySyncableStoreBacking', () => {
     const folderHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
     const folderBackingMetadata: SyncableStoreBackingItemMetadata = { ...folderMetadata, hash: folderHash, numDescendants: 0, sizeBytes: 0 };
 
-    // Act, create
+    // Act
     const createFolderResult = await backing.createFolderWithPath(trace, folderPath, { metadata: folderBackingMetadata });
 
     // Assert
@@ -58,7 +58,7 @@ describe('InMemorySyncableStoreBacking', () => {
       value: true
     });
 
-    // Act, not exists
+    // Act, does not exist
     const notExistsResult = await backing.existsAtPath(
       trace,
       // Different ID
@@ -71,8 +71,34 @@ describe('InMemorySyncableStoreBacking', () => {
       value: false
     });
 
+    //////////// getMetadataAtPath ////////////////////////////////////////////////////
+    // Act
+    const metadataResult = await backing.getMetadataAtPath(trace, folderPath);
+
+    // Assert
+    expect(metadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        name: folderMetadata.name
+      }
+    });
+
+    //////////// getMetadataByIdInPath ///////////////////////////////////////////////
+    // Act
+    const metadataByIdResult = await backing.getMetadataByIdInPath(trace, rootPath);
+
+    // Assert
+    expect(metadataByIdResult).toStrictEqual({
+      ok: true,
+      value: {
+        [folderId]: {
+          name: folderMetadata.name
+        }
+      }
+    });
+
     //////////// getIdsInPath /////////////////////////////////////////////////////////
-    // Act, list
+    // Act
     const rootListResult = await backing.getIdsInPath(trace, rootPath);
 
     // Assert
