@@ -11,6 +11,7 @@ import type { CryptoKeySetId } from 'freedom-crypto-data';
 import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableIdParts } from 'freedom-sync-types';
 import type {
+  LsFormatterArgs,
   MutableSyncableFolderAccessor,
   MutableSyncableStore,
   SaveableDocument,
@@ -307,13 +308,13 @@ export abstract class DefaultMutableSyncableFolderAccessorBase
     }
   );
 
-  public readonly ls = async (trace: Trace): PR<string[]> => {
+  public readonly ls = async (trace: Trace, options?: LsFormatterArgs): PR<string[]> => {
     const results = await allResultsNamed(
       trace,
       {},
       {
-        folderStoreLs: this.folderStore_.ls(trace),
-        fileStoreLs: this.fileStore_.ls(trace)
+        folderStoreLs: this.folderStore_.ls(trace, options),
+        fileStoreLs: this.fileStore_.ls(trace, options)
       }
     );
     if (!results.ok) {

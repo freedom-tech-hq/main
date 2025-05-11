@@ -8,6 +8,7 @@ import { extractSyncableItemTypeFromId, isCompleteLocalItemMetadata, mergeLocalI
 import { guardIsExpectedType, type SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type {
   GenerateNewSyncableItemNameFunc,
+  LsFormatterArgs,
   MutableStoreBase,
   MutableSyncableBundleAccessor,
   MutableSyncableFileAccessor,
@@ -21,6 +22,7 @@ import { flatten } from 'lodash-es';
 import type { SingleOrArray } from 'yaschema';
 
 import { guardIsSyncableItemTrusted } from '../../utils/guards/guardIsSyncableItemTrusted.ts';
+import { defaultLsFormatter } from '../consts/ls.ts';
 import { intersectSyncableItemTypes } from '../utils/intersectSyncableItemTypes.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
@@ -264,7 +266,7 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
     // return makeSuccess(isDeleted.value);
   });
 
-  public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace): PR<string[]> => {
+  public readonly ls = makeAsyncResultFunc([import.meta.filename, 'ls'], async (trace, options?: LsFormatterArgs): PR<string[]> => {
     const metadataById = await this.getMetadataById(trace);
     if (!metadataById.ok) {
       return metadataById;
@@ -282,14 +284,23 @@ export abstract class DefaultStoreBase implements MutableStoreBase {
         const itemPath = this.path_.append(itemId);
 
         const dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.name);
-
-        const output: string[] = [`${itemId}${dynamicName.ok ? ` (${JSON.stringify(dynamicName.value)})` : ''}: ${metadata.hash}`];
+        const lsFormatter = options?.formatter ?? defaultLsFormatter;
         const itemType = extractSyncableItemTypeFromId(itemId);
+
+        const output: string[] = [
+          lsFormatter({
+            itemType,
+            itemId,
+            metadata,
+            dynamicName: dynamicName.ok ? dynamicName.value : undefined
+          })
+        ];
+
         switch (itemType) {
           case 'bundle':
           case 'folder': {
             const itemAccessor = this.makeItemAccessor_(itemPath, itemType);
-            const fileLs = await itemAccessor.ls(trace);
+            const fileLs = await itemAccessor.ls(trace, options);
             if (!fileLs.ok) {
               return fileLs;
             }
