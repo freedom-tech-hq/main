@@ -4,6 +4,7 @@ import type { LocalItemMetadata, SyncableId, SyncableItemMetadata, SyncableItemT
 import type { SingleOrArray } from 'yaschema';
 
 import type { GenerateNewSyncableItemNameFunc } from '../GenerateNewSyncableItemNameFunc.ts';
+import type { LsFormatterArgs } from '../LsFormatter.ts';
 import type { SyncableItemAccessor } from './SyncableItemAccessor.ts';
 
 export interface StoreBase {
@@ -29,5 +30,5 @@ export interface StoreBase {
   readonly isDeleted: PRFunc<boolean, never, [id: SyncableId]>;
 
   /** Lists the IDs of files, along with their hashes */
-  readonly ls: PRFunc<string[]>;
+  readonly ls: PRFunc<string[], never, [options?: LsFormatterArgs]>;
 }
