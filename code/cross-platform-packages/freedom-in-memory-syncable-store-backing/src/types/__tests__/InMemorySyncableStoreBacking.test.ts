@@ -12,16 +12,37 @@ import { generateSha256HashFromHashesById } from 'freedom-crypto';
 import { uncheckedResult } from 'freedom-async';
 
 describe('InMemorySyncableStoreBacking', () => {
-  // Scenario 1: Basic File Lifecycle
+  /*
+  Let's rething the concept.
+  1. Create a folder in the root
+  2. Create a file in the root
+  3. Create a folder in the folder
+  4. Create a file in the folder
+
+  5. Test functions one by one on every object, including non-existent
+    - existsAtPath
+    - getAtPath
+    - getIdsInPath
+    - getMetadataAtPath
+    - getMetadataByIdInPath
+
+  6. deleteAtPath
+  7. updateLocalMetadataAtPath
+  */
+
+
+
   it('handles complete file lifecycle operations', async () => {
-    // Arrange, shared
+    // Arrange
     const trace = makeTrace();
 
+    // Scenario Ids
     const storageRootId = storageRootIdInfo.make('the-root');
     const rootPath = new SyncablePath(storageRootId);
 
     const provenance: SyncableProvenance = 'not-used' as unknown as SyncableProvenance;
 
+    // Backing
     const backing = new InMemorySyncableStoreBacking({ provenance: provenance });
 
     ///////////////////////////////////////////////////////////////////////////////////
