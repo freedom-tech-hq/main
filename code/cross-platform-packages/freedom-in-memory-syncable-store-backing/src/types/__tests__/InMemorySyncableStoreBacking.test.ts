@@ -318,7 +318,31 @@ describe('InMemorySyncableStoreBacking', () => {
       }
     });
 
-    // updateLocalMetadataAtPath
+    //////////// updateLocalMetadataAtPath ///////////////////////////////////////////
+    // Act
+    const updateFolderMetadataResult = await backing.updateLocalMetadataAtPath(
+      trace,
+      folderPath,
+      {
+        numDescendants: 1,
+        sizeBytes: 1
+      }
+    );
+    const updatedFolderMetadataResult = await backing.getMetadataAtPath(trace, folderPath);
+
+    // Assert
+    expect(updateFolderMetadataResult).toStrictEqual({
+      ok: true,
+      value: undefined
+    });
+    expect(updatedFolderMetadataResult).toStrictEqual({
+      ok: true,
+      value: {
+        ...folderBackingMetadata,
+        numDescendants: 1,
+        sizeBytes: 1
+      }
+    });
 
     // TODO:
     // deleteAtPath
