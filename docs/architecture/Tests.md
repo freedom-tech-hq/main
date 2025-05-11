@@ -63,6 +63,30 @@ describe('subjectFunction', () => {
 });
 ```
 
+### Assertions
+
+It is wrong to assert complex structures line by line. When it fails, you only know the line where it has failed,
+and it costs you time to dig up the failure.
+
+```ts
+// Wrong (although popular):
+assert.equal(initialExistsResult.ok, true);
+assert.equal(initialExistsResult.value, false);
+```
+
+Use deep equal checks instead. And also `expect()` - its DSL reads natural and the output is compatible with diff
+rendering in some IDE tools.
+
+```ts
+import { expect } from 'expect';
+
+// Fantastic readability both in code and on failure:
+expect(initialExistsResult).toEqual({
+  ok: true,
+  value: false
+});
+```
+
 ## AI Knowledge
 
 - Run single test file: `yarn test /Users/...test.ts`

@@ -37,8 +37,6 @@ describe('InMemorySyncableStoreBacking', () => {
       ok: true,
       value: false
     });
-    assert.equal(initialExistsResult.ok, true);
-    assert.equal(initialExistsResult.value, false);
 
     // Act - Create binary file
     const fileMetadata: SyncableStoreBackingItemMetadata = {
@@ -56,8 +54,6 @@ describe('InMemorySyncableStoreBacking', () => {
       ok: true,
       value: 'file'
     });
-    assert.equal(createResult.ok, true);
-    assert.equal(createResult.value.type, 'file');
 
     // Act - Verify path exists now
     const existsResult = await backing.existsAtPath(trace, testPath);
