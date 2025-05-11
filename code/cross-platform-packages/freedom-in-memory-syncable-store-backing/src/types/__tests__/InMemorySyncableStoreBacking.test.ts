@@ -51,6 +51,37 @@ describe('InMemorySyncableStoreBacking', () => {
       ok: true,
       value: [folderId]
     });
+
+    // Arrange
+    const fileId: SyncableId = 'EyTfS_Iz5CW754XOAlXuPWDUbJdvClWPBLKd/S3avqoPjrNC8=';
+    const fileMetadata: SyncableItemMetadata = {
+      name: 'E_AbcAbcAbc',
+      provenance,
+    }
+    const filePath = rootPath.append(fileId);
+    const fileHash = await uncheckedResult(generateSha256HashFromHashesById(trace, {}));
+    const fileBackingMetadata: SyncableStoreBackingItemMetadata = { ...fileMetadata, hash: fileHash, numDescendants: 0, sizeBytes: 0 };
+
+    // Act
+    const createFileResult = await backing.createBinaryFileWithPath(trace, filePath, {
+      data: new Uint8Array([1, 2, 3, 4, 5]),
+      metadata: fileBackingMetadata
+    });
+
+    // Assert
+    expect(createFileResult).toStrictEqual({
+      ok: true,
+      value: expect.objectContaining({ type: 'file' })
+    });
+
+    // Act
+    const rootListResult2 = await backing.getIdsInPath(trace, rootPath);
+
+    // Assert
+    expect(rootListResult2).toStrictEqual({
+      ok: true,
+      value: expect.arrayContaining([folderId, fileId])
+    });
   });
 
   it('x', async () => {
