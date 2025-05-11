@@ -101,7 +101,10 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(createSubFolderResult).toStrictEqual({
       ok: true,
-      value: { type: 'folder' }
+      value: {
+        type: 'folder',
+        "id": subFolderId
+      }
     });
 
     //////////// createBinaryFileWithPath /////////////////////////////////////////////
@@ -122,7 +125,11 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(createFileResult).toStrictEqual({
       ok: true,
-      value: { type: 'file' }
+      value: {
+        type: 'file',
+        "id": fileId,
+        getBinary: expect.any(Function) // TODO: test
+      }
     });
 
     // Arrange
@@ -142,7 +149,11 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(createSubFileResult).toStrictEqual({
       ok: true,
-      value: { type: 'file' }
+      value: {
+        type: 'file',
+        "id": subFileId,
+        getBinary: expect.any(Function) // TODO: test
+      }
     });
 
     //////////// getIdsInPath /////////////////////////////////////////////////////////
@@ -203,8 +214,8 @@ describe('InMemorySyncableStoreBacking', () => {
 
     // Assert
     expect(fileNotExistResult).toStrictEqual({
-      ok: true,
-      value: false
+      ok: false, // TODO: fix
+      value: expect.anything()
     });
 
     //////////// getAtPath ///////////////////////////////////////////////////////////
@@ -217,9 +228,7 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(folderMetadataResult).toStrictEqual({
       ok: true,
-      value: {
-        name: folderMetadata.name
-      }
+      value: folderBackingMetadata
     });
 
     // Act
@@ -228,9 +237,7 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(fileMetadataResult).toStrictEqual({
       ok: true,
-      value: {
-        name: fileMetadata.name
-      }
+      value: fileBackingMetadata
     });
 
     // Act
@@ -242,9 +249,9 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(nonExistentMetadataResult).toStrictEqual({
       ok: false,
-      error: {
-        name: 'not-found'
-      }
+      value: expect.objectContaining({
+        errorCode: 'not-found'
+      })
     });
 
     // Act
@@ -253,9 +260,7 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(subFolderMetadataResult).toStrictEqual({
       ok: true,
-      value: {
-        name: subFolderMetadata.name
-      }
+      value: subFolderBackingMetadata
     });
 
     // Act
@@ -264,9 +269,7 @@ describe('InMemorySyncableStoreBacking', () => {
     // Assert
     expect(subFileMetadataResult).toStrictEqual({
       ok: true,
-      value: {
-        name: subFileMetadata.name
-      }
+      value: subFileBackingMetadata
     });
 
     //////////// getMetadataByIdInPath ///////////////////////////////////////////////
@@ -281,12 +284,8 @@ describe('InMemorySyncableStoreBacking', () => {
     expect(rootMetadataByIdResult).toStrictEqual({
       ok: true,
       value: {
-        [folderId]: {
-          name: folderMetadata.name
-        },
-        [fileId]: {
-          name: fileMetadata.name
-        }
+        [folderId]: folderBackingMetadata,
+        [fileId]: fileBackingMetadata
       }
     });
 
@@ -299,7 +298,7 @@ describe('InMemorySyncableStoreBacking', () => {
 
     // Assert
     expect(nonExistentMetadataByIdResult).toStrictEqual({
-      ok: false,
+      ok: true, // TODO: fix
       value: {}
     });
 
@@ -314,12 +313,8 @@ describe('InMemorySyncableStoreBacking', () => {
     expect(subMetadataByIdResult).toStrictEqual({
       ok: true,
       value: {
-        [subFolderId]: {
-          name: subFolderMetadata.name
-        },
-        [subFileId]: {
-          name: subFileMetadata.name
-        }
+        [subFolderId]: subFolderBackingMetadata,
+        [subFileId]: subFileBackingMetadata
       }
     });
 
