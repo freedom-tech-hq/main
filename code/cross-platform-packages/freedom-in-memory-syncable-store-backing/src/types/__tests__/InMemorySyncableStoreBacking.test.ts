@@ -40,6 +40,27 @@ describe('InMemorySyncableStoreBacking', () => {
     const storageRootId = storageRootIdInfo.make('the-root');
     const rootPath = new SyncablePath(storageRootId);
 
+    const folderId: SyncableId =
+      'EyTbS_the+folder+WBSgooX+wBKoDDywARCAgg8jZ7mBueKM=';
+    const folderPath = rootPath.append(folderId);
+
+    const fileId: SyncableId =
+      'EyTfS_the+file+OAlXuPWDUbJdvClWPBLKd/S3avqoPjrNC8=';
+    const filePath = rootPath.append(fileId);
+
+    const subFolderId: SyncableId =
+      'EyTbS_the+sub+folder+WBSgowBKDDywARCAgg8jZ7mBueKM=';
+    const subFolderPath = folderPath.append(subFolderId);
+
+    const subFileId: SyncableId =
+      'EyTfS_the+sub+file+OAlXuPWDJdvClWBLKdS3avqoPjrNC8=';
+    const subFilePath = folderPath.append(subFileId);
+
+    const nonExistentFolderId: SyncableId =
+      'EyTbS_the+non+existent+folder+WBSgooAgg8jZ7mBueKM=';
+    const nonExistentFileId: SyncableId =
+      'EyTfS_the+non+existent+file+WDUbJdvClW3avqoPjrNC8=';
+
     const provenance: SyncableProvenance = 'not-used' as unknown as SyncableProvenance;
 
     // Backing
