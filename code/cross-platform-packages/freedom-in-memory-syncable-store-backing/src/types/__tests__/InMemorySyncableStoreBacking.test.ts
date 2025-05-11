@@ -318,8 +318,9 @@ describe('InMemorySyncableStoreBacking', () => {
       }
     });
 
+    // updateLocalMetadataAtPath
+
     // TODO:
     // deleteAtPath
-    // updateLocalMetadataAtPath
   });
 });
