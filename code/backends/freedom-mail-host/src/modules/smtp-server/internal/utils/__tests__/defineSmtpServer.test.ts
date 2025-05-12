@@ -12,7 +12,7 @@ import type { SMTPServer } from 'smtp-server';
 import { PassThrough } from 'stream';
 
 import * as config from '../../../../../config.ts';
-import type { SmtpServerParams } from '../defineSmtpServer.ts';
+import type { SmtpServerParams, ValidateReceiverResult } from '../defineSmtpServer.ts';
 import { defineSmtpServer } from '../defineSmtpServer.ts';
 
 const PORT = 3025; // Use a non-standard port for testing. TODO: consider also a runner ID
@@ -316,7 +316,7 @@ describe('defineSmtpServer', () => {
       const { client, sideEffects, onValidateReceiver } = await spinOffServerStack();
 
       // Set up mock responses for different email addresses
-      const addressResponses = new Map<string, 'our' | 'external' | 'wrong-user'>([
+      const addressResponses = new Map<string, ValidateReceiverResult>([
         ['valid-user@example.com', 'our'],
         ['invalid-user@example.com', 'wrong-user'],
         ['user@external-domain.com', 'external'],

@@ -1,10 +1,11 @@
 import { makeFailure, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { findUserByEmail } from 'freedom-db';
 
 import * as config from '../../../config.ts';
 import type { SmtpPublicErrorCodes } from '../internal/types/SmtpPublicErrorCodes.ts';
-import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
+import type { SmtpServerParams, ValidateReceiverResult } from '../internal/utils/defineSmtpServer.ts';
 
 /**
  * Validates an email recipient to determine if it's a valid recipient
@@ -15,13 +16,13 @@ import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
  */
 export const onValidateReceiver: SmtpServerParams['onValidateReceiver'] = makeAsyncResultFunc(
   [import.meta.filename],
-  async (_trace, emailAddress: string): PR<'our' | 'external' | 'wrong-user', SmtpPublicErrorCodes> => {
+  async (trace, emailAddress: string): PR<ValidateReceiverResult, SmtpPublicErrorCodes> => {
     // Get the domain part of the email
-    const [localPart, domain] = emailAddress.split('@');
+    const [, domain] = emailAddress.split('@');
 
     if (!domain) {
       return makeFailure(
-        new NotFoundError(_trace, {
+        new NotFoundError(trace, {
           errorCode: 'malformed-email-address',
           message: `Malformed email address: '${emailAddress}'`
         })
@@ -30,16 +31,17 @@ export const onValidateReceiver: SmtpServerParams['onValidateReceiver'] = makeAs
 
     // Not our domain
     if (!config.SMTP_OUR_DOMAINS.includes(domain)) {
-      return makeSuccess('external' as const);
+      return makeSuccess<ValidateReceiverResult>('external');
     }
 
-    // Check if the user exists in our system
-    // TODO: Replace with actual user validation from database
-    // For now, just a simple check for testing purposes
-    if (localPart.startsWith('invalid-')) {
-      return makeSuccess('wrong-user' as const);
+    // Check the user exists
+    const userResult = await findUserByEmail(trace, emailAddress);
+    if (userResult.ok) {
+      return makeSuccess<ValidateReceiverResult>('our');
+    } else if (userResult.value.errorCode === 'not-found') {
+      return makeSuccess<ValidateReceiverResult>('wrong-user');
+    } else {
+      return generalizeFailureResult(trace, userResult, 'not-found');
     }
-
-    return makeSuccess('our' as const);
   }
 );
