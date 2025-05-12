@@ -2,7 +2,7 @@ import type { PR, PRFunc, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { DynamicSyncableItemName, LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableItemAccessorBase, MutableSyncableStore } from 'freedom-syncable-store-types';
 
@@ -85,7 +85,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
 
     let dynamicName: Result<DynamicSyncableItemName>;
 
-    if (extractSyncableItemTypeFromId(this.path.lastId) === 'folder') {
+    if (extractSyncableItemTypeFromPath(this.path) === 'folder') {
       // The names of folders belong to the folders that contain them, not to the folders themselves
 
       const store = this.weakStore_.deref();

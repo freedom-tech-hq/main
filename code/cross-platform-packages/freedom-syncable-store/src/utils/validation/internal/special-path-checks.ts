@@ -1,5 +1,5 @@
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableIdParts, extractSyncableItemTypeFromId } from 'freedom-sync-types';
+import { extractSyncableIdParts, extractSyncableItemTypeFromId, extractSyncableItemTypeFromPath } from 'freedom-sync-types';
 import { ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
 
 export const isSpecialAutomaticallyTrustedPath = (path: SyncablePath): boolean => {
@@ -20,23 +20,21 @@ export const isSpecialAutomaticallyTrustedPath = (path: SyncablePath): boolean =
 export const isAccessControlDocumentPath = (path: SyncablePath): boolean =>
   path.ids.length > 0 &&
   path.lastId === ACCESS_CONTROL_BUNDLE_ID &&
-  extractSyncableItemTypeFromId(path.lastId) === 'bundle' &&
+  extractSyncableItemTypeFromPath(path) === 'bundle' &&
   // Root folder or explicit folder
   (path.ids.length === 1 || extractSyncableItemTypeFromId(path.ids[path.ids.length - 2]) === 'folder');
 
 export const isAccessControlDocumentSnapshotsBundlePath = (path: SyncablePath): boolean =>
   path.ids.length > 1 &&
   path.lastId === SNAPSHOTS_BUNDLE_ID({ encrypted: false }) &&
-  extractSyncableItemTypeFromId(path.lastId) === 'bundle' &&
+  extractSyncableItemTypeFromPath(path) === 'bundle' &&
   isAccessControlDocumentPath(path.parentPath!);
 
 export const isAccessControlDocumentDeltasBundlePath = (path: SyncablePath): boolean =>
   path.ids.length > 1 && isDeltasBundleId(path.lastId!) && isAccessControlDocumentPath(path.parentPath!);
 
 export const isAccessControlDocumentSnapshotFilePath = (path: SyncablePath): boolean =>
-  path.ids.length > 1 &&
-  extractSyncableItemTypeFromId(path.lastId!) === 'file' &&
-  isAccessControlDocumentSnapshotsBundlePath(path.parentPath!);
+  path.ids.length > 1 && extractSyncableItemTypeFromPath(path) === 'file' && isAccessControlDocumentSnapshotsBundlePath(path.parentPath!);
 
 // Helpers
 

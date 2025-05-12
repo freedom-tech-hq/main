@@ -8,7 +8,7 @@ import type { CollectionLikeId, ThreadLikeId } from 'freedom-email-user';
 import { getUserMailPaths, mailCollectionTypes } from 'freedom-email-user';
 import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
 import type { PageToken } from 'freedom-paginated-data';
-import { extractSyncableItemTypeFromId, extractUnmarkedSyncableId } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, extractUnmarkedSyncableId } from 'freedom-sync-types';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -53,7 +53,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
     const pendingMailIds: MailId[] = [];
     const removeCollectionChangeListener = syncableStore.addListener('itemAdded', ({ path }) => {
-      if (path.lastId === undefined || extractSyncableItemTypeFromId(path.lastId) !== 'file') {
+      if (path.lastId === undefined || extractSyncableItemTypeFromPath(path) !== 'file') {
         return;
       } else if (!path.startsWith(collectionPaths.value)) {
         return;

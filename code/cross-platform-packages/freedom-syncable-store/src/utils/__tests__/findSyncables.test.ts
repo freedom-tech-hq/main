@@ -136,7 +136,7 @@ describe('findSyncables', () => {
     // Find all items at root path
     const result = await findSyncables(trace, store, {
       basePath: rootPath,
-      include: [new SyncablePathPattern('**')]
+      glob: { include: [new SyncablePathPattern('**')] }
     });
 
     expectOk(result);
@@ -160,7 +160,7 @@ describe('findSyncables', () => {
     // Find only files
     const filesResult = await findSyncables(trace, store, {
       basePath: rootPath,
-      include: [new SyncablePathPattern('**')],
+      glob: { include: [new SyncablePathPattern('**')] },
       type: 'file'
     });
 
@@ -173,7 +173,7 @@ describe('findSyncables', () => {
     // Find only folders
     const foldersResult = await findSyncables(trace, store, {
       basePath: rootPath,
-      include: [new SyncablePathPattern('**')],
+      glob: { include: [new SyncablePathPattern('**')] },
       type: 'folder'
     });
 
@@ -186,7 +186,7 @@ describe('findSyncables', () => {
     // Find only bundles
     const bundlesResult = await findSyncables(trace, store, {
       basePath: rootPath,
-      include: [new SyncablePathPattern('**')],
+      glob: { include: [new SyncablePathPattern('**')] },
       type: 'bundle'
     });
 
@@ -203,7 +203,7 @@ describe('findSyncables', () => {
     // Find all items in docs folder
     const result = await findSyncables(trace, store, {
       basePath: docsPath,
-      include: [new SyncablePathPattern('**')]
+      glob: { include: [new SyncablePathPattern('**')] }
     });
 
     expectOk(result);
@@ -216,7 +216,7 @@ describe('findSyncables', () => {
 
     const result = await findSyncables(trace, store, {
       basePath: nonExistentPath,
-      include: [new SyncablePathPattern('**')]
+      glob: { include: [new SyncablePathPattern('**')] }
     });
     expectErrorCode(result, 'not-found');
   });
@@ -228,7 +228,7 @@ describe('findSyncables', () => {
       // Find items in the images folder using wildcard
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern(plainId('folder', 'images'), '**')]
+        glob: { include: [new SyncablePathPattern(plainId('folder', 'images'), '**')] }
       });
 
       expectOk(result);
@@ -254,12 +254,14 @@ describe('findSyncables', () => {
       // Find items matching either pattern
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [
-          // Match files directly in the docs folder
-          new SyncablePathPattern(plainId('folder', 'docs'), '*'),
-          // Match files in the settings bundle
-          new SyncablePathPattern(plainId('bundle', 'settings'), '*')
-        ]
+        glob: {
+          include: [
+            // Match files directly in the docs folder
+            new SyncablePathPattern(plainId('folder', 'docs'), '*'),
+            // Match files in the settings bundle
+            new SyncablePathPattern(plainId('bundle', 'settings'), '*')
+          ]
+        }
       });
 
       expectOk(result);
@@ -275,7 +277,7 @@ describe('findSyncables', () => {
       // Find all .txt files
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern('**', '*')],
+        glob: { include: [new SyncablePathPattern('**', '*')] },
         type: 'file'
       });
 
@@ -303,8 +305,10 @@ describe('findSyncables', () => {
       // Find all items except those in the images folder
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern('**')],
-        exclude: [new SyncablePathPattern(plainId('folder', 'images'), '**')]
+        glob: {
+          include: [new SyncablePathPattern('**')],
+          exclude: [new SyncablePathPattern(plainId('folder', 'images'), '**')]
+        }
       });
 
       expectOk(result);
@@ -334,13 +338,15 @@ describe('findSyncables', () => {
       // Find all items except bundles and .txt files
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern('**')],
-        exclude: [
-          // Exclude bundle type items
-          new SyncablePathPattern('**', plainId('bundle', 'settings'), '**'),
-          // Exclude .txt files in docs folder
-          new SyncablePathPattern(plainId('folder', 'docs'), '**')
-        ]
+        glob: {
+          include: [new SyncablePathPattern('**')],
+          exclude: [
+            // Exclude bundle type items
+            new SyncablePathPattern('**', plainId('bundle', 'settings'), '**'),
+            // Exclude .txt files in docs folder
+            new SyncablePathPattern(plainId('folder', 'docs'), '**')
+          ]
+        }
       });
 
       expectOk(result);
@@ -386,14 +392,16 @@ describe('findSyncables', () => {
       // Find using complex include/exclude patterns
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [
-          // Include all image files in any folder
-          new SyncablePathPattern('**', '*')
-        ],
-        exclude: [
-          // Exclude archived images
-          new SyncablePathPattern('**', plainId('folder', 'archive'), '**')
-        ],
+        glob: {
+          include: [
+            // Include all image files in any folder
+            new SyncablePathPattern('**', '*')
+          ],
+          exclude: [
+            // Exclude archived images
+            new SyncablePathPattern('**', plainId('folder', 'archive'), '**')
+          ]
+        },
         type: 'file'
       });
 
@@ -428,7 +436,7 @@ describe('findSyncables', () => {
       // Try to find items in empty folder
       const result = await findSyncables(trace, store, {
         basePath: emptyPath,
-        include: [new SyncablePathPattern('**')]
+        glob: { include: [new SyncablePathPattern('**')] }
       });
 
       expectOk(result);
@@ -441,7 +449,7 @@ describe('findSyncables', () => {
       // Use a pattern that won't match anything
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern(plainId('folder', 'non-existent'), '**')]
+        glob: { include: [new SyncablePathPattern(plainId('folder', 'non-existent'), '**')] }
       });
 
       expectOk(result);
@@ -454,7 +462,7 @@ describe('findSyncables', () => {
       // Find both files and folders, but not bundles
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern('**')],
+        glob: { include: [new SyncablePathPattern('**')] },
         type: ['file', 'folder']
       });
 
@@ -505,7 +513,7 @@ describe('findSyncables', () => {
       // Find all items in the deep structure
       const result = await findSyncables(trace, store, {
         basePath: rootFolder.value.path,
-        include: [new SyncablePathPattern('**')]
+        glob: { include: [new SyncablePathPattern('**')] }
       });
 
       expectOk(result);
@@ -565,7 +573,7 @@ describe('findSyncables', () => {
       // Find only the deepest files (level 2)
       const result = await findSyncables(trace, store, {
         basePath: rootPath,
-        include: [new SyncablePathPattern(plainId('folder', 'level1'), plainId('folder', 'level2'), '*')],
+        glob: { include: [new SyncablePathPattern(plainId('folder', 'level1'), plainId('folder', 'level2'), '*')] },
         type: 'file'
       });
 

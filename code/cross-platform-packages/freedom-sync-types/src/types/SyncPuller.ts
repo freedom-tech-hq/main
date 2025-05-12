@@ -1,10 +1,10 @@
 import type { PRFunc } from 'freedom-async';
 import { schema } from 'yaschema';
 
-import type { SyncPullResponse } from './pull-responses/SyncPullResponse.ts';
+import type { PullItem } from './push-pull/PullItem.ts';
 import { structHashesSchema } from './StructHashes.ts';
 import { syncablePathSchema } from './SyncablePath.ts';
-import { syncablePathPatternSchema } from './SyncablePathPattern.ts';
+import { syncGlobSchema } from './SyncGlob.ts';
 
 export const syncPullArgsSchema = schema.object({
   basePath: syncablePathSchema,
@@ -17,12 +17,10 @@ export const syncPullArgsSchema = schema.object({
    * @defaultValue `false`
    */
   sendData: schema.boolean().optional(),
-  /** glob-like patterns to include */
-  include: schema.array({ items: syncablePathPatternSchema }).optional(),
-  /** glob-like patterns to exclude */
-  exclude: schema.array({ items: syncablePathPatternSchema }).optional()
+  /** If specified, any of the matching items will also be pulled, if they're out of sync based on `localHashesRelativeToBasePath` */
+  glob: syncGlobSchema.optional()
 });
 export type SyncPullArgs = typeof syncPullArgsSchema.valueType;
 
 // TODO: during pull, if we're the creator, we should try to validate and auto-approve / reject
-export type SyncPuller = PRFunc<SyncPullResponse, 'not-found', [SyncPullArgs]>;
+export type SyncPuller = PRFunc<PullItem, 'not-found', [SyncPullArgs]>;

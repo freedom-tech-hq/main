@@ -1,5 +1,5 @@
 import { InMemoryCache } from 'freedom-in-memory-cache';
-import { extractSyncableItemTypeFromId, type SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, type SyncablePath } from 'freedom-sync-types';
 
 import { OPFS_DIRECTORY_ACCESS_CACHE_DURATION_MSEC } from '../consts/timings.ts';
 
@@ -16,7 +16,7 @@ export const setOpfsDirectoryAccessCache = (rootHandle: FileSystemDirectoryHandl
 
 /** Invalidates the cache for the specified rootHandle for the specified path and any deeper paths */
 export const invalidateDirectoryHandleCache = (rootHandle: FileSystemDirectoryHandle, path: SyncablePath) => {
-  const itemType = path.lastId !== undefined ? extractSyncableItemTypeFromId(path.lastId) : 'folder';
+  const itemType = extractSyncableItemTypeFromPath(path);
 
   switch (itemType) {
     case 'bundle':

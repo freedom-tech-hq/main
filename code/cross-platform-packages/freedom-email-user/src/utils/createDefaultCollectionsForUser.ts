@@ -1,7 +1,8 @@
 import type { PR } from 'freedom-async';
 import { allResultsMapped, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { encName } from 'freedom-sync-types';
+import type { SyncGlob } from 'freedom-sync-types';
+import { encName, SyncablePathPattern as SPP } from 'freedom-sync-types';
 import { getOrCreateBundleAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore, SyncableStore } from 'freedom-syncable-store-types';
 import { merge } from 'lodash-es';
@@ -9,15 +10,15 @@ import { merge } from 'lodash-es';
 import { mailCollectionTypes } from '../types/MailCollectionType.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
-const getGlobPatterns = async (syncableStore: SyncableStore): Promise<{ include: string[]; exclude?: string[] }> => {
+const getGlobPatterns = async (syncableStore: SyncableStore): Promise<SyncGlob> => {
   const paths = await getUserMailPaths(syncableStore);
 
-  const include: string[] = [];
+  const include: SPP[] = [];
 
-  include.push(paths.collections.value.toRelativePathString(syncableStore.path));
+  include.push(SPP.relativeTo(syncableStore.path, paths.collections.value));
 
   for (const collectionType of mailCollectionTypes) {
-    include.push(paths.collections[collectionType].value.toRelativePathString(syncableStore.path));
+    include.push(SPP.relativeTo(syncableStore.path, paths.collections[collectionType].value));
   }
 
   return { include };

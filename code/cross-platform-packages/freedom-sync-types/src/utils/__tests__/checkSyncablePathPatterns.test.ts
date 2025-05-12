@@ -7,6 +7,7 @@ import { expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import type { SyncableId } from '../../types/SyncableId.ts';
 import { plainId } from '../../types/SyncableId.ts';
 import { SyncablePathPattern } from '../../types/SyncablePathPattern.ts';
+import type { SyncGlob } from '../../types/SyncGlob.ts';
 import { checkSyncablePathPattern } from '../checkSyncablePathPattern.ts';
 import type { CheckSyncablePathPatternsResult } from '../checkSyncablePathPatterns.ts';
 import { checkSyncablePathPatterns } from '../checkSyncablePathPatterns.ts';
@@ -14,10 +15,7 @@ import { checkSyncablePathPatterns } from '../checkSyncablePathPatterns.ts';
 const trace = makeTrace('test');
 
 // Helper function to run checkSyncablePathPatterns and extract the result value
-const testMatch = (
-  relativeIds: SyncableId[],
-  options: { include: SyncablePathPattern[]; exclude?: SyncablePathPattern[] }
-): CheckSyncablePathPatternsResult => {
+const testMatch = (relativeIds: SyncableId[], options: SyncGlob): CheckSyncablePathPatternsResult => {
   const result: Result<CheckSyncablePathPatternsResult> = checkSyncablePathPatterns(trace, relativeIds, options);
   expectOk(result);
 

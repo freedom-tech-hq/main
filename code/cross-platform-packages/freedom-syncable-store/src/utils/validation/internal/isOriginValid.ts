@@ -25,7 +25,7 @@ export const isOriginValid = makeAsyncResultFunc(
     }
 
     if (origin.value.contentHash !== contentHash.value) {
-      DEV: debugTopic('VALIDATION', (log) => log(`Origin content hash mismatch for ${item.path.toShortString()}`));
+      DEV: debugTopic('VALIDATION', (log) => log(trace, `Origin content hash mismatch for ${item.path.toShortString()}`));
       return makeSuccess(false);
     }
 
@@ -57,7 +57,7 @@ export const isOriginValid = makeAsyncResultFunc(
     if (!signedValueValid.ok) {
       return signedValueValid;
     } else if (!signedValueValid.value) {
-      DEV: debugTopic('VALIDATION', (log) => log(`Signed origin invalid for ${item.path.toShortString()}`));
+      DEV: debugTopic('VALIDATION', (log) => log(trace, `Signed origin invalid for ${item.path.toShortString()}`));
       return makeSuccess(false);
     }
 
@@ -83,7 +83,7 @@ export const isOriginValid = makeAsyncResultFunc(
 
     // Making sure the origin user had write access
     if (role.value === undefined || !rolesWithWriteAccess.has(role.value)) {
-      DEV: debugTopic('VALIDATION', (log) => log(`Origin signer doesn't have write access for ${item.path.toShortString()}:`, role));
+      DEV: debugTopic('VALIDATION', (log) => log(trace, `Origin signer doesn't have write access for ${item.path.toShortString()}:`, role));
       return makeSuccess(false);
     }
 
@@ -92,7 +92,7 @@ export const isOriginValid = makeAsyncResultFunc(
       const timeId = extractUnmarkedSyncableId(item.path.lastId!);
       if (!timeIdInfo.is(timeId)) {
         DEV: debugTopic('VALIDATION', (log) =>
-          log(`Origin has trustedTimeSignature but ${item.path.toShortString()} isn't a TimeId:`, role)
+          log(trace, `Origin has trustedTimeSignature but ${item.path.toShortString()} isn't a TimeId:`, role)
         );
         return makeSuccess(false);
       }

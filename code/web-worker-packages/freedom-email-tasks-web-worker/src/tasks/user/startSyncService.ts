@@ -109,7 +109,7 @@ export const startSyncService = makeAsyncResultFunc(
               dataUploadExponentialBackoffTimeMSec[dataUploadExponentialBackoffTimeMSec.length - 1] ??
               0
           }),
-          (_attemptCount) => syncService.value.immediatelyPullGlobFromRemotes(trace, { basePath: syncableStore.path, ...globPatterns })
+          (_attemptCount) => syncService.value.pullFromRemotes(trace, { basePath: syncableStore.path, ...globPatterns })
         );
         if (!pulled.ok) {
           return generalizeFailureResult(trace, pulled, 'not-found', 'Failed to pull initial content from remote');

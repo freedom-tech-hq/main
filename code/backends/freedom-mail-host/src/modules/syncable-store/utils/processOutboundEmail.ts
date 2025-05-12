@@ -22,7 +22,7 @@ export const processOutboundEmail = makeAsyncResultFunc(
 
     // Process each email ID
     for (const mailId of emailIds) {
-      DEV: debugTopic('SMTP', (log) => log(`Sending outbound email ${mailId}`));
+      DEV: debugTopic('SMTP', (log) => log(trace, `Sending outbound email ${mailId}`));
 
       // Get the email content
       const outboundMail = await getOutboundMailById(trace, syncableStore, mailId);
@@ -55,14 +55,14 @@ export const processOutboundEmail = makeAsyncResultFunc(
 
       // Internal recipients
       for (const recipient of internalRecipients) {
-        DEV: debugTopic('SMTP', (log) => log(`Processing internal recipient: ${recipient}`));
+        DEV: debugTopic('SMTP', (log) => log(trace, `Processing internal recipient: ${recipient}`));
 
         await addIncomingEmail(trace, recipient, mail);
       }
 
       // External recipients
       if (externalRecipients.length > 0) {
-        DEV: debugTopic('SMTP', (log) => log(`Processing ${externalRecipients.length} external recipients`));
+        DEV: debugTopic('SMTP', (log) => log(trace, `Processing ${externalRecipients.length} external recipients`));
 
         // Post to SMTP upstream
         await deliverOutboundEmail(trace, mail, {
@@ -71,7 +71,7 @@ export const processOutboundEmail = makeAsyncResultFunc(
         });
       }
 
-      DEV: debugTopic('SMTP', (log) => log(`Before moveOutboundMailToStorage`));
+      DEV: debugTopic('SMTP', (log) => log(trace, `Before moveOutboundMailToStorage`));
 
       // Move to permanent storage after successful sending
       const moved = await moveOutboundMailToStorage(trace, syncableStore, mailId);
@@ -79,7 +79,7 @@ export const processOutboundEmail = makeAsyncResultFunc(
         return generalizeFailureResult(trace, moved, 'not-found');
       }
 
-      DEV: debugTopic('SMTP', (log) => log(`Sent outbound email ${mailId}`));
+      DEV: debugTopic('SMTP', (log) => log(trace, `Sent outbound email ${mailId}`));
     }
 
     return makeSuccess(undefined);

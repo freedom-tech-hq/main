@@ -161,10 +161,10 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying folderAdded for folder ${newPath.toShortString()}`));
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying folderAdded for folder ${newPath.toShortString()}`));
       this.syncTracker_.notify('folderAdded', { path: newPath });
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for folder ${newPath.toShortString()}`));
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for folder ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
 
       return makeSuccess(folder);

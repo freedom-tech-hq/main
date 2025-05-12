@@ -3,7 +3,7 @@ import { makeSuccess, makeSyncFunc } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 
 import type { SyncableId } from '../types/SyncableId.ts';
-import type { SyncablePathPattern } from '../types/SyncablePathPattern.ts';
+import type { SyncGlob } from '../types/SyncGlob.ts';
 import { checkSyncablePathPattern } from './checkSyncablePathPattern.ts';
 
 export type CheckSyncablePathPatternsResult = 'impossible' | 'possible' | 'definite';
@@ -17,11 +17,7 @@ export type CheckSyncablePathPatternsResult = 'impossible' | 'possible' | 'defin
  */
 export const checkSyncablePathPatterns = makeSyncFunc(
   [import.meta.filename],
-  (
-    trace: Trace,
-    relativeIds: SyncableId[],
-    { include, exclude }: { include: SyncablePathPattern[]; exclude?: SyncablePathPattern[] }
-  ): Result<CheckSyncablePathPatternsResult> => {
+  (trace: Trace, relativeIds: SyncableId[], { include, exclude }: SyncGlob): Result<CheckSyncablePathPatternsResult> => {
     for (const pattern of exclude ?? []) {
       const result = checkSyncablePathPattern(trace, relativeIds, pattern);
       if (!result.ok) {

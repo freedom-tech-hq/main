@@ -263,7 +263,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for file ${newPath.toShortString()}`));
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for file ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
 
       return makeSuccess(itemAccessor);
@@ -312,7 +312,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for bundle ${newPath.toShortString()}`));
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for bundle ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
 
       return makeSuccess(itemAccessor);

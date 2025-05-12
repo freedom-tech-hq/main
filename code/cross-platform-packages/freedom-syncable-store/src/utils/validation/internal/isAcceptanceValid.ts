@@ -33,7 +33,7 @@ export const isAcceptanceValid = makeAsyncResultFunc(
     if (!signedValueValid.ok) {
       return signedValueValid;
     } else if (!signedValueValid.value) {
-      DEV: debugTopic('VALIDATION', (log) => log(`Signed acceptance invalid for ${item.path.toShortString()}`));
+      DEV: debugTopic('VALIDATION', (log) => log(trace, `Signed acceptance invalid for ${item.path.toShortString()}`));
       return makeSuccess(false);
     }
 
@@ -65,7 +65,7 @@ export const isAcceptanceValid = makeAsyncResultFunc(
     if (!trustedTimeValid.ok) {
       return trustedTimeValid;
     } else if (!trustedTimeValid.value) {
-      DEV: debugTopic('VALIDATION', (log) => log(`Invalid trusted time name for ${item.path.toShortString()}`));
+      DEV: debugTopic('VALIDATION', (log) => log(trace, `Invalid trusted time name for ${item.path.toShortString()}`));
       return makeSuccess(false);
     }
 
@@ -85,7 +85,7 @@ export const isAcceptanceValid = makeAsyncResultFunc(
       return isValid;
     } else if (!isValid.value) {
       DEV: debugTopic('VALIDATION', (log) =>
-        log(`Origin didn't have change accepting access at ${new Date(timeMSec).toString()} for ${item.path.toString()}`)
+        log(trace, `Origin didn't have change accepting access at ${new Date(timeMSec).toString()} for ${item.path.toString()}`)
       );
       return makeSuccess(false);
     }

@@ -2,7 +2,8 @@ import type { PR, PRFunc } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { Cast } from 'freedom-cast';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { encName } from 'freedom-sync-types';
+import type { SyncGlob } from 'freedom-sync-types';
+import { encName, SyncablePathPattern as SPP } from 'freedom-sync-types';
 import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
 import { ACCESS_CONTROL_BUNDLE_ID, type MutableSyncableStore, type SyncableStore } from 'freedom-syncable-store-types';
 import { merge } from 'lodash-es';
@@ -10,23 +11,23 @@ import { merge } from 'lodash-es';
 import { createDefaultCollectionsForUser } from './createDefaultCollectionsForUser.ts';
 import { getUserMailPaths } from './getUserMailPaths.ts';
 
-const getGlobPatterns = async (syncableStore: SyncableStore): Promise<{ include: string[]; exclude?: string[] }> => {
+const getGlobPatterns = async (syncableStore: SyncableStore): Promise<SyncGlob> => {
   const paths = await getUserMailPaths(syncableStore);
 
-  const include: string[] = [];
-  const exclude: string[] = [];
+  const include: SPP[] = [];
+  const exclude: SPP[] = [];
 
-  include.push(paths.storage.value.toRelativePathString(syncableStore.path));
-  include.push(`${paths.storage.value.append(ACCESS_CONTROL_BUNDLE_ID).toRelativePathString(syncableStore.path)}/**`);
+  include.push(SPP.relativeTo(syncableStore.path, paths.storage.value));
+  include.push(SPP.relativeTo(syncableStore.path, paths.storage.value, ACCESS_CONTROL_BUNDLE_ID, '**'));
 
-  include.push(paths.out.value.toRelativePathString(syncableStore.path));
-  include.push(`${paths.out.value.append(ACCESS_CONTROL_BUNDLE_ID).toRelativePathString(syncableStore.path)}/**`);
+  include.push(SPP.relativeTo(syncableStore.path, paths.out.value));
+  include.push(SPP.relativeTo(syncableStore.path, paths.out.value, ACCESS_CONTROL_BUNDLE_ID, '**'));
 
-  include.push(paths.drafts.value.toRelativePathString(syncableStore.path));
-  include.push(paths.indexes.value.toRelativePathString(syncableStore.path));
-  include.push(paths.indexes.mailIdsByMessageIdIndex.toRelativePathString(syncableStore.path));
-  include.push(paths.threads.toRelativePathString(syncableStore.path));
-  include.push(paths.routeProcessing.value.toRelativePathString(syncableStore.path));
+  include.push(SPP.relativeTo(syncableStore.path, paths.drafts.value));
+  include.push(SPP.relativeTo(syncableStore.path, paths.indexes.value));
+  include.push(SPP.relativeTo(syncableStore.path, paths.indexes.mailIdsByMessageIdIndex));
+  include.push(SPP.relativeTo(syncableStore.path, paths.threads));
+  include.push(SPP.relativeTo(syncableStore.path, paths.routeProcessing.value));
 
   const createDefaultCollectionsForUserGlobPatterns = await createDefaultCollectionsForUser.getGlobPatterns(syncableStore);
   include.push(...createDefaultCollectionsForUserGlobPatterns.include);

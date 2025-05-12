@@ -8,6 +8,7 @@ import { NotificationManager } from 'freedom-notification-types';
 import { api } from 'freedom-store-api-server-api';
 import type {
   ControllableRemoteConnection,
+  PullItem,
   RemoteAccessor,
   RemoteChangeNotificationClient,
   RemoteChangeNotifications,
@@ -15,7 +16,6 @@ import type {
   StorageRootId,
   SyncableItemMetadata,
   SyncPuller,
-  SyncPullResponse,
   SyncPusher
 } from 'freedom-sync-types';
 import { remoteIdInfo, SyncablePath } from 'freedom-sync-types';
@@ -69,7 +69,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
 
     const puller: SyncPuller = makeAsyncResultFunc(
       [import.meta.filename, 'puller'],
-      async (trace, body): PR<SyncPullResponse, 'not-found'> => {
+      async (trace, body): PR<PullItem, 'not-found'> => {
         const pulled = await pullFromRemote(trace, {
           body: { ...body, sendData: body.sendData ?? false },
           context: getDefaultApiRoutingContext()

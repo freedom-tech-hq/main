@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import { extractSyncableItemTypeFromId, type SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, type SyncablePath } from 'freedom-sync-types';
 import type { ISyncableStoreAccessControlDocument, SyncableStore } from 'freedom-syncable-store-types';
 
 import { getNearestFolder } from './getNearestFolder.ts';
@@ -15,7 +15,7 @@ export const getOwningAccessControlDocument = makeAsyncResultFunc(
     }
 
     // Folders are owned by the access control documents of their nearest parent folders
-    if (extractSyncableItemTypeFromId(path.lastId!) === 'folder') {
+    if (extractSyncableItemTypeFromPath(path) === 'folder') {
       path = path.parentPath!;
     }
 

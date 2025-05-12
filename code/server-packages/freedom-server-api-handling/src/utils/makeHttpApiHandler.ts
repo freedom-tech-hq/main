@@ -17,7 +17,7 @@ import { isAcceptedRouteType } from '../config/route-types.ts';
 import type { GenericallyFailableHttpOutput } from '../internal/types/GenericallyFailableHttpOutput.ts';
 import { httpError } from '../internal/utils/http-error.ts';
 import type { ExpressWithYaschemaApi } from '../types/ExpressWithYaschemaApi.ts';
-import type { LogPrefixedHttpApiHandler } from '../types/LogPrefixedHttpApiHandler.ts';
+import type { HttpApiHandler } from '../types/HttpApiHandler.ts';
 
 export const makeHttpApiHandler =
   <
@@ -54,7 +54,7 @@ export const makeHttpApiHandler =
           ErrResBodyT
         >;
       },
-    handler: LogPrefixedHttpApiHandler<
+    handler: HttpApiHandler<
       ReqHeadersT,
       ReqParamsT,
       ReqQueryT,

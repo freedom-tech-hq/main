@@ -1,9 +1,9 @@
-import { extractSyncableItemTypeFromId, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, extractSyncableItemTypeFromPath, SyncablePath } from 'freedom-sync-types';
 
 /** If this path represents a file, returns a new path with the deepest common folder.  If this path represents a folder, returns the
  * same path */
 export const getNearestFolderPath = (path: SyncablePath): SyncablePath => {
-  if (path.lastId !== undefined && extractSyncableItemTypeFromId(path.lastId) === 'folder') {
+  if (extractSyncableItemTypeFromPath(path) === 'folder') {
     return path;
   }
 

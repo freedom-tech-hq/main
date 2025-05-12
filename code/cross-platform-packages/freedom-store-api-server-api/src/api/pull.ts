@@ -1,5 +1,5 @@
 import { makeFailureWithCodeSchemas } from 'freedom-basic-data';
-import { syncPullArgsSchema, syncPullResponseSchema } from 'freedom-sync-types';
+import { pullItemSchema, syncPullArgsSchema } from 'freedom-sync-types';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
@@ -15,7 +15,7 @@ export const POST = makeHttpApi({
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
-      body: syncPullResponseSchema
+      body: pullItemSchema
     },
     failureResponse: makeFailureWithCodeSchemas('not-found')
   }

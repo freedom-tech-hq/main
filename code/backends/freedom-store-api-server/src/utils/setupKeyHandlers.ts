@@ -5,6 +5,7 @@ import { bestEffort, inline, makeAsyncResultFunc, makeSuccess, uncheckedResult }
 import { getUserById } from 'freedom-db';
 import { getEmailAgentSyncableStore } from 'freedom-email-server';
 import type { EmailUserId } from 'freedom-email-sync';
+import { storageRootIdInfo } from 'freedom-sync-types';
 import { logLs } from 'freedom-syncable-store';
 
 import { addDemoEmail } from './addDemoEmail.ts';
@@ -70,7 +71,12 @@ const logUserFsLs = makeAsyncResultFunc(
   [import.meta.filename, 'logUserFsLs'],
   async (trace, { userId }: { userId: EmailUserId }): PR<undefined> => {
     const user = await uncheckedResult(getUserById(trace, userId));
-    const syncableStore = await uncheckedResult(getEmailAgentSyncableStore(trace, user));
+
+    const storageRootId = storageRootIdInfo.make(userId);
+    const creatorPublicKeys = user.publicKeys;
+    const saltsById = { [user.defaultSalt]: user.defaultSalt };
+
+    const syncableStore = await uncheckedResult(getEmailAgentSyncableStore(trace, { storageRootId, creatorPublicKeys, saltsById }));
     await logLs(trace, syncableStore, console.log, { prefix: 'user fs: ' });
     return makeSuccess(undefined);
   }

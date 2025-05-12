@@ -4,6 +4,8 @@ import type { Trace } from 'freedom-contexts';
 import type { User } from 'freedom-db';
 import { getAllUsers } from 'freedom-db';
 import { listOutboundMailIds } from 'freedom-email-sync';
+import type { SaltsById } from 'freedom-sync-types';
+import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
@@ -77,7 +79,11 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
       for (const user of users) {
         if (!isActive) return;
 
-        const syncableStore = await uncheckedResult(getEmailAgentSyncableStore(trace, user));
+        const storageRootId = storageRootIdInfo.make(user.userId);
+        const creatorPublicKeys = user.publicKeys;
+        const saltsById: SaltsById = { [DEFAULT_SALT_ID]: user.defaultSalt };
+
+        const syncableStore = await uncheckedResult(getEmailAgentSyncableStore(trace, { storageRootId, creatorPublicKeys, saltsById }));
 
         await pollOutboundEmailsForUser(user, syncableStore);
       }

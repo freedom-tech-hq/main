@@ -1,6 +1,6 @@
 export * from './DynamicSyncableItemName.ts';
 export * from './metadata/exports.ts';
-export * from './pull-responses/exports.ts';
+export * from './push-pull/exports.ts';
 export * from './RemoteAccessor.ts';
 export * from './RemoteChangeNotificationClient.ts';
 export * from './RemoteConnection.ts';
@@ -14,5 +14,6 @@ export * from './SyncableOrigin.ts';
 export * from './SyncablePath.ts';
 export * from './SyncablePathPattern.ts';
 export * from './SyncableProvenance.ts';
+export * from './SyncGlob.ts';
 export * from './SyncPuller.ts';
 export * from './SyncPusher.ts';

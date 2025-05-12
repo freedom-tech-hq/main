@@ -2,6 +2,7 @@ import type { DeserializationResult, SerializationResult } from 'yaschema';
 import { schema } from 'yaschema';
 
 import { syncableIdSchema } from './SyncableId.ts';
+import type { SyncablePath } from './SyncablePath.ts';
 
 export const syncableIdOrPatternSchema = schema.oneOf(syncableIdSchema, schema.string('*', '**'));
 export type SyncableIdOrPattern = typeof syncableIdOrPatternSchema.valueType;
@@ -11,6 +12,16 @@ export class SyncablePathPattern {
 
   constructor(...ids: SyncableIdOrPattern[]) {
     this.ids = ids;
+  }
+
+  /**
+   * Creates a new `SyncablePathPattern` for the specified subPath (and any extra IDs) relative to the specified basePath.
+   *
+   * For example: `SyncablePathPattern.relativeTo(mySyncablePath, mySyncablePath.append(plainId('bundle', 'foo')), '*')` makes
+   * `new SyncablePathPattern(plainId('bundle', 'foo'), '*')`
+   */
+  static relativeTo(basePath: SyncablePath, subPath: SyncablePath, ...ids: SyncableIdOrPattern[]) {
+    return new SyncablePathPattern(...subPath.relativeTo(basePath)!, ...ids);
   }
 
   /** Returns a new path with an appended ID */

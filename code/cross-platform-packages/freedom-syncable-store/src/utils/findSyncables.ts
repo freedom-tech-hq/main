@@ -2,7 +2,8 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import { checkSyncablePathPatterns, type SyncableItemType, type SyncablePath, type SyncablePathPattern } from 'freedom-sync-types';
+import type { SyncableItemType, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import { checkSyncablePathPatterns } from 'freedom-sync-types';
 import { isExpectedType } from 'freedom-syncable-store-backing-types';
 import type { SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
 import type { SingleOrArray } from 'yaschema';
@@ -17,12 +18,7 @@ export const findSyncables = makeAsyncResultFunc(
   async <T extends SyncableItemType = SyncableItemType>(
     trace: Trace,
     store: SyncableStore,
-    {
-      basePath,
-      include,
-      exclude,
-      type
-    }: { basePath: SyncablePath; include: SyncablePathPattern[]; exclude?: SyncablePathPattern[]; type?: SingleOrArray<T> }
+    { basePath, glob, type }: { basePath: SyncablePath; glob: SyncGlob; type?: SingleOrArray<T> }
   ): PR<Array<SyncableItemAccessor & { type: T }>, 'not-found'> => {
     const baseItem = await getSyncableAtPath(trace, store, basePath);
     if (!baseItem.ok) {
@@ -37,7 +33,7 @@ export const findSyncables = makeAsyncResultFunc(
         return makeSuccess('skip' as const);
       }
 
-      const patternMatchResult = checkSyncablePathPatterns(trace, relativePathIds, { include, exclude });
+      const patternMatchResult = checkSyncablePathPatterns(trace, relativePathIds, glob);
       if (!patternMatchResult.ok) {
         return patternMatchResult;
       }
