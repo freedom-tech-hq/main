@@ -9,10 +9,12 @@ import * as config from '../../../../config.ts';
 import type { SmtpPublicErrorCodes } from '../types/SmtpPublicErrorCodes.ts';
 import { wrapSmtpHandler } from './wrapSmtpHandler.ts';
 
+export type ValidateReceiverResult = 'our' | 'external' | 'wrong-user';
+
 export type SmtpServerParams = {
   secureOnly: boolean;
   onAuth: (trace: Trace, username: string, password: string) => PR<{ userId: string }, SmtpPublicErrorCodes>;
-  onValidateReceiver: (trace: Trace, emailAddress: string) => PR<'our' | 'external' | 'wrong-user', SmtpPublicErrorCodes>;
+  onValidateReceiver: (trace: Trace, emailAddress: string) => PR<ValidateReceiverResult, SmtpPublicErrorCodes>;
 
   // TODO: check how we validate no promise here
   onReceivedEmail: (trace: Trace, emailData: string, envelope: SMTPServerEnvelope) => PR<undefined>;
