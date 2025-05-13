@@ -7,3 +7,4 @@ export { getAllUsers } from './getAllUsers.ts';
 export { getMailAgentPrivateKeys } from './getMailAgentPrivateKeys.ts';
 export { getMailAgentUserKeys } from './getMailAgentUserKeys.ts';
 export { getUserById } from './getUserById.ts';
+export { saveUserCredentials } from './saveUserCredentials.ts';
