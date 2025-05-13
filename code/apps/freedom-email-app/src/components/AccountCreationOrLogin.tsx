@@ -150,47 +150,50 @@ export const AccountCreationOrLogin = () => {
     ));
   });
 
-  const onSubmitNewAccountDialog = useCallbackRef(async ({ masterPassword }: { masterPassword: string }) => {
-    if (isBusy.get()) {
-      return;
-    }
+  const onSubmitNewAccountDialog = useCallbackRef(
+    async ({ masterPassword }: { masterPassword: string; saveCredentialsOnServer: boolean }) => {
+      if (isBusy.get()) {
+        return;
+      }
 
       dismissNewAccountDialog.current();
 
-    isBusy.set(true);
-    try {
-      const description = `${makeUuid()}@freedommail.me - ${new Date().toISOString()}`;
-      const created = await tasks!.createUser({
-        install: { description },
-        password: masterPassword
-      });
-      if (!created.ok) {
-        // TODO: better error visibility
-        log().error?.('Failed to create user', created.value);
-        return;
-      }
+      isBusy.set(true);
+      try {
+        const description = `${makeUuid()}@freedommail.me - ${new Date().toISOString()}`;
+        const created = await tasks!.createUser({
+          install: { description },
+          password: masterPassword
+          // Here? saveCredentialsOnServer
+        });
+        if (!created.ok) {
+          // TODO: better error visibility
+          log().error?.('Failed to create user', created.value);
+          return;
+        }
 
         history.replace('/mail');
 
         activeLocallyStoredCredentialUuid.set(created.value.locallyStoredCredentialUuid);
         activeUserId.set(created.value.userId);
 
-      // After successful account creation, try to register a WebAuthn credential
-      if (created.value.locallyStoredCredentialUuid !== undefined && window.PublicKeyCredential !== undefined) {
-        const trace = makeTrace(import.meta.filename, 'onSubmitNewAccountDialog');
-        const registered = await registerWebAuthnCredential(trace, {
-          localCredentialUuid: created.value.locallyStoredCredentialUuid,
-          description
-        });
-        if (!registered.ok) {
-          log().error?.('Failed to register WebAuthn credential', registered.value);
-          return;
+        // After successful account creation, try to register a WebAuthn credential
+        if (created.value.locallyStoredCredentialUuid !== undefined && window.PublicKeyCredential !== undefined) {
+          const trace = makeTrace(import.meta.filename, 'onSubmitNewAccountDialog');
+          const registered = await registerWebAuthnCredential(trace, {
+            localCredentialUuid: created.value.locallyStoredCredentialUuid,
+            description
+          });
+          if (!registered.ok) {
+            log().error?.('Failed to register WebAuthn credential', registered.value);
+            return;
+          }
         }
+      } finally {
+        isBusy.set(false);
       }
-    } finally {
-      isBusy.set(false);
     }
-  });
+  );
 
   const dismissUnlockAccountMasterPasswordDialog = useRef<() => void>(noop);
   const onOpenAccountButtonClick = useCallbackRef((credentialInfo: LocallyStoredEncryptedEmailCredentialInfo) => {
