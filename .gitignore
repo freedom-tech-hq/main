@@ -27,6 +27,7 @@ firebase-debug.log
 # If a nested dir is opened in IDE, those settings are excluded
 .idea
 !/.idea
+/.vscode
 
 # dotenv environment variables file
 *.env

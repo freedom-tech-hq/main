@@ -12,4 +12,5 @@ nx-*
 prettier.xml
 terraform.xml
 workspace.xml
+sqldialects.xml
 /inspectionProfiles/
