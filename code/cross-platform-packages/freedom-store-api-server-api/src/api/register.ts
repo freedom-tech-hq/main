@@ -1,4 +1,4 @@
-import { makeFailureWithCodeSchemas } from 'freedom-basic-data';
+import { base64String, makeFailureWithCodeSchemas } from 'freedom-basic-data';
 import { combinationCryptoKeySetSchema } from 'freedom-crypto-data';
 import { saltsByIdSchema, storageRootIdInfo, syncableItemMetadataSchema } from 'freedom-sync-types';
 import { StatusCodes } from 'http-status-codes';
@@ -19,7 +19,8 @@ export const POST = makeHttpApi({
         storageRootId: storageRootIdInfo.schema,
         metadata: schema.omit(syncableItemMetadataSchema, ['name']),
         creatorPublicKeys: combinationCryptoKeySetSchema,
-        saltsById: saltsByIdSchema
+        saltsById: saltsByIdSchema,
+        encryptedCredentials: base64String.schema.allowNull().optional()
       })
     },
     successResponse: {
