@@ -40,7 +40,6 @@ const serializedSchema = schema.object({
 type Serialized = typeof serializedSchema.valueType;
 export const syncablePathPatternSchema = schema.custom<SyncablePathPattern, Serialized>({
   typeName: 'SyncablePathPattern',
-  isContainerType: false,
   serDes: {
     isValueType: (value): value is SyncablePathPattern => value instanceof SyncablePathPattern,
     serializedSchema: () => serializedSchema,

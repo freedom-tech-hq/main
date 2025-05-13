@@ -1,13 +1,13 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { getUserById } from 'freedom-db';
-import { getEmailAgentSyncableStore } from 'freedom-email-server';
+import { getEmailAgentSyncableStoreForUser } from 'freedom-email-server';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import { pullFromLocal } from 'freedom-local-sync';
 import type { InferHttpApiHandlerResultTypeFromApi } from 'freedom-server-api-handling';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { api } from 'freedom-store-api-server-api';
-import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
+import { storageRootIdInfo } from 'freedom-sync-types';
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -35,11 +35,7 @@ export default makeHttpApiHandler(
       return creatorUser;
     }
 
-    const syncableStore = await getEmailAgentSyncableStore(trace, {
-      storageRootId: storageRootId,
-      creatorPublicKeys: creatorUser.value.publicKeys,
-      saltsById: { [DEFAULT_SALT_ID]: creatorUser.value.defaultSalt }
-    });
+    const syncableStore = await getEmailAgentSyncableStoreForUser(trace, creatorUser.value);
     if (!syncableStore.ok) {
       return syncableStore;
     }

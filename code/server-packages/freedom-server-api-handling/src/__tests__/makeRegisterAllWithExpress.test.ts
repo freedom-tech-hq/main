@@ -69,7 +69,7 @@ describe('makeRegisterAllWithExpress', () => {
       new Promise<void>((resolve, reject) => {
         const app = addYaschemaApiExpressContextAccessorToExpress(express(), makeYaschemaApiExpressContext());
 
-        app.use(bodyParser.json({ type: 'application/json' }));
+        app.use(bodyParser.json({ limit: '2mb', type: 'application/json' }));
 
         makeRegisterAllWithExpress(
           makeHttpApiHandler(['test'], { api: POST_WITH_CREDENTIALS }, async (trace, { input }) => {

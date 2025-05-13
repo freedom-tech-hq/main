@@ -92,10 +92,14 @@ export const makeSyncService = makeSyncResultFunc(
             log(trace, `Pull enqueued ${basePath.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
           );
 
-          pullQueue.add(
-            { key, version, priority },
-            async (trace) => await service.pullFromRemotes(trace, { remoteId, basePath, glob, strategy })
-          );
+          pullQueue.add({ key, version, priority }, async (trace) => {
+            const pulled = await service.pullFromRemotes(trace, { remoteId, basePath, glob, strategy });
+            if (!pulled.ok) {
+              return pulled;
+            }
+
+            return makeSuccess(undefined);
+          });
 
           return makeSuccess(undefined);
         },
@@ -125,7 +129,7 @@ export const makeSyncService = makeSyncResultFunc(
 
           pushQueue.add(
             { key, version, priority },
-            async (trace) => await pushToRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy })
+            async (trace) => await service.pushToRemotes(trace, { remoteId, basePath, glob, strategy })
           );
 
           return makeSuccess(undefined);
@@ -134,7 +138,7 @@ export const makeSyncService = makeSyncResultFunc(
 
       pullFromRemotes: makeAsyncResultFunc(
         [import.meta.filename, 'pullFromRemotes'],
-        async (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<undefined, 'not-found'> =>
+        async (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<{ inSync: boolean }, 'not-found'> =>
           await pullFromRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy }),
         { deepDisableLam: 'not-found' }
       ),

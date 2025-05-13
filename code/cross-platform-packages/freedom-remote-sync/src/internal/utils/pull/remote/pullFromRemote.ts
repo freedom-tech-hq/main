@@ -29,7 +29,7 @@ export const pullFromRemote = makeAsyncResultFunc(
       glob?: SyncGlob;
       strategy?: SyncStrategy;
     }
-  ): PR<undefined, 'not-found'> => {
+  ): PR<{ inSync: boolean }, 'not-found'> => {
     const pullFromRemoteUsingRemoteAccessor = syncService.remoteAccessors[remoteId]?.puller;
     if (pullFromRemoteUsingRemoteAccessor === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
@@ -58,7 +58,7 @@ export const pullFromRemote = makeAsyncResultFunc(
     );
 
     if (pulled.value === 'in-sync') {
-      return makeSuccess(undefined);
+      return makeSuccess({ inSync: true });
     }
 
     const pushedToLocal = await pushItemToLocal(trace, { store, syncService, item: pulled.value }, { remoteId, path: basePath });
@@ -66,7 +66,7 @@ export const pullFromRemote = makeAsyncResultFunc(
       return pushedToLocal;
     }
 
-    return makeSuccess(undefined);
+    return makeSuccess({ inSync: false });
   },
   { deepDisableLam: 'not-found' }
 );

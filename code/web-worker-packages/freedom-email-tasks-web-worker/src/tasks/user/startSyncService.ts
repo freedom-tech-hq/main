@@ -101,7 +101,7 @@ export const startSyncService = makeAsyncResultFunc(
     doSoon(trace, (trace) =>
       bestEffort(trace, async (trace): PR<undefined> => {
         const globPatterns = await createInitialSyncableStoreStructureForUser.getGlobPatterns(syncableStore);
-        const pulled = await callWithRetrySupport<undefined, 'not-found'>(
+        const pulled = await callWithRetrySupport<{ inSync: boolean }, 'not-found'>(
           (_failure, { attemptCount, accumulatedDelayMSec }) => ({
             retry: accumulatedDelayMSec < MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC,
             delayMSec:

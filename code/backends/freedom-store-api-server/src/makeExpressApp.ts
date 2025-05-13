@@ -22,8 +22,8 @@ export const makeExpressApp = makeAsyncFunc([import.meta.filename], async (trace
   app.use(cors({ origin: config.CORS_ORIGINS, credentials: true }));
 
   app.use(cookieParser());
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json({ limit: '2mb' }));
+  app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
 
   expressWs(app);
 

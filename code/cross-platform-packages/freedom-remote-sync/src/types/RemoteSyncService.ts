@@ -39,7 +39,7 @@ export interface RemoteSyncService {
   readonly enqueuePushToRemotes: RFunc<undefined, never, [SyncServicePushPullArgs & { hash?: Sha256Hash; priority?: 'default' | 'high' }]>;
   /** If `glob` is defined, it always takes precedence over `strategy`.  If `strategy` is `undefined`, it will be determined using
    * `syncService.getSyncStrategyForPath` */
-  readonly pullFromRemotes: PRFunc<undefined, 'not-found', [SyncServicePushPullArgs]>;
+  readonly pullFromRemotes: PRFunc<{ inSync: boolean }, 'not-found', [SyncServicePushPullArgs]>;
   /** If `glob` is defined, it always takes precedence over `strategy`.  If `strategy` is `undefined`, it will be determined using
    * `syncService.getSyncStrategyForPath` */
   readonly pushToRemotes: PRFunc<undefined, 'not-found', [SyncServicePushPullArgs]>;

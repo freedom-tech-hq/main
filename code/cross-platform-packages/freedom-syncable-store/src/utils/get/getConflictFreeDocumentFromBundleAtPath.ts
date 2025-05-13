@@ -22,7 +22,7 @@ import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } fro
 import { TaskQueue } from 'freedom-task-queue';
 import { noop } from 'lodash-es';
 
-import { useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation, useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
 import { APPLY_DELTAS_LIMIT_TIME_MSEC, CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';
 import { accessControlDocumentProvider } from '../../internal/context/accessControlDocument.ts';
 import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
@@ -304,7 +304,11 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                 deltaPaths,
                 {},
                 async (trace, deltaPath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type' | 'format-error'> => {
-                  const encodedDelta = await getStringFromFile(trace, store, deltaPath, { checkForDeletion: false });
+                  // Not checking syncable validation here because we're just pre-loading the strings.  Validation is performed by calling
+                  // getSyncableAtPath below.
+                  const encodedDelta = await disableSyncableValidation(getStringFromFile)(trace, store, deltaPath, {
+                    checkForDeletion: false
+                  });
                   if (!encodedDelta.ok) {
                     return generalizeFailureResult(trace, encodedDelta, 'deleted');
                   }

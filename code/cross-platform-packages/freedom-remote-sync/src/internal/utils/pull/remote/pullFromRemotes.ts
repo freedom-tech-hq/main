@@ -25,12 +25,12 @@ export const pullFromRemotes = makeAsyncResultFunc(
       glob?: SyncGlob;
       strategy?: SyncStrategy;
     }
-  ): PR<undefined, 'not-found'> => {
+  ): PR<{ inSync: boolean }, 'not-found'> => {
     const remoteIds = remoteId !== undefined ? [remoteId] : objectKeys(syncService.remoteAccessors);
 
     if (remoteIds.length === 0) {
       // If there are no remotes setup, there's nothing to do, which is ok
-      return makeSuccess(undefined);
+      return makeSuccess({ inSync: true });
     }
 
     let lastNotFoundError: TraceableError<'not-found'> | undefined;
@@ -43,7 +43,7 @@ export const pullFromRemotes = makeAsyncResultFunc(
         onSuccess: 'stop',
         skipErrorCodes: ['generic', 'not-found']
       },
-      async (trace, remoteId): PR<'ok', 'not-found'> => {
+      async (trace, remoteId): PR<{ inSync: boolean }, 'not-found'> => {
         const pulled = await pullFromRemote(trace, { store, syncService }, { remoteId, basePath, glob, strategy });
         if (!pulled.ok) {
           if (pulled.value.errorCode === 'not-found') {
@@ -52,14 +52,15 @@ export const pullFromRemotes = makeAsyncResultFunc(
           return pulled;
         }
 
-        return makeSuccess('ok' as const);
+        return makeSuccess(pulled.value);
       }
     );
     if (!pulled.ok) {
       return pulled;
     }
 
-    if (!pulled.value.includes('ok')) {
+    const firstSuccess = pulled.value.find((v) => v !== undefined);
+    if (firstSuccess === undefined) {
       if (lastNotFoundError !== undefined) {
         // If the syncable was not found on at least one remote, we'll assume it doesn't exist on any remotes
         return makeFailure(lastNotFoundError);
@@ -73,7 +74,7 @@ export const pullFromRemotes = makeAsyncResultFunc(
       }
     }
 
-    return makeSuccess(undefined);
+    return makeSuccess(firstSuccess);
   },
   { deepDisableLam: 'not-found' }
 );

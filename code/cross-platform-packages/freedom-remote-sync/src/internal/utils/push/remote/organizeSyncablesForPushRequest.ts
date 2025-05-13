@@ -1,4 +1,4 @@
-import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { allResultsMapped, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import {
   extractSyncableItemTypeFromId,
@@ -28,10 +28,10 @@ export const organizeSyncablesForPushRequest = makeAsyncResultFunc(
 
     const itemsById: Partial<Record<SyncableId, PushItem>> = {};
 
-    for (const item of items) {
+    const processed = await allResultsMapped(trace, items, {}, async (trace, item): PR<undefined> => {
       const relativePathIds = item.path.relativeTo(basePath);
       if (relativePathIds === undefined) {
-        continue;
+        return makeSuccess(undefined);
       }
 
       let itemsCursor = itemsById;
@@ -67,6 +67,11 @@ export const organizeSyncablesForPushRequest = makeAsyncResultFunc(
           }
         }
       }
+
+      return makeSuccess(undefined);
+    });
+    if (!processed.ok) {
+      return processed;
     }
 
     return makeSuccess({ itemsById });

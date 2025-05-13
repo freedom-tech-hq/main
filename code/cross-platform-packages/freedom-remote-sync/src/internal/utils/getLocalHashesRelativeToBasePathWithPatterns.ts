@@ -8,8 +8,15 @@ import { insertIntoStructHashes } from './struct-hashes/insertIntoStructHashes.t
 
 export const getLocalHashesRelativeToBasePathWithGlob = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, store: SyncableStore, { basePath, glob }: { basePath: SyncablePath; glob: SyncGlob }): PR<StructHashes> => {
+  async (trace, store: SyncableStore, { basePath, glob }: { basePath: SyncablePath; glob: SyncGlob }): PR<StructHashes, 'not-found'> => {
     const hashes: StructHashes = {};
+
+    const baseMetadata = await getMetadataAtPath(trace, store, basePath);
+    if (!baseMetadata.ok) {
+      return generalizeFailureResult(trace, baseMetadata, ['untrusted', 'wrong-type']);
+    }
+
+    hashes.hash = baseMetadata.value.hash;
 
     const found = await findSyncables(trace, store, { basePath, glob });
     if (!found.ok) {

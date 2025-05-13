@@ -1,6 +1,7 @@
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { extractSyncableItemTypeFromPath, type RemoteId, type SyncablePath, type SyncGlob, type SyncPushArgs } from 'freedom-sync-types';
+import type { RemoteId, SyncablePath, SyncGlob, SyncPushArgs } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, syncPushArgsSchema } from 'freedom-sync-types';
 import { findSyncables, getMetadataAtPath } from 'freedom-syncable-store';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
@@ -32,6 +33,12 @@ export const getSyncPushArgsForGlob = makeAsyncResultFunc(
           return found;
         }
 
+        console.log(
+          'FOOBARBLA found',
+          basePath.toShortString(),
+          found.value.map((item) => item.path.toShortString())
+        );
+
         const metadata = await getMetadataAtPath(trace, store, basePath);
         if (!metadata.ok) {
           if (metadata.value.errorCode === 'not-found') {
@@ -44,6 +51,11 @@ export const getSyncPushArgsForGlob = makeAsyncResultFunc(
         if (!organized.ok) {
           return organized;
         }
+
+        console.log(
+          'FOOBARBLA args',
+          syncPushArgsSchema.stringify({ basePath, item: { metadata: metadata.value, itemsById: organized.value.itemsById } }, { space: 2 })
+        );
 
         return makeSuccess({ basePath, item: { metadata: metadata.value, itemsById: organized.value.itemsById } });
       }

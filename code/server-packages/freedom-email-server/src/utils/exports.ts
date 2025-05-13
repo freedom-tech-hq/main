@@ -1,3 +1,4 @@
-export { addIncomingEmail } from './addIncomingEmail.ts';
-export { getEmailAgentSyncableStore } from './getEmailAgentSyncableStore.ts';
-export { subscribeOnOutboundEmails } from './subscribeOnOutboundEmails.ts';
+export * from './addIncomingEmail.ts';
+export * from './getEmailAgentSyncableStore.ts';
+export * from './getEmailAgentSyncableStoreForUser.ts';
+export * from './subscribeOnOutboundEmails.ts';

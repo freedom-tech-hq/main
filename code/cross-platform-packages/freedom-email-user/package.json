@@ -16,7 +16,7 @@
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "4.17.21",
     "yaschema": "5.2.1"
   },
   "devDependencies": {
