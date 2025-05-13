@@ -1,4 +1,4 @@
-import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
+import { allResultsMapped, makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import {
   extractSyncableItemTypeFromId,
@@ -11,7 +11,7 @@ import {
   type SyncableItemMetadata,
   type SyncablePath
 } from 'freedom-sync-types';
-import { getMetadataAtPath } from 'freedom-syncable-store';
+import { getMetadataAtPath, getSyncableAtPath } from 'freedom-syncable-store';
 import type { SyncableFileAccessor, SyncableFolderLikeAccessor, SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
 
 export const organizeSyncablesForPullResponse = makeAsyncResultFunc(
@@ -30,10 +30,10 @@ export const organizeSyncablesForPullResponse = makeAsyncResultFunc(
   }> => {
     const itemsById: Partial<Record<SyncableId, PullOutOfSyncItem>> = {};
 
-    for (const item of items) {
+    const processed = await allResultsMapped(trace, items, {}, async (trace, item): PR<undefined> => {
       const relativePathIds = item.path.relativeTo(basePath);
       if (relativePathIds === undefined) {
-        continue;
+        return makeSuccess(undefined);
       }
 
       let itemsCursor = itemsById;
@@ -42,7 +42,12 @@ export const organizeSyncablesForPullResponse = makeAsyncResultFunc(
       for (const id of relativePathIds) {
         pathSoFar = pathSoFar.append(id);
 
-        const itemType = extractSyncableItemTypeFromId(id);
+        const ancestorItem = await getSyncableAtPath(trace, store, pathSoFar);
+        if (!ancestorItem.ok) {
+          return generalizeFailureResult(trace, ancestorItem, ['not-found', 'untrusted', 'wrong-type']);
+        }
+
+        const ancestorItemType = extractSyncableItemTypeFromId(id);
 
         let metadata: (SyncableItemMetadata & LocalItemMetadata) | undefined;
         if (itemsCursor[id] === undefined) {
@@ -60,10 +65,10 @@ export const organizeSyncablesForPullResponse = makeAsyncResultFunc(
           }
         }
 
-        switch (itemType) {
+        switch (ancestorItemType) {
           case 'bundle':
           case 'folder': {
-            const folderLikeItem = item as SyncableFolderLikeAccessor;
+            const folderLikeItem = ancestorItem.value as SyncableFolderLikeAccessor;
 
             if (itemsCursor[id] === undefined) {
               const localMetadataById = await folderLikeItem.getMetadataById(trace);
@@ -85,7 +90,7 @@ export const organizeSyncablesForPullResponse = makeAsyncResultFunc(
             break;
           }
           case 'file': {
-            const fileItem = item as SyncableFileAccessor;
+            const fileItem = ancestorItem.value as SyncableFileAccessor;
 
             if (itemsCursor[id] === undefined) {
               let data: Uint8Array | undefined;
@@ -103,6 +108,11 @@ export const organizeSyncablesForPullResponse = makeAsyncResultFunc(
           }
         }
       }
+
+      return makeSuccess(undefined);
+    });
+    if (!processed.ok) {
+      return processed;
     }
 
     return makeSuccess({ itemsById });

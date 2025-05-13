@@ -1,14 +1,14 @@
 import type { PR } from 'freedom-async';
-import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { bestEffort, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
-import type { PullOutOfSyncFolderLikeItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import type { PullItem, PullOutOfSyncFolderLikeItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
 import { extractSyncableItemTypeFromPath } from 'freedom-sync-types';
 import { type SyncableStore } from 'freedom-syncable-store-types';
 
-import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
-import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
-import { makeRemoteSyncLogEntryPush } from '../../log-entries/makeRemoteSyncLogEntryPush.ts';
-import { enqueueFollowUpSyncsIfNeeded } from '../local/enqueueFollowUpSyncsIfNeeded.ts';
+import type { RemoteSyncService } from '../../../types/RemoteSyncService.ts';
+import type { SyncStrategy } from '../../../types/SyncStrategy.ts';
+import { enqueueFollowUpSyncsIfNeeded } from '../enqueueFollowUpSyncsIfNeeded.ts';
+import { makeRemoteSyncLogEntryPush } from '../log-entries/makeRemoteSyncLogEntryPush.ts';
 import { getSyncPushArgsForGlob } from './getSyncPushArgsForGlob.ts';
 import { getSyncPushArgsForStrategy } from './getSyncPushArgsForStrategy.ts';
 
@@ -28,7 +28,9 @@ export const pushToRemote = makeAsyncResultFunc(
       glob?: SyncGlob;
       strategy?: SyncStrategy;
     }
-  ): PR<undefined, 'not-found'> => {
+  ): PR<PullItem, 'not-found'> => {
+    DEV: debugTopic('SYNC', (log) => log(trace, `Will push ${basePath.toShortString()} to remote ${remoteId}`));
+
     const pushToRemoteUsingRemoteAccessor = syncService.remoteAccessors[remoteId]?.pusher;
     if (pushToRemoteUsingRemoteAccessor === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
@@ -53,18 +55,27 @@ export const pushToRemote = makeAsyncResultFunc(
 
     DEV: debugTopic('SYNC', (log) => log(trace, `Pushed ${basePath.toShortString()}`));
 
+    if (pushed.value === 'in-sync') {
+      return makeSuccess('in-sync' as const);
+    }
+
     const itemType = extractSyncableItemTypeFromPath(basePath);
     switch (itemType) {
       case 'file':
-        return makeSuccess(undefined);
+        return makeSuccess(pushed.value);
       case 'bundle':
       case 'folder':
-        return await enqueueFollowUpSyncsIfNeeded(
+        await bestEffort(
           trace,
-          { store, syncService, item: pushed.value as PullOutOfSyncFolderLikeItem },
-          { remoteId, path: basePath }
+          enqueueFollowUpSyncsIfNeeded(
+            trace,
+            { store, syncService, item: pushed.value as PullOutOfSyncFolderLikeItem },
+            { remoteId, path: basePath }
+          )
         );
     }
+
+    return makeSuccess(pushed.value);
   },
   { deepDisableLam: 'not-found' }
 );

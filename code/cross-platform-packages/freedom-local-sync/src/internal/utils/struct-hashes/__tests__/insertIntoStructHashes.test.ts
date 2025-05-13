@@ -13,12 +13,12 @@ describe('insertIntoStructHashes', () => {
 
     const basePath = new SyncablePath(storageRootIdInfo.make('test'));
 
-    insertIntoStructHashes(basePath, basePath.append(plainId('folder', 'testing')), sha256HashInfo.make('testing-folder-hash'), hashes);
+    insertIntoStructHashes(hashes, basePath, basePath.append(plainId('folder', 'testing')), sha256HashInfo.make('testing-folder-hash'));
     insertIntoStructHashes(
+      hashes,
       basePath,
       basePath.append(plainId('folder', 'testing'), ACCESS_CONTROL_BUNDLE_ID),
-      sha256HashInfo.make('testing-folder-access-control-bundle-hash'),
-      hashes
+      sha256HashInfo.make('testing-folder-access-control-bundle-hash')
     );
 
     expectStrictEqual(hashes.contents?.[plainId('folder', 'testing')]?.hash, sha256HashInfo.make('testing-folder-hash'));
@@ -33,12 +33,12 @@ describe('insertIntoStructHashes', () => {
 
     const basePath = new SyncablePath(storageRootIdInfo.make('test'), plainId('folder', 'folder'));
 
-    insertIntoStructHashes(basePath, basePath.append(plainId('folder', 'testing')), sha256HashInfo.make('testing-folder-hash'), hashes);
+    insertIntoStructHashes(hashes, basePath, basePath.append(plainId('folder', 'testing')), sha256HashInfo.make('testing-folder-hash'));
     insertIntoStructHashes(
+      hashes,
       basePath,
       basePath.append(plainId('folder', 'testing'), ACCESS_CONTROL_BUNDLE_ID),
-      sha256HashInfo.make('testing-folder-access-control-bundle-hash'),
-      hashes
+      sha256HashInfo.make('testing-folder-access-control-bundle-hash')
     );
 
     expectStrictEqual(hashes.contents?.[plainId('folder', 'testing')]?.hash, sha256HashInfo.make('testing-folder-hash'));

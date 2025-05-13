@@ -1,6 +1,6 @@
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { LocalItemMetadata, PullOutOfSyncItem, StructHashes, SyncableId, SyncableItemMetadata, SyncGlob } from 'freedom-sync-types';
-import { findSyncables } from 'freedom-syncable-store';
+import { disableSyncableValidation, findSyncables } from 'freedom-syncable-store';
 import type { SyncableFolderLikeAccessor, SyncableStore } from 'freedom-syncable-store-types';
 
 import { organizeSyncablesForPullResponse } from './organizeSyncablesForPullResponse.ts';
@@ -33,7 +33,7 @@ export const pullFolderLikeItemFromLocal = makeAsyncResultFunc(
     let itemsById: Partial<Record<SyncableId, PullOutOfSyncItem>> | undefined;
 
     if (glob !== undefined) {
-      const found = await findSyncables(trace, userFs, { basePath: item.path, glob });
+      const found = await disableSyncableValidation(findSyncables)(trace, userFs, { basePath: item.path, glob });
       if (!found.ok) {
         return found;
       }

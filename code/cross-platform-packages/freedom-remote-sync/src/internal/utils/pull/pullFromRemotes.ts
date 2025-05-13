@@ -2,11 +2,11 @@ import type { PR, TraceableError } from 'freedom-async';
 import { allResultsMappedSkipFailures, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { Cast, objectKeys } from 'freedom-cast';
 import { InternalStateError } from 'freedom-common-errors';
-import type { RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import type { PullItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
-import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
+import type { RemoteSyncService } from '../../../types/RemoteSyncService.ts';
+import type { SyncStrategy } from '../../../types/SyncStrategy.ts';
 import { pullFromRemote } from './pullFromRemote.ts';
 
 export const pullFromRemotes = makeAsyncResultFunc(
@@ -25,12 +25,12 @@ export const pullFromRemotes = makeAsyncResultFunc(
       glob?: SyncGlob;
       strategy?: SyncStrategy;
     }
-  ): PR<{ inSync: boolean }, 'not-found'> => {
+  ): PR<PullItem, 'not-found'> => {
     const remoteIds = remoteId !== undefined ? [remoteId] : objectKeys(syncService.remoteAccessors);
 
     if (remoteIds.length === 0) {
       // If there are no remotes setup, there's nothing to do, which is ok
-      return makeSuccess({ inSync: true });
+      return makeSuccess('in-sync' as const);
     }
 
     let lastNotFoundError: TraceableError<'not-found'> | undefined;
@@ -43,7 +43,7 @@ export const pullFromRemotes = makeAsyncResultFunc(
         onSuccess: 'stop',
         skipErrorCodes: ['generic', 'not-found']
       },
-      async (trace, remoteId): PR<{ inSync: boolean }, 'not-found'> => {
+      async (trace, remoteId): PR<PullItem, 'not-found'> => {
         const pulled = await pullFromRemote(trace, { store, syncService }, { remoteId, basePath, glob, strategy });
         if (!pulled.ok) {
           if (pulled.value.errorCode === 'not-found') {

@@ -2,9 +2,9 @@ import { makeAsyncResultFunc, type PR } from 'freedom-async';
 import type { RemoteId, SyncablePath, SyncPushArgs } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
-import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
-import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
-import { getGlobForStrategy } from '../../getGlobForStrategy.ts';
+import type { RemoteSyncService } from '../../../types/RemoteSyncService.ts';
+import type { SyncStrategy } from '../../../types/SyncStrategy.ts';
+import { getGlobForStrategy } from '../getGlobForStrategy.ts';
 import { getSyncPushArgsForGlob } from './getSyncPushArgsForGlob.ts';
 
 export const getSyncPushArgsForStrategy = makeAsyncResultFunc(

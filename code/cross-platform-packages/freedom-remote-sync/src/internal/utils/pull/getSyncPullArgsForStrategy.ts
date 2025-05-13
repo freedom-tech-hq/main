@@ -2,8 +2,8 @@ import { makeAsyncResultFunc, type PR } from 'freedom-async';
 import type { SyncablePath, SyncPullArgs } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
-import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
-import { getGlobForStrategy } from '../../getGlobForStrategy.ts';
+import type { SyncStrategy } from '../../../types/SyncStrategy.ts';
+import { getGlobForStrategy } from '../getGlobForStrategy.ts';
 import { getSyncPullArgsForGlob } from './getSyncPullArgsForGlob.ts';
 
 export const getSyncPullArgsForStrategy = makeAsyncResultFunc(

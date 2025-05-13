@@ -1,7 +1,7 @@
 import type { PRFunc, RFunc } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { DevLoggingSupport } from 'freedom-dev-logging-support';
-import type { RemoteAccessor, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import type { PullItem, RemoteAccessor, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
 
 import type { GetSyncStrategyForPathFunc } from './GetSyncStrategyForPathFunc.ts';
 import type { RemoteSyncLogEntry } from './RemoteSyncLogEntry.ts';
@@ -39,10 +39,10 @@ export interface RemoteSyncService {
   readonly enqueuePushToRemotes: RFunc<undefined, never, [SyncServicePushPullArgs & { hash?: Sha256Hash; priority?: 'default' | 'high' }]>;
   /** If `glob` is defined, it always takes precedence over `strategy`.  If `strategy` is `undefined`, it will be determined using
    * `syncService.getSyncStrategyForPath` */
-  readonly pullFromRemotes: PRFunc<{ inSync: boolean }, 'not-found', [SyncServicePushPullArgs]>;
+  readonly pullFromRemotes: PRFunc<PullItem, 'not-found', [SyncServicePushPullArgs]>;
   /** If `glob` is defined, it always takes precedence over `strategy`.  If `strategy` is `undefined`, it will be determined using
    * `syncService.getSyncStrategyForPath` */
-  readonly pushToRemotes: PRFunc<undefined, 'not-found', [SyncServicePushPullArgs]>;
+  readonly pushToRemotes: PRFunc<PullItem, 'not-found', [SyncServicePushPullArgs]>;
 
   readonly areQueuesEmpty: () => boolean;
   readonly start: PRFunc<undefined, never, [options?: { maxPushConcurrency?: number; maxPullConcurrency?: number }]>;

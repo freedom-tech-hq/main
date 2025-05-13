@@ -1,18 +1,12 @@
 import { allResultsMapped, makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import {
-  extractSyncableItemTypeFromId,
-  type PushFolderLikeItem,
-  type PushItem,
-  type RemoteId,
-  type SyncableId,
-  type SyncablePath
-} from 'freedom-sync-types';
+import { pullFromLocal } from 'freedom-local-sync';
+import type { PullOutOfSyncFile, PushFolderLikeItem, PushItem, RemoteId, SyncableId, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId } from 'freedom-sync-types';
 import { getMetadataAtPath } from 'freedom-syncable-store';
 import { type SyncableItemAccessor, type SyncableStore } from 'freedom-syncable-store-types';
 
-import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
-import { pullFileFromLocal } from '../../pull/local/pullFileFromLocal.ts';
+import type { RemoteSyncService } from '../../../types/RemoteSyncService.ts';
 
 export const organizeSyncablesForPushRequest = makeAsyncResultFunc(
   [import.meta.filename],
@@ -28,7 +22,7 @@ export const organizeSyncablesForPushRequest = makeAsyncResultFunc(
 
     const itemsById: Partial<Record<SyncableId, PushItem>> = {};
 
-    const processed = await allResultsMapped(trace, items, {}, async (trace, item): PR<undefined> => {
+    const processed = await allResultsMapped(trace, items, {}, async (trace, item): PR<undefined, 'not-found'> => {
       const relativePathIds = item.path.relativeTo(basePath);
       if (relativePathIds === undefined) {
         return makeSuccess(undefined);
@@ -56,12 +50,14 @@ export const organizeSyncablesForPushRequest = makeAsyncResultFunc(
 
             break;
           case 'file': {
-            const pushFile = await pullFileFromLocal(trace, store, pathSoFar);
-            if (!pushFile.ok) {
-              return generalizeFailureResult(trace, pushFile, ['not-found', 'untrusted', 'wrong-type']);
+            const pulled = await pullFromLocal(trace, store, { basePath: pathSoFar, localHashesRelativeToBasePath: {}, sendData: true });
+            if (!pulled.ok) {
+              return pulled;
             }
 
-            itemsCursor[id] = pushFile.value;
+            const file = pulled.value as PullOutOfSyncFile;
+
+            itemsCursor[id] = { metadata: file.metadata, data: file.data! };
 
             break;
           }

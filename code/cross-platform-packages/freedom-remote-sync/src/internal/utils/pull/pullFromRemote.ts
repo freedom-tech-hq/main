@@ -1,13 +1,15 @@
 import type { PR } from 'freedom-async';
-import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { bestEffort, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
-import type { RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import { pushToLocal } from 'freedom-local-sync';
+import type { PullItem, PullOutOfSyncFolderLikeItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath } from 'freedom-sync-types';
 import { type MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
-import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
-import { makeRemoteSyncLogEntryPull } from '../../log-entries/makeRemoteSyncLogEntryPull.ts';
-import { pushItemToLocal } from '../../push/local/pushItemToLocal.ts';
+import type { RemoteSyncService } from '../../../types/RemoteSyncService.ts';
+import type { SyncStrategy } from '../../../types/SyncStrategy.ts';
+import { enqueueFollowUpSyncsIfNeeded } from '../enqueueFollowUpSyncsIfNeeded.ts';
+import { makeRemoteSyncLogEntryPull } from '../log-entries/makeRemoteSyncLogEntryPull.ts';
 import { getSyncPullArgsForGlob } from './getSyncPullArgsForGlob.ts';
 import { getSyncPullArgsForStrategy } from './getSyncPullArgsForStrategy.ts';
 
@@ -29,7 +31,9 @@ export const pullFromRemote = makeAsyncResultFunc(
       glob?: SyncGlob;
       strategy?: SyncStrategy;
     }
-  ): PR<{ inSync: boolean }, 'not-found'> => {
+  ): PR<PullItem, 'not-found'> => {
+    DEV: debugTopic('SYNC', (log) => log(trace, `Will pull ${basePath.toShortString()} from remote ${remoteId}`));
+
     const pullFromRemoteUsingRemoteAccessor = syncService.remoteAccessors[remoteId]?.puller;
     if (pullFromRemoteUsingRemoteAccessor === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
@@ -58,15 +62,29 @@ export const pullFromRemote = makeAsyncResultFunc(
     );
 
     if (pulled.value === 'in-sync') {
-      return makeSuccess({ inSync: true });
+      return makeSuccess('in-sync' as const);
     }
 
-    const pushedToLocal = await pushItemToLocal(trace, { store, syncService, item: pulled.value }, { remoteId, path: basePath });
-    if (!pushedToLocal.ok) {
-      return pushedToLocal;
+    const pushedLocally = await pushToLocal(trace, store, { basePath, item: pulled.value });
+    if (!pushedLocally.ok) {
+      return pushedLocally;
     }
 
-    return makeSuccess({ inSync: false });
+    const baseItemType = extractSyncableItemTypeFromPath(basePath);
+    switch (baseItemType) {
+      case 'file':
+        return makeSuccess(pulled.value);
+      case 'bundle':
+      case 'folder': {
+        const folderLike = pulled.value as PullOutOfSyncFolderLikeItem;
+        await bestEffort(
+          trace,
+          enqueueFollowUpSyncsIfNeeded(trace, { store, syncService, item: folderLike }, { remoteId, path: basePath })
+        );
+      }
+    }
+
+    return makeSuccess(pushedLocally.value);
   },
   { deepDisableLam: 'not-found' }
 );

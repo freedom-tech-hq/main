@@ -2,10 +2,10 @@ import type { Sha256Hash } from 'freedom-basic-data';
 import type { StructHashes, SyncableId } from 'freedom-sync-types';
 
 export const insertIntoStructHashesWithRelativeIds = (
+  outHashes: StructHashes,
   relativeIds: SyncableId[],
   relativeIdsOffset: number,
-  hash: Sha256Hash,
-  outHashes: StructHashes
+  hash: Sha256Hash
 ) => {
   if (relativeIdsOffset === relativeIds.length) {
     outHashes.hash = hash;
@@ -20,5 +20,5 @@ export const insertIntoStructHashesWithRelativeIds = (
     outHashes.contents[id] = {};
   }
 
-  insertIntoStructHashesWithRelativeIds(relativeIds, relativeIdsOffset + 1, hash, outHashes.contents[id]);
+  insertIntoStructHashesWithRelativeIds(outHashes.contents[id], relativeIds, relativeIdsOffset + 1, hash);
 };

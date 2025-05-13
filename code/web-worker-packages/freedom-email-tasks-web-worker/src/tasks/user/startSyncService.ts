@@ -14,6 +14,7 @@ import { doSoon } from 'freedom-do-soon';
 import { createInitialSyncableStoreStructureForUser } from 'freedom-email-user';
 import { dataUploadExponentialBackoffTimeMSec, makeApiFetchTask, MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC } from 'freedom-fetching';
 import { api as fakeEmailServiceApi } from 'freedom-store-api-server-api';
+import type { PullItem } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -101,7 +102,7 @@ export const startSyncService = makeAsyncResultFunc(
     doSoon(trace, (trace) =>
       bestEffort(trace, async (trace): PR<undefined> => {
         const globPatterns = await createInitialSyncableStoreStructureForUser.getGlobPatterns(syncableStore);
-        const pulled = await callWithRetrySupport<{ inSync: boolean }, 'not-found'>(
+        const pulled = await callWithRetrySupport<PullItem, 'not-found'>(
           (_failure, { attemptCount, accumulatedDelayMSec }) => ({
             retry: accumulatedDelayMSec < MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC,
             delayMSec:

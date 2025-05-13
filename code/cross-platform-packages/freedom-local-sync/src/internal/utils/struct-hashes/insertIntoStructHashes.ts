@@ -3,9 +3,9 @@ import type { StructHashes, SyncablePath } from 'freedom-sync-types';
 
 import { insertIntoStructHashesWithRelativeIds } from './insertIntoStructHashesWithRelativeIds.ts';
 
-export const insertIntoStructHashes = (basePath: SyncablePath, itemPath: SyncablePath, hash: Sha256Hash, outHashes: StructHashes) => {
+export const insertIntoStructHashes = (outHashes: StructHashes, basePath: SyncablePath, itemPath: SyncablePath, hash: Sha256Hash) => {
   const relativeIds = itemPath.relativeTo(basePath);
   if (relativeIds !== undefined) {
-    insertIntoStructHashesWithRelativeIds(relativeIds, 0, hash, outHashes);
+    insertIntoStructHashesWithRelativeIds(outHashes, relativeIds, 0, hash);
   }
 };

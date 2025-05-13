@@ -4,10 +4,10 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { PullOutOfSyncFolderLikeItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
 import { syncableItemTypes, SyncablePathPattern } from 'freedom-sync-types';
-import { getSyncableAtPath } from 'freedom-syncable-store';
+import { disableSyncableValidation, getSyncableAtPath } from 'freedom-syncable-store';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
-import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
+import type { RemoteSyncService } from '../../types/RemoteSyncService.ts';
 
 /**
  * Called by `pushBundleToLocal` and `pushFolderToLocal` after they handle initial processing
@@ -23,7 +23,7 @@ export const enqueueFollowUpSyncsIfNeeded = makeAsyncResultFunc(
     { store, syncService, item }: { store: SyncableStore; syncService: RemoteSyncService; item: PullOutOfSyncFolderLikeItem },
     { remoteId, path }: { remoteId: RemoteId; path: SyncablePath }
   ): PR<undefined> => {
-    const localFolderLikeItem = await getSyncableAtPath(trace, store, path, syncableItemTypes.exclude('file'));
+    const localFolderLikeItem = await disableSyncableValidation(getSyncableAtPath)(trace, store, path, syncableItemTypes.exclude('file'));
     if (!localFolderLikeItem.ok) {
       return generalizeFailureResult(trace, localFolderLikeItem, ['not-found', 'untrusted', 'wrong-type']);
     }

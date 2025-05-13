@@ -2,7 +2,7 @@ import type { PR, Result } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess, makeSyncResultFunc } from 'freedom-async';
 import { objectKeys } from 'freedom-cast';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
-import type { RemoteAccessor, RemoteConnection, RemoteId } from 'freedom-sync-types';
+import type { PullItem, RemoteAccessor, RemoteConnection, RemoteId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -11,8 +11,8 @@ import type { TypeOrPromisedType } from 'yaschema';
 
 import { DEFAULT_MAX_PULL_CONCURRENCY, DEFAULT_MAX_PUSH_CONCURRENCY } from '../consts/concurrency.ts';
 import { attachSyncServiceToSyncableStore } from '../internal/utils/attachSyncServiceToSyncableStore.ts';
-import { pullFromRemotes } from '../internal/utils/pull/remote/pullFromRemotes.ts';
-import { pushToRemotes } from '../internal/utils/push/remote/pushToRemotes.ts';
+import { pullFromRemotes } from '../internal/utils/pull/pullFromRemotes.ts';
+import { pushToRemotes } from '../internal/utils/push/pushToRemotes.ts';
 import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
 import type { RemoteSyncLogEntry } from '../types/RemoteSyncLogEntry.ts';
 import type { RemoteSyncService } from '../types/RemoteSyncService.ts';
@@ -127,27 +127,24 @@ export const makeSyncService = makeSyncResultFunc(
             log(trace, `Push enqueued ${basePath.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
           );
 
-          pushQueue.add(
-            { key, version, priority },
-            async (trace) => await service.pushToRemotes(trace, { remoteId, basePath, glob, strategy })
-          );
+          pushQueue.add({ key, version, priority }, async (trace) => {
+            const pushed = await service.pushToRemotes(trace, { remoteId, basePath, glob, strategy });
+            if (!pushed.ok) {
+              return pushed;
+            }
+
+            return makeSuccess(undefined);
+          });
 
           return makeSuccess(undefined);
         }
       ),
 
-      pullFromRemotes: makeAsyncResultFunc(
-        [import.meta.filename, 'pullFromRemotes'],
-        async (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<{ inSync: boolean }, 'not-found'> =>
-          await pullFromRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy }),
-        { deepDisableLam: 'not-found' }
-      ),
+      pullFromRemotes: (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<PullItem, 'not-found'> =>
+        pullFromRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy }),
 
-      pushToRemotes: makeAsyncResultFunc(
-        [import.meta.filename, 'pushToRemotes'],
-        async (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<undefined, 'not-found'> =>
-          await pushToRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy })
-      ),
+      pushToRemotes: (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<PullItem, 'not-found'> =>
+        pushToRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy }),
 
       start: makeAsyncResultFunc(
         [import.meta.filename, 'start'],

@@ -44,14 +44,14 @@ export const pullFromLocal = makeAsyncResultFunc(
 
     switch (baseItemType) {
       case 'file':
-        return await disableSyncableValidation(pullFileFromLocal)(trace, baseItem.value as SyncableFileAccessor, {
+        return await pullFileFromLocal(trace, baseItem.value as SyncableFileAccessor, {
           metadata: metadata.value,
           sendData
         });
 
       case 'bundle':
       case 'folder':
-        return await disableSyncableValidation(pullFolderLikeItemFromLocal)(trace, userFs, baseItem.value as SyncableFolderLikeAccessor, {
+        return await pullFolderLikeItemFromLocal(trace, userFs, baseItem.value as SyncableFolderLikeAccessor, {
           metadata: metadata.value,
           localHashesRelativeToBasePath,
           glob,
