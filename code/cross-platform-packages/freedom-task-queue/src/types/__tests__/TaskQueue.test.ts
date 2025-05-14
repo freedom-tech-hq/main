@@ -1,8 +1,8 @@
-import type { TestContext } from 'node:test';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { makeSuccess, sleep } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
+import { expectDeepStrictEqual, expectStrictEqual } from 'freedom-testing-tools';
 
 import { TaskQueue } from '../TaskQueue.ts';
 
@@ -15,7 +15,7 @@ describe('TaskQueue', () => {
 
   afterEach(() => taskQueue.stop());
 
-  it('should add and run tasks sequentially', async (t: TestContext) => {
+  it('should add and run tasks sequentially', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1 });
@@ -30,16 +30,16 @@ describe('TaskQueue', () => {
       return makeSuccess(undefined);
     });
 
-    t.assert.strictEqual(taskQueue.isEmpty(), false);
+    expectStrictEqual(taskQueue.isEmpty(), false);
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task1', 'task2']);
+    expectDeepStrictEqual(results, ['task1', 'task2']);
 
-    t.assert.strictEqual(taskQueue.isEmpty(), true);
+    expectStrictEqual(taskQueue.isEmpty(), true);
   });
 
-  it('high priority tasks should be run first', async (t: TestContext) => {
+  it('high priority tasks should be run first', async () => {
     const results: string[] = [];
 
     taskQueue.add('task1', async () => {
@@ -54,16 +54,16 @@ describe('TaskQueue', () => {
 
     taskQueue.start({ maxConcurrency: 1 });
 
-    t.assert.strictEqual(taskQueue.isEmpty(), false);
+    expectStrictEqual(taskQueue.isEmpty(), false);
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task2', 'task1']);
+    expectDeepStrictEqual(results, ['task2', 'task1']);
 
-    t.assert.strictEqual(taskQueue.isEmpty(), true);
+    expectStrictEqual(taskQueue.isEmpty(), true);
   });
 
-  it('should run tasks concurrently up to maxConcurrency', async (t: TestContext) => {
+  it('should run tasks concurrently up to maxConcurrency', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 2 });
@@ -87,10 +87,10 @@ describe('TaskQueue', () => {
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task2', 'task3', 'task1']);
+    expectDeepStrictEqual(results, ['task2', 'task3', 'task1']);
   });
 
-  it('should not start tasks if not started', async (t: TestContext) => {
+  it('should not start tasks if not started', async () => {
     const results: string[] = [];
 
     taskQueue.add('task1', async () => {
@@ -100,10 +100,10 @@ describe('TaskQueue', () => {
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, []);
+    expectDeepStrictEqual(results, []);
   });
 
-  it('should stop tasks once stopped', async (t: TestContext) => {
+  it('should stop tasks once stopped', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1 });
@@ -124,10 +124,10 @@ describe('TaskQueue', () => {
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task1']);
+    expectDeepStrictEqual(results, ['task1']);
   });
 
-  it('should not add the same task twice', async (t: TestContext) => {
+  it('should not add the same task twice', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1 });
@@ -144,10 +144,10 @@ describe('TaskQueue', () => {
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task1']);
+    expectDeepStrictEqual(results, ['task1']);
   });
 
-  it('should run the latest version of a task if scheduled multiple times concurrently', async (t: TestContext) => {
+  it('should run the latest version of a task if scheduled multiple times concurrently', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1 });
@@ -172,10 +172,10 @@ describe('TaskQueue', () => {
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task1.0', 'task1.2']);
+    expectDeepStrictEqual(results, ['task1.0', 'task1.2']);
   });
 
-  it("should run the same task multiple times if they've each completed", async (t: TestContext) => {
+  it("should run the same task multiple times if they've each completed", async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1 });
@@ -206,10 +206,10 @@ describe('TaskQueue', () => {
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task.0', 'task.1', 'task.2']);
+    expectDeepStrictEqual(results, ['task.0', 'task.1', 'task.2']);
   });
 
-  it('stopping while waiting should resolve after active tasks complete', async (t: TestContext) => {
+  it('stopping while waiting should resolve after active tasks complete', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1 });
@@ -235,16 +235,16 @@ describe('TaskQueue', () => {
     setTimeout(() => taskQueue.stop(), 0);
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task1']);
+    expectDeepStrictEqual(results, ['task1']);
   });
 
-  it('waiting on an empty queue should resolve immediately', async (_t: TestContext) => {
+  it('waiting on an empty queue should resolve immediately', async () => {
     taskQueue.start({ maxConcurrency: 1 });
 
     await taskQueue.wait();
   });
 
-  it('delayWhenEmptyMSec should work', async (t: TestContext) => {
+  it('delayWhenEmptyMSec should work', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1, delayWhenEmptyMSec: 500 });
@@ -259,18 +259,18 @@ describe('TaskQueue', () => {
       return makeSuccess(undefined);
     });
 
-    t.assert.deepStrictEqual(results, []);
+    expectDeepStrictEqual(results, []);
 
     await sleep(50);
 
-    t.assert.deepStrictEqual(results, []);
+    expectDeepStrictEqual(results, []);
 
     await sleep(450);
 
-    t.assert.deepStrictEqual(results, ['task1', 'task2']);
+    expectDeepStrictEqual(results, ['task1', 'task2']);
   });
 
-  it('calling when when using delayWhenEmptyMSec should immediately kickstart processing', async (t: TestContext) => {
+  it('calling when when using delayWhenEmptyMSec should immediately kickstart processing', async () => {
     const results: string[] = [];
 
     taskQueue.start({ maxConcurrency: 1, delayWhenEmptyMSec: 500 });
@@ -285,14 +285,66 @@ describe('TaskQueue', () => {
       return makeSuccess(undefined);
     });
 
-    t.assert.deepStrictEqual(results, []);
+    expectDeepStrictEqual(results, []);
 
     await sleep(50);
 
-    t.assert.deepStrictEqual(results, []);
+    expectDeepStrictEqual(results, []);
 
     await taskQueue.wait();
 
-    t.assert.deepStrictEqual(results, ['task1', 'task2']);
+    expectDeepStrictEqual(results, ['task1', 'task2']);
+  });
+
+  it('pausing and unpausing should work', async () => {
+    const results: string[] = [];
+
+    taskQueue.start({ maxConcurrency: 1 });
+
+    const unpause = taskQueue.pause();
+
+    taskQueue.add('task1', async () => {
+      results.push('task1');
+      return makeSuccess(undefined);
+    });
+
+    taskQueue.add('task2', async () => {
+      results.push('task2');
+      return makeSuccess(undefined);
+    });
+
+    // Tasks shouldn't run while paused
+    await sleep(50);
+    expectDeepStrictEqual(results, []);
+    expectStrictEqual(taskQueue.isPaused(), true);
+
+    // Unpause should allow tasks to run
+    unpause();
+    expectStrictEqual(taskQueue.isPaused(), false);
+
+    await taskQueue.wait();
+    expectDeepStrictEqual(results, ['task1', 'task2']);
+
+    // Test nested pauses
+    const unpause1 = taskQueue.pause();
+    const unpause2 = taskQueue.pause();
+
+    taskQueue.add('task3', async () => {
+      results.push('task3');
+      return makeSuccess(undefined);
+    });
+
+    // One unpause shouldn't resume processing
+    unpause1();
+    expectStrictEqual(taskQueue.isPaused(), true);
+    await sleep(50);
+    expectDeepStrictEqual(results, ['task1', 'task2']);
+
+    // Second unpause should resume processing
+    unpause2();
+    expectStrictEqual(taskQueue.isPaused(), false);
+
+    await taskQueue.wait();
+    expectDeepStrictEqual(results, ['task1', 'task2', 'task3']);
   });
 });

@@ -6429,6 +6429,15 @@ yaschema@5.0.0, yaschema@^5.0.0:
     lodash "^4.17.21"
     lodash-es "^4.17.21"
 
+yaschema@5.2.1:
+  version "5.2.1"
+  resolved "https://registry.yarnpkg.com/yaschema/-/yaschema-5.2.1.tgz#9531d7f74339f78ab8349d960f20b7ffa917d306"
+  integrity sha512-Ta3lbHLqtgqDZbvf9THVG/x80aGJuB2/g9mffU9tkYFwedeU5MPno4ZaJNqDoFGMlCJHY5FnANmsCShXUcX8vA==
+  dependencies:
+    is-promise "4.0.0"
+    lodash "^4.17.21"
+    lodash-es "^4.17.21"
+
 yasorted-array@1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/yasorted-array/-/yasorted-array-1.0.3.tgz#cc92d2f14fb4152cb072361d41416b8a6c3ea143"
