@@ -1,7 +1,7 @@
 import { log, type Trace } from 'freedom-contexts';
 import { default as pLimit } from 'p-limit';
 
-import { FREEDOM_MAX_CONCURRENCY_DEFAULT } from '../consts/concurrency.ts';
+import { useDefaultMaxConcurrency } from '../contexts/concurrency.ts';
 import { GeneralError } from '../types/GeneralError.ts';
 import type { PR } from '../types/PR.ts';
 import type { PRFunc } from '../types/PRFunc.ts';
@@ -16,7 +16,7 @@ export const allResultsMapped = makeAsyncResultFunc(
     trace: Trace,
     values: readonly V[],
     {
-      maxConcurrency = FREEDOM_MAX_CONCURRENCY_DEFAULT,
+      maxConcurrency,
       onFailure = 'continue'
     }: {
       maxConcurrency?: number;
@@ -25,6 +25,8 @@ export const allResultsMapped = makeAsyncResultFunc(
     },
     callback: PRFunc<T, ErrorCodeT, [value: V, index: number]>
   ): PR<T[], ErrorCodeT> {
+    maxConcurrency = maxConcurrency ?? useDefaultMaxConcurrency(trace);
+
     const limit = pLimit(maxConcurrency);
 
     let shouldStop = false;
