@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { UnauthorizedError } from 'freedom-common-errors';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
-import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
 import { isRootProvenanceValid } from '../validation/isRootProvenanceValid.ts';
 
 export const guardIsRootProvenanceValid = makeAsyncResultFunc(

@@ -1,7 +1,7 @@
 import type { ChainableResult, PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, resolveChain } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { syncableItemTypes, SyncablePath } from 'freedom-sync-types';
+import { folderLikeSyncableItemTypes, SyncablePath } from 'freedom-sync-types';
 import type { SyncableFileAccessor, SyncableStore } from 'freedom-syncable-store-types';
 
 import { getSyncableAtPath } from './get/getSyncableAtPath.ts';
@@ -29,7 +29,7 @@ export const isSyncableDeleted = makeAsyncResultFunc(
       return makeSuccess(false); // Roots aren't deletable
     }
 
-    const parentFolderLike = await getSyncableAtPath(trace, store, path.parentPath, syncableItemTypes.exclude('file'));
+    const parentFolderLike = await getSyncableAtPath(trace, store, path.parentPath, folderLikeSyncableItemTypes);
     if (!parentFolderLike.ok) {
       return generalizeFailureResult(trace, parentFolderLike, ['not-found', 'untrusted', 'wrong-type']);
     }

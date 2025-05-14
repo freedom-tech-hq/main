@@ -76,6 +76,9 @@
             "path": "cross-platform-packages/freedom-localization"
         },
         {
+            "path": "cross-platform-packages/freedom-local-sync"
+        },
+        {
             "path": "cross-platform-packages/freedom-locking-types"
         },
         {
@@ -97,10 +100,10 @@
             "path": "cross-platform-packages/freedom-periodic"
         },
         {
-            "path": "cross-platform-packages/freedom-serialization"
+            "path": "cross-platform-packages/freedom-remote-sync"
         },
         {
-            "path": "cross-platform-packages/freedom-sync-service"
+            "path": "cross-platform-packages/freedom-serialization"
         },
         {
             "path": "cross-platform-packages/freedom-sync-types"
@@ -143,9 +146,6 @@
         },
         {
             "path": "dev-packages/freedom-profiler"
-        },
-        {
-            "path": "dev-packages/freedom-sync-service-testing-tools"
         },
         {
             "path": "dev-packages/freedom-testing-tools"

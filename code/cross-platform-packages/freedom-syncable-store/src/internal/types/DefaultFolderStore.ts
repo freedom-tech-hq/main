@@ -55,7 +55,7 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
     async (trace, args): PR<MutableSyncableFolderAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedFolder_(trace, args.id, args.metadata);
+          return await this.createPreEncodedFolder_(trace, args.id, args.metadata, { viaSync: true });
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -94,7 +94,12 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
             return provenance;
           }
 
-          const folder = await this.createPreEncodedFolder_(trace, id, { name: name.value, provenance: provenance.value });
+          const folder = await this.createPreEncodedFolder_(
+            trace,
+            id,
+            { name: name.value, provenance: provenance.value },
+            { viaSync: false }
+          );
           if (!folder.ok) {
             return folder;
           }
@@ -116,7 +121,12 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
 
   private readonly createPreEncodedFolder_ = makeAsyncResultFunc(
     [import.meta.filename, 'createPreEncodedFolder_'],
-    async (trace, id: SyncableId, metadata: SyncableItemMetadata): PR<DefaultMutableSyncableFolderAccessor, 'conflict'> => {
+    async (
+      trace,
+      id: SyncableId,
+      metadata: SyncableItemMetadata,
+      { viaSync }: { viaSync: boolean }
+    ): PR<DefaultMutableSyncableFolderAccessor, 'conflict'> => {
       const newPath = this.path_.append(id);
 
       DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-folder', pathString: newPath.toString() });
@@ -161,11 +171,11 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying folderAdded for folder ${newPath.toShortString()}`));
-      this.syncTracker_.notify('folderAdded', { path: newPath });
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying folderAdded for folder ${newPath.toShortString()}`));
+      this.syncTracker_.notify('folderAdded', { path: newPath, viaSync });
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for folder ${newPath.toShortString()}`));
-      this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for folder ${newPath.toShortString()}`));
+      this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value, viaSync });
 
       return makeSuccess(folder);
     }

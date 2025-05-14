@@ -4,7 +4,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { Nested } from 'freedom-nest';
 import type { SyncableId, SyncablePath } from 'freedom-sync-types';
-import { syncableItemTypes } from 'freedom-sync-types';
+import { folderLikeSyncableItemTypes } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
 import type { MutableSyncableStore, SaltedId } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -66,7 +66,7 @@ export const makeBottomUpTimeOrganizedMailStorageTraverser = makeAsyncResultFunc
           trace,
           syncableStore,
           timeOrganizedPaths.value,
-          syncableItemTypes.exclude('file')
+          folderLikeSyncableItemTypes
         );
         if (!baseFolderLike.ok) {
           if (baseFolderLike.value.errorCode === 'not-found') {

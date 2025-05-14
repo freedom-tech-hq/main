@@ -1,4 +1,3 @@
-export * from './getBundleAtPathForSync.ts';
-export * from './getFileAtPathForSync.ts';
-export * from './getFolderAtPathForSync.ts';
-export * from './getSyncableItemTypeAtPathForSync.ts';
+export * from './createViaSyncBundleAtPath.ts';
+export * from './createViaSyncFolderAtPath.ts';
+export * from './createViaSyncPreEncodedBinaryFileAtPath.ts';

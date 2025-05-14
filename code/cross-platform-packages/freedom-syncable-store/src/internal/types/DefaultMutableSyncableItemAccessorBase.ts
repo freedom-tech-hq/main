@@ -1,12 +1,16 @@
-import type { PR, PRFunc } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { generalizeFailureResult } from 'freedom-common-errors';
-import type { LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
-import { isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
+import type { PR, PRFunc, Result } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
+import type { DynamicSyncableItemName, LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, isCompleteLocalItemMetadata } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableItemAccessorBase, MutableSyncableStore } from 'freedom-syncable-store-types';
 
+import { getNearestFolder } from '../../utils/get/getNearestFolder.ts';
+import { getNearestFolderPath } from '../../utils/get/getNearestFolderPath.ts';
 import { markSyncableNeedsRecomputeLocalMetadataAtPath } from '../utils/markSyncableNeedsRecomputeLocalMetadataAtPath.ts';
+import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
+import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
 
 export interface DefaultMutableSyncableItemAccessorBaseConstructorArgs {
   backing: SyncableStoreBacking;
@@ -18,6 +22,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
 
   protected readonly backing_: SyncableStoreBacking;
   protected weakStore_!: WeakRef<MutableSyncableStore>;
+  protected folderOperationsHandler_!: FolderOperationsHandler;
 
   private needsRecomputeLocalMetadataCount_ = 0;
 
@@ -26,8 +31,15 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
     this.path = path;
   }
 
-  protected deferredInit_({ store }: { store: MutableSyncableStore }) {
+  protected deferredDefaultMutableSyncableItemAccessorBaseInit_({
+    store,
+    folderOperationsHandler
+  }: {
+    store: MutableSyncableStore;
+    folderOperationsHandler: FolderOperationsHandler;
+  }) {
     this.weakStore_ = new WeakRef(store);
+    this.folderOperationsHandler_ = folderOperationsHandler;
   }
 
   // Abstract Methods
@@ -55,11 +67,56 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
         return localItemMetadata;
       }
 
-      mergeLocalItemMetadata(metadata.value, localItemMetadata.value);
-
-      return makeSuccess(metadata.value as SyncableItemMetadata & LocalItemMetadata);
+      return makeSuccess({ ...metadata.value, ...localItemMetadata.value });
     }
   );
+
+  public readonly getName = makeAsyncResultFunc([import.meta.filename, 'getName'], async (trace): PR<string> => {
+    const metadata = await this.getMetadata(trace);
+    if (!metadata.ok) {
+      return metadata;
+    }
+
+    if (this.path.lastId === undefined) {
+      return makeSuccess('');
+    }
+
+    let dynamicName: Result<DynamicSyncableItemName>;
+
+    if (extractSyncableItemTypeFromPath(this.path) === 'folder') {
+      // The names of folders belong to the folders that contain them, not to the folders themselves
+
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
+      }
+
+      const parentFolder = await getNearestFolder(trace, store, getNearestFolderPath(this.path).parentPath!);
+      if (!parentFolder.ok) {
+        return generalizeFailureResult(trace, parentFolder, ['not-found', 'untrusted', 'wrong-type']);
+      }
+
+      if (!(parentFolder.value instanceof DefaultMutableSyncableFolderAccessor)) {
+        return makeFailure(new InternalStateError(trace, { message: 'parent folder is not a DefaultMutableSyncableFolderAccessor' }));
+      }
+
+      dynamicName = await parentFolder.value.folderOperationsHandler_.getDynamicName(trace, metadata.value.name);
+    } else {
+      // All other items are contained in folders, so their names belong to the nearest folder
+
+      dynamicName = await this.folderOperationsHandler_.getDynamicName(trace, metadata.value.name);
+    }
+
+    if (!dynamicName.ok) {
+      return dynamicName;
+    }
+
+    if (typeof dynamicName.value === 'string') {
+      return makeSuccess(dynamicName.value);
+    }
+
+    return makeSuccess(dynamicName.value.plainName);
+  });
 
   public readonly markNeedsRecomputeLocalMetadata = makeAsyncResultFunc(
     [import.meta.filename, 'markNeedsRecomputeLocalMetadata'],

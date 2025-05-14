@@ -20,7 +20,7 @@
     "freedom-notification-types": "0.0.0",
     "freedom-opfs-syncable-store-backing": "0.0.0",
     "freedom-paginated-data": "0.0.0",
-    "freedom-sync-service": "0.0.0",
+    "freedom-remote-sync": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",
     "freedom-syncable-store-backing-types": "0.0.0",

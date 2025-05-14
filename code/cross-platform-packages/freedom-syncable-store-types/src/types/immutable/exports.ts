@@ -4,6 +4,7 @@ export * from './StoreBase.ts';
 export * from './SyncableBundleAccessor.ts';
 export * from './SyncableFileAccessor.ts';
 export * from './SyncableFolderAccessor.ts';
+export * from './SyncableFolderLikeAccessor.ts';
 export * from './SyncableItemAccessor.ts';
 export * from './SyncableItemAccessorBase.ts';
 export * from './SyncableStore.ts';

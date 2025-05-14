@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { withAcquiredLock } from 'freedom-locking-types';
-import { type LocalItemMetadata, mergeLocalItemMetadata, type SyncableId } from 'freedom-sync-types';
+import { type LocalItemMetadata, type SyncableId } from 'freedom-sync-types';
 
 import { getFsPathForMetadataFile } from './getFsPathForMetadataFile.ts';
 import { getLockStore } from './getLockStore.ts';
@@ -22,9 +22,7 @@ export const updateLocalMetadata = makeAsyncResultFunc(
         return generalizeFailureResult(trace, metadata, ['not-found', 'wrong-type']);
       }
 
-      mergeLocalItemMetadata(metadata.value, metadataChanges);
-
-      const wrote = await writeMetadataFile(trace, filePath, metadata.value);
+      const wrote = await writeMetadataFile(trace, filePath, { ...metadata.value, ...metadataChanges });
       if (!wrote.ok) {
         return wrote;
       }

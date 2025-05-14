@@ -7,7 +7,7 @@ import { listOutboundMailIds } from 'freedom-email-sync';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
-import { getEmailAgentSyncableStore } from './getEmailAgentSyncableStore.ts';
+import { getEmailAgentSyncableStoreForUser } from './getEmailAgentSyncableStoreForUser.ts';
 
 /**
  * Subscribes to outbound emails by polling the listOutboundMailIds function
@@ -77,7 +77,7 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
       for (const user of users) {
         if (!isActive) return;
 
-        const syncableStore = await uncheckedResult(getEmailAgentSyncableStore(trace, user));
+        const syncableStore = await uncheckedResult(getEmailAgentSyncableStoreForUser(trace, user));
 
         await pollOutboundEmailsForUser(user, syncableStore);
       }

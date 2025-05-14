@@ -8,6 +8,7 @@ import { NotificationManager } from 'freedom-notification-types';
 import { api } from 'freedom-store-api-server-api';
 import type {
   ControllableRemoteConnection,
+  PullItem,
   RemoteAccessor,
   RemoteChangeNotificationClient,
   RemoteChangeNotifications,
@@ -15,7 +16,6 @@ import type {
   StorageRootId,
   SyncableItemMetadata,
   SyncPuller,
-  SyncPullResponse,
   SyncPusher
 } from 'freedom-sync-types';
 import { remoteIdInfo, SyncablePath } from 'freedom-sync-types';
@@ -69,7 +69,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
 
     const puller: SyncPuller = makeAsyncResultFunc(
       [import.meta.filename, 'puller'],
-      async (trace, body): PR<SyncPullResponse, 'not-found'> => {
+      async (trace, body): PR<PullItem, 'not-found'> => {
         const pulled = await pullFromRemote(trace, {
           body: { ...body, sendData: body.sendData ?? false },
           context: getDefaultApiRoutingContext()
@@ -85,7 +85,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
 
     const pusher: SyncPusher = makeAsyncResultFunc(
       [import.meta.filename, 'pusher'],
-      async (trace, body): PR<undefined, 'not-found'> => {
+      async (trace, body): PR<PullItem, 'not-found'> => {
         // not-found happens during push fairly commonly when doing an initial sync to a server and simultaneously updating the client,
         // because the client will try to push newer content before the base folders have been initially pushed -- but this will
         // automatically get resolved as the initial sync continues
@@ -94,7 +94,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
           return pushed;
         }
 
-        return makeSuccess(undefined);
+        return makeSuccess(pushed.value.body);
       },
       { deepDisableLam: 'not-found' }
     );

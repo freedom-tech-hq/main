@@ -1,6 +1,7 @@
 import './polyfills.ts';
 import './utils/fwd-env.ts';
 
+import { buildMode } from 'freedom-contexts';
 import { init } from 'freedom-react-localization';
 import ReactDOM from 'react-dom/client';
 
@@ -19,4 +20,11 @@ const startWebApp = async (rootElem: HTMLElement | null) => {
 
 startWebApp(document.getElementById('root'));
 
+console.log('Build mode', buildMode);
 console.log('Loaded index', process.env.FREEDOM_BUILD_UUID);
+
+let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
+DEV: expectedBuildMode = 'DEV';
+if (expectedBuildMode !== buildMode) {
+  throw new Error(`Build mode mismatch: ${buildMode} !== ${expectedBuildMode}`);
+}

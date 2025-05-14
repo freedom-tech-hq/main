@@ -1,9 +1,20 @@
 import type { PR } from 'freedom-async';
-import { allResults, bestEffort, makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
+import {
+  allResults,
+  bestEffort,
+  callWithRetrySupport,
+  makeAsyncResultFunc,
+  makeFailure,
+  makeSuccess,
+  uncheckedResult
+} from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { InternalStateError } from 'freedom-common-errors';
-import { makeApiFetchTask } from 'freedom-fetching';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
+import { doSoon } from 'freedom-do-soon';
+import { createInitialSyncableStoreStructureForUser } from 'freedom-email-user';
+import { dataUploadExponentialBackoffTimeMSec, makeApiFetchTask, MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC } from 'freedom-fetching';
 import { api as fakeEmailServiceApi } from 'freedom-store-api-server-api';
+import type { PullItem } from 'freedom-sync-types';
 import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -64,11 +75,6 @@ export const startSyncService = makeAsyncResultFunc(
     // Giving Editor Access on the Out Folder to the Server
     await disableLam(true, bestEffort)(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
 
-    const startedRoutingMail = await routeMail(trace, credential);
-    if (!startedRoutingMail.ok) {
-      return startedRoutingMail;
-    }
-
     const syncService = await makeSyncServiceForUserSyncables(trace, {
       credential,
       shouldRecordLogs: false,
@@ -76,6 +82,11 @@ export const startSyncService = makeAsyncResultFunc(
     });
     if (!syncService.ok) {
       return syncService;
+    }
+
+    const startedRoutingMail = await routeMail(trace, syncService.value, credential);
+    if (!startedRoutingMail.ok) {
+      return startedRoutingMail;
     }
 
     const startedRemoteConnectionContentChangeNotifications = await remoteConnection.value.start(trace);
@@ -87,6 +98,35 @@ export const startSyncService = makeAsyncResultFunc(
     if (!startedSyncService.ok) {
       return startedSyncService;
     }
+
+    doSoon(trace, (trace) =>
+      bestEffort(trace, async (trace): PR<undefined> => {
+        const globPatterns = await createInitialSyncableStoreStructureForUser.getGlobPatterns(syncableStore);
+        const pulled = await callWithRetrySupport<PullItem, 'not-found'>(
+          (_failure, { attemptCount, accumulatedDelayMSec }) => ({
+            retry: accumulatedDelayMSec < MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC,
+            delayMSec:
+              dataUploadExponentialBackoffTimeMSec[attemptCount] ??
+              dataUploadExponentialBackoffTimeMSec[dataUploadExponentialBackoffTimeMSec.length - 1] ??
+              0
+          }),
+          (_attemptCount) => syncService.value.pullFromRemotes(trace, { basePath: syncableStore.path, ...globPatterns })
+        );
+        if (!pulled.ok) {
+          return generalizeFailureResult(trace, pulled, 'not-found', 'Failed to pull initial content from remote');
+        }
+
+        // Calling this every time we start syncing in case our code has changed to need a different structure.
+        //
+        // This ignores conflicts but must be performed after the initial sync because we don't want to recreate folders that were already
+        // created and just not downloaded yet (duplicate bundles and files are generally ok but duplicate folders are problematic because
+        // there will be differing snapshots and deltas in the access-control document and the folder contents may be encrypted with
+        // multiple sets of keys that are effectively in different, but colocated, access control documents)
+        await bestEffort(trace, createInitialSyncableStoreStructureForUser(trace, syncableStore));
+
+        return makeSuccess(undefined);
+      })
+    );
 
     const stop = async () => {
       await bestEffort(

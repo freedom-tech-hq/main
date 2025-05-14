@@ -3,8 +3,8 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import { extractNumberFromPlainSyncableId } from 'freedom-email-sync';
 import type { EmailCredential, UserMailPaths } from 'freedom-email-user';
 import { getUserMailPaths, mailCollectionTypes } from 'freedom-email-user';
-import type { MakeSyncServiceArgs, SyncService } from 'freedom-sync-service';
-import { makeSyncService } from 'freedom-sync-service';
+import type { MakeSyncServiceArgs, RemoteSyncService, SyncStrategy } from 'freedom-remote-sync';
+import { makeSyncService } from 'freedom-remote-sync';
 import type { SyncablePath } from 'freedom-sync-types';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
@@ -20,10 +20,10 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
     {
       credential,
       ...fwdArgs
-    }: Omit<MakeSyncServiceArgs, 'getSyncStrategyForPath' | 'shouldPullFromRemote' | 'shouldPushToAllRemotes' | 'store'> & {
+    }: Omit<MakeSyncServiceArgs, 'getSyncStrategyForPath' | 'shouldPullFromRemote' | 'shouldPushToRemote' | 'store'> & {
       credential: EmailCredential;
     }
-  ): PR<SyncService> => {
+  ): PR<RemoteSyncService> => {
     const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, credential);
     if (!syncableStoreResult.ok) {
       return syncableStoreResult;
@@ -41,9 +41,9 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
     // let removeItemAccessedListener: (() => void) | undefined;
     // let removeItemNotFoundListener: (() => void) | undefined;
 
-    return await makeSyncService(trace, {
+    return makeSyncService(trace, {
       ...fwdArgs,
-      shouldPullFromRemote: () => true,
+      shouldPullFromRemote: () => ({ strategy: 'stack' }),
       // shouldPullFromRemote: ({ path }) => {
       //   const parentPath = path.parentPath;
       //   return (
@@ -51,14 +51,14 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
       //     (parentPath !== undefined && interestedInPaths.has(parentPath.toRelativePathString(userFs.path)))
       //   );
       // },
-      shouldPushToAllRemotes: () => false,
-      getSyncStrategyForPath: async (direction, path) => {
+      shouldPushToRemote: () => ({ strategy: 'stack' }),
+      getSyncStrategyForPath: async (direction, path): Promise<SyncStrategy> => {
         switch (direction) {
           case 'pull': {
             const found = await disableLam('not-found', getSyncableAtPath)(trace, userFs, path);
             if (!found.ok) {
               if (found.value.errorCode === 'not-found') {
-                return 'batch';
+                return 'stack';
               }
             }
             break;
@@ -68,18 +68,18 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
         }
 
         if (getNonCustomCollectionHourPaths(paths, path) !== undefined || getRouteProcessingHourPath(paths, path) !== undefined) {
-          return 'batch';
+          return 'stack';
         }
 
-        return 'default';
+        return 'item';
       },
       // onStart: ({ syncService }) => {
       //   removeItemAccessedListener = userFs.addListener('itemAccessed', ({ path }) => {
       //     interestedInPaths.add(path.toRelativePathString(userFs.path));
       //   });
-      //   removeItemNotFoundListener = userFs.addListener('itemNotFound', ({ path }) => {
-      //     syncService.pullFromRemotes({ path });
-      //   });
+      //   removeItemNotFoundListener = userFs.addListener('itemNotFound', ({ path }) =>
+      //     syncService.enqueuePullFromRemotes(trace, { path })
+      //   );
       // },
       // onStop: () => {
       //   removeItemAccessedListener?.();

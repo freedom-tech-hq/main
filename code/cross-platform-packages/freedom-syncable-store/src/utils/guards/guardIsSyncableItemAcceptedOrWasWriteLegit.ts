@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ForbiddenError } from 'freedom-common-errors';
 import type { SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
 
-import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
 import { isSyncableItemAcceptedOrWasWriteLegit } from '../validation/isSyncableItemAcceptedOrWasWriteLegit.ts';
 
 export const guardIsSyncableItemAcceptedOrWasWriteLegit = makeAsyncResultFunc(

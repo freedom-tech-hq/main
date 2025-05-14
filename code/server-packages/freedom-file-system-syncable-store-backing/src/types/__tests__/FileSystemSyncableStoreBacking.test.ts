@@ -25,12 +25,10 @@ import {
   initializeRoot,
   isSyncableDeleted
 } from 'freedom-syncable-store';
+import { type HotSwappableUserKeys, makeHotSwappableUserKeysForTesting, makeUserKeysForTesting } from 'freedom-syncable-store/tests';
 import { saltedId } from 'freedom-syncable-store-types';
 import { expectErrorCode, expectIncludes, expectNotOk, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
-import type { HotSwappableUserKeys } from '../../__test_dependency__/makeHotSwappableUserKeysForTesting.ts';
-import { makeHotSwappableUserKeysForTesting } from '../../__test_dependency__/makeHotSwappableUserKeysForTesting.ts';
-import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { FileSystemSyncableStoreBacking } from '../FileSystemSyncableStoreBacking.ts';
 
 describe('FileSystemSyncableStore', () => {

@@ -18,3 +18,5 @@ export const syncableItemType: Record<AbbreviatedSyncableItemType, SyncableItemT
   f: 'file',
   F: 'folder'
 };
+
+export const folderLikeSyncableItemTypes = syncableItemTypes.exclude('file');

@@ -3,6 +3,7 @@
     "freedom-async": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-crypto-data": "0.0.0",
     "freedom-db": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "freedom-sync-types": "0.0.0",

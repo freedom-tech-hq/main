@@ -69,7 +69,13 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
     const decode: PRFunc<Uint8Array, never, [encodedData: Uint8Array]> = isSyncableItemEncrypted(path.lastId!)
       ? this.verifyAndDecryptBuffer_
       : passThroughData;
-    return getOrCreateDefaultMutableSyncableFileAccessor({ store, backing: this.backing_, path, decode });
+    return getOrCreateDefaultMutableSyncableFileAccessor({
+      store,
+      backing: this.backing_,
+      path,
+      folderOperationsHandler: this.folderOperationsHandler_,
+      decode
+    });
   }
 
   // MutableFileStore Methods
@@ -79,7 +85,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
     async (trace: Trace, args): PR<MutableSyncableFileAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata);
+          return await this.createPreEncodedBinaryFile_(trace, args.id, args.encodedValue, args.metadata, { viaSync: true });
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -129,7 +135,13 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
             return provenance;
           }
 
-          return await this.createPreEncodedBinaryFile_(trace, id, encodedData.value, { name: name.value, provenance: provenance.value });
+          return await this.createPreEncodedBinaryFile_(
+            trace,
+            id,
+            encodedData.value,
+            { name: name.value, provenance: provenance.value },
+            { viaSync: false }
+          );
         }
       }
     }
@@ -140,7 +152,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
     async (trace, args): PR<MutableSyncableBundleAccessor, 'conflict' | 'deleted'> => {
       switch (args.mode) {
         case 'via-sync':
-          return await this.createPreEncodedBundle_(trace, args.id, args.metadata);
+          return await this.createPreEncodedBundle_(trace, args.id, args.metadata, { viaSync: true });
         case undefined:
         case 'local': {
           const store = this.weakStore_.deref();
@@ -179,7 +191,7 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
             return provenance;
           }
 
-          return await this.createPreEncodedBundle_(trace, id, { name: name.value, provenance: provenance.value });
+          return await this.createPreEncodedBundle_(trace, id, { name: name.value, provenance: provenance.value }, { viaSync: false });
         }
       }
     }
@@ -213,7 +225,8 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       trace: Trace,
       id: SyncableId,
       encodedData: Uint8Array,
-      metadata: SyncableItemMetadata
+      metadata: SyncableItemMetadata,
+      { viaSync }: { viaSync: boolean }
     ): PR<MutableSyncableFileAccessor, 'conflict'> => {
       const newPath = this.path_.append(id);
 
@@ -257,8 +270,8 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for file ${newPath.toShortString()}`));
-      this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for file ${newPath.toShortString()}`));
+      this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value, viaSync });
 
       return makeSuccess(itemAccessor);
     }
@@ -266,7 +279,12 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
 
   public readonly createPreEncodedBundle_ = makeAsyncResultFunc(
     [import.meta.filename, 'createPreEncodedBundle_'],
-    async (trace, id: SyncableId, metadata: SyncableItemMetadata): PR<MutableSyncableBundleAccessor, 'conflict'> => {
+    async (
+      trace,
+      id: SyncableId,
+      metadata: SyncableItemMetadata,
+      { viaSync }: { viaSync: boolean }
+    ): PR<MutableSyncableBundleAccessor, 'conflict'> => {
       const newPath = this.path_.append(id);
 
       DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-bundle', pathString: newPath.toString() });
@@ -306,8 +324,8 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
       }
       /* node:coverage enable */
 
-      DEV: debugTopic('SYNC', (log) => log(`Notifying itemAdded for bundle ${newPath.toShortString()}`));
-      this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value });
+      DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for bundle ${newPath.toShortString()}`));
+      this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value, viaSync });
 
       return makeSuccess(itemAccessor);
     }

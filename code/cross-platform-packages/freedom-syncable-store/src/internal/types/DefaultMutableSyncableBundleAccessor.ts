@@ -26,7 +26,6 @@ export class DefaultMutableSyncableBundleAccessor extends DefaultMutableSyncable
   public readonly type = 'bundle';
 
   protected readonly syncTracker_: SyncTracker;
-  protected readonly folderOperationsHandler_: FolderOperationsHandler;
 
   private fileStore__: DefaultFileStore | undefined;
   private get fileStore_(): DefaultFileStore {
@@ -51,10 +50,9 @@ export class DefaultMutableSyncableBundleAccessor extends DefaultMutableSyncable
   constructor({ store, syncTracker, folderOperationsHandler, ...args }: DefaultFileStoreConstructorArgs) {
     super(args);
 
-    this.deferredInit_({ store });
+    this.deferredDefaultMutableSyncableItemAccessorBaseInit_({ store, folderOperationsHandler });
 
     this.syncTracker_ = syncTracker;
-    this.folderOperationsHandler_ = folderOperationsHandler;
   }
 
   // MutableFileStore Methods

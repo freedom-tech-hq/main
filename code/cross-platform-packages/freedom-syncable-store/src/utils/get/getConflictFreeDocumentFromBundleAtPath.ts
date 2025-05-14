@@ -10,7 +10,7 @@ import { InMemoryCache } from 'freedom-in-memory-cache';
 import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
 import { NotificationManager } from 'freedom-notification-types';
 import type { SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, isSyncableItemEncrypted } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, isSyncableItemEncrypted } from 'freedom-sync-types';
 import type {
   ConflictFreeDocumentBundleNotifications,
   ConflictFreeDocumentEvaluator,
@@ -22,9 +22,9 @@ import { ACCESS_CONTROL_BUNDLE_ID, makeDeltasBundleId, SNAPSHOTS_BUNDLE_ID } fro
 import { TaskQueue } from 'freedom-task-queue';
 import { noop } from 'lodash-es';
 
+import { disableSyncableValidation, useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
 import { APPLY_DELTAS_LIMIT_TIME_MSEC, CACHE_DURATION_MSEC } from '../../internal/consts/timing.ts';
 import { accessControlDocumentProvider } from '../../internal/context/accessControlDocument.ts';
-import { disableSyncableValidation, useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
 import { SyncableStoreAccessControlDocument } from '../../types/SyncableStoreAccessControlDocument.ts';
 import { getRoleForOrigin } from '../validation/getRoleForOrigin.ts';
 import { getBundleAtPath } from './getBundleAtPath.ts';
@@ -174,7 +174,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                   notificationManager.notify('needsReload', { path });
                   needsReload = true;
                 }
-              } else if (event.path.lastId !== undefined && extractSyncableItemTypeFromId(event.path.lastId) === 'file') {
+              } else if (extractSyncableItemTypeFromPath(event.path) === 'file') {
                 const currentSnapshotDeltasBundlePath = path.append(makeDeltasBundleId({ encrypted: isEncrypted }, currentSnapshotId));
 
                 if (event.path.startsWith(currentSnapshotDeltasBundlePath)) {
@@ -282,7 +282,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
             if (!snapshotValid.ok) {
               return snapshotValid;
             } else if (!snapshotValid.value) {
-              DEV: debugTopic('VALIDATION', (log) => log(`Snapshot invalid for ${snapshotFile.value.path.toShortString()}`));
+              DEV: debugTopic('VALIDATION', (log) => log(trace, `Snapshot invalid for ${snapshotFile.value.path.toShortString()}`));
               continue;
             }
           }
@@ -304,6 +304,8 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                 deltaPaths,
                 {},
                 async (trace, deltaPath): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type' | 'format-error'> => {
+                  // Not checking syncable validation here because we're just pre-loading the strings.  Validation is performed by calling
+                  // getSyncableAtPath below.
                   const encodedDelta = await disableSyncableValidation(getStringFromFile)(trace, store, deltaPath, {
                     checkForDeletion: false
                   });
@@ -359,7 +361,7 @@ export const getConflictFreeDocumentFromBundleAtPath = makeAsyncResultFunc(
                   if (!deltaValid.ok) {
                     return deltaValid;
                   } else if (!deltaValid.value) {
-                    DEV: debugTopic('VALIDATION', (log) => log(`Delta invalid for ${deltaFile.value.path.toShortString()}`));
+                    DEV: debugTopic('VALIDATION', (log) => log(trace, `Delta invalid for ${deltaFile.value.path.toShortString()}`));
                     continue;
                   }
                 }
