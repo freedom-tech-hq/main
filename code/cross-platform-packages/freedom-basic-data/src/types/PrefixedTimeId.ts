@@ -41,6 +41,18 @@ export const makePrefixedTimeIdInfo = <PrefixT extends `${string}_`>(prefix: Pre
 };
 export type PrefixedTimeId<PrefixT extends `${string}_`> = `${PrefixT}${IsoDateTime}-${Uuid}`;
 
+const tailAnchoredTimeAndUuidRegex = new RegExp(`_(${nonAnchoredIsoDateTimeRegex.source})-(${nonAnchoredUuidRegex.source})$`);
+export const isPrefixedTimeId = (value: string): value is PrefixedTimeId<`${string}_`> => tailAnchoredTimeAndUuidRegex.test(value);
+export const extractTimeMSecAndUuidFromPrefixedTimeId = (prefixedTimeId: PrefixedTimeId<`${string}_`>): [number, Uuid] => {
+  const match = tailAnchoredTimeAndUuidRegex.exec(prefixedTimeId);
+  if (match === null) {
+    throw new Error(`Invalid PrefixedTimeId encountered`);
+  }
+
+  const date = new Date(match[1]);
+  return [date.getTime(), match[2] as Uuid];
+};
+
 export const nonAnchoredAnyPrefixTimeIdRegex = new RegExp(`[^]*_${nonAnchoredIsoDateTimeRegex.source}-${nonAnchoredUuidRegex.source}`);
 export const anyPrefixedTimeIdSchema = schema.regex<PrefixedTimeId<`${string}_`>>(
   new RegExp(`^${nonAnchoredAnyPrefixTimeIdRegex.source}$`)

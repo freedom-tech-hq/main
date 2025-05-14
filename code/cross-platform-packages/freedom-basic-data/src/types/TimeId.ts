@@ -9,6 +9,9 @@ import { type IsoDateTime, nonAnchoredIsoDateTimeRegex } from './IsoDateTime.ts'
 import type { Uuid } from './Uuid.ts';
 import { nonAnchoredUuidRegex } from './Uuid.ts';
 
+const tailAnchoredTimeAndUuidRegex = new RegExp(`_(${nonAnchoredIsoDateTimeRegex.source})-(${nonAnchoredUuidRegex.source})$`);
+const tailAnchoredUuidRegex = new RegExp(`-(${nonAnchoredUuidRegex.source})$`);
+
 /**
  * Format: `T_<ISO time>-<UUID>`
  *
@@ -25,19 +28,29 @@ export const timeIdInfo = inline(() => {
   const out = defaultIdInfo as typeof defaultIdInfo & {
     make: (nonPrefixedValue?: `${IsoDateTime}-${Uuid}`) => TimeId;
     extractTimeMSec: (timeId: TimeId) => number;
+    extractUuid: (timeId: TimeId) => Uuid;
   };
 
   const defaultMake = defaultIdInfo.make;
   out.make = (nonPrefixedValue?: `${IsoDateTime}-${Uuid}`) => defaultMake(nonPrefixedValue ?? `${makeIsoDateTime()}-${makeUuid()}`);
 
   out.extractTimeMSec = (timeId: TimeId) => {
-    const match = nonAnchoredIsoDateTimeRegex.exec(defaultIdInfo.removePrefix(timeId));
+    const match = tailAnchoredTimeAndUuidRegex.exec(timeId);
     if (match === null) {
       throw new Error('Invalid TimeId encountered');
     }
 
-    const date = new Date(match[0]);
+    const date = new Date(match[1]);
     return date.getTime();
+  };
+
+  out.extractUuid = (timeId: TimeId): Uuid => {
+    const match = tailAnchoredUuidRegex.exec(timeId);
+    if (match === null) {
+      throw new Error('Invalid TimeId encountered');
+    }
+
+    return match[1] as Uuid;
   };
 
   return out;
