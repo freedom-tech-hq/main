@@ -1,6 +1,7 @@
 import type { SuiteContext, TestContext } from 'node:test';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
+import { expect } from 'expect';
 import { sha256HashInfo } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
@@ -21,15 +22,7 @@ import {
 } from 'freedom-syncable-store';
 import { makeUserKeysForTesting } from 'freedom-syncable-store/tests';
 import { ACCESS_CONTROL_BUNDLE_ID } from 'freedom-syncable-store-types';
-import {
-  ANY_OBJECT,
-  ANY_OBJECT_WITH,
-  expectDeepStrictEqual,
-  expectEqualsStructPattern,
-  expectOk,
-  expectStrictEqual,
-  StringTestPattern
-} from 'freedom-testing-tools';
+import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
 import { getLocalHashesRelativeToBasePathWithGlob } from '../getLocalHashesRelativeToBasePathWithPatterns.ts';
 
@@ -152,13 +145,13 @@ describe('getLocalHashesRelativeToBasePathWithPatterns', () => {
     expectOk(rootMetadata);
 
     expectStrictEqual(hashes.value.hash, rootMetadata.value.hash);
-    expectEqualsStructPattern(hashes.value.contents ?? {}, {
+    expect(hashes.value.contents ?? {}).toEqual({
       'EyTF._test-folder': {
         hash: ANY_SHA256_HASH,
         contents: {
           'EnTb._access-control': {
             hash: ANY_SHA256_HASH,
-            contents: ANY_OBJECT_WITH({
+            contents: expect.objectContaining({
               'EnTb._snapshots': { hash: ANY_SHA256_HASH, contents: ANY_OBJECT }
             })
           },
@@ -176,7 +169,7 @@ describe('getLocalHashesRelativeToBasePathWithPatterns', () => {
       },
       'EnTb._access-control': {
         hash: ANY_SHA256_HASH,
-        contents: ANY_OBJECT_WITH({
+        contents: expect.objectContaining({
           'EnTb._snapshots': { hash: ANY_SHA256_HASH, contents: ANY_OBJECT }
         })
       }
@@ -196,10 +189,10 @@ describe('getLocalHashesRelativeToBasePathWithPatterns', () => {
     expectOk(testFolderMetadata);
 
     expectStrictEqual(hashes.value.hash, testFolderMetadata.value.hash);
-    expectEqualsStructPattern(hashes.value.contents ?? {}, {
+    expect(hashes.value.contents ?? {}).toEqual({
       'EnTb._access-control': {
         hash: ANY_SHA256_HASH,
-        contents: ANY_OBJECT_WITH({
+        contents: expect.objectContaining({
           'EnTb._snapshots': { hash: ANY_SHA256_HASH, contents: ANY_OBJECT }
         })
       }
@@ -209,4 +202,5 @@ describe('getLocalHashesRelativeToBasePathWithPatterns', () => {
 
 // Helpers
 
-const ANY_SHA256_HASH = new StringTestPattern(sha256HashInfo.schema.regex);
+const ANY_OBJECT = expect.objectContaining({});
+const ANY_SHA256_HASH = expect.stringMatching(sha256HashInfo.schema.regex);

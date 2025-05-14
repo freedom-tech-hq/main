@@ -1,6 +1,7 @@
 import type { SuiteContext, TestContext } from 'node:test';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
+import { expect } from 'expect';
 import { sha256HashInfo } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { makeTrace, makeUuid } from 'freedom-contexts';
@@ -22,17 +23,7 @@ import {
 } from 'freedom-syncable-store';
 import { makeUserKeysForTesting } from 'freedom-syncable-store/tests';
 import { ACCESS_CONTROL_BUNDLE_ID } from 'freedom-syncable-store-types';
-import {
-  ANY_NUMBER,
-  ANY_OBJECT,
-  ANY_OBJECT_WITH,
-  ANY_STRING,
-  expectDeepStrictEqual,
-  expectEqualsStructPattern,
-  expectOk,
-  ObjectTestPattern,
-  StringTestPattern
-} from 'freedom-testing-tools';
+import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 
 import { getLocalHashesRelativeToBasePathWithGlob } from '../../../utils/getLocalHashesRelativeToBasePathWithPatterns.ts';
 import { organizeSyncablesForPullResponse } from '../organizeSyncablesForPullResponse.ts';
@@ -167,7 +158,7 @@ describe('organizeSyncablesForPullResponse', () => {
     });
     expectOk(organized);
 
-    expectEqualsStructPattern(organized.value, {
+    expect(organized.value).toEqual({
       itemsById: {
         'EyTF._test-folder': ANY_SHA256_HASH,
         'EnTb._access-control': ANY_SHA256_HASH
@@ -189,14 +180,14 @@ describe('organizeSyncablesForPullResponse', () => {
     });
     expectOk(organized);
 
-    expectEqualsStructPattern(organized.value, {
+    expect(organized.value).toEqual({
       itemsById: {
         'EyTF._test-folder': {
           metadata: ANY_METADATA,
           itemsById: {
             'EnTb._access-control': {
               metadata: ANY_METADATA,
-              itemsById: ANY_OBJECT_WITH({
+              itemsById: expect.objectContaining({
                 'EnTb._snapshots': { metadata: ANY_METADATA, itemsById: ANY_OBJECT }
               })
             },
@@ -214,7 +205,7 @@ describe('organizeSyncablesForPullResponse', () => {
         },
         'EnTb._access-control': {
           metadata: ANY_METADATA,
-          itemsById: ANY_OBJECT_WITH({
+          itemsById: expect.objectContaining({
             'EnTb._snapshots': { metadata: ANY_METADATA, itemsById: ANY_OBJECT }
           })
         }
@@ -236,11 +227,11 @@ describe('organizeSyncablesForPullResponse', () => {
     });
     expectOk(organized);
 
-    expectEqualsStructPattern(organized.value, {
+    expect(organized.value).toEqual({
       itemsById: {
         'EnTb._access-control': {
           metadata: ANY_METADATA,
-          itemsById: ANY_OBJECT_WITH({
+          itemsById: expect.objectContaining({
             'EnTb._snapshots': { metadata: ANY_METADATA, itemsById: ANY_OBJECT }
           })
         },
@@ -252,15 +243,18 @@ describe('organizeSyncablesForPullResponse', () => {
 
 // Helpers
 
-const ANY_SHA256_HASH = new StringTestPattern(sha256HashInfo.schema.regex);
-const ANY_UINT8_ARRAY = new ObjectTestPattern((value) => [value instanceof Uint8Array, 'Expected Uint8Array']);
+const ANY_OBJECT = expect.objectContaining({});
+const ANY_STRING = expect.stringContaining('');
+const ANY_NUMBER = expect.any(Number);
+const ANY_UINT8_ARRAY = expect.any(Uint8Array);
+const ANY_SHA256_HASH = expect.stringMatching(sha256HashInfo.schema.regex);
 
-const ANY_METADATA = ANY_OBJECT_WITH({
+const ANY_METADATA = expect.objectContaining({
   name: ANY_STRING,
   provenance: ANY_OBJECT
 });
 
-const ANY_FILE_ITEM = ANY_OBJECT_WITH({
+const ANY_FILE_ITEM = expect.objectContaining({
   metadata: ANY_METADATA,
   data: ANY_UINT8_ARRAY,
   sizeBytes: ANY_NUMBER
