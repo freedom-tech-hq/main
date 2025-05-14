@@ -112,6 +112,7 @@ const baseConfig = [
         }
       ],
 
+      '@typescript-eslint/no-duplicate-type-constituents': 'off',
       '@typescript-eslint/no-use-before-define': 'off',
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/strict-boolean-expressions': 'error',
