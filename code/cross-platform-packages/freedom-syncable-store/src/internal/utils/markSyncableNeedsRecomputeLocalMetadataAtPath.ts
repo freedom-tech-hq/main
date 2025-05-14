@@ -3,8 +3,8 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { SyncablePath } from 'freedom-sync-types';
 import type { SyncableStore } from 'freedom-syncable-store-types';
 
+import { disableSyncableValidation } from '../../context/isSyncableValidationEnabled.ts';
 import { getSyncableAtPath } from '../../utils/get/getSyncableAtPath.ts';
-import { disableSyncableValidation } from '../context/isSyncableValidationEnabled.ts';
 
 export const markSyncableNeedsRecomputeLocalMetadataAtPath = makeAsyncResultFunc(
   [import.meta.filename],

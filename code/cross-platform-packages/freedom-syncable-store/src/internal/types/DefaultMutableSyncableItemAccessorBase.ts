@@ -2,7 +2,7 @@ import type { PR, PRFunc, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import type { DynamicSyncableItemName, LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromPath, isCompleteLocalItemMetadata, mergeLocalItemMetadata } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, isCompleteLocalItemMetadata } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 import type { MutableSyncableItemAccessorBase, MutableSyncableStore } from 'freedom-syncable-store-types';
 
@@ -67,9 +67,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
         return localItemMetadata;
       }
 
-      mergeLocalItemMetadata(metadata.value, localItemMetadata.value);
-
-      return makeSuccess(metadata.value as SyncableItemMetadata & LocalItemMetadata);
+      return makeSuccess({ ...metadata.value, ...localItemMetadata.value });
     }
   );
 

@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
 
-import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
 import { guardIsProvenanceValid } from './guardIsProvenanceValid.ts';
 import { guardIsSyncableItemAcceptedOrWasWriteLegit } from './guardIsSyncableItemAcceptedOrWasWriteLegit.ts';
 

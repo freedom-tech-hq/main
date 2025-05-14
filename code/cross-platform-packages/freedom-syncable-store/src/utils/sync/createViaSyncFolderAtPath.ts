@@ -3,8 +3,9 @@ import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 
-import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation } from '../../context/isSyncableValidationEnabled.ts';
 import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
 
 // TODO: reenable validation in a smarter way
@@ -27,7 +28,7 @@ export const createViaSyncFolderAtPath = makeAsyncResultFunc(
         return parent;
       }
 
-      const created = await parent.value.createFolder(trace, { mode: 'via-sync', id: path.lastId!, metadata });
+      const created = await disableLam('conflict', parent.value.createFolder)(trace, { mode: 'via-sync', id: path.lastId!, metadata });
       if (!created.ok) {
         if (created.value.errorCode === 'conflict') {
           // If there's a conflict, we can ignore it because the folder already exists

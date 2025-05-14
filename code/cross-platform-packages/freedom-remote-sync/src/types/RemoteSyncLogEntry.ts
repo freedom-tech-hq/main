@@ -5,12 +5,20 @@ export interface RemoteSyncLogEntryPull {
   remoteId: RemoteId;
   path: SyncablePath;
   outOfSync: boolean;
+  numHashes: number;
+  numFolders: number;
+  numBundles: number;
+  numFiles: number;
+  numFileDatas: number;
 }
 
 export interface RemoteSyncLogEntryPush {
   type: 'push';
   remoteId: RemoteId;
   path: SyncablePath;
+  numFolders: number;
+  numBundles: number;
+  numFiles: number;
 }
 
 export interface RemoteSyncLogEntryNotified {

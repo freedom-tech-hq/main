@@ -1,12 +1,10 @@
 import type { PR } from 'freedom-async';
-import { allResultsMapped, debugTopic, excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { allResultsMapped, debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import { objectValues } from 'freedom-cast';
-import { generalizeFailureResult } from 'freedom-common-errors';
 import type { RemoteChangeNotificationClient, RemoteId, SyncablePath } from 'freedom-sync-types';
 import { getMetadataAtPath, getRecursiveFolderPaths } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import type { RemoteSyncService } from '../../types/RemoteSyncService.ts';
 
@@ -40,20 +38,10 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       async (trace, { remoteId, path, hash: remoteHash }: { remoteId: RemoteId; path: SyncablePath; hash: Sha256Hash }): PR<undefined> => {
         DEV: syncService.devLogging.appendLogEntry?.({ type: 'notified', path });
 
-        const localMetadata = await disableLam('not-found', getMetadataAtPath)(trace, store, path);
-        if (!localMetadata.ok) {
-          // 'not-found' errors are expected in cases where the remote has content that the local doesn't know about yet
-          if (localMetadata.value.errorCode !== 'not-found') {
-            return generalizeFailureResult(trace, excludeFailureResult(localMetadata, 'not-found'), ['untrusted', 'wrong-type']);
-          }
-        } else if (localMetadata.value.hash === remoteHash) {
-          return makeSuccess(undefined);
-        }
-
         return syncService.enqueuePullFromRemotes(trace, {
           remoteId,
           basePath: path,
-          hash: localMetadata.ok ? localMetadata.value.hash : undefined
+          hash: remoteHash
         });
       }
     );
@@ -72,9 +60,13 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
         );
       }
 
+      // If unsuccessful, just passing undefined to enqueuePullFromRemotes, which will just result in less-good deduplication of effort
+      const metadata = await getMetadataAtPath(trace, store, path);
+      const hash = metadata.ok ? metadata.value.hash : undefined;
+
       // Pulling whenever we add a new folder because otherwise there's a race condition where the folder could have been changed on the
       // remote in the meantime
-      return syncService.enqueuePullFromRemotes(trace, { basePath: path });
+      return syncService.enqueuePullFromRemotes(trace, { basePath: path, hash });
     });
 
     const onFolderRemoved = (folderPath: SyncablePath) => {

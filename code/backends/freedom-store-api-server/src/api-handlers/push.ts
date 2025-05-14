@@ -51,6 +51,6 @@ export default makeHttpApiHandler(
       return pushed;
     }
 
-    return makeSuccess({});
+    return makeSuccess({ body: pushed.value });
   }
 );

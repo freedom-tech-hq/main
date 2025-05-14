@@ -1,7 +1,7 @@
 import type { DoubleLinkedListNode } from 'doublell';
 import { DoubleLinkedList } from 'doublell';
 import type { PRFunc } from 'freedom-async';
-import { callAsyncResultFunc, FREEDOM_MAX_CONCURRENCY_DEFAULT, inline, Resolvable } from 'freedom-async';
+import { callAsyncResultFunc, inline, Resolvable, useDefaultMaxConcurrency } from 'freedom-async';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import type { Trace } from 'freedom-contexts';
 import { log, makeSubTrace } from 'freedom-contexts';
@@ -22,6 +22,7 @@ export class TaskQueue {
   private maxConcurrency_ = 1;
   private numActive = 0;
   private pendingWaiter_: Resolvable<void> | undefined;
+  private trace_: Trace;
   private runNextTrace_: Trace;
   private delayWhenEmptyMSec_ = 0;
   private pauseCount_ = 0;
@@ -31,6 +32,7 @@ export class TaskQueue {
 
   constructor(id: string, trace: Trace) {
     this.id = id;
+    this.trace_ = trace;
     this.runNextTrace_ = makeSubTrace(trace, ['runNext_']);
   }
 
@@ -74,7 +76,7 @@ export class TaskQueue {
      */
     delayWhenEmptyMSec?: number;
   } = {}) => {
-    this.maxConcurrency_ = maxConcurrency ?? FREEDOM_MAX_CONCURRENCY_DEFAULT;
+    this.maxConcurrency_ = maxConcurrency ?? useDefaultMaxConcurrency(this.trace_);
     this.delayWhenEmptyMSec_ = delayWhenEmptyMSec;
     this.isRunning_ = true;
 

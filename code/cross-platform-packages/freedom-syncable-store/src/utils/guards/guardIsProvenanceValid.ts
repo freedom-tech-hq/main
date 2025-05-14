@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { UnauthorizedError } from 'freedom-common-errors';
 import type { SyncableItemAccessor, SyncableStore } from 'freedom-syncable-store-types';
 
-import { useIsSyncableValidationEnabled } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { useIsSyncableValidationEnabled } from '../../context/isSyncableValidationEnabled.ts';
 import { isProvenanceValid } from '../validation/isProvenanceValid.ts';
 
 export const guardIsProvenanceValid = makeAsyncResultFunc(

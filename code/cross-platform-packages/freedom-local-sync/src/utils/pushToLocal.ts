@@ -1,11 +1,11 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { PushFile, PushFolderLikeItem, PushItem, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromPath } from 'freedom-sync-types';
+import type { PullItem, PushItem, SyncablePath } from 'freedom-sync-types';
+import { disableSyncableValidation } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { pushFileToLocal } from '../internal/utils/pushFileToLocal.ts';
-import { pushFolderLikeItemToLocal } from '../internal/utils/pushFolderLikeItemToLocal.ts';
+import { pushItemToLocal } from '../internal/utils/pushItemToLocal.ts';
+import { pullFromLocal } from './pullFromLocal.ts';
 
 export const pushToLocal = makeAsyncResultFunc(
   [import.meta.filename, 'pushToLocal'],
@@ -19,15 +19,12 @@ export const pushToLocal = makeAsyncResultFunc(
       basePath: SyncablePath;
       item: PushItem;
     }
-  ): PR<undefined, 'not-found'> => {
-    const itemType = extractSyncableItemTypeFromPath(basePath);
-    switch (itemType) {
-      case 'file':
-        return await pushFileToLocal(trace, userFs, item as PushFile, { path: basePath });
-
-      case 'bundle':
-      case 'folder':
-        return await pushFolderLikeItemToLocal(trace, userFs, item as PushFolderLikeItem, { path: basePath });
+  ): PR<PullItem, 'not-found'> => {
+    const pushed = await disableSyncableValidation(pushItemToLocal)(trace, userFs, { basePath, item });
+    if (!pushed.ok) {
+      return pushed;
     }
+
+    return await pullFromLocal(trace, userFs, { basePath, localHashesRelativeToBasePath: {}, sendData: false });
   }
 );

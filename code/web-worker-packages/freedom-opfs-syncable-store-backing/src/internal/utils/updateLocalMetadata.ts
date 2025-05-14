@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { withAcquiredLock } from 'freedom-locking-types';
 import { parse, stringify } from 'freedom-serialization';
-import { type LocalItemMetadata, mergeLocalItemMetadata, type SyncablePath } from 'freedom-sync-types';
+import { type LocalItemMetadata, type SyncablePath } from 'freedom-sync-types';
 import { syncableStoreBackingItemMetadataSchema } from 'freedom-syncable-store-backing-types';
 
 import { getDirectoryHandleAndFilenameForMetadataFile } from './getDirectoryHandleAndFilenameForMetadataFile.ts';
@@ -45,9 +45,11 @@ export const updateLocalMetadata = makeAsyncResultFunc(
         return metadata;
       }
 
-      mergeLocalItemMetadata(metadata.value, metadataChanges);
-
-      const outMetadataJsonString = await stringify(trace, metadata.value, syncableStoreBackingItemMetadataSchema);
+      const outMetadataJsonString = await stringify(
+        trace,
+        { ...metadata.value, ...metadataChanges },
+        syncableStoreBackingItemMetadataSchema
+      );
       if (!outMetadataJsonString.ok) {
         return outMetadataJsonString;
       }

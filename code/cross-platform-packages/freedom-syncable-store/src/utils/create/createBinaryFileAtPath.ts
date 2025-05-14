@@ -5,7 +5,7 @@ import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } fro
 import { syncableItemTypes } from 'freedom-sync-types';
 import type { MutableSyncableFileAccessor, MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation } from '../../context/isSyncableValidationEnabled.ts';
 import { getMutableSyncableAtPath } from '../get/getMutableSyncableAtPath.ts';
 
 export const createBinaryFileAtPath = makeAsyncResultFunc(

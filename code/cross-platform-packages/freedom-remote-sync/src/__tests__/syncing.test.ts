@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
-import type { PR } from 'freedom-async';
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
@@ -11,17 +10,27 @@ import type { UserKeys } from 'freedom-crypto-service';
 import { makeUserKeys } from 'freedom-crypto-service';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
-import { pullFromLocal, pushToLocal } from 'freedom-local-sync';
-import type { PullItem } from 'freedom-sync-types';
-import { DEFAULT_SALT_ID, remoteIdInfo, storageRootIdInfo } from 'freedom-sync-types';
-import { DefaultSyncableStore, generateProvenanceForNewSyncableStore, getBundleAtPath, initializeRoot } from 'freedom-syncable-store';
+import { DEFAULT_SALT_ID, plainId, storageRootIdInfo } from 'freedom-sync-types';
+import {
+  createBundleAtPath,
+  createFolderAtPath,
+  createStringFileAtPath,
+  DefaultSyncableStore,
+  generateProvenanceForNewSyncableStore,
+  initializeRoot
+} from 'freedom-syncable-store';
 import { makeUserKeysForTesting } from 'freedom-syncable-store/tests';
 import { ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
-import { expectEventually, expectOk } from 'freedom-testing-tools';
+import type { ExpectEventuallyOptions } from 'freedom-testing-tools';
+import { expectDeepStrictEqual, expectEventually, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
-import type { RemoteSyncService } from '../types/RemoteSyncService.ts';
-import { makeSyncService } from '../utils/makeSyncService.ts';
+import { makeSyncServiceForTesting as makeSyncServiceForTestingWithAllDetails } from '../__test_dependency__/makeSyncServiceForTesting.ts';
+import { expectDidPullPath } from '../tests/expectDidPullPath.ts';
+import { expectDidPushPath } from '../tests/expectDidPushPath.ts';
+import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
+import type { ShouldPullFromRemoteFunc } from '../types/ShouldPullFromRemoteFunc.ts';
+import type { ShouldPushToRemoteFunc } from '../types/ShouldPushToRemoteFunc.ts';
 
 describe('syncing', () => {
   let localTrace!: Trace;
@@ -29,7 +38,6 @@ describe('syncing', () => {
   let localUserKeys!: UserKeys;
   let localStoreBacking!: InMemorySyncableStoreBacking;
   let localStore!: DefaultSyncableStore;
-  let localSyncService!: RemoteSyncService;
 
   let remoteTrace!: Trace;
   let remoteUserKeys!: UserKeys;
@@ -86,51 +94,258 @@ describe('syncing', () => {
       creatorPublicKeys,
       saltsById: { [DEFAULT_SALT_ID]: defaultSalt }
     });
+  });
 
-    const newSyncService = makeSyncService(localTrace, {
-      getSyncStrategyForPath: () => 'item',
-      remoteConnections: [
-        {
-          accessor: {
-            remoteId: remoteIdInfo.make('test'),
-            puller: async (trace, { basePath, localHashesRelativeToBasePath, glob, sendData = false }): PR<PullItem, 'not-found'> =>
-              await pullFromLocal(trace, remoteStore, { basePath, localHashesRelativeToBasePath, glob, sendData }),
-            pusher: async (trace, { basePath, item }): PR<undefined, 'not-found'> =>
-              await pushToLocal(trace, remoteStore, { basePath, item })
-          },
-          changeNotificationClient: { addListener: () => () => {} }
-        }
-      ],
-      shouldPullFromRemote: () => ({ strategy: 'item' }),
-      shouldPushToRemote: () => ({ strategy: 'item' }),
-      store: localStore,
-      shouldRecordLogs: true
-    });
+  const makeSyncServiceForTesting = (fwd: {
+    getSyncStrategyForPath: GetSyncStrategyForPathFunc;
+    shouldPullFromRemote: ShouldPullFromRemoteFunc;
+    shouldPushToRemote: ShouldPushToRemoteFunc;
+  }) => {
+    const newSyncService = makeSyncServiceForTestingWithAllDetails({ ...fwd, localTrace, localStore, remoteTrace, remoteStore });
     expectOk(newSyncService);
 
-    localSyncService = newSyncService.value;
+    return newSyncService.value;
+  };
+
+  // access control bundle + access control snapshots bundle + access control snapshot file + access control deltas bundle
+  const numBaseFiles = 4;
+
+  describe('empty store (other than access control bundle)', () => {
+    it('full item-by-item syncing should work', async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => 'item',
+        shouldPullFromRemote: () => ({ strategy: 'item' }),
+        shouldPushToRemote: () => ({ strategy: 'item' })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(remoteTrace, async (remoteTrace) => {
+          expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+        });
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      const logs = syncService.devLogging.getLogEntries();
+      // - pull: root
+      // - push: access control bundle
+      // - push: access control snapshots bundle
+      // - push: access control snapshot file
+      // - push: access control deltas bundle
+      expectStrictEqual(logs.length, 1 + numBaseFiles);
+      await expectDidPullPath(logs, localStore.path);
+      await expectDidPushPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID));
+      await expectDidPushPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID({ encrypted: false })));
+      // Not explicitly checking the names of the snapshot file or deltas bundle for simplicity
+    });
+
+    it('full level syncing should work', async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => 'level',
+        shouldPullFromRemote: () => ({ strategy: 'level' }),
+        shouldPushToRemote: () => ({ strategy: 'level' })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(remoteTrace, async (remoteTrace) => {
+          expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+        });
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      const logs = syncService.devLogging.getLogEntries();
+      // - pull: root
+      // - push: root (including access control bundle)
+      // - pull: root access control bundle
+      // - push: access control bundle (including snapshots and deltas bundles)
+      // - pull: access control snapshots bundle
+      // - push: access control snapshots bundle (including snapshot file)
+      expectStrictEqual(logs.length, 6);
+      await expectDidPullPath(logs, localStore.path);
+      await expectDidPushPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID));
+      await expectDidPullPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID({ encrypted: false })));
+    });
+
+    it('full stack syncing should work', async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => 'stack',
+        shouldPullFromRemote: () => ({ strategy: 'stack' }),
+        shouldPushToRemote: () => ({ strategy: 'stack' })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(remoteTrace, async (remoteTrace) => {
+          expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+        });
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      const logs = syncService.devLogging.getLogEntries();
+      expectStrictEqual(logs.length, 2); // 1 pull and 1 push
+      await expectDidPullPath(logs, localStore.path);
+      await expectDidPushPath(logs, localStore.path);
+    });
   });
 
-  it('should work', async () => {
-    expectOk(await localSyncService.start(localTrace));
+  describe('populated store', () => {
+    let extraItemsAdded = 0;
+    beforeEach(async () => {
+      expectOk(await createFolderAtPath(localTrace, localStore, localStore.path.append(plainId('folder', 'test-folder'))));
+      extraItemsAdded += 5; // 1 folder, 1 access control bundle, 1 snapshots bundle, 1 snapshots file, and 1 deltas bundle
 
-    try {
-      await disableLam(true, (remoteTrace) =>
-        expectEventually(async () => {
-          expectOk(await getBundleAtPath(remoteTrace, remoteStore, remoteStore.path.append(ACCESS_CONTROL_BUNDLE_ID)));
-          expectOk(
-            await getBundleAtPath(
-              remoteTrace,
-              remoteStore,
-              remoteStore.path.append(ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID({ encrypted: false }))
-            )
-          );
-        })
-      )(remoteTrace);
-    } finally {
-      expectOk(await localSyncService.stop(localTrace));
-    }
+      expectOk(
+        await createBundleAtPath(
+          localTrace,
+          localStore,
+          localStore.path.append(plainId('folder', 'test-folder'), plainId('bundle', 'test-bundle'))
+        )
+      );
+      extraItemsAdded += 1;
 
-    console.log('FOOBARBLA localSyncService.devLogging.getLogEntries()', localSyncService.devLogging.getLogEntries());
+      expectOk(
+        await createStringFileAtPath(
+          localTrace,
+          localStore,
+          localStore.path.append(plainId('folder', 'test-folder'), plainId('bundle', 'test-bundle'), plainId('file', 'testing1.txt')),
+          { value: 'Hello World!' }
+        )
+      );
+      extraItemsAdded += 1;
+
+      expectOk(
+        await createStringFileAtPath(
+          localTrace,
+          localStore,
+          localStore.path.append(plainId('folder', 'test-folder'), plainId('bundle', 'test-bundle'), plainId('file', 'testing2.txt')),
+          { value: 'Goodbye World!' }
+        )
+      );
+      extraItemsAdded += 1;
+
+      expectOk(
+        await createStringFileAtPath(
+          localTrace,
+          localStore,
+          localStore.path.append(plainId('folder', 'test-folder'), plainId('bundle', 'test-bundle'), plainId('file', 'testing3.txt')),
+          { value: 'A' }
+        )
+      );
+      extraItemsAdded += 1;
+
+      expectOk(
+        await createStringFileAtPath(
+          localTrace,
+          localStore,
+          localStore.path.append(plainId('folder', 'test-folder'), plainId('bundle', 'test-bundle'), plainId('file', 'testing4.txt')),
+          { value: 'B' }
+        )
+      );
+      extraItemsAdded += 1;
+
+      expectOk(
+        await createStringFileAtPath(
+          localTrace,
+          localStore,
+          localStore.path.append(plainId('folder', 'test-folder'), plainId('bundle', 'test-bundle'), plainId('file', 'testing5.txt')),
+          { value: 'C' }
+        )
+      );
+      extraItemsAdded += 1;
+    });
+
+    it('full item-by-item syncing should work', async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => 'item',
+        shouldPullFromRemote: () => ({ strategy: 'item' }),
+        shouldPushToRemote: () => ({ strategy: 'item' })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(remoteTrace, async (remoteTrace) => {
+          expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+        });
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      const logs = syncService.devLogging.getLogEntries();
+      // same as empty case above + 1 push per extra item added
+      expectStrictEqual(logs.length, 1 + numBaseFiles + extraItemsAdded);
+    });
+
+    it('full level syncing should work', async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => 'level',
+        shouldPullFromRemote: () => ({ strategy: 'level' }),
+        shouldPushToRemote: () => ({ strategy: 'level' })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(remoteTrace, async (remoteTrace) => {
+          expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+        });
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      const logs = syncService.devLogging.getLogEntries();
+      // - pull: root
+      // - push: root (including access control bundle and test-folder)
+      // - pull: root access control bundle
+      // - push: root access control bundle (including snapshots and deltas bundles)
+      // - pull: root access control snapshots bundle
+      // - push: root access control snapshot file
+      // - pull: test-folder
+      // - push: test-folder (including access control bundle and test-bundle)
+      // - pull: test-folder access control bundle
+      // - push: test-folder access control bundle (including snapshots and deltas bundles)
+      // - pull: test-folder access control snapshots bundle
+      // - pull: test-folder access control snapshot file
+      // - pull: test-bundle
+      // - push: test-bundle (including all testing*.txt files)
+      // depending on the exact timing of things, test-folder may be requested twice
+      expectStrictEqual(logs.length <= 15, true);
+    });
+
+    it('full stack syncing should work', async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => 'stack',
+        shouldPullFromRemote: () => ({ strategy: 'stack' }),
+        shouldPushToRemote: () => ({ strategy: 'stack' })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(remoteTrace, async (remoteTrace) => {
+          expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+        });
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      const logs = syncService.devLogging.getLogEntries();
+      // pull: root
+      // push: root
+      // depending on the exact timing of things, a pull: test-folder may or may not be present
+      expectStrictEqual(logs.length <= 3, true);
+    });
   });
 });
+
+// Helpers
+
+const noLoggingExpectEventually = (trace: Trace, callback: (trace: Trace) => Promise<void>, options?: ExpectEventuallyOptions) =>
+  disableLam(true, (trace) => expectEventually(() => callback(trace), options))(trace);

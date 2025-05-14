@@ -34,7 +34,12 @@ export const pushFolderLikeItemToLocal = makeAsyncResultFunc(
         return makeSuccess(undefined);
       }
 
-      return await pushToLocal(trace, userFs, { basePath: path.append(id), item: subItem });
+      const pushed = await pushToLocal(trace, userFs, { basePath: path.append(id), item: subItem });
+      if (!pushed.ok) {
+        return pushed;
+      }
+
+      return makeSuccess(undefined);
     });
     if (!pushedSubItems.ok) {
       return pushedSubItems;

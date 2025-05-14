@@ -85,7 +85,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
 
     const pusher: SyncPusher = makeAsyncResultFunc(
       [import.meta.filename, 'pusher'],
-      async (trace, body): PR<undefined, 'not-found'> => {
+      async (trace, body): PR<PullItem, 'not-found'> => {
         // not-found happens during push fairly commonly when doing an initial sync to a server and simultaneously updating the client,
         // because the client will try to push newer content before the base folders have been initially pushed -- but this will
         // automatically get resolved as the initial sync continues
@@ -94,7 +94,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
           return pushed;
         }
 
-        return makeSuccess(undefined);
+        return makeSuccess(pushed.value.body);
       },
       { deepDisableLam: 'not-found' }
     );

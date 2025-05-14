@@ -6,9 +6,10 @@ import type { SyncableItemMetadata } from 'freedom-sync-types';
 import { syncableItemTypes, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID } from 'freedom-syncable-store-types';
+import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { lastIndexOf } from 'lodash-es';
 
-import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation } from '../../context/isSyncableValidationEnabled.ts';
 import { getMutableParentSyncable } from '../get/getMutableParentSyncable.ts';
 
 // TODO: reenable validation in a smarter way
@@ -34,7 +35,12 @@ export const createViaSyncPreEncodedBinaryFileAtPath = makeAsyncResultFunc(
         return parent;
       }
 
-      const created = await parent.value.createBinaryFile(trace, { mode: 'via-sync', id: path.lastId!, encodedValue, metadata });
+      const created = await disableLam('conflict', parent.value.createBinaryFile)(trace, {
+        mode: 'via-sync',
+        id: path.lastId!,
+        encodedValue,
+        metadata
+      });
       if (!created.ok) {
         if (created.value.errorCode === 'conflict') {
           // If there's a conflict, we can ignore it because the file already exists

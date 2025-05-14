@@ -3,7 +3,7 @@ import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, mergeLocalItemMetadata, syncableItemTypes } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, syncableItemTypes } from 'freedom-sync-types';
 import type {
   SyncableStoreBacking,
   SyncableStoreBackingFileAccessor,
@@ -238,7 +238,8 @@ export class InMemorySyncableStoreBacking implements SyncableStoreBacking {
         return found;
       }
 
-      mergeLocalItemMetadata(found.value.metadata, metadataChanges);
+      // Updating in memory
+      found.value.metadata = { ...found.value.metadata, ...metadataChanges };
 
       return makeSuccess(undefined);
     }

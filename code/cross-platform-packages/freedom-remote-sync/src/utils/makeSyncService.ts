@@ -1,7 +1,6 @@
 import type { PR, Result } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess, makeSyncResultFunc } from 'freedom-async';
 import { objectKeys } from 'freedom-cast';
-import { makeUuid } from 'freedom-contexts';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
 import type { RemoteAccessor, RemoteConnection, RemoteId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
@@ -48,8 +47,8 @@ export const makeSyncService = makeSyncResultFunc(
       onStop
     }: MakeSyncServiceArgs
   ): Result<RemoteSyncService> => {
-    const pullQueue = new TaskQueue('[SYNC] pull-queue', trace);
-    const pushQueue = disableLam('not-found', (trace) => new TaskQueue('[SYNC] push-queue', trace))(trace);
+    const pullQueue = disableLam('not-found', (trace) => new TaskQueue('[SYNC] pull-queue', trace))(trace);
+    const pushQueue = new TaskQueue('[SYNC] push-queue', trace);
 
     let detachSyncService: () => void = noop;
 
@@ -76,7 +75,18 @@ export const makeSyncService = makeSyncResultFunc(
         [import.meta.filename, 'enqueuePullFromRemotes'],
         (trace, { remoteId = defaultRemoteId, basePath, hash, glob, strategy, priority = 'default' }) => {
           const key = basePath.toString();
-          const version = glob !== undefined ? makeUuid() : JSON.stringify({ remoteId, hash, strategy });
+          const version = JSON.stringify({
+            remoteId,
+            hash,
+            strategy: glob !== undefined ? undefined : strategy,
+            glob:
+              glob !== undefined
+                ? {
+                    include: glob.include.map((pattern) => pattern.toString()).sort(),
+                    exclude: glob.exclude?.map((pattern) => pattern.toString()).sort()
+                  }
+                : undefined
+          });
 
           DEV: debugTopic('SYNC', (log) =>
             log(trace, `Pull enqueued ${basePath.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
@@ -88,14 +98,26 @@ export const makeSyncService = makeSyncResultFunc(
           );
 
           return makeSuccess(undefined);
-        }
+        },
+        { deepDisableLam: 'not-found' }
       ),
 
       enqueuePushToRemotes: makeSyncResultFunc(
         [import.meta.filename, 'enqueuePushToRemotes'],
         (trace, { remoteId = defaultRemoteId, basePath, hash, glob, strategy, priority = 'default' }) => {
           const key = basePath.toString();
-          const version = glob !== undefined ? makeUuid() : JSON.stringify({ remoteId, hash, strategy });
+          const version = JSON.stringify({
+            remoteId,
+            hash,
+            strategy: glob !== undefined ? undefined : strategy,
+            glob:
+              glob !== undefined
+                ? {
+                    include: glob.include.map((pattern) => pattern.toString()).sort(),
+                    exclude: glob.exclude?.map((pattern) => pattern.toString()).sort()
+                  }
+                : undefined
+          });
 
           DEV: debugTopic('SYNC', (log) =>
             log(trace, `Push enqueued ${basePath.toShortString()} for ${remoteId !== undefined ? `remote ${remoteId}` : 'any remote'}`)
@@ -113,7 +135,8 @@ export const makeSyncService = makeSyncResultFunc(
       pullFromRemotes: makeAsyncResultFunc(
         [import.meta.filename, 'pullFromRemotes'],
         async (trace, { remoteId = defaultRemoteId, basePath, glob, strategy }): PR<undefined, 'not-found'> =>
-          await pullFromRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy })
+          await pullFromRemotes(trace, { store, syncService: service }, { remoteId, basePath, glob, strategy }),
+        { deepDisableLam: 'not-found' }
       ),
 
       pushToRemotes: makeAsyncResultFunc(

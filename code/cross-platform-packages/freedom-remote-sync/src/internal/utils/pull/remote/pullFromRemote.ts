@@ -6,6 +6,7 @@ import { type MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
 import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
+import { makeRemoteSyncLogEntryPull } from '../../log-entries/makeRemoteSyncLogEntryPull.ts';
 import { pushItemToLocal } from '../../push/local/pushItemToLocal.ts';
 import { getSyncPullArgsForGlob } from './getSyncPullArgsForGlob.ts';
 import { getSyncPullArgsForStrategy } from './getSyncPullArgsForStrategy.ts';
@@ -29,8 +30,8 @@ export const pullFromRemote = makeAsyncResultFunc(
       strategy?: SyncStrategy;
     }
   ): PR<undefined, 'not-found'> => {
-    const pullFromRemote = syncService.remoteAccessors[remoteId]?.puller;
-    if (pullFromRemote === undefined) {
+    const pullFromRemoteUsingRemoteAccessor = syncService.remoteAccessors[remoteId]?.puller;
+    if (pullFromRemoteUsingRemoteAccessor === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
     }
 
@@ -46,11 +47,11 @@ export const pullFromRemote = makeAsyncResultFunc(
 
     // TODO: everything pulled needs to be validated -- approved content: just validate the approval itself; not-yet approved content:
     // validate the change against the access control document
-    const pulled = await pullFromRemote(trace, requestArgs.value);
+    const pulled = await pullFromRemoteUsingRemoteAccessor(trace, requestArgs.value);
     if (!pulled.ok) {
       return pulled;
     }
-    DEV: syncService.devLogging.appendLogEntry?.({ type: 'pull', remoteId, path: basePath, outOfSync: pulled.value !== 'in-sync' });
+    DEV: syncService.devLogging.appendLogEntry?.(makeRemoteSyncLogEntryPull({ remoteId, path: basePath, pulled: pulled.value }));
 
     DEV: debugTopic('SYNC', (log) =>
       log(trace, `Pulled ${basePath.toShortString()}: local and remote are ${pulled.value === 'in-sync' ? 'in sync' : 'out of sync'}`)

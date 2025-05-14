@@ -3,7 +3,7 @@ import { makeAsyncResultFunc } from 'freedom-async';
 import type { DynamicSyncableItemName, SyncableOriginOptions, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableFolderAccessor, MutableSyncableStore } from 'freedom-syncable-store-types';
 
-import { disableSyncableValidation } from '../../internal/context/isSyncableValidationEnabled.ts';
+import { disableSyncableValidation } from '../../context/isSyncableValidationEnabled.ts';
 import { getMutableSyncableAtPath } from '../get/getMutableSyncableAtPath.ts';
 
 export const createFolderAtPath = makeAsyncResultFunc(

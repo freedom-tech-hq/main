@@ -15,8 +15,8 @@ export const pullAccessControlBundleForFolder = makeAsyncResultFunc(
     { store, syncService }: { store: MutableSyncableStore; syncService: RemoteSyncService },
     { remoteId, folderPath }: { remoteId: RemoteId; folderPath: SyncablePath }
   ): PR<undefined, 'not-found'> => {
-    const pullFromRemote = syncService.remoteAccessors[remoteId]?.puller;
-    if (pullFromRemote === undefined) {
+    const pullFromRemoteUsingRemoteAccessor = syncService.remoteAccessors[remoteId]?.puller;
+    if (pullFromRemoteUsingRemoteAccessor === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
     }
 
@@ -29,7 +29,7 @@ export const pullAccessControlBundleForFolder = makeAsyncResultFunc(
       return localHashesRelativeToBasePath;
     }
 
-    const pulledAccessControlBundle = await pullFromRemote(trace, {
+    const pulledAccessControlBundle = await pullFromRemoteUsingRemoteAccessor(trace, {
       basePath: accessControlBundlePath,
       sendData: true,
       localHashesRelativeToBasePath: localHashesRelativeToBasePath.value,

@@ -1,11 +1,14 @@
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
-import type { RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import type { PullOutOfSyncFolderLikeItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath } from 'freedom-sync-types';
 import { type SyncableStore } from 'freedom-syncable-store-types';
 
 import type { RemoteSyncService } from '../../../../types/RemoteSyncService.ts';
 import type { SyncStrategy } from '../../../../types/SyncStrategy.ts';
+import { makeRemoteSyncLogEntryPush } from '../../log-entries/makeRemoteSyncLogEntryPush.ts';
+import { enqueueFollowUpSyncsIfNeeded } from '../local/enqueueFollowUpSyncsIfNeeded.ts';
 import { getSyncPushArgsForGlob } from './getSyncPushArgsForGlob.ts';
 import { getSyncPushArgsForStrategy } from './getSyncPushArgsForStrategy.ts';
 
@@ -26,8 +29,8 @@ export const pushToRemote = makeAsyncResultFunc(
       strategy?: SyncStrategy;
     }
   ): PR<undefined, 'not-found'> => {
-    const pushToRemote = syncService.remoteAccessors[remoteId]?.pusher;
-    if (pushToRemote === undefined) {
+    const pushToRemoteUsingRemoteAccessor = syncService.remoteAccessors[remoteId]?.pusher;
+    if (pushToRemoteUsingRemoteAccessor === undefined) {
       return makeFailure(new InternalStateError(trace, { message: `No remote accessor found for ${remoteId}` }));
     }
 
@@ -42,15 +45,26 @@ export const pushToRemote = makeAsyncResultFunc(
       return requestArgs;
     }
 
-    const pushed = await pushToRemote(trace, requestArgs.value);
+    const pushed = await pushToRemoteUsingRemoteAccessor(trace, requestArgs.value);
     if (!pushed.ok) {
       return pushed;
     }
-    DEV: syncService.devLogging.appendLogEntry?.({ type: 'push', remoteId, path: basePath });
+    DEV: syncService.devLogging.appendLogEntry?.(makeRemoteSyncLogEntryPush({ remoteId, path: basePath, pushed: requestArgs.value.item }));
 
     DEV: debugTopic('SYNC', (log) => log(trace, `Pushed ${basePath.toShortString()}`));
 
-    return makeSuccess(undefined);
+    const itemType = extractSyncableItemTypeFromPath(basePath);
+    switch (itemType) {
+      case 'file':
+        return makeSuccess(undefined);
+      case 'bundle':
+      case 'folder':
+        return await enqueueFollowUpSyncsIfNeeded(
+          trace,
+          { store, syncService, item: pushed.value as PullOutOfSyncFolderLikeItem },
+          { remoteId, path: basePath }
+        );
+    }
   },
   { deepDisableLam: 'not-found' }
 );
