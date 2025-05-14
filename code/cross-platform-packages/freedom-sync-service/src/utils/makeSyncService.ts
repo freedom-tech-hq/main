@@ -11,6 +11,7 @@ import type { TypeOrPromisedType } from 'yaschema';
 
 import { DEFAULT_MAX_PULL_CONCURRENCY, DEFAULT_MAX_PUSH_CONCURRENCY } from '../consts/concurrency.ts';
 import { attachSyncServiceToSyncableStore } from '../internal/utils/attachSyncServiceToSyncableStore.ts';
+import { pullGlobFromRemotes } from '../internal/utils/pullGlobFromRemotes.ts';
 import { pullSyncableFromRemotes } from '../internal/utils/pullSyncableFromRemotes.ts';
 import { pushSyncableToRemotes } from '../internal/utils/pushSyncableToRemotes.ts';
 import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
@@ -109,6 +110,12 @@ export const makeSyncService = makeAsyncResultFunc(
           return makeSuccess(pushed.value);
         });
       },
+
+      immediatelyPullGlobFromRemotes: makeAsyncResultFunc(
+        [import.meta.filename, 'immediatelyPullGlobFromRemotes'],
+        async (trace, { remoteId, basePath, include, exclude }): PR<undefined, 'not-found'> =>
+          await pullGlobFromRemotes(trace, { store, syncService: service }, { remoteId, basePath, include, exclude })
+      ),
 
       start: makeAsyncResultFunc(
         [import.meta.filename, 'start'],

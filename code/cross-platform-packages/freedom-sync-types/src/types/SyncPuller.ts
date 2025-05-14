@@ -1,17 +1,26 @@
 import type { PRFunc } from 'freedom-async';
-import { sha256HashInfo } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
 import type { SyncPullResponse } from './pull-responses/SyncPullResponse.ts';
+import { structHashesSchema } from './StructHashes.ts';
 import { syncablePathSchema } from './SyncablePath.ts';
-import { syncStrategies } from './SyncStrategy.ts';
+import { syncablePathPatternSchema } from './SyncablePathPattern.ts';
 
 export const syncPullArgsSchema = schema.object({
-  path: syncablePathSchema,
-  hash: sha256HashInfo.schema.optional(),
-  /** @defaultValue `false` */
+  basePath: syncablePathSchema,
+  /** Hashes for the base path and may include hashes for the relative paths matching any of the specified glob-like patterns as well.  An
+   * `undefined` / missing value indicates that the local doesn't have the item. */
+  localHashesRelativeToBasePath: structHashesSchema,
+  /**
+   * If `true` data will be included for out-of-sync files.
+   *
+   * @defaultValue `false`
+   */
   sendData: schema.boolean().optional(),
-  strategy: schema.string(...syncStrategies)
+  /** glob-like patterns to include */
+  include: schema.array({ items: syncablePathPatternSchema }).optional(),
+  /** glob-like patterns to exclude */
+  exclude: schema.array({ items: syncablePathPatternSchema }).optional()
 });
 export type SyncPullArgs = typeof syncPullArgsSchema.valueType;
 

@@ -1,11 +1,10 @@
 import type { PR } from 'freedom-async';
-import { bestEffort, makeAsyncResultFunc, makeFailure, makeSuccess, sleep, uncheckedResult } from 'freedom-async';
-import { base64String, ONE_SEC_MSEC, type Uuid } from 'freedom-basic-data';
+import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
+import { base64String, type Uuid } from 'freedom-basic-data';
 import { NotFoundError } from 'freedom-common-errors';
 import { decryptBufferWithPassword } from 'freedom-crypto';
-import { doSoon } from 'freedom-do-soon';
 import type { EmailUserId } from 'freedom-email-sync';
-import { createInitialSyncableStoreStructureForUser, decryptEmailCredentialWithPassword } from 'freedom-email-user';
+import { decryptEmailCredentialWithPassword } from 'freedom-email-user';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
@@ -68,22 +67,6 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
     if (!syncableStoreResult.ok) {
       return syncableStoreResult;
     }
-    const userFs = syncableStoreResult.value;
-
-    // Calling this every time we activate a user in case our code has changed to need a different structure.  This ignores conflicts
-    doSoon(trace, (trace) =>
-      bestEffort(trace, async (trace) => {
-        // Waiting 10 seconds to give a chance to sync first
-        await sleep(10 * ONE_SEC_MSEC);
-
-        const createdStructure = await createInitialSyncableStoreStructureForUser(trace, userFs);
-        if (!createdStructure.ok) {
-          return createdStructure;
-        }
-
-        return makeSuccess(undefined);
-      })
-    );
 
     activeCredential.credential = decryptedCredential.value;
 
