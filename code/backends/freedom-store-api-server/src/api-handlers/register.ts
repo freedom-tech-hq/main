@@ -23,7 +23,8 @@ export default makeHttpApiHandler(
           storageRootId, // It emerges on the client and it is globally unique
           metadata, // Provenance (origin - signature, acceptance)
           creatorPublicKeys, // 2 public keys: verification and encryption
-          saltsById // { SALT_default: 'salt-value' } - there's a constant for SALT_default
+          saltsById, // { SALT_default: 'salt-value' } - there's a constant for SALT_default
+          encryptedCredentials = null
         }
       }
     }
@@ -44,7 +45,8 @@ export default makeHttpApiHandler(
       email,
       userId,
       publicKeys: creatorPublicKeys,
-      defaultSalt: saltsById[DEFAULT_SALT_ID]! // TODO: Require presence
+      defaultSalt: saltsById[DEFAULT_SALT_ID]!, // TODO: Require presence
+      encryptedCredentials
     });
     if (!userAdded.ok) {
       return userAdded;

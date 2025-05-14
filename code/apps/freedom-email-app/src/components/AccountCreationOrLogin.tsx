@@ -4,6 +4,7 @@ import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListIte
 import { bestEffort } from 'freedom-async';
 import { base64String, type Uuid } from 'freedom-basic-data';
 import { log, makeTrace, makeUuid } from 'freedom-contexts';
+import type { EmailUserId } from 'freedom-email-sync';
 import type {
   LocallyStoredEncryptedEmailCredentialInfo,
   LocallyStoredEncryptedEmailCredentialPasswordType
@@ -25,6 +26,7 @@ import { useTaskWaitable } from '../hooks/useTaskWaitable.ts';
 import { registerWebAuthnCredential } from '../utils/webauthn/registerWebAuthnCredential.ts';
 import type { AppTheme } from './AppTheme.tsx';
 import { ConfirmationDialog } from './ConfirmationDialog.tsx';
+import { LoginFromServerDialog } from './new-account/LoginFromServerDialog.tsx';
 import { NewAccountMasterPasswordDialog } from './new-account/NewAccountMasterPasswordDialog.tsx';
 import { UnlockAccountMasterPasswordDialog } from './new-account/UnlockAccountMasterPasswordDialog.tsx';
 
@@ -35,6 +37,7 @@ const $addBiometricsMessage = LOCALIZE(
   "For your convenience, your device's biometrics capabilities (ex. Touch ID) may be used to unlock your account.  Would you like to setup biometric security now?"
 )({ ns });
 const $importCredential = LOCALIZE('Import Credential')({ ns });
+const $loginFromServer = LOCALIZE('Login from Server')({ ns });
 const $newAccount = LOCALIZE('New Account')({ ns });
 const $untitled = LOCALIZE('untitled')({ ns });
 
@@ -111,6 +114,31 @@ export const AccountCreationOrLogin = () => {
     elem.click();
   });
 
+  const dismissLoginFromServerDialog = useRef<() => void>(noop);
+  const onLoginFromServerButtonClick = useCallbackRef(() => {
+    if (tasks === undefined) {
+      return; // Not ready
+    }
+
+    dismissLoginFromServerDialog.current = transientContent.present(({ dismiss }) => (
+      <LoginFromServerDialog dismiss={dismiss} onLogin={onSuccessLoginFromServerDialog} />
+    ));
+  });
+
+  const onSuccessLoginFromServerDialog = useCallbackRef(
+    async ({ userId, locallyStoredCredentialUuid }: { userId: EmailUserId; locallyStoredCredentialUuid: Uuid }) => {
+      // Close the dialog
+      dismissLoginFromServerDialog.current();
+
+      // TODO: Is this enough?
+      activeLocallyStoredCredentialUuid.set(locallyStoredCredentialUuid);
+      activeUserId.set(userId);
+
+      // Redirect
+      history.replace('/mail');
+    }
+  );
+
   const dismissNewAccountDialog = useRef<() => void>(noop);
   const onNewAccountButtonClick = useCallbackRef(() => {
     if (tasks === undefined) {
@@ -122,47 +150,50 @@ export const AccountCreationOrLogin = () => {
     ));
   });
 
-  const onSubmitNewAccountDialog = useCallbackRef(async ({ masterPassword }: { masterPassword: string }) => {
-    if (isBusy.get()) {
-      return;
-    }
-
-    dismissNewAccountDialog.current();
-
-    isBusy.set(true);
-    try {
-      const description = `${makeUuid()}@freedommail.me - ${new Date().toISOString()}`;
-      const created = await tasks!.createUser({
-        install: { description },
-        password: masterPassword
-      });
-      if (!created.ok) {
-        // TODO: better error visibility
-        log().error?.('Failed to create user', created.value);
+  const onSubmitNewAccountDialog = useCallbackRef(
+    async ({ masterPassword }: { masterPassword: string; saveCredentialsOnServer: boolean }) => {
+      if (isBusy.get()) {
         return;
       }
 
-      history.replace('/mail');
+      dismissNewAccountDialog.current();
 
-      activeLocallyStoredCredentialUuid.set(created.value.locallyStoredCredentialUuid);
-      activeUserId.set(created.value.userId);
-
-      // After successful account creation, try to register a WebAuthn credential
-      if (created.value.locallyStoredCredentialUuid !== undefined && window.PublicKeyCredential !== undefined) {
-        const trace = makeTrace(import.meta.filename, 'onSubmitNewAccountDialog');
-        const registered = await registerWebAuthnCredential(trace, {
-          localCredentialUuid: created.value.locallyStoredCredentialUuid,
-          description
+      isBusy.set(true);
+      try {
+        const description = `${makeUuid()}@freedommail.me - ${new Date().toISOString()}`;
+        const created = await tasks!.createUser({
+          install: { description },
+          password: masterPassword
+          // Here? saveCredentialsOnServer
         });
-        if (!registered.ok) {
-          log().error?.('Failed to register WebAuthn credential', registered.value);
+        if (!created.ok) {
+          // TODO: better error visibility
+          log().error?.('Failed to create user', created.value);
           return;
         }
+
+        history.replace('/mail');
+
+        activeLocallyStoredCredentialUuid.set(created.value.locallyStoredCredentialUuid);
+        activeUserId.set(created.value.userId);
+
+        // After successful account creation, try to register a WebAuthn credential
+        if (created.value.locallyStoredCredentialUuid !== undefined && window.PublicKeyCredential !== undefined) {
+          const trace = makeTrace(import.meta.filename, 'onSubmitNewAccountDialog');
+          const registered = await registerWebAuthnCredential(trace, {
+            localCredentialUuid: created.value.locallyStoredCredentialUuid,
+            description
+          });
+          if (!registered.ok) {
+            log().error?.('Failed to register WebAuthn credential', registered.value);
+            return;
+          }
+        }
+      } finally {
+        isBusy.set(false);
       }
-    } finally {
-      isBusy.set(false);
     }
-  });
+  );
 
   const dismissUnlockAccountMasterPasswordDialog = useRef<() => void>(noop);
   const onOpenAccountButtonClick = useCallbackRef((credentialInfo: LocallyStoredEncryptedEmailCredentialInfo) => {
@@ -302,6 +333,10 @@ export const AccountCreationOrLogin = () => {
 
                 <ListItemButton onClick={onImportCredentialButtonClick} sx={{ borderTop: `1px solid ${theme.palette.divider}` }}>
                   <ListItemText primary={$importCredential(t)} slotProps={emphasizedListItemButtonTextSlotProps} />
+                </ListItemButton>
+
+                <ListItemButton onClick={onLoginFromServerButtonClick} sx={{ borderTop: `1px solid ${theme.palette.divider}` }}>
+                  <ListItemText primary={$loginFromServer(t)} slotProps={emphasizedListItemButtonTextSlotProps} />
                 </ListItemButton>
 
                 <ListItemButton onClick={onNewAccountButtonClick} sx={{ borderTop: `1px solid ${theme.palette.divider}` }}>

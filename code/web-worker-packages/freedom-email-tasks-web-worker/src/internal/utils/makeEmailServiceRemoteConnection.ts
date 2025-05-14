@@ -1,6 +1,6 @@
 import { excludeFailureResult, type PR, type PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { ONE_SEC_MSEC, sha256HashInfo } from 'freedom-basic-data';
+import { type Base64String, ONE_SEC_MSEC, sha256HashInfo } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { makeApiFetchTask } from 'freedom-fetching';
@@ -32,6 +32,7 @@ interface RegisterArgs {
   metadata: Omit<SyncableItemMetadata, 'name'>;
   creatorPublicKeys: CombinationCryptoKeySet;
   saltsById: SaltsById;
+  encryptedCredentials: Base64String | null;
 }
 
 export interface EmailServiceRemoteConnection extends ControllableRemoteConnection {

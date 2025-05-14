@@ -56,7 +56,9 @@ export const startSyncService = makeAsyncResultFunc(
       creatorPublicKeys: credential.privateKeys.publicOnly(),
       storageRootId: storageRootIdInfo.make(credential.userId),
       metadata: { provenance: rootMetadata.value.provenance },
-      saltsById: { [DEFAULT_SALT_ID]: syncableStore.saltsById[DEFAULT_SALT_ID] }
+      saltsById: { [DEFAULT_SALT_ID]: syncableStore.saltsById[DEFAULT_SALT_ID] },
+      // TODO: pass encrypted credentials from saveCredentialsOnServer@AccountCreationOrLogin.tsx
+      encryptedCredentials: null
     });
     if (!registered.ok) {
       return registered;
