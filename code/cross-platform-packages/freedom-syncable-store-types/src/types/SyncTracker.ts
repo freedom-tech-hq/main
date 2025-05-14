@@ -4,6 +4,7 @@ import type { SyncablePath } from 'freedom-sync-types';
 
 export interface SyncTrackerFolderAddedEvent {
   path: SyncablePath;
+  viaSync: boolean;
 }
 
 export interface SyncTrackerFolderRemovedEvent {
@@ -13,6 +14,7 @@ export interface SyncTrackerFolderRemovedEvent {
 export interface SyncTrackerItemAddedEvent {
   path: SyncablePath;
   hash: Sha256Hash;
+  viaSync: boolean;
 }
 
 export interface SyncTrackerItemAccessedEvent {

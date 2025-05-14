@@ -120,10 +120,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
     const start = makeAsyncResultFunc([import.meta.filename, 'start'], async (trace): PR<{ stop: PRFunc<undefined> }> => {
       await stop(trace);
 
-      // TODO: TEMP
-      if (Math.random() > 1) {
-        triggerFakeContentChangeInterval = setInterval(triggerFakeContentChange, 3 * ONE_SEC_MSEC);
-      }
+      triggerFakeContentChangeInterval = setInterval(triggerFakeContentChange, 3 * ONE_SEC_MSEC);
 
       return makeSuccess({ stop });
     });

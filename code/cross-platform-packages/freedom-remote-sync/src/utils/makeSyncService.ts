@@ -2,12 +2,12 @@ import type { PR, Result } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess, makeSyncResultFunc } from 'freedom-async';
 import { objectKeys } from 'freedom-cast';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
+import { NotificationManager } from 'freedom-notification-types';
 import type { PullItem, RemoteAccessor, RemoteConnection, RemoteId } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { TaskQueue } from 'freedom-task-queue';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { noop } from 'lodash-es';
-import type { TypeOrPromisedType } from 'yaschema';
 
 import { DEFAULT_MAX_PULL_CONCURRENCY, DEFAULT_MAX_PUSH_CONCURRENCY } from '../consts/concurrency.ts';
 import { attachSyncServiceToSyncableStore } from '../internal/utils/attachSyncServiceToSyncableStore.ts';
@@ -15,7 +15,7 @@ import { pullFromRemotes } from '../internal/utils/pull/pullFromRemotes.ts';
 import { pushToRemotes } from '../internal/utils/push/pushToRemotes.ts';
 import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
 import type { RemoteSyncLogEntry } from '../types/RemoteSyncLogEntry.ts';
-import type { RemoteSyncService } from '../types/RemoteSyncService.ts';
+import type { RemoteSyncService, RemoteSyncServiceNotifications } from '../types/RemoteSyncService.ts';
 import type { ShouldPullFromRemoteFunc } from '../types/ShouldPullFromRemoteFunc.ts';
 import type { ShouldPushToRemoteFunc } from '../types/ShouldPushToRemoteFunc.ts';
 
@@ -26,10 +26,6 @@ export interface MakeSyncServiceArgs {
   shouldPullFromRemote: ShouldPullFromRemoteFunc;
   shouldPushToRemote: ShouldPushToRemoteFunc;
   shouldRecordLogs?: boolean;
-  /** Called at the end of the start procedure */
-  onStart?: (args: { syncService: RemoteSyncService }) => TypeOrPromisedType<void>;
-  /** Called at the beginning of the stop procedure */
-  onStop?: (args: { syncService: RemoteSyncService }) => TypeOrPromisedType<void>;
 }
 
 export const makeSyncService = makeSyncResultFunc(
@@ -42,9 +38,7 @@ export const makeSyncService = makeSyncResultFunc(
       getSyncStrategyForPath,
       shouldPullFromRemote,
       shouldPushToRemote,
-      shouldRecordLogs = false,
-      onStart,
-      onStop
+      shouldRecordLogs = false
     }: MakeSyncServiceArgs
   ): Result<RemoteSyncService> => {
     const pullQueue = disableLam('not-found', (trace) => new TaskQueue('[SYNC] pull-queue', trace))(trace);
@@ -62,8 +56,15 @@ export const makeSyncService = makeSyncResultFunc(
     const remoteIds = objectKeys(remoteAccessors);
     const defaultRemoteId: RemoteId | undefined = remoteIds.length === 1 ? remoteIds[0] : undefined;
 
+    const notificationManager = new NotificationManager<RemoteSyncServiceNotifications>();
+
     const service = {
       // External
+
+      addListener: <TypeT extends keyof RemoteSyncServiceNotifications>(
+        type: TypeT,
+        callback: (args: RemoteSyncServiceNotifications[TypeT]) => void
+      ) => notificationManager.addListener(type, callback),
 
       remoteAccessors,
 
@@ -163,14 +164,14 @@ export const makeSyncService = makeSyncResultFunc(
           }
           detachSyncService = attached.value.detach;
 
-          await onStart?.({ syncService: service });
+          notificationManager.notify('start', { syncService: service });
 
           return makeSuccess(undefined);
         }
       ),
 
       stop: makeAsyncResultFunc([import.meta.filename, 'stop'], async (_trace) => {
-        await onStop?.({ syncService: service });
+        notificationManager.notify('stop', { syncService: service });
 
         pullQueue.stop();
         pushQueue.stop();
@@ -180,6 +181,31 @@ export const makeSyncService = makeSyncResultFunc(
 
         return makeSuccess(undefined);
       }),
+
+      pause: () => {
+        const shouldTriggerOnPause = !pullQueue.isPaused();
+        const unpausedPullQueue = pullQueue.pause();
+        const unpausePushQueue = pushQueue.pause();
+
+        if (shouldTriggerOnPause) {
+          notificationManager.notify('pause', { syncService: service });
+        }
+
+        let alreadyUnpaused = false;
+        return () => {
+          if (alreadyUnpaused) {
+            return;
+          }
+          alreadyUnpaused = true;
+
+          unpausedPullQueue();
+          unpausePushQueue();
+
+          if (!pullQueue.isPaused()) {
+            notificationManager.notify('resume', { syncService: service });
+          }
+        };
+      },
 
       areQueuesEmpty: () => pushQueue.isEmpty() && pullQueue.isEmpty(),
 

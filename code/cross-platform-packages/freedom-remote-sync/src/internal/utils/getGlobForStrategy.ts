@@ -10,6 +10,6 @@ export const getGlobForStrategy = (strategy: SyncStrategy): SyncGlob => {
     case 'level':
       return { include: [new SyncablePathPattern(), new SyncablePathPattern('*')] };
     case 'stack':
-      return { include: [new SyncablePathPattern(), new SyncablePathPattern('**')] };
+      return { include: [new SyncablePathPattern('**')] };
   }
 };

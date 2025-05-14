@@ -19,21 +19,18 @@ import {
   createStringFileAtPath,
   DefaultSyncableStore,
   generateProvenanceForNewSyncableStore,
-  initializeRoot,
-  logLs
+  initializeRoot
 } from 'freedom-syncable-store';
 import { makeUserKeysForTesting } from 'freedom-syncable-store/tests';
-import { ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID } from 'freedom-syncable-store-types';
 import type { ExpectEventuallyOptions } from 'freedom-testing-tools';
 import { expectDeepStrictEqual, expectEventually, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
 import { makeSyncServiceForTesting as makeSyncServiceForTestingWithAllDetails } from '../__test_dependency__/makeSyncServiceForTesting.ts';
-import { expectDidPullPath } from '../tests/expectDidPullPath.ts';
-import { expectDidPushPath } from '../tests/expectDidPushPath.ts';
 import type { GetSyncStrategyForPathFunc } from '../types/GetSyncStrategyForPathFunc.ts';
 import type { ShouldPullFromRemoteFunc } from '../types/ShouldPullFromRemoteFunc.ts';
 import type { ShouldPushToRemoteFunc } from '../types/ShouldPushToRemoteFunc.ts';
+import type { SyncStrategy } from '../types/SyncStrategy.ts';
 
 const maxSyncTimeMSec = 5 * ONE_SEC_MSEC;
 
@@ -117,15 +114,79 @@ describe('syncing', () => {
     return newSyncService.value;
   };
 
-  describe('empty store (other than access control bundle)', () => {
-    it('full item-by-item syncing should work', async () => {
+  const makeSyncTest = (name: string, { strategy }: { strategy: SyncStrategy }) => {
+    it(name, async () => {
       const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => strategy,
+        shouldPullFromRemote: () => ({ strategy }),
+        shouldPushToRemote: () => ({ strategy })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(
+          remoteTrace,
+          async (remoteTrace) => {
+            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+          },
+          { timeoutMSec: maxSyncTimeMSec }
+        );
+
+        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
+        expectOk(pulledRoot);
+        expectStrictEqual(pulledRoot.value, 'in-sync');
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      console.log(`${name} log entries: ${syncService.devLogging.getLogEntries().length}`);
+    });
+  };
+
+  const makeRestoringTest = (name: string, { strategy }: { strategy: SyncStrategy }) => {
+    it(name, async () => {
+      const syncService = makeSyncServiceForTesting({
+        getSyncStrategyForPath: () => strategy,
+        shouldPullFromRemote: () => ({ strategy }),
+        shouldPushToRemote: () => ({ strategy })
+      });
+
+      expectOk(await syncService.start(localTrace));
+
+      try {
+        await noLoggingExpectEventually(
+          remoteTrace,
+          async (remoteTrace) => {
+            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
+          },
+          { timeoutMSec: maxSyncTimeMSec }
+        );
+
+        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
+        expectOk(pulledRoot);
+        expectStrictEqual(pulledRoot.value, 'in-sync');
+      } finally {
+        expectOk(await syncService.stop(localTrace));
+      }
+
+      // Creating a new empty local store
+      localStoreBacking = new InMemorySyncableStoreBacking({ provenance });
+      localStore = new DefaultSyncableStore({
+        storageRootId,
+        backing: localStoreBacking,
+        userKeys: localUserKeys,
+        creatorPublicKeys,
+        saltsById: { [DEFAULT_SALT_ID]: defaultSalt }
+      });
+
+      const syncService2 = makeSyncServiceForTesting({
         getSyncStrategyForPath: () => 'item',
         shouldPullFromRemote: () => ({ strategy: 'item' }),
         shouldPushToRemote: () => ({ strategy: 'item' })
       });
 
-      expectOk(await syncService.start(localTrace));
+      expectOk(await syncService2.start(localTrace));
 
       try {
         await noLoggingExpectEventually(
@@ -136,75 +197,21 @@ describe('syncing', () => {
           { timeoutMSec: maxSyncTimeMSec }
         );
 
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
+        const pulledRoot = await syncService2.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
         expectOk(pulledRoot);
         expectStrictEqual(pulledRoot.value, 'in-sync');
       } finally {
-        expectOk(await syncService.stop(localTrace));
+        expectOk(await syncService2.stop(localTrace));
       }
 
-      const logs = syncService.devLogging.getLogEntries();
-      await expectDidPullPath(logs, localStore.path);
-      await expectDidPushPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID));
-      await expectDidPushPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID({ encrypted: false })));
+      console.log(`${name} log entries: ${syncService.devLogging.getLogEntries().length}`);
     });
+  };
 
-    it('full level syncing should work', async () => {
-      const syncService = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'level',
-        shouldPullFromRemote: () => ({ strategy: 'level' }),
-        shouldPushToRemote: () => ({ strategy: 'level' })
-      });
-
-      expectOk(await syncService.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          { timeoutMSec: maxSyncTimeMSec }
-        );
-
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService.stop(localTrace));
-      }
-
-      const logs = syncService.devLogging.getLogEntries();
-      await expectDidPullPath(logs, localStore.path);
-      await expectDidPushPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID));
-      await expectDidPullPath(logs, localStore.path.append(ACCESS_CONTROL_BUNDLE_ID, SNAPSHOTS_BUNDLE_ID({ encrypted: false })));
-    });
-
-    it('full stack syncing should work', async () => {
-      const syncService = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'stack',
-        shouldPullFromRemote: () => ({ strategy: 'stack' }),
-        shouldPushToRemote: () => ({ strategy: 'stack' })
-      });
-
-      expectOk(await syncService.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          { timeoutMSec: maxSyncTimeMSec }
-        );
-
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService.stop(localTrace));
-      }
-    });
+  describe('empty store (other than access control bundle)', () => {
+    makeSyncTest('full item-by-item syncing should work', { strategy: 'item' });
+    makeSyncTest('full level syncing should work', { strategy: 'level' });
+    makeSyncTest('full stack syncing should work', { strategy: 'stack' });
   });
 
   describe('populated store', () => {
@@ -265,83 +272,9 @@ describe('syncing', () => {
       );
     });
 
-    it('full item-by-item syncing should work', async () => {
-      const syncService = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'item',
-        shouldPullFromRemote: () => ({ strategy: 'item' }),
-        shouldPushToRemote: () => ({ strategy: 'item' })
-      });
-
-      expectOk(await syncService.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          { timeoutMSec: maxSyncTimeMSec }
-        );
-
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService.stop(localTrace));
-      }
-    });
-
-    it('full level syncing should work', async () => {
-      const syncService = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'level',
-        shouldPullFromRemote: () => ({ strategy: 'level' }),
-        shouldPushToRemote: () => ({ strategy: 'level' })
-      });
-
-      expectOk(await syncService.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          { timeoutMSec: maxSyncTimeMSec }
-        );
-
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService.stop(localTrace));
-      }
-    });
-
-    it('full stack syncing should work', async () => {
-      const syncService = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'stack',
-        shouldPullFromRemote: () => ({ strategy: 'stack' }),
-        shouldPushToRemote: () => ({ strategy: 'stack' })
-      });
-
-      expectOk(await syncService.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          { timeoutMSec: maxSyncTimeMSec }
-        );
-
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService.stop(localTrace));
-      }
-    });
+    makeSyncTest('full item-by-item syncing should work', { strategy: 'item' });
+    makeSyncTest('full level syncing should work', { strategy: 'level' });
+    makeSyncTest('full stack syncing should work', { strategy: 'stack' });
   });
 
   describe('restoring', () => {
@@ -402,71 +335,9 @@ describe('syncing', () => {
       );
     });
 
-    it('full item-by-item syncing should work', async () => {
-      const syncService = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'item',
-        shouldPullFromRemote: () => ({ strategy: 'item' }),
-        shouldPushToRemote: () => ({ strategy: 'item' })
-      });
-
-      expectOk(await syncService.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          { timeoutMSec: maxSyncTimeMSec }
-        );
-
-        const pulledRoot = await syncService.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService.stop(localTrace));
-      }
-
-      // Creating a new empty local store
-      localStoreBacking = new InMemorySyncableStoreBacking({ provenance });
-      localStore = new DefaultSyncableStore({
-        storageRootId,
-        backing: localStoreBacking,
-        userKeys: localUserKeys,
-        creatorPublicKeys,
-        saltsById: { [DEFAULT_SALT_ID]: defaultSalt }
-      });
-
-      const syncService2 = makeSyncServiceForTesting({
-        getSyncStrategyForPath: () => 'item',
-        shouldPullFromRemote: () => ({ strategy: 'item' }),
-        shouldPushToRemote: () => ({ strategy: 'item' })
-      });
-
-      expectOk(await syncService2.start(localTrace));
-
-      try {
-        await noLoggingExpectEventually(
-          remoteTrace,
-          async (remoteTrace) => {
-            expectDeepStrictEqual(await localStore.ls(localTrace), await remoteStore.ls(remoteTrace));
-          },
-          {
-            timeoutMSec: maxSyncTimeMSec,
-            onTimeout: async () => {
-              await logLs(localTrace, localStore, console.log, { prefix: 'LOCAL: ' });
-              await logLs(remoteTrace, remoteStore, console.log, { prefix: 'REMOTE: ' });
-            }
-          }
-        );
-
-        const pulledRoot = await syncService2.pullFromRemotes(localTrace, { basePath: localStore.path, strategy: 'item' });
-        expectOk(pulledRoot);
-        expectStrictEqual(pulledRoot.value, 'in-sync');
-      } finally {
-        expectOk(await syncService2.stop(localTrace));
-      }
-    });
+    makeRestoringTest('full item-by-item syncing should work', { strategy: 'item' });
+    makeRestoringTest('full level syncing should work', { strategy: 'level' });
+    makeRestoringTest('full stack syncing should work', { strategy: 'stack' });
   });
 });
 

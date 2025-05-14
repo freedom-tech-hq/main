@@ -53,10 +53,6 @@ export const makeSyncServiceForUserSyncables = makeAsyncResultFunc(
       // },
       shouldPushToRemote: () => ({ strategy: 'stack' }),
       getSyncStrategyForPath: async (direction, path): Promise<SyncStrategy> => {
-        if (Math.random() < 1) {
-          return 'stack';
-        }
-
         switch (direction) {
           case 'pull': {
             const found = await disableLam('not-found', getSyncableAtPath)(trace, userFs, path);

@@ -3,7 +3,7 @@ import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { SyncableItemMetadata } from 'freedom-sync-types';
-import { syncableItemTypes, SyncablePath } from 'freedom-sync-types';
+import { folderLikeSyncableItemTypes, SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { ACCESS_CONTROL_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
@@ -30,7 +30,7 @@ export const createViaSyncPreEncodedBinaryFileAtPath = makeAsyncResultFunc(
         store.localTrustMarks.clearTrust(folderPath);
       }
 
-      const parent = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('file'));
+      const parent = await getMutableParentSyncable(trace, store, path, folderLikeSyncableItemTypes);
       if (!parent.ok) {
         return parent;
       }

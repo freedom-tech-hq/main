@@ -1,8 +1,7 @@
 import type { PR } from 'freedom-async';
 import { excludeFailureResult, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
-import { syncableItemTypes } from 'freedom-sync-types';
+import { folderLikeSyncableItemTypes, type SyncableItemMetadata, type SyncablePath } from 'freedom-sync-types';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 import { disableLam } from 'freedom-trace-logging-and-metrics';
 
@@ -19,7 +18,7 @@ export const createViaSyncBundleAtPath = makeAsyncResultFunc(
       path: SyncablePath,
       metadata: SyncableItemMetadata
     ): PR<undefined, 'not-found' | 'untrusted' | 'wrong-type'> => {
-      const parent = await getMutableParentSyncable(trace, store, path, syncableItemTypes.exclude('file'));
+      const parent = await getMutableParentSyncable(trace, store, path, folderLikeSyncableItemTypes);
       if (!parent.ok) {
         return parent;
       }

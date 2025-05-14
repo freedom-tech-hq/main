@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { bestEffort, debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import type { PullItem, PullOutOfSyncFolderLikeItem, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromPath } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromPath, pullItemSchema, syncPushArgsSchema } from 'freedom-sync-types';
 import { type SyncableStore } from 'freedom-syncable-store-types';
 
 import type { RemoteSyncService } from '../../../types/RemoteSyncService.ts';
@@ -47,11 +47,17 @@ export const pushToRemote = makeAsyncResultFunc(
       return requestArgs;
     }
 
+    DEV: debugTopic('SYNC_COMM', (log) =>
+      log(trace, `Pushing ${basePath.toShortString()} with args: ${syncPushArgsSchema.stringify(requestArgs.value)}`)
+    );
     const pushed = await pushToRemoteUsingRemoteAccessor(trace, requestArgs.value);
     if (!pushed.ok) {
       return pushed;
     }
     DEV: syncService.devLogging.appendLogEntry?.(makeRemoteSyncLogEntryPush({ remoteId, path: basePath, pushed: requestArgs.value.item }));
+    DEV: debugTopic('SYNC_COMM', (log) =>
+      log(trace, `Pushed ${basePath.toShortString()} with response: ${pullItemSchema.stringify(pushed.value)}`)
+    );
 
     DEV: debugTopic('SYNC', (log) => log(trace, `Pushed ${basePath.toShortString()}`));
 
@@ -59,20 +65,25 @@ export const pushToRemote = makeAsyncResultFunc(
       return makeSuccess('in-sync' as const);
     }
 
-    const itemType = extractSyncableItemTypeFromPath(basePath);
-    switch (itemType) {
-      case 'file':
-        return makeSuccess(pushed.value);
-      case 'bundle':
-      case 'folder':
-        await bestEffort(
-          trace,
-          enqueueFollowUpSyncsIfNeeded(
+    const unpauseSyncService = syncService.pause();
+    try {
+      const itemType = extractSyncableItemTypeFromPath(basePath);
+      switch (itemType) {
+        case 'file':
+          return makeSuccess(pushed.value);
+        case 'bundle':
+        case 'folder':
+          await bestEffort(
             trace,
-            { store, syncService, item: pushed.value as PullOutOfSyncFolderLikeItem },
-            { remoteId, path: basePath }
-          )
-        );
+            enqueueFollowUpSyncsIfNeeded(
+              trace,
+              { store, syncService, item: pushed.value as PullOutOfSyncFolderLikeItem },
+              { remoteId, path: basePath }
+            )
+          );
+      }
+    } finally {
+      unpauseSyncService();
     }
 
     return makeSuccess(pushed.value);

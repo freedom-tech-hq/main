@@ -10,6 +10,7 @@ import type {
 import { listTimeOrganizedMailIdsForHour, mailIdInfo, traverseTimeOrganizedMailStorageFromTheBottomUp } from 'freedom-email-sync';
 import type { EmailCredential } from 'freedom-email-user';
 import { getUserMailPaths } from 'freedom-email-user';
+import type { RemoteSyncService } from 'freedom-remote-sync';
 import { extractUnmarkedSyncableId } from 'freedom-sync-types';
 import { getSyncableAtPath } from 'freedom-syncable-store';
 import type { SyncTrackerItemAddedEvent } from 'freedom-syncable-store-types';
@@ -24,7 +25,7 @@ import { getOrCreateEmailSyncableStore } from '../user/getOrCreateEmailSyncableS
  * collection. */
 export const routeMail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, credential: EmailCredential): PR<{ stop: PRFunc<undefined> }> => {
+  async (trace, syncService: RemoteSyncService, credential: EmailCredential): PR<{ stop: PRFunc<undefined> }> => {
     const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
     const paths = await getUserMailPaths(syncableStore);
@@ -32,6 +33,26 @@ export const routeMail = makeAsyncResultFunc(
     // Used for mail that comes in while the app is already launched
     const highPriorityQueue = new TaskQueue('route-mail-high-priority', trace);
     highPriorityQueue.start();
+
+    // Used for historical mail
+    const lowPriorityQueue = new TaskQueue('route-mail-low-priority', trace);
+    lowPriorityQueue.start({ maxConcurrency: 1 });
+
+    // We want to avoid attempting routing while the sync service is paused because this usually means that a larger transfer is coming in
+    // (or going out), which can affect the routing that's needed.
+    let lastUnpauseHighPriorityQueue: (() => void) | undefined = undefined;
+    let lastUnpauseLowPriorityQueue: (() => void) | undefined = undefined;
+    const removeSyncServicePauseListener = syncService.addListener('pause', () => {
+      lastUnpauseHighPriorityQueue = highPriorityQueue.pause();
+      lastUnpauseLowPriorityQueue = lowPriorityQueue.pause();
+    });
+    const removeSyncServiceResumeListener = syncService.addListener('resume', () => {
+      lastUnpauseHighPriorityQueue?.();
+      lastUnpauseHighPriorityQueue = undefined;
+
+      lastUnpauseLowPriorityQueue?.();
+      lastUnpauseLowPriorityQueue = undefined;
+    });
 
     const removeItemAddedListener = syncableStore.addListener('itemAdded', async (event: SyncTrackerItemAddedEvent) => {
       const { path } = event;
@@ -47,10 +68,6 @@ export const routeMail = makeAsyncResultFunc(
 
       highPriorityQueue.add(mailId, (trace) => routeSingleMailIdNeeded(trace, credential, mailId));
     });
-
-    // Used for historical mail
-    const lowPriorityQueue = new TaskQueue('route-mail-low-priority', trace);
-    lowPriorityQueue.start({ maxConcurrency: 1 });
 
     // Detecting previously-received emails that haven't been routed yet
     let wasStopped = false;
@@ -94,6 +111,9 @@ export const routeMail = makeAsyncResultFunc(
 
       await highPriorityQueue.wait();
       await lowPriorityQueue.wait();
+
+      removeSyncServicePauseListener();
+      removeSyncServiceResumeListener();
 
       return makeSuccess(undefined);
     });

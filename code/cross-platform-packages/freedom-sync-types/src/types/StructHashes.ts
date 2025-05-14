@@ -15,6 +15,7 @@ export const structHashesSchema = schema.object({
     )
     .optional()
 });
+// TODO: abbreviate since these are transferred a lot
 export interface StructHashes {
   hash?: Sha256Hash;
   contents?: Partial<Record<SyncableId, StructHashes>>;

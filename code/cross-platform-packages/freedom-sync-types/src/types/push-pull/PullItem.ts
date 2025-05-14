@@ -1,34 +1,30 @@
-import { nonNegativeIntegerSchema, uint8ArraySchema } from 'freedom-basic-data';
+import type { Sha256Hash } from 'freedom-basic-data';
+import { nonNegativeIntegerSchema, sha256HashInfo, uint8ArraySchema } from 'freedom-basic-data';
 import type { Schema } from 'yaschema';
 import { schema } from 'yaschema';
 
-import type { LocalItemMetadata } from '../metadata/LocalItemMetadata.ts';
-import { localItemMetadataSchema } from '../metadata/LocalItemMetadata.ts';
 import type { SyncableItemMetadata } from '../metadata/SyncableItemMetadata.ts';
 import { syncableItemMetadataSchema } from '../metadata/SyncableItemMetadata.ts';
 import type { SyncableId } from '../SyncableId.ts';
 import { syncableIdSchema } from '../SyncableId.ts';
 
+// TODO: shorten since it's used a lot
 export const pullInSyncItemSchema = schema.string('in-sync');
 export type PullInSyncItem = typeof pullInSyncItemSchema.valueType;
 
+// TODO: shorten keys since they're used a lot
 export const pullOutOfSyncFolderLikeItemSchema = schema.object_noAutoOptional<PullOutOfSyncFolderLikeItem>({
   metadata: syncableItemMetadataSchema,
-  remoteMetadataById: schema.record(syncableIdSchema, localItemMetadataSchema),
-  itemsById: schema
-    .record(
-      syncableIdSchema,
-      schema.ref((): Schema<PullOutOfSyncItem> => pullOutOfSyncItemSchema)
-    )
-    .optional()
+  itemsById: schema.record(
+    syncableIdSchema,
+    schema.ref((): Schema<PullItem> => pullItemSchema)
+  )
 });
 export interface PullOutOfSyncFolderLikeItem {
   /** The metadata of this item */
   metadata: SyncableItemMetadata;
-  /** The local metadata of sub-items, as represented on the remote being pulled from, by their SyncableIds */
-  remoteMetadataById: Partial<Record<SyncableId, LocalItemMetadata>>;
-  /** When `include` (and possibly `exclude`) is used, the matched sub-items that are out of sync (in sync items aren't included) */
-  itemsById?: Partial<Record<SyncableId, PullOutOfSyncItem>>;
+  /** Information about each sub-item */
+  itemsById: Partial<Record<SyncableId, PullItem>>;
 }
 
 export const pullOutOfSyncBundleSchema = pullOutOfSyncFolderLikeItemSchema;
@@ -43,17 +39,21 @@ export const pullOutOfSyncFileSchema = schema.object_noAutoOptional<PullOutOfSyn
   metadata: syncableItemMetadataSchema
 });
 export interface PullOutOfSyncFile {
+  /** Included when `sendData` = `true` is sent with the pull request */
   data?: Uint8Array;
   sizeBytes: number;
   metadata: SyncableItemMetadata;
 }
 
-export const pullOutOfSyncItemSchema = schema.oneOf3<PullOutOfSyncFolder, PullOutOfSyncFile, PullOutOfSyncBundle>(
+export type PullOutOfSyncFileWithData = PullOutOfSyncFile & { data: Uint8Array };
+
+export const pullOutOfSyncItemSchema = schema.oneOf4<Sha256Hash, PullOutOfSyncFolder, PullOutOfSyncFile, PullOutOfSyncBundle>(
+  sha256HashInfo.schema,
   pullOutOfSyncFolderSchema,
   pullOutOfSyncFileSchema,
   pullOutOfSyncBundleSchema
 );
-export type PullOutOfSyncItem = PullOutOfSyncFolder | PullOutOfSyncFile | PullOutOfSyncBundle;
+export type PullOutOfSyncItem = Sha256Hash | PullOutOfSyncFolder | PullOutOfSyncFile | PullOutOfSyncBundle;
 
 export const pullItemSchema = schema.oneOf<PullInSyncItem, PullOutOfSyncItem>(pullInSyncItemSchema, pullOutOfSyncItemSchema);
 export type PullItem = PullInSyncItem | PullOutOfSyncItem;

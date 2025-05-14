@@ -46,28 +46,35 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       }
     );
 
-    const onFolderAdded = makeAsyncResultFunc([import.meta.filename, 'onFolderAdded'], async (trace, path: SyncablePath): PR<undefined> => {
-      const pathString = path.toString();
-      // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
+    const onFolderAdded = makeAsyncResultFunc(
+      [import.meta.filename, 'onFolderAdded'],
+      async (trace, path: SyncablePath, { viaSync }: { viaSync: boolean }): PR<undefined> => {
+        const pathString = path.toString();
+        // TODO: there's a race condition here if the folder is removed during the generateStreamIdForPath call
 
-      DEV: debugTopic('SYNC', (log) => log(trace, `Adding contentChange listeners for ${path.toShortString()}`));
-      for (const remoteChangeNotificationClient of remoteChangeNotificationClients) {
-        removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
-        removeListenersByFolderPath[pathString].push(
-          remoteChangeNotificationClient.addListener(`contentChange:${pathString}`, ({ remoteId, hash }) => {
-            onRemoteContentChange(trace, { remoteId, path, hash });
-          })
-        );
+        DEV: debugTopic('SYNC', (log) => log(trace, `Adding contentChange listeners for ${path.toShortString()}`));
+        for (const remoteChangeNotificationClient of remoteChangeNotificationClients) {
+          removeListenersByFolderPath[pathString] = removeListenersByFolderPath[pathString] ?? [];
+          removeListenersByFolderPath[pathString].push(
+            remoteChangeNotificationClient.addListener(`contentChange:${pathString}`, ({ remoteId, hash }) => {
+              onRemoteContentChange(trace, { remoteId, path, hash });
+            })
+          );
+        }
+
+        if (viaSync) {
+          return makeSuccess(undefined);
+        }
+
+        // If unsuccessful, just passing undefined to enqueuePullFromRemotes, which will just result in less-good deduplication of effort
+        const metadata = await getMetadataAtPath(trace, store, path);
+        const hash = metadata.ok ? metadata.value.hash : undefined;
+
+        // Pulling whenever we add a new folder because otherwise there's a race condition where the folder could have been changed on the
+        // remote in the meantime
+        return syncService.enqueuePullFromRemotes(trace, { basePath: path, hash });
       }
-
-      // If unsuccessful, just passing undefined to enqueuePullFromRemotes, which will just result in less-good deduplication of effort
-      const metadata = await getMetadataAtPath(trace, store, path);
-      const hash = metadata.ok ? metadata.value.hash : undefined;
-
-      // Pulling whenever we add a new folder because otherwise there's a race condition where the folder could have been changed on the
-      // remote in the meantime
-      return syncService.enqueuePullFromRemotes(trace, { basePath: path, hash });
-    });
+    );
 
     const onFolderRemoved = (folderPath: SyncablePath) => {
       const folderPathString = folderPath.toString();
@@ -80,10 +87,15 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
       return makeSuccess(undefined);
     };
 
-    const onItemAdded = ({ path, hash }: { path: SyncablePath; hash: Sha256Hash }) =>
-      syncService.enqueuePushToRemotes(trace, { basePath: path, hash });
+    const onItemAdded = (path: SyncablePath, { hash, viaSync }: { hash: Sha256Hash; viaSync: boolean }) => {
+      if (viaSync) {
+        return;
+      }
 
-    const rootAdded = await onFolderAdded(trace, store.path);
+      syncService.enqueuePushToRemotes(trace, { basePath: path, hash });
+    };
+
+    const rootAdded = await onFolderAdded(trace, store.path, { viaSync: false });
     if (!rootAdded.ok) {
       return rootAdded;
     }
@@ -94,7 +106,7 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     }
 
     const foldersAdded = await allResultsMapped(trace, allFolderPaths.value, {}, async (trace, folderPath) => {
-      const folderAdded = await onFolderAdded(trace, folderPath);
+      const folderAdded = await onFolderAdded(trace, folderPath, { viaSync: false });
       if (!folderAdded.ok) {
         return folderAdded;
       }
@@ -106,9 +118,9 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     }
 
     DEV: debugTopic('SYNC', (log) => log(trace, `Added folderAdded listener for ${store.path.toShortString()}`));
-    const removeLocalFolderAddedListener = store.addListener('folderAdded', ({ path }) => {
+    const removeLocalFolderAddedListener = store.addListener('folderAdded', ({ path, viaSync }) => {
       DEV: debugTopic('SYNC', (log) => log(trace, `Received folderAdded for ${path.toShortString()}`));
-      onFolderAdded(trace, path);
+      onFolderAdded(trace, path, { viaSync });
     });
 
     DEV: debugTopic('SYNC', (log) => log(trace, `Added folderRemoved listener for ${store.path.toShortString()}`));
@@ -118,9 +130,9 @@ export const attachSyncServiceToSyncableStore = makeAsyncResultFunc(
     });
 
     DEV: debugTopic('SYNC', (log) => log(trace, `Added itemAdded listener for ${store.path.toShortString()}`));
-    const removeLocalItemAddedListener = store.addListener('itemAdded', async ({ path, hash }) => {
+    const removeLocalItemAddedListener = store.addListener('itemAdded', async ({ path, hash, viaSync }) => {
       DEV: debugTopic('SYNC', (log) => log(trace, `Received itemAdded for ${path.toShortString()}: ${hash}`));
-      onItemAdded({ path, hash });
+      onItemAdded(path, { hash, viaSync });
     });
 
     return makeSuccess({

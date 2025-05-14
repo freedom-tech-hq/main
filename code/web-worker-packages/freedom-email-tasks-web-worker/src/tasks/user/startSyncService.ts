@@ -75,11 +75,6 @@ export const startSyncService = makeAsyncResultFunc(
     // Giving Editor Access on the Out Folder to the Server
     await disableLam(true, bestEffort)(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
 
-    const startedRoutingMail = await routeMail(trace, credential);
-    if (!startedRoutingMail.ok) {
-      return startedRoutingMail;
-    }
-
     const syncService = await makeSyncServiceForUserSyncables(trace, {
       credential,
       shouldRecordLogs: false,
@@ -87,6 +82,11 @@ export const startSyncService = makeAsyncResultFunc(
     });
     if (!syncService.ok) {
       return syncService;
+    }
+
+    const startedRoutingMail = await routeMail(trace, syncService.value, credential);
+    if (!startedRoutingMail.ok) {
+      return startedRoutingMail;
     }
 
     const startedRemoteConnectionContentChangeNotifications = await remoteConnection.value.start(trace);

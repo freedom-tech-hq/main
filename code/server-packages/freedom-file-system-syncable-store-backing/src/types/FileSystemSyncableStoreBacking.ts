@@ -3,7 +3,7 @@ import { objectEntries, objectKeys } from 'freedom-cast';
 import { ConflictError, generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 import type { LocalItemMetadata, SyncableId, SyncableItemType, SyncablePath } from 'freedom-sync-types';
-import { extractSyncableItemTypeFromId, syncableItemTypes } from 'freedom-sync-types';
+import { extractSyncableItemTypeFromId, folderLikeSyncableItemTypes } from 'freedom-sync-types';
 import type {
   SyncableStoreBacking,
   SyncableStoreBackingFileAccessor,
@@ -98,7 +98,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
       path: SyncablePath,
       options?: { type?: SingleOrArray<SyncableItemType> }
     ): PR<SyncableId[], 'not-found' | 'wrong-type'> => {
-      const found = await traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
+      const found = await traversePath(trace, this.root_, path, folderLikeSyncableItemTypes);
       if (!found.ok) {
         return found;
       }
@@ -151,7 +151,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
       path: SyncablePath,
       ids?: Set<SyncableId>
     ): PR<Partial<Record<SyncableId, SyncableStoreBackingItemMetadata>>, 'not-found' | 'wrong-type'> => {
-      const found = await traversePath(trace, this.root_, path, syncableItemTypes.exclude('file'));
+      const found = await traversePath(trace, this.root_, path, folderLikeSyncableItemTypes);
       if (!found.ok) {
         return found;
       }
@@ -197,7 +197,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = await traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('file'));
+      const foundParent = await traversePath(trace, this.root_, parentPath, folderLikeSyncableItemTypes);
       if (!foundParent.ok) {
         return foundParent;
       }
@@ -230,7 +230,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = await traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('file'));
+      const foundParent = await traversePath(trace, this.root_, parentPath, folderLikeSyncableItemTypes);
       if (!foundParent.ok) {
         return foundParent;
       }
@@ -247,7 +247,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
         return saved;
       }
 
-      return await this.getAtPath(trace, path, syncableItemTypes.exclude('file'));
+      return await this.getAtPath(trace, path, folderLikeSyncableItemTypes);
     }
   );
 
@@ -259,7 +259,7 @@ export class FileSystemSyncableStoreBacking implements SyncableStoreBacking {
         return makeFailure(new ConflictError(trace, { message: 'Expected a parent path' }));
       }
 
-      const foundParent = await traversePath(trace, this.root_, parentPath, syncableItemTypes.exclude('file'));
+      const foundParent = await traversePath(trace, this.root_, parentPath, folderLikeSyncableItemTypes);
       if (!foundParent.ok) {
         return foundParent;
       }

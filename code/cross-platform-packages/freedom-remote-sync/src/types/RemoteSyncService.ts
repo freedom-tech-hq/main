@@ -1,6 +1,7 @@
 import type { PRFunc, RFunc } from 'freedom-async';
 import type { Sha256Hash } from 'freedom-basic-data';
 import type { DevLoggingSupport } from 'freedom-dev-logging-support';
+import type { Notifiable } from 'freedom-notification-types';
 import type { PullItem, RemoteAccessor, RemoteId, SyncablePath, SyncGlob } from 'freedom-sync-types';
 
 import type { GetSyncStrategyForPathFunc } from './GetSyncStrategyForPathFunc.ts';
@@ -18,7 +19,14 @@ export interface SyncServicePushPullArgs {
   strategy?: SyncStrategy;
 }
 
-export interface RemoteSyncService {
+export type RemoteSyncServiceNotifications = {
+  start: { syncService: RemoteSyncService };
+  stop: { syncService: RemoteSyncService };
+  pause: { syncService: RemoteSyncService };
+  resume: { syncService: RemoteSyncService };
+};
+
+export interface RemoteSyncService extends Notifiable<RemoteSyncServiceNotifications> {
   readonly remoteAccessors: Partial<Record<RemoteId, RemoteAccessor>>;
 
   readonly getSyncStrategyForPath: GetSyncStrategyForPathFunc;
@@ -47,6 +55,9 @@ export interface RemoteSyncService {
   readonly areQueuesEmpty: () => boolean;
   readonly start: PRFunc<undefined, never, [options?: { maxPushConcurrency?: number; maxPullConcurrency?: number }]>;
   readonly stop: PRFunc<undefined>;
+  /** Temporarily pauses the queues.  Retuns a function to unpause.  More than one pause request can occur simultaneously but unpausing must
+   * be done symmetrically (only when there are 0 pauses outstanding will the the queues resume). */
+  readonly pause: () => () => void;
 
   readonly devLogging: DevLoggingSupport<RemoteSyncLogEntry>;
 }
