@@ -7,6 +7,7 @@
     "freedom-contexts": "0.0.0",
     "freedom-dev-logging-support": "0.0.0",
     "freedom-local-sync": "0.0.0",
+    "freedom-notification-types": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",
