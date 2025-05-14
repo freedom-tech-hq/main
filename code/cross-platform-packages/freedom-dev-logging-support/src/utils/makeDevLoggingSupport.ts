@@ -1,9 +1,7 @@
 import type { DevLoggingSupport } from '../types/DevLoggingSupport.ts';
 
 export const makeDevLoggingSupport = <LogEntryT>(initialShouldRecordLogs: boolean): DevLoggingSupport<LogEntryT> => {
-  let shouldRecordLogs = false;
-
-  DEV: shouldRecordLogs = initialShouldRecordLogs;
+  let shouldRecordLogs = initialShouldRecordLogs;
 
   const logEntries: LogEntryT[] = [];
 
@@ -11,11 +9,9 @@ export const makeDevLoggingSupport = <LogEntryT>(initialShouldRecordLogs: boolea
 
   const output: DevLoggingSupport<LogEntryT> & { appendLogEntry: ((entry: LogEntryT) => void) | undefined } = {
     setShouldRecordLogs: (shouldRecord) => {
-      DEV: {
-        shouldRecordLogs = shouldRecord;
+      shouldRecordLogs = shouldRecord;
 
-        output.appendLogEntry = shouldRecord ? appendLogEntry : undefined;
-      }
+      output.appendLogEntry = shouldRecord ? appendLogEntry : undefined;
     },
 
     isRecordingLogs: () => shouldRecordLogs,
