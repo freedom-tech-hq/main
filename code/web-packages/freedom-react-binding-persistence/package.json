@@ -4,7 +4,7 @@
     "freedom-async": "0.0.0",
     "freedom-contexts": "0.0.0",
     "react-bindings": "1.19.8",
-    "yaschema": "5.0.0"
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
     "@types/react": "19.1.2",

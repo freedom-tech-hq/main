@@ -18,7 +18,6 @@ type Serialized = typeof serializedSchema.valueType;
 
 export const privateCombinationCryptoKeySetSchema = schema.custom<PrivateCombinationCryptoKeySet, Serialized>({
   typeName: 'private:combination-crypto-key-set',
-  isContainerType: true,
   serDes: {
     isValueType: (value): value is PrivateCombinationCryptoKeySet => value instanceof PrivateCombinationCryptoKeySet,
     serializedSchema: () => serializedSchema,

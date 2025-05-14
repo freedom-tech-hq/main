@@ -29,8 +29,8 @@
     "freedom-trace-logging-and-metrics": "0.0.0",
     "lodash-es": "4.17.21",
     "luxon": "3.6.1",
-    "yaschema": "5.0.0",
-    "yaschema-api": "5.0.0"
+    "yaschema": "5.2.1",
+    "yaschema-api": "5.0.4"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

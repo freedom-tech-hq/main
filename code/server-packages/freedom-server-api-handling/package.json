@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "express": "5.1.0",
-    "express-yaschema-api-handler": "4.2.0",
+    "express-yaschema-api-handler": "4.2.4",
     "freedom-async": "0.0.0",
     "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
@@ -14,8 +14,8 @@
     "freedom-trace-logging-and-metrics": "0.0.0",
     "freedom-trace-service-context": "0.0.0",
     "http-status-codes": "2.3.0",
-    "yaschema": "5.0.0",
-    "yaschema-api": "5.0.0"
+    "yaschema": "5.2.1",
+    "yaschema-api": "5.0.4"
   },
   "devDependencies": {
     "@types/express": "5.0.1",
@@ -26,7 +26,7 @@
     "freedom-common-errors": "0.0.0",
     "lodash-es": "4.17.21",
     "typescript": "5.8.3",
-    "yaschema-api-fetcher": "5.2.0"
+    "yaschema-api-fetcher": "5.2.2"
   },
   "type": "module",
   "main": "lib/exports.mjs",

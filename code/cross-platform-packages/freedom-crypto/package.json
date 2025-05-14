@@ -8,7 +8,7 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-serialization": "0.0.0",
     "freedom-testing-tools": "0.0.0",
-    "yaschema": "5.0.0"
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

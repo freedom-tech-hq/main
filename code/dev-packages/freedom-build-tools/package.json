@@ -6,7 +6,7 @@
     "glob": "11.0.2",
     "lodash-es": "4.17.21",
     "yargs": "17.7.2",
-    "yaschema": "5.0.0"
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

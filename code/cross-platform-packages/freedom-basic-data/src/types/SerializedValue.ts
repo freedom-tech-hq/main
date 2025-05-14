@@ -27,7 +27,6 @@ export const makeSerializedValueSchema = <T>(
 ): schema.CustomSchema<SerializedValue<T>, `SER_${string}`> & { valueSchema: Schema<T> } => {
   const modifiedCustomSchema = schema.custom<SerializedValue<T>, `SER_${string}`>({
     typeName: 'SerializedValue',
-    isContainerType: true,
     serDes: {
       isValueType: (value): value is SerializedValue<T> =>
         value !== null && typeof value === 'object' && get(value, 'isSerializedValue') === true,

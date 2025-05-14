@@ -5,8 +5,8 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "http-status-codes": "2.3.0",
-    "yaschema": "5.0.0",
-    "yaschema-api": "5.0.0"
+    "yaschema": "5.2.1",
+    "yaschema-api": "5.0.4"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

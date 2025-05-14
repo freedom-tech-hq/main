@@ -5,8 +5,8 @@
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
     "http-status-codes": "2.3.0",
-    "yaschema-api": "5.0.0",
-    "yaschema-api-fetcher": "5.2.0"
+    "yaschema-api": "5.0.4",
+    "yaschema-api-fetcher": "5.2.2"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

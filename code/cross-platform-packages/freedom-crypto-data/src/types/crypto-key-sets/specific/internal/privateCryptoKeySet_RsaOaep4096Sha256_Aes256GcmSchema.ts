@@ -26,7 +26,6 @@ export const privateCryptoKeySet_RsaOaep4096Sha256_Aes256GcmSchema = schema.cust
   Serialized
 >({
   typeName: 'private:RSA-OAEP/4096/SHA-256+AES/256/GCM',
-  isContainerType: true,
   serDes: {
     isValueType: (value): value is PrivateCryptoKeySet_RsaOaep4096Sha256_Aes256Gcm =>
       value !== null &&

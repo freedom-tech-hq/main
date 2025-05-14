@@ -26,7 +26,6 @@ export const privateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256Schema = schema.custo
   Serialized
 >({
   typeName: 'private:RSASSA-PKCS1-v1_5/4096/SHA-256',
-  isContainerType: true,
   serDes: {
     isValueType: (value): value is PrivateCryptoKeySet_RsaSsaPkcs1V1_5_4096Sha256 =>
       value !== null &&

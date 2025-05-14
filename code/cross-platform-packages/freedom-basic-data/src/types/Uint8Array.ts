@@ -4,7 +4,6 @@ import { base64String } from './Base64String.ts';
 
 export const uint8ArraySchema = schema.custom<Uint8Array, any>({
   typeName: 'Uint8Array',
-  isContainerType: true,
   serDes: {
     isValueType: (value) => value instanceof Uint8Array,
     serializedSchema: () => schema.any(),

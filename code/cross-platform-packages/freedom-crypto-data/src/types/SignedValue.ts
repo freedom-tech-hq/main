@@ -28,7 +28,6 @@ export const makeSignedValueSchema = <T, SignatureExtrasT = never>(
 } => {
   const modifiedCustomSchema = schema.custom<SignedValue<T, SignatureExtrasT>, string>({
     typeName: 'SignedValue',
-    isContainerType: true,
     customValidation: (value) => valueSchema.validateAsync(value.value),
     serDes: {
       isValueType: (value): value is SignedValue<T, SignatureExtrasT> =>

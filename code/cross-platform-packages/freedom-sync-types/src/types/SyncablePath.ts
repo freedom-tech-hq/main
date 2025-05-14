@@ -81,7 +81,6 @@ const serializedSchema = schema.object({
 type Serialized = typeof serializedSchema.valueType;
 export const syncablePathSchema = schema.custom<SyncablePath, Serialized>({
   typeName: 'SyncablePath',
-  isContainerType: true,
   serDes: {
     isValueType: (value): value is SyncablePath => value instanceof SyncablePath,
     serializedSchema: () => serializedSchema,

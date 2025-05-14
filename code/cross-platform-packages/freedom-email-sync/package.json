@@ -11,7 +11,7 @@
     "freedom-syncable-store-types": "0.0.0",
     "freedom-trace-logging-and-metrics": "0.0.0",
     "luxon": "3.6.1",
-    "yaschema": "5.0.0"
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
     "@types/luxon": "3.6.2",

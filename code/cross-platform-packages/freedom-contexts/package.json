@@ -2,7 +2,7 @@
   "dependencies": {
     "lodash-es": "4.17.21",
     "uuid": "11.1.0",
-    "yaschema": "5.0.0"
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

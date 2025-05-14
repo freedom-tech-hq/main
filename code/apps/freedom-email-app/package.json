@@ -39,7 +39,7 @@
     "react-bindings": "1.19.8",
     "react-dom": "19.1.0",
     "react-waitables": "2.3.10",
-    "yaschema": "5.0.0",
+    "yaschema": "5.2.1",
     "yasorted-array": "1.0.3"
   },
   "devDependencies": {

@@ -11,7 +11,7 @@
     "freedom-crypto-service": "0.0.0",
     "freedom-serialization": "0.0.0",
     "freedom-trusted-time-source": "0.0.0",
-    "yaschema": "5.0.0"
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

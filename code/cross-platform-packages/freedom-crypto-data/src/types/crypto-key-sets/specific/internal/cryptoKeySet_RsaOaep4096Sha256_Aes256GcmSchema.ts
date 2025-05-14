@@ -19,7 +19,6 @@ type Serialized = typeof serializedSchema.valueType;
 
 export const cryptoKeySet_RsaOaep4096Sha256_Aes256GcmSchema = schema.custom<CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm, Serialized>({
   typeName: 'RSA-OAEP/4096/SHA-256+AES/256/GCM',
-  isContainerType: true,
   serDes: {
     isValueType: (value): value is CryptoKeySet_RsaOaep4096Sha256_Aes256Gcm =>
       value !== null &&
