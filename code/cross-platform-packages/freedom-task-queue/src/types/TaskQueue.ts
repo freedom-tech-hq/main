@@ -23,7 +23,8 @@ export class TaskQueue {
   private numActive = 0;
   private pendingWaiter_: Resolvable<void> | undefined;
   private runNextTrace_: Trace;
-  private delayWhenEmptyMSec_: number = 0;
+  private delayWhenEmptyMSec_ = 0;
+  private pauseCount_ = 0;
 
   private reportingInterval_: ReturnType<typeof setInterval> | undefined;
   private numCompletedSinceLastReport_ = 0;
@@ -57,7 +58,7 @@ export class TaskQueue {
   };
 
   public readonly start = ({
-    maxConcurrency = FREEDOM_MAX_CONCURRENCY_DEFAULT,
+    maxConcurrency,
     delayWhenEmptyMSec = 0
   }: {
     /**
@@ -73,7 +74,7 @@ export class TaskQueue {
      */
     delayWhenEmptyMSec?: number;
   } = {}) => {
-    this.maxConcurrency_ = maxConcurrency;
+    this.maxConcurrency_ = maxConcurrency ?? FREEDOM_MAX_CONCURRENCY_DEFAULT;
     this.delayWhenEmptyMSec_ = delayWhenEmptyMSec;
     this.isRunning_ = true;
 
@@ -100,7 +101,29 @@ export class TaskQueue {
     /* node:coverage enable */
   };
 
+  /** @returns a function to unpause.  If pause is called multiple times, all of the unpause functions must be called to completely unpause
+   * the queue. */
+  public readonly pause = () => {
+    this.pauseCount_ += 1;
+
+    let alreadyUnpaused = false;
+    return () => {
+      if (alreadyUnpaused) {
+        return;
+      }
+      alreadyUnpaused = true;
+
+      this.pauseCount_ -= 1;
+
+      if (this.pauseCount_ === 0) {
+        this.runMore_();
+      }
+    };
+  };
+
   public readonly isEmpty = () => this.entries_.getLength() === 0 && this.numActive === 0;
+
+  public readonly isPaused = () => this.pauseCount_ > 0;
 
   /** If the task queue is running, waits until there are no pending or active entries.  If the task queue isn't running, waits until there
    * are no active entries */
@@ -170,7 +193,7 @@ export class TaskQueue {
 
     if (this.numActive > 0 || numPending > 0 || numCompleted > 0) {
       log().debug?.(
-        `TaskQueue ${this.id}: max-concurrency=${this.maxConcurrency_}, active=${this.numActive}, pending=${numPending}, completed=${numCompleted}`
+        `TaskQueue ${this.id}: max-concurrency=${this.maxConcurrency_}, active=${this.numActive}, pending=${numPending}, completed=${numCompleted}${this.isPaused() ? ' (paused)' : ''}`
       );
     }
   };
@@ -186,7 +209,7 @@ export class TaskQueue {
   };
 
   private readonly runMore_ = () => {
-    if (!this.isRunning_) {
+    if (!this.isRunning_ || this.pauseCount_ > 0) {
       if (this.numActive === 0) {
         this.resolvePendingWaiter_();
       }
