@@ -35,7 +35,7 @@ const storeProviders: StoreProvider[] = [
 ];
 
 storeProviders.forEach((provider) => {
-  describe(`LockStore: ${provider.name}`, () => {
+  describe(provider.name, () => {
     let store: LockStore<typeof lockKey>;
     let teardown: () => Promise<void>;
 
