@@ -33,6 +33,7 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
 
   public lock(key: KeyT): Lock {
     const lockFile = path.join(this.dir, `${key}.lock`);
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- we return a sub-object
     const store = this;
 
     return {
