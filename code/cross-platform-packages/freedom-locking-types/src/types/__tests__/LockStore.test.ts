@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { makeTrace } from 'freedom-contexts';
+import { sleep } from 'freedom-testing-tools';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -11,59 +12,39 @@ import { FileLockStore } from '../FileLockStore.ts';
 import { InMemoryLockStore } from '../InMemoryLockStore.ts';
 import type { LockStore } from '../LockStore.ts';
 
-// TODO: replace with stopwatch
-const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
 const trace = makeTrace();
 const lockKey = 'myTestResource' as const;
 
 interface StoreProvider {
   name: string;
-  setup?: () => Promise<string | undefined>; // Returns tempDir path for FileLockStore
-  factory: (tempDir?: string) => LockStore<typeof lockKey>;
-  teardown?: (tempDir?: string) => Promise<void>;
+  factory: (tempDir?: string) => Promise<[LockStore<typeof lockKey>, () => Promise<void>]>;
 }
 
 const storeProviders: StoreProvider[] = [
   {
     name: 'InMemoryLockStore',
-    factory: () => new InMemoryLockStore<typeof lockKey>()
+    factory: async () => [new InMemoryLockStore<typeof lockKey>(), async () => {}]
   },
   {
     name: 'FileLockStore',
-    setup: async () => {
-      return await fs.mkdtemp(path.join(os.tmpdir(), 'lockstore-test-'));
-    },
-    factory: (tempDir?: string) => {
-      if (!tempDir) throw new Error('Temporary directory not provided for FileLockStore');
-      return new FileLockStore<typeof lockKey>(tempDir);
-    },
-    teardown: async (tempDir?: string) => {
-      if (tempDir) {
-        await fs.rm(tempDir, { recursive: true, force: true });
-      }
+    factory: async () => {
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lockstore-test-'));
+      return [new FileLockStore<typeof lockKey>(tempDir), async () => await fs.rm(tempDir, { recursive: true, force: true })];
     }
   }
 ];
 
-// it('ok', () => {});
-
 storeProviders.forEach((provider) => {
   describe(`LockStore: ${provider.name}`, () => {
     let store: LockStore<typeof lockKey>;
-    let setupResult: string | undefined; // For FileLockStore tempDir
+    let teardown: () => Promise<void>;
 
     beforeEach(async () => {
-      if (provider.setup) {
-        setupResult = await provider.setup();
-      }
-      store = provider.factory(setupResult);
+      [store, teardown] = await provider.factory();
     });
 
     afterEach(async () => {
-      if (provider.teardown) {
-        await provider.teardown(setupResult);
-      }
+      await teardown();
     });
 
     it('should lock and unlock a single entity', async () => {
@@ -133,7 +114,8 @@ storeProviders.forEach((provider) => {
       // const token1 = acquireResult1.value; // Not strictly needed as it auto-releases
 
       // Act: Wait for longer than the auto-release time
-      await delay(shortAutoReleaseTime + 50); // Wait a bit longer to ensure expiry
+      // TODO: replace with timekeeper
+      await sleep(shortAutoReleaseTime + 50); // Wait a bit longer to ensure expiry
 
       // Act: Attempt to acquire the lock again
       const acquireResult2 = await lock.acquire(trace, { timeoutMSec: 0 });
