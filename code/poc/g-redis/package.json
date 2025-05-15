@@ -1,0 +1,12 @@
+{
+  "name": "g-redis",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/redis-client.js"
+  },
+  "dependencies": {
+    "redis": "^4.6.7",
+    "google-auth-library": "^9.0.0"
+  }
+}
