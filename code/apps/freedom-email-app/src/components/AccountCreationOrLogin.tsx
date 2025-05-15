@@ -1,10 +1,9 @@
-import { ArrowForwardIosOutlined, Fingerprint } from '@mui/icons-material';
+import { ArrowForwardIosOutlined, DownloadForOfflineOutlined as DownloadIcon, Fingerprint } from '@mui/icons-material';
 import type { ListItemTextSlotsAndSlotProps } from '@mui/material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, Typography, useTheme } from '@mui/material';
 import { bestEffort } from 'freedom-async';
 import { base64String, type Uuid } from 'freedom-basic-data';
 import { log, makeTrace, makeUuid } from 'freedom-contexts';
-import type { EmailUserId } from 'freedom-email-sync';
 import type {
   LocallyStoredEncryptedEmailCredentialInfo,
   LocallyStoredEncryptedEmailCredentialPasswordType
@@ -23,12 +22,14 @@ import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useTasks } from '../contexts/tasks.tsx';
 import { useTransientContent } from '../contexts/transient-content.tsx';
 import { useTaskWaitable } from '../hooks/useTaskWaitable.ts';
+import { getTaskWorkerConfig } from '../task-worker-configs/configs.ts';
+import { makeBrowserDownloadLocallyStoredEncryptedEmailCredential } from '../utils/makeBrowserDownloadLocallyStoredEncryptedEmailCredential.ts';
 import { registerWebAuthnCredential } from '../utils/webauthn/registerWebAuthnCredential.ts';
 import type { AppTheme } from './AppTheme.tsx';
+import { LoginFromServerDialog } from './auth/LoginFromServerDialog.tsx';
+import { NewAccountEmailAndMasterPasswordDialog } from './auth/NewAccountEmailAndMasterPasswordDialog.tsx';
+import { UnlockAccountMasterPasswordDialog } from './auth/UnlockAccountMasterPasswordDialog.tsx';
 import { ConfirmationDialog } from './ConfirmationDialog.tsx';
-import { LoginFromServerDialog } from './new-account/LoginFromServerDialog.tsx';
-import { NewAccountMasterPasswordDialog } from './new-account/NewAccountMasterPasswordDialog.tsx';
-import { UnlockAccountMasterPasswordDialog } from './new-account/UnlockAccountMasterPasswordDialog.tsx';
 
 const ns = 'ui';
 const $accounts = LOCALIZE('Accounts')({ ns });
@@ -36,10 +37,14 @@ const $addBiometricsTitle = LOCALIZE('Secure with Biometrics?')({ ns });
 const $addBiometricsMessage = LOCALIZE(
   "For your convenience, your device's biometrics capabilities (ex. Touch ID) may be used to unlock your account.  Would you like to setup biometric security now?"
 )({ ns });
+const $downloadCredentialTitle = LOCALIZE('Save Credential')({ ns });
+const $downloadCredentialMessage = LOCALIZE(
+  "You've opted not to backup your encrypted credential on our servers.  You can export your credential later, but you recommend saving it now, and keeping it somewhere safe.  You'll always need your master password to decrypt it.  Would you like to save your recovery file now?"
+)({ ns });
 const $importCredential = LOCALIZE('Import Credential')({ ns });
-const $loginFromServer = LOCALIZE('Login from Server')({ ns });
 const $newAccount = LOCALIZE('New Account')({ ns });
 const $untitled = LOCALIZE('untitled')({ ns });
+const $useAnotherAccount = LOCALIZE('Use Another Account')({ ns });
 
 export const AccountCreationOrLogin = () => {
   const activeLocallyStoredCredentialUuid = useActiveLocallyStoredCredentialUuid();
@@ -114,30 +119,18 @@ export const AccountCreationOrLogin = () => {
     elem.click();
   });
 
-  const dismissLoginFromServerDialog = useRef<() => void>(noop);
+  const dismissLoginDialog = useRef<() => void>(noop);
+
   const onLoginFromServerButtonClick = useCallbackRef(() => {
     if (tasks === undefined) {
       return; // Not ready
     }
 
-    dismissLoginFromServerDialog.current = transientContent.present(({ dismiss }) => (
-      <LoginFromServerDialog dismiss={dismiss} onLogin={onSuccessLoginFromServerDialog} />
+    dismissLoginDialog.current();
+    dismissLoginDialog.current = transientContent.present(({ dismiss }) => (
+      <LoginFromServerDialog dismiss={dismiss} onSubmit={onSubmitUnlockAccountDialog} />
     ));
   });
-
-  const onSuccessLoginFromServerDialog = useCallbackRef(
-    async ({ userId, locallyStoredCredentialUuid }: { userId: EmailUserId; locallyStoredCredentialUuid: Uuid }) => {
-      // Close the dialog
-      dismissLoginFromServerDialog.current();
-
-      // TODO: Is this enough?
-      activeLocallyStoredCredentialUuid.set(locallyStoredCredentialUuid);
-      activeUserId.set(userId);
-
-      // Redirect
-      history.replace('/mail');
-    }
-  );
 
   const dismissNewAccountDialog = useRef<() => void>(noop);
   const onNewAccountButtonClick = useCallbackRef(() => {
@@ -145,13 +138,38 @@ export const AccountCreationOrLogin = () => {
       return; // Not ready
     }
 
+    dismissNewAccountDialog.current();
     dismissNewAccountDialog.current = transientContent.present(({ dismiss }) => (
-      <NewAccountMasterPasswordDialog dismiss={dismiss} onSubmit={onSubmitNewAccountDialog} />
+      <NewAccountEmailAndMasterPasswordDialog dismiss={dismiss} onSubmit={onSubmitNewAccountDialog} />
     ));
   });
 
+  const onExportCredentialClick = useCallbackRef(async () => {
+    if (tasks === undefined) {
+      console.error('Tasks not ready');
+      return; // Not ready
+    }
+
+    const credentialUuid = activeLocallyStoredCredentialUuid.get();
+    if (credentialUuid === undefined) {
+      console.error('No active credential UUID');
+      return; // Not ready
+    }
+
+    const trace = makeTrace(import.meta.filename, 'onExportCredentialClick');
+    await bestEffort(trace, makeBrowserDownloadLocallyStoredEncryptedEmailCredential(trace, { tasks, credentialUuid }));
+  });
+
   const onSubmitNewAccountDialog = useCallbackRef(
-    async ({ masterPassword }: { masterPassword: string; saveCredentialsOnServer: boolean }) => {
+    async ({
+      emailUsername,
+      masterPassword,
+      saveCredentialsOnRemote
+    }: {
+      emailUsername: string;
+      masterPassword: string;
+      saveCredentialsOnRemote: boolean;
+    }) => {
       if (isBusy.get()) {
         return;
       }
@@ -160,12 +178,7 @@ export const AccountCreationOrLogin = () => {
 
       isBusy.set(true);
       try {
-        const description = `${makeUuid()}@freedommail.me - ${new Date().toISOString()}`;
-        const created = await tasks!.createUser({
-          install: { description },
-          password: masterPassword
-          // Here? saveCredentialsOnServer
-        });
+        const created = await tasks!.createUser({ emailUsername, masterPassword, saveCredentialsOnRemote });
         if (!created.ok) {
           // TODO: better error visibility
           log().error?.('Failed to create user', created.value);
@@ -177,17 +190,38 @@ export const AccountCreationOrLogin = () => {
         activeLocallyStoredCredentialUuid.set(created.value.locallyStoredCredentialUuid);
         activeUserId.set(created.value.userId);
 
-        // After successful account creation, try to register a WebAuthn credential
-        if (created.value.locallyStoredCredentialUuid !== undefined && window.PublicKeyCredential !== undefined) {
-          const trace = makeTrace(import.meta.filename, 'onSubmitNewAccountDialog');
-          const registered = await registerWebAuthnCredential(trace, {
-            localCredentialUuid: created.value.locallyStoredCredentialUuid,
-            description
-          });
-          if (!registered.ok) {
-            log().error?.('Failed to register WebAuthn credential', registered.value);
-            return;
-          }
+        if (!saveCredentialsOnRemote) {
+          transientContent.present(({ dismiss }) => (
+            <ConfirmationDialog
+              dismiss={dismiss}
+              titleIcon={<DownloadIcon color="primary" fontSize="large" />}
+              title={$downloadCredentialTitle(t)}
+              message={$downloadCredentialMessage(t)}
+              onConfirm={async () => {
+                dismiss();
+                await onExportCredentialClick();
+              }}
+            />
+          ));
+        } else if (created.value.locallyStoredCredentialUuid !== undefined) {
+          const email = `${emailUsername}@${getTaskWorkerConfig().defaultEmailDomain}`;
+
+          transientContent.present(({ dismiss }) => (
+            <ConfirmationDialog
+              dismiss={dismiss}
+              titleIcon={<Fingerprint color="primary" fontSize="large" />}
+              title={$addBiometricsTitle(t)}
+              message={$addBiometricsMessage(t)}
+              onConfirm={() => {
+                dismiss();
+                onSetupBiometricsConfirmation({
+                  localCredentialUuid: created.value.locallyStoredCredentialUuid!,
+                  description: email,
+                  password: masterPassword
+                });
+              }}
+            />
+          ));
         }
       } finally {
         isBusy.set(false);
@@ -195,13 +229,13 @@ export const AccountCreationOrLogin = () => {
     }
   );
 
-  const dismissUnlockAccountMasterPasswordDialog = useRef<() => void>(noop);
   const onOpenAccountButtonClick = useCallbackRef((credentialInfo: LocallyStoredEncryptedEmailCredentialInfo) => {
     if (tasks === undefined) {
       return; // Not ready
     }
 
-    dismissUnlockAccountMasterPasswordDialog.current = transientContent.present(({ dismiss }) => (
+    dismissLoginDialog.current();
+    dismissLoginDialog.current = transientContent.present(({ dismiss }) => (
       <UnlockAccountMasterPasswordDialog dismiss={dismiss} credentialInfo={credentialInfo} onSubmit={onSubmitUnlockAccountDialog} />
     ));
   });
@@ -222,7 +256,7 @@ export const AccountCreationOrLogin = () => {
         return;
       }
 
-      dismissUnlockAccountMasterPasswordDialog.current();
+      dismissLoginDialog.current();
 
       isBusy.set(true);
       try {
@@ -336,7 +370,7 @@ export const AccountCreationOrLogin = () => {
                 </ListItemButton>
 
                 <ListItemButton onClick={onLoginFromServerButtonClick} sx={{ borderTop: `1px solid ${theme.palette.divider}` }}>
-                  <ListItemText primary={$loginFromServer(t)} slotProps={emphasizedListItemButtonTextSlotProps} />
+                  <ListItemText primary={$useAnotherAccount(t)} slotProps={emphasizedListItemButtonTextSlotProps} />
                 </ListItemButton>
 
                 <ListItemButton onClick={onNewAccountButtonClick} sx={{ borderTop: `1px solid ${theme.palette.divider}` }}>

@@ -1,8 +1,7 @@
-import { excludeFailureResult, type PR, type PRFunc } from 'freedom-async';
+import type { PR, PRFunc } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type Base64String, ONE_SEC_MSEC, sha256HashInfo } from 'freedom-basic-data';
+import { ONE_SEC_MSEC, sha256HashInfo } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
-import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { NotificationManager } from 'freedom-notification-types';
 import { api } from 'freedom-store-api-server-api';
@@ -12,61 +11,22 @@ import type {
   RemoteAccessor,
   RemoteChangeNotificationClient,
   RemoteChangeNotifications,
-  SaltsById,
   StorageRootId,
-  SyncableItemMetadata,
   SyncPuller,
   SyncPusher
 } from 'freedom-sync-types';
 import { remoteIdInfo, SyncablePath } from 'freedom-sync-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
-const registerWithRemote = makeApiFetchTask([import.meta.filename, 'registerWithRemote'], api.register.POST);
 const pullFromRemote = makeApiFetchTask([import.meta.filename, 'pullFromRemote'], api.pull.POST);
 const pushToRemote = makeApiFetchTask([import.meta.filename, 'pushToRemote'], api.push.POST);
 
-interface RegisterArgs {
-  name: string;
-  storageRootId: StorageRootId;
-  metadata: Omit<SyncableItemMetadata, 'name'>;
-  creatorPublicKeys: CombinationCryptoKeySet;
-  saltsById: SaltsById;
-  encryptedCredentials: Base64String | null;
-}
-
-export interface EmailServiceRemoteConnection extends ControllableRemoteConnection {
-  readonly register: PRFunc<undefined, 'email-is-unavailable', [RegisterArgs]>;
-}
+export type EmailServiceRemoteConnection = ControllableRemoteConnection;
 
 export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
   [import.meta.filename],
-  async (_trace): PR<EmailServiceRemoteConnection> => {
+  async (_trace, { storageRootId }: { storageRootId: StorageRootId }): PR<EmailServiceRemoteConnection> => {
     const remoteId = remoteIdInfo.make(makeUuid());
-
-    let storageRootId: StorageRootId | undefined = undefined;
-    const register = makeAsyncResultFunc(
-      [import.meta.filename, 'register'],
-      async (trace, args: RegisterArgs): PR<undefined, 'email-is-unavailable'> => {
-        storageRootId = args.storageRootId;
-
-        const registered = await disableLam(['already-created', 'conflict', 'email-is-unavailable'], registerWithRemote)(trace, {
-          body: args,
-          context: getDefaultApiRoutingContext()
-        });
-        if (!registered.ok) {
-          // TODO: TEMP treating conflict as success until updated service is deployed
-          if (registered.value.errorCode === 'conflict' || registered.value.errorCode === 'already-created') {
-            // If there's a conflict, the account was probably already registered
-            return makeSuccess(undefined);
-          }
-          // Pass through validation and not-found errors
-          return excludeFailureResult(registered, 'already-created', 'conflict');
-        }
-
-        return makeSuccess(undefined);
-      }
-    );
 
     const puller: SyncPuller = makeAsyncResultFunc(
       [import.meta.filename, 'puller'],
@@ -131,8 +91,7 @@ export const makeEmailServiceRemoteConnection = makeAsyncResultFunc(
     return makeSuccess({
       accessor: remoteAccessor,
       changeNotificationClient: remoteChangeNotificationClient,
-      start,
-      register
+      start
     });
   }
 );

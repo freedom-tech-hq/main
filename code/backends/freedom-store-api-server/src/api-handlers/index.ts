@@ -6,5 +6,16 @@ import publicKeys from './publicKeys.ts';
 import pull from './pull.ts';
 import push from './push.ts';
 import register from './register.ts';
+import retrieveCredentials from './retrieve-credentials.ts';
+import storeCredentials from './store-credentials.ts';
 
-export default makeRegisterAllWithExpress(checkNameAvailability, health, pull, publicKeys, push, register);
+export default makeRegisterAllWithExpress(
+  checkNameAvailability,
+  health,
+  pull,
+  publicKeys,
+  push,
+  register,
+  retrieveCredentials,
+  storeCredentials
+);

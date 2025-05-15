@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { bestEffort, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Base64String, Uuid } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { EmailUserId } from 'freedom-email-sync';
@@ -14,35 +14,37 @@ import { initializeRoot } from 'freedom-syncable-store';
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';
 import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
+import { reserveEmail } from '../../internal/tasks/user/reserveEmail.ts';
+import { getConfig } from '../config/setConfig.ts';
+import { storeCredentialsOnServer } from '../email-credential/storeCredentialsOnServer.ts';
 
 /**
- * Creates:
- * - email credential
- * - basic user folder structure
- * - welcome content
+ * - Creates email credential
+ * - Reserves email address on remote
+ * - Stores encrypted email credential locally
+ * - Optionally stores encrypted email credential on remote
+ * - Creates basic user folder structure
+ * - Creates welcome content
  *
- * The user should keep their user ID and private keys somewhere safe, so they can use them for account recovery or to sign in on other
- * devices
- *
- * @returns the user ID and encrypted email credential
+ * @returns the user ID and encrypted email credential info
  */
 export const createUser = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     {
-      install,
-      password
+      emailUsername,
+      masterPassword,
+      saveCredentialsOnRemote
     }: {
-      /** If provided, the credential is encrypted with the specified password and stored locally */
-      install?: {
-        /** Stored with the credential so the user can intelligibly select which credential to use later */
-        description: string;
-      };
-      password: string;
+      emailUsername: string;
+      masterPassword: string;
+      saveCredentialsOnRemote: boolean;
     }
-  ): PR<{ userId: EmailUserId; encryptedEmailCredential: Base64String; locallyStoredCredentialUuid?: Uuid }> => {
+  ): PR<{ userId: EmailUserId; encryptedEmailCredential: Base64String; locallyStoredCredentialUuid?: Uuid }, 'email-unavailable'> => {
     const activeCredential = useActiveCredential(trace);
+
+    // --- Creating credential and store ---
 
     const credential = await createEmailCredential(trace);
     if (!credential.ok) {
@@ -50,24 +52,6 @@ export const createUser = makeAsyncResultFunc(
     }
 
     const userId = credential.value.userId;
-
-    const encryptedEmailCredential = await encryptEmailCredentialWithPassword(trace, { credential: credential.value, password });
-    if (!encryptedEmailCredential.ok) {
-      return encryptedEmailCredential;
-    }
-
-    let locallyStoredCredentialUuid: Uuid | undefined;
-    if (install) {
-      const storedEncryptedEmailCredential = await storeEncryptedEmailCredentialLocally(trace, {
-        description: install.description,
-        encryptedEmailCredential: encryptedEmailCredential.value
-      });
-      if (!storedEncryptedEmailCredential.ok) {
-        return storedEncryptedEmailCredential;
-      }
-
-      locallyStoredCredentialUuid = storedEncryptedEmailCredential.value.locallyStoredCredentialUuid;
-    }
 
     const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, credential.value);
     if (!syncableStoreResult.ok) {
@@ -80,6 +64,48 @@ export const createUser = makeAsyncResultFunc(
       return generalizeFailureResult(trace, initializedStore, ['conflict', 'not-found']);
     }
 
+    // --- Reserving email address on remote ---
+
+    const reserved = await reserveEmail(trace, credential.value, { emailUsername });
+    if (!reserved.ok) {
+      return reserved;
+    }
+
+    // --- Storing encrypted email credential ---
+
+    const credentialDescription = `${emailUsername}@${getConfig().defaultEmailDomain}`;
+
+    const encryptedCredential = await encryptEmailCredentialWithPassword(trace, { credential: credential.value, password: masterPassword });
+    if (!encryptedCredential.ok) {
+      return encryptedCredential;
+    }
+
+    const storedEncryptedCredential = await storeEncryptedEmailCredentialLocally(trace, {
+      description: credentialDescription,
+      encryptedEmailCredential: encryptedCredential.value
+    });
+    if (!storedEncryptedCredential.ok) {
+      return storedEncryptedCredential;
+    }
+
+    const locallyStoredCredentialUuid = storedEncryptedCredential.value.locallyStoredCredentialUuid;
+
+    // --- Saving encrypted email credential on remote, if desired ---
+
+    if (saveCredentialsOnRemote) {
+      // TODO: need some kind of fallback / user notification if this fails
+      await bestEffort(
+        trace,
+        storeCredentialsOnServer(trace, {
+          userId,
+          encryptedCredentials: encryptedCredential.value,
+          signingKeys: credential.value.privateKeys
+        })
+      );
+    }
+
+    // --- Initializing user folder structure ---
+
     const createdStructure = await createInitialSyncableStoreStructureForUser(trace, userFs);
     if (!createdStructure.ok) {
       return createdStructure;
@@ -90,11 +116,13 @@ export const createUser = makeAsyncResultFunc(
       return welcomeContentAdded;
     }
 
+    // --- Setting the new credential as the active credential ---
+
     activeCredential.credential = credential.value;
 
     return makeSuccess({
       userId,
-      encryptedEmailCredential: encryptedEmailCredential.value,
+      encryptedEmailCredential: encryptedCredential.value,
       locallyStoredCredentialUuid
     });
   }

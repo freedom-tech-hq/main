@@ -8,7 +8,7 @@ import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.t
 import { getUserStore } from '../internal/utils/getUserStore.ts';
 import type { User } from '../types/User.ts';
 
-type ErrorCodes = 'already-created' | 'conflict' | 'email-is-unavailable';
+type ErrorCodes = 'already-created' | 'conflict' | 'email-unavailable';
 
 export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], async (trace, user: User): PR<User, ErrorCodes> => {
   const userStore = await uncheckedResult(getUserStore(trace));
@@ -61,7 +61,7 @@ export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], as
     return makeFailure(
       new ConflictError(trace, {
         message: `Email ${user.email} is already assigned to userId ${userByEmailResult.value.userId}`,
-        errorCode: 'email-is-unavailable'
+        errorCode: 'email-unavailable'
       })
     );
   }

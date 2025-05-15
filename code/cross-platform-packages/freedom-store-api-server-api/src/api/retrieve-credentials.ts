@@ -19,7 +19,7 @@ export const POST = makeHttpApi({
       status: schema.number(StatusCodes.OK),
       body: schema.object({
         userId: emailUserIdInfo.schema,
-        encryptedCredentials: base64String.schema.allowNull()
+        encryptedCredentials: base64String.schema
       })
     },
     failureResponse: makeFailureWithCodeSchemas(

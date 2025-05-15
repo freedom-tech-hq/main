@@ -8,7 +8,7 @@ import { useWaitableFunction, WaitablesConsumer } from 'react-waitables';
 
 import { getAppEnvironment } from '../consts/appEnvironments.ts';
 import { getTasks } from '../modules/task-support/utils/getTasks.ts';
-import { taskWorkerConfigs } from '../task-worker-configs/configs.ts';
+import { getTaskWorkerConfig } from '../task-worker-configs/configs.ts';
 
 const TasksContext = createContext<Tasks | undefined>(undefined);
 
@@ -22,7 +22,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
       DEV: (window as Record<string, any>).freedom_logUserFsLs = tasks.logUserFsLs;
 
-      const configured = await tasks.setConfig(taskWorkerConfigs[appEnv]);
+      const configured = await tasks.setConfig(getTaskWorkerConfig());
       if (!configured.ok) {
         log().error?.('Failed to configure tasks worker', configured.value);
         return configured;

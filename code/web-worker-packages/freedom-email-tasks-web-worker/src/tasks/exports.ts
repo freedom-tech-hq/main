@@ -10,15 +10,17 @@ import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './em
 import type { addEncryptionForBiometricsToLocallyStoredEmailCredential } from './email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts';
 import type { getLocallyStoredEncryptedEmailCredential } from './email-credential/getLocallyStoredEncryptedEmailCredential.ts';
 import type { importEmailCredential } from './email-credential/importEmailCredential.ts';
+import type { importEmailCredentialFromRemote } from './email-credential/importEmailCredentialFromRemote.ts';
 import type { listLocallyStoredEncryptedEmailCredentials } from './email-credential/listLocallyStoredEncryptedEmailCredentials.ts';
 import type { removeEncryptionForBiometricsFromLocallyStoredEmailCredential } from './email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts';
-import type { retrieveCredentialsFromServer } from './email-credential/retrieveCredentialsFromServer.ts';
 import type { storeCredentialsOnServer } from './email-credential/storeCredentialsOnServer.ts';
 import type { createMailDraft } from './mail/createMailDraft.ts';
 import type { getMailCollections } from './mail/getMailCollections.ts';
 import type { getMailForThread } from './mail/getMailForThread.ts';
 import type { getMailThread } from './mail/getMailThread.ts';
 import type { getMailThreadsForCollection } from './mail/getMailThreadsForCollection.ts';
+import type { sendMail } from './mail/sendMail.ts';
+import type { checkEmailAvailability } from './user/checkEmailAvailability.ts';
 import type { createUser } from './user/createUser.ts';
 import type { startSyncService } from './user/startSyncService.ts';
 
@@ -69,6 +71,9 @@ class TasksImpl {
   public readonly importEmailCredential = async (...args: ParametersExceptFirst<typeof importEmailCredential>) =>
     await (await import('./email-credential/importEmailCredential.ts')).importEmailCredential(this.#trace, ...args);
 
+  public readonly importEmailCredentialFromRemote = async (...args: ParametersExceptFirst<typeof importEmailCredentialFromRemote>) =>
+    await (await import('./email-credential/importEmailCredentialFromRemote.ts')).importEmailCredentialFromRemote(this.#trace, ...args);
+
   public readonly listLocallyStoredEncryptedEmailCredentials = async (
     ...args: ParametersExceptFirst<typeof listLocallyStoredEncryptedEmailCredentials>
   ) =>
@@ -82,9 +87,6 @@ class TasksImpl {
     await (
       await import('./email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts')
     ).removeEncryptionForBiometricsFromLocallyStoredEmailCredential(this.#trace, ...args);
-
-  public readonly retrieveCredentialsFromServer = async (...args: ParametersExceptFirst<typeof retrieveCredentialsFromServer>) =>
-    await (await import('./email-credential/retrieveCredentialsFromServer.ts')).retrieveCredentialsFromServer(this.#trace, ...args);
 
   public readonly storeCredentialsOnServer = async (...args: ParametersExceptFirst<typeof storeCredentialsOnServer>) =>
     await (await import('./email-credential/storeCredentialsOnServer.ts')).storeCredentialsOnServer(this.#trace, ...args);
@@ -106,7 +108,13 @@ class TasksImpl {
   public readonly getMailThreadsForCollection = async (...args: ParametersExceptFirst<typeof getMailThreadsForCollection>) =>
     await (await import('./mail/getMailThreadsForCollection.ts')).getMailThreadsForCollection(this.#trace, ...args);
 
+  public readonly sendMail = async (...args: ParametersExceptFirst<typeof sendMail>) =>
+    await (await import('./mail/sendMail.ts')).sendMail(this.#trace, ...args);
+
   // User
+
+  public readonly checkEmailAvailability = async (...args: ParametersExceptFirst<typeof checkEmailAvailability>) =>
+    await (await import('./user/checkEmailAvailability.ts')).checkEmailAvailability(this.#trace, ...args);
 
   public readonly createUser = async (...args: ParametersExceptFirst<typeof createUser>) =>
     await (await import('./user/createUser.ts')).createUser(this.#trace, ...args);

@@ -1,29 +1,35 @@
+import { CreateOutlined as ComposeIcon } from '@mui/icons-material';
 import { AppBar, Box, Button, Stack, Toolbar, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { bestEffort } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import { noop } from 'lodash-es';
+import { useRef } from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
 import { useActiveLocallyStoredCredentialUuid } from '../contexts/active-locally-stored-credential-uuid.tsx';
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useTasks } from '../contexts/tasks.tsx';
+import { useTransientContent } from '../contexts/transient-content.tsx';
 import { makeBrowserDownloadLocallyStoredEncryptedEmailCredential } from '../utils/makeBrowserDownloadLocallyStoredEncryptedEmailCredential.ts';
+import { ComposeEmailDialog } from './compose/ComposeEmailDialog.tsx';
 import { NavBarSearchField } from './NavBarSearchField.tsx';
 import { MAIN_MENU_WIDTH_PX } from './SideMenu.tsx';
 
 const ns = 'ui';
 const $appName = LOCALIZE('Freedom Mail')({ ns });
 const $exportCredentialButtonTitle = LOCALIZE('Export Credential')({ ns });
-// const $newMessageButtonTitle = LOCALIZE('New Message')({ ns });
+const $newMessageButtonTitle = LOCALIZE('New Message')({ ns });
 
 export const AppNavbar = () => {
   const activeLocallyStoredCredentialUuid = useActiveLocallyStoredCredentialUuid();
   const activeUserId = useActiveUserId();
+  const t = useT();
   const tasks = useTasks();
   const theme = useTheme();
-  const t = useT();
+  const transientContent = useTransientContent();
   // const selectedCollectionId = useSelectedMailCollectionId();
   // const selectedThreadId = useSelectedMailThreadId();
 
@@ -45,20 +51,11 @@ export const AppNavbar = () => {
     await bestEffort(trace, makeBrowserDownloadLocallyStoredEncryptedEmailCredential(trace, { tasks, credentialUuid }));
   });
 
-  // const onNewMessageClick = useCallbackRef(async () => {
-  //   if (tasks === undefined) {
-  //     return;
-  //   }
-
-  //   const draft = await tasks.createMailDraft();
-  //   if (!draft.ok) {
-  //     console.error('Failed to create draft', draft.value);
-  //     return;
-  //   }
-
-  //   selectedCollectionId.set('drafts');
-  //   selectedThreadId.set(draft.value.draftId);
-  // });
+  const dismissComposeMessageDialog = useRef<() => void>(noop);
+  const onNewMessageClick = useCallbackRef(async () => {
+    dismissComposeMessageDialog.current();
+    dismissComposeMessageDialog.current = transientContent.present(({ dismiss }) => <ComposeEmailDialog dismiss={dismiss} />);
+  });
 
   return (
     <AppBar color="secondary" position="sticky" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
@@ -75,9 +72,9 @@ export const AppNavbar = () => {
                 <Button variant="text" onClick={onExportCredentialClick}>
                   {$exportCredentialButtonTitle(t)}
                 </Button>
-                {/* <Button variant="text" startIcon={<ComposeIcon />} onClick={onNewMessageClick}>
+                <Button variant="text" startIcon={<ComposeIcon />} onClick={onNewMessageClick}>
                   {$newMessageButtonTitle(t)}
-                </Button> */}
+                </Button>
               </>
             ) : null
           )}

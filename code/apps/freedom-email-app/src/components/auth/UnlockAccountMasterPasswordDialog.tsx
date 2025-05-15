@@ -16,12 +16,11 @@ import type { TypeOrPromisedType } from 'yaschema';
 
 import { authenticateWithWebAuthn } from '../../utils/webauthn/authenticateWithWebAuthn.ts';
 import { isWebAuthnAvailable as checkIsWebAuthnAvailable } from '../../utils/webauthn/isWebAuthnAvailable.ts';
-import { ControlledTextField } from '../form/ControlledTextField.tsx';
+import { MasterPasswordField } from './fields/MasterPasswordField.tsx';
 
 const ns = 'ui';
 const $cancel = LOCALIZE('Cancel')({ ns });
 const $unlockAccount = LOCALIZE('Unlock Account')({ ns });
-const $masterPassword = LOCALIZE('Master Password')({ ns });
 const $unlockAccountInstructions = LOCALIZE(
   'Your account information is protected with a master password.  Enter it to unlock your account.'
 )({ ns });
@@ -127,22 +126,7 @@ export const UnlockAccountMasterPasswordDialog = ({ credentialInfo, dismiss, onS
           </>
         ))}
 
-        {BC(isBusy, (isBusy) => (
-          <ControlledTextField
-            type="password"
-            value={masterPassword}
-            autoFocus
-            autoComplete="password"
-            required
-            margin="dense"
-            id="password"
-            name="master-password"
-            label={$masterPassword(t)}
-            fullWidth
-            variant="standard"
-            disabled={isBusy}
-          />
-        ))}
+        <MasterPasswordField autoFocus value={masterPassword} isBusy={isBusy} />
       </DialogContent>
       <DialogActions>
         <Button onClick={dismiss}>{$cancel(t)}</Button>
