@@ -1,8 +1,10 @@
-import type { PR } from 'freedom-async';
+import { makeSuccess, type PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
+import { log } from 'freedom-contexts';
 import type { SMTPServerEnvelope } from 'smtp-server';
 
-import { processInboundEmail } from '../../syncable-store/utils/processInboundEmail.ts';
+import { parseEmail } from '../../formats/utils/parseEmail.ts';
+import { routeMail } from '../../syncable-store/utils/routeMail.ts';
 import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 
 /**
@@ -16,6 +18,28 @@ import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 export const onReceivedEmail: SmtpServerParams['onReceivedEmail'] = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, emailData: string, envelope: SMTPServerEnvelope): PR<undefined> => {
-    return await processInboundEmail(trace, emailData, envelope);
+    // Parse the email
+    const parsedEmailResult = await parseEmail(trace, emailData);
+    if (!parsedEmailResult.ok) {
+      return parsedEmailResult;
+    }
+    const parsedMail = parsedEmailResult.value;
+
+    // Get the recipients. Note: the contents of envelope.rcptTo are already validated by onValidateReceiver
+    const recipients = new Set<string>(envelope.rcptTo.map((v) => v.address));
+
+    // Route and deliver
+    await routeMail(trace, {
+      recipients,
+      mail: parsedMail,
+      mode: {
+        type: 'inbound',
+        rawMail: emailData
+      }
+    });
+
+    log().info?.(trace, `Delivery is successful for ${envelope.rcptTo.map((v) => v.address).join(', ')}`);
+
+    return makeSuccess(undefined);
   }
 );

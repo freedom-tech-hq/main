@@ -1,0 +1,124 @@
+Received: by mail-vs1-f48.google.com with SMTP id ada2fe7eead31-4deff18d67aso934267137.3
+        for <paulo@mock-smtp.dev.linefeedr.com>; Mon, 12 May 2025 05:41:05 -0700 (PDT)
+ARC-Seal: i=2; a=rsa-sha256; t=1747053665; cv=pass;
+        d=google.com; s=arc-20240605;
+        b=i/n98fGF8lEQOkSQGMgNBOVMtEiPEpV/l1xqaJ739dMoFQ8ZBJ68L+x0pD2Tr2s8zI
+         mzXj43KDRuFj5r/r1QRp5gYCt4CWX9Cs7x98T7PqGWLZy4O3wwT+wktnxlbcheQPjgG0
+         4HeREdj8K/mV9DvzoRvVBqVDahWlq7bWpsMCyRlbEdnPayQoP7jiaDe5kCrOyh1TuBd/
+         SweUVzsSehFrUcWGRDUOgnrXhuFwD11diJOHY2/aBtSIXOk7ahHH9oj8AXSTjKQtl0o6
+         e0bL9FambxmUwvQHJgs5r/COew/BJq82ibW+qbm/ROfR/3tPqZuaMwjdGNbkDGWbGXZ8
+         O8Kw==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature
+         :delivered-to;
+        bh=6iuJJa7ERkGAoCxFaHZFqNfPqKGRn7bHMo4wMz08yYo=;
+        fh=Y27gppk41mQtiN+oO2Qig0klLFi2zSQ2/zdTpuFhG1A=;
+        b=kgAP49c0uCgW7127VIv/uO75CKEtl1riNi8lmcJnfRoYTo27wmOcf+Na+4EI56kkD0
+         8kIQTEAed3qDqhjOj5k4ajwgYdIkneo8ZHYrwv4aWlZMBi9QWmdDz9oHrARxsFKNKypz
+         rt9hPApI+RBlZ7yShih7y6ESU02/a7voJVJDVpOGbBEJ+/Zru4j3ZZgabjZWnCjYNtpO
+         cGZG3C5Yv8OXKiW1uW5/kedIYfcLzowh4ZR4Hz9te/6k6bmPlIS7cq2uSruSD4SfVThm
+         Q+CCBdO4lgVpyUOIamdywMttX9tZoYmciuewuaIkfFJfPWB1pQ2vDc+9UMrFGdAZ5yHR
+         mIbA==;
+        darn=mock-smtp.dev.linefeedr.com
+ARC-Authentication-Results: i=2; mx.google.com;
+       dkim=pass header.i=@koryagin-com.20230601.gappssmtp.com header.s=20230601 header.b=2hW4wQwz;
+       spf=pass (google.com: domain of pavel@koryagin.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=pavel@koryagin.com;
+       dara=neutral header.i=@freedomtechhq.com
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1747053665; x=1747658465;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature
+         :delivered-to:x-forwarded-for:x-forwarded-to:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=6iuJJa7ERkGAoCxFaHZFqNfPqKGRn7bHMo4wMz08yYo=;
+        b=qDs4Pc5TwlPiIr2UxYv2t9AfOsVLP1cAmaCJmfHrIeokmNeDUV1bjMhZ9MvT2BFEdT
+         eTP+n1fO8RsnvpgmGXAxrsZjrZXQMtvwByDjIi+CUBX+ZmRw9ipGJ2hi8r6iEAI7B69x
+         /c8mK9o5BLQ7PEC02k01m96GI8IwC9j/Q+MsGBnZGxoSAxE7HakuRnDV/R2uw6fOaMp5
+         BP437r156bogBZzcM1wvEWOz/WKeB0fZ/B8N4oHuUU6/QSnveQJWIuDl2QA4y6dFmhYc
+         DhHF487pY32WU+/3uXTXrmnfGWdWoYPYrNHms/P8V+rctqjDizPJSBES+fFw6G1rK0u8
+         Y2sA==
+X-Forwarded-Encrypted: i=2; AJvYcCXRktwgr7DlIsAlSCTBFPzGfDAnR8Lsxqb8K3AWnHXqKmu/mEb0K0BlgE26UPKEKX93D/WAqA==@mock-smtp.dev.linefeedr.com
+X-Gm-Message-State: AOJu0Yy/oka7ITfebYj+zcSbAsGdpyIRsKdhsSqhaIeWmjYyz4kKq/lQ
+	2Su5kyo2MZXnPUz0fHvwr3z81MZg1YPArscWRUo7KZ6gFbYMu9QhGuNIauxKRGqA3Ax9UJDR9m4
+	yb629owJk9bvyv0xr2JfYC1XnCVXXfGXfqrYRaAIivQFiTTFu3X9/22y91LYngaVxvyU0+kKT28
+	vyAjI=
+X-Received: by 2002:a05:6102:3e18:b0:4c3:6393:843f with SMTP id ada2fe7eead31-4deed30cdaamr9310247137.5.1747053664865;
+        Mon, 12 May 2025 05:41:04 -0700 (PDT)
+X-Forwarded-To: pavel@mail-host.dev.linefeedr.com, paulo@mock-smtp.dev.linefeedr.com
+X-Forwarded-For: pavel.koryagin@freedomtechhq.com pavel@mail-host.dev.linefeedr.com, paulo@mock-smtp.dev.linefeedr.com
+Delivered-To: pavel.koryagin@freedomtechhq.com
+Received: by 2002:a05:612c:13a2:b0:4cd:8b43:524f with SMTP id gz34csp2478131vqb;
+        Mon, 12 May 2025 05:41:03 -0700 (PDT)
+X-Received: by 2002:a17:90b:41:b0:309:cf0b:cb37 with SMTP id 98e67ed59e1d1-30c3cafd29amr22763774a91.7.1747053663643;
+        Mon, 12 May 2025 05:41:03 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1747053663; cv=none;
+        d=google.com; s=arc-20240605;
+        b=FdJgUH5XUtW6dUL44gbGDlt78M1DLzvwhntRU9fCpgsSTknHsfAsUWPQ5B1o5zBFoi
+         KVF+SLCH9QOGZNw6PL5Q/Oi2zuNwuSsMso6oeq0jcsskmnXjGhSRBU+EGJS/j12LAvCo
+         V6odDpZLGcZug8X/8TUgWNO/lIk+5L6J8qQWsI6xsIhS5Bs2ExGU2Cz03ZABvQyv9obW
+         f/fxlH8vfXOBUphzAEteKv5Os0/bk+GUQb41R/NP7wjhu6IScYzmZUAbFTe+vDaRLlk+
+         jnX0HaDibn6zsGTxUQvQFhUKV3laXgvifAuDadDddGtR+l74tVDxL/hV983eol5Ovyxt
+         IKAQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=6iuJJa7ERkGAoCxFaHZFqNfPqKGRn7bHMo4wMz08yYo=;
+        fh=+5tMBhoO4zLaXX0vhTHOsfms1N80dSACxC0/Ya66jP4=;
+        b=EeZQX40ZcbkqVDDQ0D1uEeR815nxTY1LbKpnaFjP7/XQCTmh7t6MuUS2Ad38nP1OGQ
+         LMyU6a79JGpJJr3aTQwpWBAp86Heox+39AOjTtOYVOV88nwtIa0CnmbG9UpDmLCMf8hl
+         O1F/GL7LrjTWYTBVpuknBJab2v1wN0ennzN2pRZE6YfiUAg8I1JH68G5qMsDnl5GU5Pp
+         S2HQvdgwYi5cO2RY8krRQCfihkn9Nyqa92I/z5N9S9xR7NaBHlgwoUWzTECCWopYD+gD
+         bWF5vocJyL8WFYqcLKygvz4wSchyNVqFcV1yTfZl75z4bOAsn8BryGLANHS07nKxk7Ho
+         gKZg==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@koryagin-com.20230601.gappssmtp.com header.s=20230601 header.b=2hW4wQwz;
+       spf=pass (google.com: domain of pavel@koryagin.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=pavel@koryagin.com;
+       dara=neutral header.i=@freedomtechhq.com
+Return-Path: <pavel@koryagin.com>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id 98e67ed59e1d1-30c39eef0acsor6083909a91.6.2025.05.12.05.41.03
+        for <pavel.koryagin@freedomtechhq.com>
+        (Google Transport Security);
+        Mon, 12 May 2025 05:41:03 -0700 (PDT)
+Received-SPF: pass (google.com: domain of pavel@koryagin.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@koryagin-com.20230601.gappssmtp.com header.s=20230601 header.b=2hW4wQwz;
+       spf=pass (google.com: domain of pavel@koryagin.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=pavel@koryagin.com;
+       dara=neutral header.i=@freedomtechhq.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=koryagin-com.20230601.gappssmtp.com; s=20230601; t=1747053662; x=1747658462; darn=freedomtechhq.com;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=6iuJJa7ERkGAoCxFaHZFqNfPqKGRn7bHMo4wMz08yYo=;
+        b=2hW4wQwz1V3fST4FxYlmlDmpHnmPwWDGBBLagRNkuQ6JOTw1gOCIQ8mWuiUCOCqJzW
+         Q7HAW2vXuAQaqhAagyPdbx789oQarhQCIuyOZ5Sd3vqmyRfgCyV1YE8OWvBkqxZJoXw8
+         2vVvWbtCxqcBM/SKsZJ0cASInMmVACuayppf/L5KnTq/jr1aNG5O+UhEHZ4PFog8kGN1
+         4W4lW9EQ/YpDbZJ0NzG9+d6MqvfM5INCAgKs3sqRCRPaPYdRPaWaR9d+BveES8QIKS6y
+         3NYwO/lq/ggO8NAlShWW4Pe2+vyrzrY51lZsC1zaSxoOJEf43k8x1vPPDrL7HDDt8n47
+         q0Pw==
+X-Gm-Gg: ASbGnct+KmnYRB+4U2rOKXWvEzMtQ1whf0rp6Tay0gPSrorQYL4xQHtYrtP4DT/T4+6
+	hEDEAq5fnqEmNvCy6TrCSyRGf3kDb5g1JgfiLHiTBAAKLGWnwZqVdTXTU5T5+sgDFMj20yQaoh+
+	v2AjqC0OO/xxBVVFHKMLsQX3sg1ViYE9UW
+X-Google-Smtp-Source: AGHT+IGnsyACAAgaJcEsPYAscNCDRfaB6PWNR6H6lW1KOusLQSTOc6NC1PKPL5pi6+EglNBQPiDk4v718AprCFtnwU4=
+X-Received: by 2002:a17:90b:3c0a:b0:2ff:693a:7590 with SMTP id
+ 98e67ed59e1d1-30c3d65e441mr24153905a91.33.1747053662610; Mon, 12 May 2025
+ 05:41:02 -0700 (PDT)
+MIME-Version: 1.0
+From: Pavel Koryagin <pavel@koryagin.com>
+Date: Mon, 12 May 2025 14:40:50 +0200
+X-Gm-Features: AX0GCFtlFvNlWeaL95sAq07We34x4wTUJtuqEWl1nbSjk7xccdUnb8567YjRZ4E
+Message-ID: <CA+vs5NR+oedGN2OxuAWixyEbWrD2qwZyviCmUMufB-2eZxohxQ@mail.gmail.com>
+Subject: Test Forward
+To: pavel.koryagin@freedomtechhq.com
+Content-Type: multipart/alternative; boundary="000000000000f6ba250634efa0e6"
+
+--000000000000f6ba250634efa0e6
+Content-Type: text/plain; charset="UTF-8"
+
+Some text
+
+--000000000000f6ba250634efa0e6
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="auto">Some text</div>
+
+--000000000000f6ba250634efa0e6--

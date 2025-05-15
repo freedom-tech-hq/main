@@ -1,0 +1,4 @@
+{
+  "comment": "Override this file on deploy",
+  "abuse@local.dev.freedommail.me": "abuse@example.com"
+}

@@ -33,7 +33,7 @@ yarn dev
 Inbound email (port 25, no restrictions)
 
 ```bash
-swaks --to user1@local.dev.freedommail.me \
+swaks --to abuse@local.dev.freedommail.me \
       --from nowhere@no-server.linefeedr.com \
       --server 127.0.0.1:25 \
       --body "This is a test inbound email"

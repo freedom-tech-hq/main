@@ -27,6 +27,9 @@ export const SMTP_PORTS = env
 /** Host to bind the SMTP server to */
 export const SMTP_HOST = env.get('SMTP_HOST').required().asString();
 
+/** Is used to represent us in SMTP protocol. Should be the one with PTR record, same as DEPLOY_DELIVERY_HOST_NAME */
+export const SMTP_HOST_NAME = env.get('SMTP_HOST_NAME').required().asString();
+
 /** TLS certificate path for SMTP server */
 export const SMTP_TLS_CERT_RAW =
   (env.get('SMTP_TLS_CERT_RAW').asString() ?? '') ||
@@ -51,6 +54,12 @@ export const SMTP_OUR_DOMAINS = env
   .get('SMTP_OUR_DOMAINS')
   .required()
   .asCustom((value) => value.split(',').map((domain) => domain.trim())) as string[];
+
+/** Forwarding routes */
+export const FORWARDING_ROUTES = JSON.parse(
+  // Override the JSON file on deploy
+  fs.readFileSync(`${rootDir}/forwardingRoutes.json`, 'utf8')
+) as Record<string, string>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SMTP Upstream (should be on internal network within the same physical machine, thus no auth)

@@ -36,6 +36,8 @@ export const defineSmtpServer = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { secureOnly, onAuth, onValidateReceiver, onReceivedEmail, onSentEmail, onData }: SmtpServerParams): PR<SMTPServer> => {
     const serverOptions: SMTPServerOptions = {
+      name: config.SMTP_HOST_NAME,
+
       // Control whether to only allow secure connections
       secure: secureOnly,
       key: config.SMTP_TLS_KEY_RAW,

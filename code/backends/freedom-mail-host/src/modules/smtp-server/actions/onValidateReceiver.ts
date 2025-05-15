@@ -4,6 +4,7 @@ import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
 import { findUserByEmail } from 'freedom-db';
 
 import * as config from '../../../config.ts';
+import { hasForwardingRoute } from '../../forwarding/exports.ts';
 import type { SmtpPublicErrorCodes } from '../internal/types/SmtpPublicErrorCodes.ts';
 import type { SmtpServerParams, ValidateReceiverResult } from '../internal/utils/defineSmtpServer.ts';
 
@@ -32,6 +33,11 @@ export const onValidateReceiver: SmtpServerParams['onValidateReceiver'] = makeAs
     // Not our domain
     if (!config.SMTP_OUR_DOMAINS.includes(domain)) {
       return makeSuccess<ValidateReceiverResult>('external');
+    }
+
+    // Check a forwarding route exists
+    if (hasForwardingRoute(emailAddress)) {
+      return makeSuccess<ValidateReceiverResult>('our'); // address is ours, destination is the onReceivedEmail concern
     }
 
     // Check the user exists
