@@ -7,9 +7,10 @@ import { forceSetObjectValue } from 'freedom-object-store-types';
 import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.ts';
 import { getUserStore } from '../internal/utils/getUserStore.ts';
 
+/** An `undefined` value for `encryptedCredentials` will clear the stored credentials */
 export const saveUserCredentials = makeAsyncResultFunc(
   [import.meta.filename, 'saveUserCredentials'],
-  async (trace, userId: EmailUserId, encryptedCredentials: Base64String | null): PR<void, 'not-found'> => {
+  async (trace, userId: EmailUserId, encryptedCredentials: Base64String | undefined): PR<void, 'not-found'> => {
     const userStore = await uncheckedResult(getUserStore(trace));
     const emailByUserIdStore = await uncheckedResult(getEmailByUserIdStore(trace));
 

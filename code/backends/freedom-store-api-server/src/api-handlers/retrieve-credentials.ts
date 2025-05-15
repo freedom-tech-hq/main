@@ -28,6 +28,10 @@ export default makeHttpApiHandler(
 
     // Return the user ID and encrypted credentials if they exist
     const { userId, encryptedCredentials } = userResult.value;
+    if (encryptedCredentials === undefined) {
+      return makeFailure(new NotFoundError(trace, { message: 'Credential not found', errorCode: 'not-found' }));
+    }
+
     return makeSuccess({ body: { userId, encryptedCredentials } });
   }
 );

@@ -8,7 +8,7 @@ const userSchema = schema.object({
   userId: emailUserIdInfo.schema,
   publicKeys: combinationCryptoKeySetSchema,
   defaultSalt: schema.string(),
-  encryptedCredentials: base64String.schema.allowNull()
+  encryptedCredentials: base64String.schema.optional()
 });
 
 export type User = typeof userSchema.valueType;

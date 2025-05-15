@@ -15,8 +15,6 @@ import { createInitialSyncableStoreStructureForUser } from 'freedom-email-user';
 import { dataUploadExponentialBackoffTimeMSec, makeApiFetchTask, MAX_RETRY_DATA_UPLOAD_ACCUMULATED_DELAY_MSEC } from 'freedom-fetching';
 import { api as fakeEmailServiceApi } from 'freedom-store-api-server-api';
 import type { PullItem } from 'freedom-sync-types';
-import { DEFAULT_SALT_ID, storageRootIdInfo } from 'freedom-sync-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
 import type { TypeOrPromisedType } from 'yaschema';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
@@ -32,7 +30,7 @@ const getPublicKeysForRemote = makeApiFetchTask([import.meta.filename, 'getPubli
 
 export const startSyncService = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, isConnected: () => TypeOrPromisedType<boolean>): PR<undefined, 'email-is-unavailable'> => {
+  async (trace, isConnected: () => TypeOrPromisedType<boolean>): PR<undefined, 'email-unavailable'> => {
     const credential = useActiveCredential(trace).credential;
 
     if (credential === undefined) {
@@ -41,27 +39,9 @@ export const startSyncService = makeAsyncResultFunc(
 
     const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
 
-    const remoteConnection = await makeEmailServiceRemoteConnection(trace);
+    const remoteConnection = await makeEmailServiceRemoteConnection(trace, { storageRootId: syncableStore.path.storageRootId });
     if (!remoteConnection.ok) {
       return remoteConnection;
-    }
-
-    const rootMetadata = await syncableStore.getMetadata(trace);
-    if (!rootMetadata.ok) {
-      return rootMetadata;
-    }
-
-    const registered = await remoteConnection.value.register(trace, {
-      name: `user${Math.random()}`,
-      creatorPublicKeys: credential.privateKeys.publicOnly(),
-      storageRootId: storageRootIdInfo.make(credential.userId),
-      metadata: { provenance: rootMetadata.value.provenance },
-      saltsById: { [DEFAULT_SALT_ID]: syncableStore.saltsById[DEFAULT_SALT_ID] },
-      // TODO: pass encrypted credentials from saveCredentialsOnServer@AccountCreationOrLogin.tsx
-      encryptedCredentials: null
-    });
-    if (!registered.ok) {
-      return registered;
     }
 
     const gotRemotePublicKeys = await getPublicKeysForRemote(trace, { context: getDefaultApiRoutingContext() });
@@ -69,13 +49,6 @@ export const startSyncService = makeAsyncResultFunc(
       return gotRemotePublicKeys;
     }
     const remotePublicKeys = gotRemotePublicKeys.value.body;
-
-    // These will typically fail if we're recovering an account from the remote -- because the storage folder won't exist locally yet, but
-    // that's ok, it means the remote already has the access it needs.
-    // Giving Appender Access on the Storage Folder to the Server
-    await disableLam(true, bestEffort)(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }));
-    // Giving Editor Access on the Out Folder to the Server
-    await disableLam(true, bestEffort)(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
 
     const syncService = await makeSyncServiceForUserSyncables(trace, {
       credential,
@@ -125,6 +98,13 @@ export const startSyncService = makeAsyncResultFunc(
         // there will be differing snapshots and deltas in the access-control document and the folder contents may be encrypted with
         // multiple sets of keys that are effectively in different, but colocated, access control documents)
         await bestEffort(trace, createInitialSyncableStoreStructureForUser(trace, syncableStore));
+
+        // These will typically fail if we're recovering an account from the remote -- because the storage folder won't exist locally yet, but
+        // that's ok, it means the remote already has the access it needs.
+        // Giving Appender Access on the Storage Folder to the Server
+        await bestEffort(trace, grantAppenderAccessOnStorageFolderToRemote(trace, credential, { remotePublicKeys }));
+        // Giving Editor Access on the Out Folder to the Server
+        await bestEffort(trace, grantEditorAccessOnOutFolderToRemote(trace, credential, { remotePublicKeys }));
 
         return makeSuccess(undefined);
       })
