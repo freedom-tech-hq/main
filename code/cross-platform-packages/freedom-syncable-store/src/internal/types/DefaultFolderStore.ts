@@ -2,6 +2,7 @@ import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import { generateSha256HashForEmptyString, generateSha256HashFromHashesById } from 'freedom-crypto';
+import { withAcquiredLock } from 'freedom-locking-types';
 import type { SyncableId, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import { uuidId } from 'freedom-sync-types';
 import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
@@ -129,19 +130,12 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
     ): PR<DefaultMutableSyncableFolderAccessor, 'conflict'> => {
       const newPath = this.path_.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-folder', pathString: newPath.toString() });
-
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      const exists = await this.backing_.existsAtPath(trace, newPath);
-      if (!exists.ok) {
-        return exists;
-      } else if (exists.value) {
-        return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
-      }
+      DEV: store.devLogging.appendLogEntry?.({ type: 'create-folder', pathString: newPath.toString() });
 
       const hash = await generateSha256HashFromHashesById(trace, {});
       /* node:coverage disable */
@@ -152,24 +146,43 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
 
       const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash: hash.value, numDescendants: 0, sizeBytes: 0 };
 
-      const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
-      if (!createdFolder.ok) {
-        return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
-      }
+      const itemAccessor = await withAcquiredLock(
+        trace,
+        store.lockStore.lock(store.uid),
+        {},
+        async (trace): PR<DefaultMutableSyncableFolderAccessor, 'conflict'> => {
+          const exists = await this.backing_.existsAtPath(trace, newPath);
+          if (!exists.ok) {
+            return exists;
+          } else if (exists.value) {
+            return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
+          }
 
-      const folder = getOrCreateDefaultMutableSyncableFolderAccessor({
-        store,
-        backing: this.backing_,
-        path: newPath,
-        syncTracker: this.syncTracker_
-      });
+          const createdFolder = await this.backing_.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
+          if (!createdFolder.ok) {
+            return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
+          }
 
-      const marked = await folder.markNeedsRecomputeLocalMetadata(trace);
-      /* node:coverage disable */
-      if (!marked.ok) {
-        return marked;
+          const itemAccessor = getOrCreateDefaultMutableSyncableFolderAccessor({
+            store,
+            backing: this.backing_,
+            path: newPath,
+            syncTracker: this.syncTracker_
+          });
+
+          const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
+          /* node:coverage disable */
+          if (!marked.ok) {
+            return marked;
+          }
+          /* node:coverage enable */
+
+          return makeSuccess(itemAccessor);
+        }
+      );
+      if (!itemAccessor.ok) {
+        return generalizeFailureResult(trace, itemAccessor, 'lock-timeout');
       }
-      /* node:coverage enable */
 
       DEV: debugTopic('SYNC', (log) => log(trace, `Notifying folderAdded for folder ${newPath.toShortString()}`));
       this.syncTracker_.notify('folderAdded', { path: newPath, viaSync });
@@ -177,7 +190,7 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
       DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for folder ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value, viaSync });
 
-      return makeSuccess(folder);
+      return makeSuccess(itemAccessor.value);
     }
   );
 }
