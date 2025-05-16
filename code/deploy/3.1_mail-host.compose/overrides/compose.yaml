@@ -92,9 +92,34 @@ services:
       timeout: 3s
       retries: 1
 
+  redis:
+    # Open Redis. Eval is here: https://www.youtube.com/watch?v=9hDvWVJtljE
+    image: valkey/valkey
+    command:
+      - valkey-server
+      # Persist
+      - "--save"
+      - "60"
+      - "1"
+      # Reduce logs
+      - "--loglevel"
+      - "warning"
+      # Enable password access
+      - "--requirepass"
+      - "${DEPLOY_REDIS_PASSWORD:-VALUE_REQUIRED}"
+    networks:
+      - internal
+    ports: []
+      # Currently all the consumers are in the same compose.yaml
+      # Will be exposed to be readable from GCP. Then will move to GCP.
+      # - "${DEPLOY_LISTEN_IP:-0.0.0.0}:6379:6379"
+    volumes:
+      - redis-data:/data
+
 volumes:
   delivery-host-mail-state:
   syncable-store-data:
+  redis-data:
 
 networks:
   internal:
