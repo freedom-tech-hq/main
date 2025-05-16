@@ -1,83 +1,23 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
+import { sleep } from 'freedom-async';
 import { makeTrace } from 'freedom-contexts';
-import { sleep } from 'freedom-testing-tools';
-import { promises as fs } from 'fs';
-import Redis from 'ioredis';
-import * as os from 'os';
-import * as path from 'path';
 
-import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC } from '../../consts/timeout.ts';
-import { FileLockStore } from '../FileLockStore.ts';
-import { InMemoryLockStore } from '../InMemoryLockStore.ts';
-import type { LockStore } from '../LockStore.ts';
-import { RedlockStore } from '../RedlockStore.ts';
+import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC } from '../consts/timeout.ts';
+import type { LockStore } from '../types/LockStore.ts';
 
-const trace = makeTrace();
-const lockKey = 'myTestResource' as const;
+const lockKey = 'myTestResource';
 
-interface StoreProvider {
-  name: string;
-  factory: (tempDir?: string) => Promise<[LockStore<typeof lockKey>, () => Promise<void>]>;
-}
-
-const storeProviders: StoreProvider[] = [
-  {
-    name: 'InMemoryLockStore',
-    factory: async () => [new InMemoryLockStore<typeof lockKey>(), async () => {}]
-  },
-  {
-    name: 'FileLockStore',
-    factory: async () => {
-      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lockstore-test-'));
-      return [new FileLockStore<typeof lockKey>(tempDir), async () => await fs.rm(tempDir, { recursive: true, force: true })];
-    }
-  },
-  {
-    name: 'RedLockStore',
-    factory: async () => {
-      // IMPORTANT: These tests require a Redis server running (e.g., localhost:6379).
-      // Adjust Redis connection options if your server is elsewhere or needs authentication.
-      const redisClient = new Redis(); // Defaults to 127.0.0.1:6379
-
-      // Optional: Wait for connect or fail fast if Redis is not available
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          redisClient.removeAllListeners();
-          reject(new Error('Redis connection timed out after 5 seconds. Ensure Redis is running and accessible.'));
-        }, 5000);
-        redisClient.once('connect', () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-        redisClient.once('error', (err) => {
-          clearTimeout(timeout);
-          redisClient.removeAllListeners(); // Clean up other listeners
-          // Attempt to quit, though it might not be connected
-          redisClient.quit().catch(() => {
-            /* ignore errors on quit if not connected */
-          });
-          reject(new Error(`Failed to connect to Redis for RedLockStore tests: ${err.message}. Ensure Redis is running.`));
-        });
-      });
-
-      const storeInstance = new RedlockStore<typeof lockKey>([redisClient]);
-      const teardown = async () => {
-        await redisClient.quit();
-      };
-      return [storeInstance, teardown];
-    }
-  }
-];
-
-storeProviders.forEach((provider) => {
-  describe(provider.name, () => {
-    let store: LockStore<typeof lockKey>;
+export const makeTestsForLockStore = (typeName: string, makeLockStore: () => Promise<[LockStore<string>, () => Promise<void>]>) => {
+  describe(typeName, () => {
+    let store: LockStore<string>;
     let teardown: () => Promise<void>;
 
+    const trace = makeTrace('test');
+
     beforeEach(async () => {
-      [store, teardown] = await provider.factory();
+      [store, teardown] = await makeLockStore();
     });
 
     afterEach(async () => {
@@ -191,4 +131,4 @@ storeProviders.forEach((provider) => {
       await lock.release(trace, tokenA);
     });
   });
-});
+};

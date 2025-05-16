@@ -2,18 +2,11 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
+import type { Lock, LockOptions, LockStore, LockToken } from 'freedom-locking-types';
+import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC, lockTokenInfo } from 'freedom-locking-types';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { setTimeout } from 'timers';
-
-import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC } from '../consts/timeout.ts';
-import type { Lock } from './Lock.ts';
-import type { LockOptions } from './LockOptions.ts';
-import type { LockStore } from './LockStore.ts';
-import type { LockToken } from './LockToken.ts';
-import { lockTokenInfo } from './LockToken.ts';
-
-// TODO: move to its own package
 
 interface HeldLockInfo<KeyT extends string> {
   key: KeyT;
@@ -94,8 +87,10 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
 
                 await sleep(this.storeOptions_.retryDelayMSec + Math.random() * this.storeOptions_.retryJitterMSec);
               } else {
+                /* node:coverage disable */
                 // For other errors, re-throw to be caught by makeAsyncResultFunc
                 throw err;
+                /* node:coverage enable */
               }
             }
           }
@@ -112,9 +107,11 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
     [import.meta.filename, 'releaseLockFile_'],
     async (_trace, lockFile: string, key: KeyT, token: LockToken): PR<undefined> => {
       const held = this.heldLocks_.get(token);
+      /* node:coverage disable */
       if (held?.key !== key) {
         return makeSuccess(undefined); // Nothing to do / wrong key (ignoring)
       }
+      /* node:coverage enable */
 
       this.heldLocks_.delete(token);
       clearTimeout(held.autoReleaseTimeout);

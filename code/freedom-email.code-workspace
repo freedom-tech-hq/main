@@ -203,6 +203,12 @@
         },
         {
             "path": "web-worker-packages/freedom-email-tasks-web-worker"
+        },
+        {
+            "path": "server-packages/freedom-file-lock-store"
+        },
+        {
+            "path": "server-packages/freedom-redlock-store"
         }
     ],
     "settings": {},

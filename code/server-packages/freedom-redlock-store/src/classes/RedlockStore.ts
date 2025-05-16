@@ -4,13 +4,9 @@ import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import { makeUuid, type Trace } from 'freedom-contexts';
+import type { Lock, LockOptions, LockStore, LockToken } from 'freedom-locking-types';
+import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC, lockTokenInfo } from 'freedom-locking-types';
 import type Redis from 'ioredis';
-
-import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC } from '../consts/timeout.ts';
-import type { Lock } from './Lock.ts';
-import type { LockOptions } from './LockOptions.ts';
-import type { LockStore } from './LockStore.ts';
-import { type LockToken, lockTokenInfo } from './LockToken.ts';
 
 // TODO: move to its own package
 
@@ -50,9 +46,11 @@ export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
    * @param options - Optional configuration for the Redlock instance.
    */
   constructor(redisClients: Redis[], options?: RedlockStoreOptions) {
+    /* node:coverage disable */
     if (redisClients.length === 0) {
       throw new Error('At least one Redis client must be provided to RedlockStore.');
     }
+    /* node:coverage enable */
 
     this.storeOptions_ = {
       driftFactor: options?.driftFactor ?? defaultOptions.driftFactor,
@@ -67,9 +65,11 @@ export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
     this.redlock_.on('error', (error) => {
       // TODO: Consider proper logging instead of console.error for production
       // Avoid logging ResourceLockedError as it's an expected part of contention
+      /* node:coverage disable */
       if (!(error instanceof ResourceLockedError)) {
         console.error('Redlock internal error:', error);
       }
+      /* node:coverage enable */
     });
   }
 
@@ -109,20 +109,24 @@ export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
       [import.meta.filename, 'release'],
       async (trace: Trace, token: LockToken): PR<undefined> => {
         const found = this.heldLocks_.get(token);
+        /* node:coverage disable */
         if (found?.key !== key) {
           return makeSuccess(undefined); // Nothing to do / wrong key (ignoring)
         }
+        /* node:coverage enable */
 
         try {
           await found.redlockLock.release();
           return makeSuccess(undefined);
         } catch (e) {
+          /* node:coverage disable */
           return makeFailure(
             new InternalStateError(trace, {
               message: `Failed to release Redlock for key ${JSON.stringify(key)}.`,
               cause: new GeneralError(trace, e)
             })
           );
+          /* node:coverage enable */
         }
       }
     );

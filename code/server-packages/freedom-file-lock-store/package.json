@@ -1,29 +1,17 @@
 {
   "dependencies": {
-    "doublell": "1.1.6",
     "freedom-async": "0.0.0",
-    "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
-    "freedom-contexts": "0.0.0"
+    "freedom-contexts": "0.0.0",
+    "freedom-locking-types": "0.0.0"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",
-    "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
-  },
-  "exports": {
-    ".": {
-      "types": "./lib/exports.d.ts",
-      "import": "./lib/exports.mjs"
-    },
-    "./tests": {
-      "types": "./lib/tests/exports.d.ts",
-      "import": "./lib/tests/exports.mjs"
-    }
   },
   "type": "module",
   "main": "lib/exports.mjs",
-  "name": "freedom-locking-types",
+  "name": "freedom-file-lock-store",
   "nx": {
     "tags": [
       "type:lib",
@@ -48,12 +36,5 @@
     "deploy:extract": "../../poc/repo/deploy.extract.sh"
   },
   "types": "lib/exports.d.ts",
-  "typesVersions": {
-    "*": {
-      "tests": [
-        "lib/tests/exports.d.ts"
-      ]
-    }
-  },
   "version": "0.0.0"
 }
