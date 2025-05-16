@@ -1,132 +1,132 @@
+import type { Lock as RedlockLock } from '@sesamecare-oss/redlock';
+import { Redlock, ResourceLockedError } from '@sesamecare-oss/redlock';
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
-import type { Trace } from 'freedom-contexts';
+import { makeUuid, type Trace } from 'freedom-contexts';
 import type Redis from 'ioredis';
-import Redlock from 'redlock';
 
-import {
-  DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC,
-  DEFAULT_LOCK_TIMEOUT_MSEC
-} from '../consts/timeout.ts';
+import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC } from '../consts/timeout.ts';
 import type { Lock } from './Lock.ts';
-import type { LockOptions, LockStore, LockToken } from './LockStore.ts';
+import type { LockOptions } from './LockOptions.ts';
+import type { LockStore } from './LockStore.ts';
+import { type LockToken, lockTokenInfo } from './LockToken.ts';
 
-// The LockToken for RedLockStore will be the Redlock.Lock object itself.
-// We cast it to an opaque type for our interface, but internally we know what it is.
-declare const RedlockLockTokenSymbol: unique symbol;
-type RedlockLockOpaqueToken<KeyT> = LockToken<KeyT> & { [RedlockLockTokenSymbol]: Redlock.Lock };
+// TODO: move to its own package
 
-/**
- * Options for configuring the Redlock instance itself.
- * See https://www.npmjs.com/package/redlock#configuration
- */
-export interface RedLockStoreOptions extends Partial<Redlock.Options> {}
+interface HeldLockInfo<KeyT extends string> {
+  key: KeyT;
+  redlockLock: RedlockLock;
+}
 
-export class RedLockStore<KeyT extends string | number | symbol> implements LockStore<KeyT> {
-  private readonly redlock: Redlock;
+export interface RedlockStoreOptions {
+  /**
+   * The expected clock drift, which is multiplied by lock ttl to determine drift time
+   * @see {@link https://redis.io/topics/distlock}
+   */
+  driftFactor?: number;
+  /** @defaultValue `5` */
+  retryDelayMSec?: number;
+  /** @defaultValue `5` */
+  retryJitterMSec?: number;
+}
+
+const defaultOptions: Required<RedlockStoreOptions> = {
+  driftFactor: 0.01,
+  retryDelayMSec: 5,
+  retryJitterMSec: 5
+};
+
+export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
+  public readonly uid = makeUuid();
+
+  private readonly redlock_: Redlock;
+  private readonly heldLocks_ = new Map<LockToken, HeldLockInfo<KeyT>>();
+  private readonly storeOptions_: Required<RedlockStoreOptions>;
 
   /**
-   * Creates an instance of RedLockStore.
-   * @param redisClients An array of one or more ioredis client instances.
-   * @param options Optional configuration for the Redlock instance.
+   * Creates an instance of RedlockStore.
+   * @param redisClients - An array of one or more ioredis client instances.
+   * @param options - Optional configuration for the Redlock instance.
    */
-  constructor(redisClients: Redis[], options?: RedLockStoreOptions) {
-    if (!redisClients || redisClients.length === 0) {
-      throw new Error('At least one Redis client must be provided to RedLockStore.');
+  constructor(redisClients: Redis[], options?: RedlockStoreOptions) {
+    if (redisClients.length === 0) {
+      throw new Error('At least one Redis client must be provided to RedlockStore.');
     }
-    // Default redlock options can be fine-tuned here if needed
-    const defaultRedlockOpts: Partial<Redlock.Options> = {
-      driftFactor: 0.01,
-      retryCount: 10, // Default, can be adjusted based on LockOptions.timeoutMSec
-      retryDelay: 200, // Default retry delay
-      retryJitter: 200, // Default jitter
+
+    this.storeOptions_ = {
+      driftFactor: options?.driftFactor ?? defaultOptions.driftFactor,
+      retryDelayMSec: options?.retryDelayMSec ?? defaultOptions.retryDelayMSec,
+      retryJitterMSec: options?.retryJitterMSec ?? defaultOptions.retryJitterMSec
     };
-    this.redlock = new Redlock(redisClients, { ...defaultRedlockOpts, ...options });
+
+    // Default redlock options can be fine-tuned here if needed
+    this.redlock_ = new Redlock(redisClients, { driftFactor: this.storeOptions_.driftFactor, retryCount: 0 });
 
     // It's good practice to listen for errors on the redlock instance
-    this.redlock.on('error', (error) => {
+    this.redlock_.on('error', (error) => {
       // TODO: Consider proper logging instead of console.error for production
       // Avoid logging ResourceLockedError as it's an expected part of contention
-      if (!(error instanceof Redlock.ResourceLockedError)) {
+      if (!(error instanceof ResourceLockedError)) {
         console.error('Redlock internal error:', error);
       }
     });
   }
 
-  public lock(key: KeyT): Lock<KeyT> {
-    const resource = String(key);
-
-    const acquire = makeAsyncResultFunc(
-      async (
-        _trace: Trace,
-        options?: LockOptions
-      ): PR<LockToken<KeyT>, InternalStateError | 'lock-timeout'> => {
-        const autoReleaseAfterMSec =
-          options?.autoReleaseAfterMSec ?? DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC;
+  public lock(key: KeyT): Lock {
+    const acquire: Lock['acquire'] = makeAsyncResultFunc(
+      [import.meta.filename, 'acquire'],
+      async (trace, options?: LockOptions): PR<LockToken, 'lock-timeout'> => {
+        const autoReleaseAfterMSec = options?.autoReleaseAfterMSec ?? DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC;
         const timeoutMSec = options?.timeoutMSec ?? DEFAULT_LOCK_TIMEOUT_MSEC;
 
-        // Adjust Redlock's retry behavior based on timeoutMSec
-        // If timeoutMSec is 0, we want to try only once (retryCount = 0)
-        // Otherwise, calculate retryCount based on redlock's retryDelay.
-        // This is a simplification; redlock's retryDelay and retryJitter also play a role.
-        // For precise control, one might need to create a new Redlock instance per call
-        // or use redlock.using which has more advanced timeout management.
-        // Current redlock version doesn't allow per-acquire options for retries.
+        const start = performance.now();
+        do {
+          try {
+            const redlockLock: RedlockLock = await this.redlock_.acquire([key], autoReleaseAfterMSec);
 
-        // For simplicity, we'll use the globally configured retryCount and retryDelay.
-        // If a very short or zero timeout is needed, the Redlock instance
-        // should be configured with a low retryCount (e.g., 0 for no retries).
-        // We can't dynamically change this per call with redlock.acquire directly.
+            const token = lockTokenInfo.make(makeUuid());
+            this.heldLocks_.set(token, { key, redlockLock });
 
-        // If an immediate attempt (timeoutMSec = 0) is desired, the Redlock
-        // instance should ideally be configured with retryCount: 0.
-        // This implementation assumes the global redlock config for retries.
+            return makeSuccess(token);
+          } catch (_e) {
+            // Redlock throws an error if the lock cannot be acquired after all retries.
+            // This error is typically an ExecutionError or ResourceLockedError.
+            await sleep(this.storeOptions_.retryDelayMSec + Math.random() * this.storeOptions_.retryJitterMSec);
+          }
+        } while (performance.now() - start < timeoutMSec);
 
-        // The TTL for the lock in Redis
-        const ttl = autoReleaseAfterMSec;
-
-        try {
-          // Note: redlock.acquire will use the retryCount and retryDelay configured
-          // on the Redlock instance. If timeoutMSec is very small (e.g., 0), and
-          // retryCount is > 0, it might still attempt retries.
-          const acquiredLock: Redlock.Lock = await this.redlock.acquire([resource], ttl);
-          return makeSuccess(acquiredLock as unknown as RedlockLockOpaqueToken<KeyT>);
-        } catch (err: unknown) {
-          // Redlock throws an error if the lock cannot be acquired after all retries.
-          // This error is typically an ExecutionError or ResourceLockedError.
-          const message = `Failed to acquire Redlock for key "${resource}" within configured retries.`;
-          return makeFailure(
-            new InternalStateError(_trace, {
-              message,
-              errorCode: 'lock-timeout',
-              cause: err instanceof Error ? err : new Error(String(err))
-            })
-          );
-        }
+        return makeFailure(
+          new InternalStateError(trace, {
+            message: `Failed to acquire Redlock for key ${JSON.stringify(key)} within configured retries.`,
+            errorCode: 'lock-timeout'
+          })
+        );
       }
     );
 
-    const release = makeAsyncResultFunc(
-      async (
-        _trace: Trace,
-        token: LockToken<KeyT>
-      ): PR<void, InternalStateError> => {
-        const redlockLock = token as unknown as Redlock.Lock;
+    const release: Lock['release'] = makeAsyncResultFunc(
+      [import.meta.filename, 'release'],
+      async (trace: Trace, token: LockToken): PR<undefined> => {
+        const found = this.heldLocks_.get(token);
+        if (found?.key !== key) {
+          return makeSuccess(undefined); // Nothing to do / wrong key (ignoring)
+        }
+
         try {
-          await redlockLock.release();
+          await found.redlockLock.release();
           return makeSuccess(undefined);
-        } catch (err: unknown) {
+        } catch (e) {
           return makeFailure(
-            new InternalStateError(_trace, {
-              message: `Failed to release Redlock for key "${resource}".`,
-              cause: err instanceof Error ? err : new Error(String(err))
+            new InternalStateError(trace, {
+              message: `Failed to release Redlock for key ${JSON.stringify(key)}.`,
+              cause: new GeneralError(trace, e)
             })
           );
         }
       }
     );
 
-    return { acquire, release };
+    return { uid: `${this.uid}.${key}`, acquire, release };
   }
 }

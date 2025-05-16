@@ -1,9 +1,10 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { setTimeout } from 'timers';
 
 import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC } from '../consts/timeout.ts';
 import type { Lock } from './Lock.ts';
@@ -12,27 +13,43 @@ import type { LockStore } from './LockStore.ts';
 import type { LockToken } from './LockToken.ts';
 import { lockTokenInfo } from './LockToken.ts';
 
-// Helper: sleep for ms
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+// TODO: move to its own package
+
+interface HeldLockInfo<KeyT extends string> {
+  key: KeyT;
+  autoReleaseTimeout: ReturnType<typeof setTimeout>;
 }
 
-interface FileLockInfo {
-  token: LockToken;
-  timeout?: NodeJS.Timeout;
+export interface FileLockStoreOptions {
+  /** @defaultValue `5` */
+  retryDelayMSec?: number;
+  /** @defaultValue `5` */
+  retryJitterMSec?: number;
 }
+
+const defaultOptions: Required<FileLockStoreOptions> = {
+  retryDelayMSec: 5,
+  retryJitterMSec: 5
+};
 
 export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
   public readonly uid = makeUuid();
-  private readonly dir: string;
-  private readonly heldLocks = new Map<KeyT, FileLockInfo>();
 
-  constructor(dir: string) {
-    this.dir = dir;
+  private readonly dir_: string;
+  private readonly heldLocks_ = new Map<LockToken, HeldLockInfo<KeyT>>();
+  private readonly storeOptions_: Required<FileLockStoreOptions>;
+
+  constructor(dir: string, options?: FileLockStoreOptions) {
+    this.dir_ = dir;
+
+    this.storeOptions_ = {
+      retryDelayMSec: options?.retryDelayMSec ?? defaultOptions.retryDelayMSec,
+      retryJitterMSec: options?.retryJitterMSec ?? defaultOptions.retryJitterMSec
+    };
   }
 
   public lock(key: KeyT): Lock {
-    const lockFile = path.join(this.dir, `${key}.lock`);
+    const lockFile = path.join(this.dir_, `${key}.lock`);
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- we return a sub-object
     const store = this;
 
@@ -41,7 +58,7 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
       acquire: makeAsyncResultFunc(
         [import.meta.filename, 'acquire'],
         async (
-          _trace,
+          trace,
           { timeoutMSec = DEFAULT_LOCK_TIMEOUT_MSEC, autoReleaseAfterMSec = DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC }: LockOptions = {}
         ): PR<LockToken, 'lock-timeout'> => {
           const start = Date.now();
@@ -57,13 +74,10 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
               // Internal consistency of heldLocks should be managed by release/cleanup logic.
 
               // Setup auto-release
-              let timeout: NodeJS.Timeout | undefined;
-              if (autoReleaseAfterMSec && autoReleaseAfterMSec > 0) {
-                timeout = setTimeout(async () => {
-                  await store.releaseLockFile(lockFile, key, token);
-                }, autoReleaseAfterMSec);
-              }
-              store.heldLocks.set(key, { token, timeout });
+              const autoReleaseTimeout = setTimeout(() => store.releaseLockFile_(trace, lockFile, key, token), autoReleaseAfterMSec);
+
+              store.heldLocks_.set(token, { key, autoReleaseTimeout });
+
               return makeSuccess(token);
             } catch (err) {
               // Check if it's an error object with a 'code' property
@@ -71,13 +85,14 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
                 // File exists: someone else holds the lock
                 if (Date.now() - start > timeoutMSec) {
                   return makeFailure(
-                    new InternalStateError(_trace, {
+                    new InternalStateError(trace, {
                       message: `Lock not acquired within ${timeoutMSec}ms for key ${String(key)}`,
                       errorCode: 'lock-timeout'
                     })
                   );
                 }
-                await sleep(20); // Retry
+
+                await sleep(this.storeOptions_.retryDelayMSec + Math.random() * this.storeOptions_.retryJitterMSec);
               } else {
                 // For other errors, re-throw to be caught by makeAsyncResultFunc
                 throw err;
@@ -86,22 +101,27 @@ export class FileLockStore<KeyT extends string> implements LockStore<KeyT> {
           }
         }
       ),
-      release: makeAsyncResultFunc([import.meta.filename, 'release'], async (_trace, token: LockToken) => {
-        const held = store.heldLocks.get(key);
-        if (!held || held.token !== token) {
-          return makeSuccess(undefined); // Wrong token or not held
-        }
-        await store.releaseLockFile(lockFile, key, token);
-        return makeSuccess(undefined);
-      })
+      release: makeAsyncResultFunc(
+        [import.meta.filename, 'release'],
+        async (trace, token: LockToken) => await store.releaseLockFile_(trace, lockFile, key, token)
+      )
     };
   }
 
-  private async releaseLockFile(lockFile: string, key: KeyT, token: LockToken) {
-    const held = this.heldLocks.get(key);
-    if (!held || held.token !== token) return;
-    this.heldLocks.delete(key);
-    if (held.timeout) clearTimeout(held.timeout);
-    await fs.unlink(lockFile).catch(() => {});
-  }
+  private releaseLockFile_ = makeAsyncResultFunc(
+    [import.meta.filename, 'releaseLockFile_'],
+    async (_trace, lockFile: string, key: KeyT, token: LockToken): PR<undefined> => {
+      const held = this.heldLocks_.get(token);
+      if (held?.key !== key) {
+        return makeSuccess(undefined); // Nothing to do / wrong key (ignoring)
+      }
+
+      this.heldLocks_.delete(token);
+      clearTimeout(held.autoReleaseTimeout);
+
+      await fs.unlink(lockFile).catch(() => {});
+
+      return makeSuccess(undefined);
+    }
+  );
 }

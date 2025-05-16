@@ -11,8 +11,8 @@ import * as path from 'path';
 import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC } from '../../consts/timeout.ts';
 import { FileLockStore } from '../FileLockStore.ts';
 import { InMemoryLockStore } from '../InMemoryLockStore.ts';
-import { RedLockStore, type RedLockStoreOptions } from '../RedLockStore.ts';
 import type { LockStore } from '../LockStore.ts';
+import { RedlockStore } from '../RedlockStore.ts';
 
 const trace = makeTrace();
 const lockKey = 'myTestResource' as const;
@@ -55,24 +55,14 @@ const storeProviders: StoreProvider[] = [
           clearTimeout(timeout);
           redisClient.removeAllListeners(); // Clean up other listeners
           // Attempt to quit, though it might not be connected
-          redisClient.quit().catch(() => { /* ignore errors on quit if not connected */ });
-          reject(
-            new Error(
-              `Failed to connect to Redis for RedLockStore tests: ${err.message}. Ensure Redis is running.`
-            )
-          );
+          redisClient.quit().catch(() => {
+            /* ignore errors on quit if not connected */
+          });
+          reject(new Error(`Failed to connect to Redis for RedLockStore tests: ${err.message}. Ensure Redis is running.`));
         });
       });
 
-      // Configure Redlock for testing: quick retries to make timeouts more responsive.
-      // This helps LockOptions.timeoutMSec to be more accurately tested.
-      const redlockOptions: RedLockStoreOptions = {
-        retryCount: 3,       // Number of retries if lock is initially unavailable
-        retryDelay: 50,      // Delay between retries (ms)
-        retryJitter: 10,     // Max random time added to retryDelay (ms)
-      };
-
-      const storeInstance = new RedLockStore<typeof lockKey>([redisClient], redlockOptions);
+      const storeInstance = new RedlockStore<typeof lockKey>([redisClient]);
       const teardown = async () => {
         await redisClient.quit();
       };
@@ -104,7 +94,6 @@ storeProviders.forEach((provider) => {
       // Assert: First acquisition is successful
       assert(acquireResult1.ok, 'First acquire should be successful');
       const token1 = acquireResult1.value;
-      assert(token1, 'Token should be defined on successful acquire');
 
       // Act: Release the lock
       const releaseResult = await lock.release(trace, token1);
@@ -118,7 +107,6 @@ storeProviders.forEach((provider) => {
       // Assert: Second acquisition is successful
       assert(acquireResult2.ok, 'Second acquire after release should be successful');
       const token2 = acquireResult2.value;
-      assert(token2, 'Token should be defined on second successful acquire');
 
       // Cleanup: Release the second lock
       await lock.release(trace, token2);
@@ -170,7 +158,6 @@ storeProviders.forEach((provider) => {
       // Assert: Second acquisition should be successful as the first lock should have auto-released
       assert(acquireResult2.ok, 'Second acquire should be successful after auto-release');
       const token2 = acquireResult2.value;
-      assert(token2, 'Token should be defined on second successful acquire after auto-release');
 
       // Cleanup: Release the second lock
       await lock.release(trace, token2);

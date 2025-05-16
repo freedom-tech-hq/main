@@ -865,6 +865,11 @@
     domhandler "^5.0.3"
     selderee "^0.11.0"
 
+"@sesamecare-oss/redlock@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@sesamecare-oss/redlock/-/redlock-1.4.0.tgz#f312a396f73e7e1ef389c50377d8d43ecadb1f01"
+  integrity sha512-2z589R+yxKLN4CgKxP1oN4dsg6Y548SE4bVYam/R0kHk7Q9VrQ9l66q+k1ehhSLLY4or9hcchuF9/MhuuZdjJg==
+
 "@sinclair/typebox@^0.27.8":
   version "0.27.8"
   resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.27.8.tgz#6667fac16c436b5434a387a34dedb013198f6e6e"
@@ -1726,11 +1731,6 @@ bl@^4.0.3:
     buffer "^5.5.0"
     inherits "^2.0.4"
     readable-stream "^3.4.0"
-
-bluebird@^3.7.2:
-  version "3.7.2"
-  resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
-  integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
 
 body-parser@2.2.0, body-parser@^2.2.0:
   version "2.2.0"
@@ -5252,13 +5252,6 @@ redis-parser@^3.0.0:
   integrity sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==
   dependencies:
     redis-errors "^1.0.0"
-
-redlock@4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/redlock/-/redlock-4.2.0.tgz#c26590768559afd5fff76aa1133c94b411ff4f5f"
-  integrity sha512-j+oQlG+dOwcetUt2WJWttu4CZVeRzUrcVcISFmEmfyuwCVSJ93rDT7YSgg7H7rnxwoRyk/jU46kycVka5tW7jA==
-  dependencies:
-    bluebird "^3.7.2"
 
 reflect.getprototypeof@^1.0.6, reflect.getprototypeof@^1.0.9:
   version "1.0.10"
