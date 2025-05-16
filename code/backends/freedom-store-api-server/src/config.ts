@@ -34,6 +34,17 @@ export const HTTPS_SERVER_KEY =
   );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Redis
+
+/** Redis connection details */
+export const REDIS_HOST = env.get('REDIS_HOST').required().asString();
+export const REDIS_PORT = env.get('REDIS_PORT').required().asPortNumber();
+export const REDIS_PASSWORD = env.get('REDIS_PASSWORD').asString();
+
+/** Redis lock store prefix */
+export const REDIS_LOCK_STORE_PREFIX = env.get('REDIS_LOCK_STORE_PREFIX').required().asString();
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Storage
 
 export const STORAGE_ROOT_PATH = env.getRequiredAsCustom('STORAGE_ROOT_PATH', (value) => resolveConfigPath(rootDir, value));
