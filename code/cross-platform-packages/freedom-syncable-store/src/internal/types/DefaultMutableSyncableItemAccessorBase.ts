@@ -1,7 +1,7 @@
 import type { PR, PRFunc, Result } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
-import { InMemoryLockStore, withAcquiredLock } from 'freedom-locking-types';
+import { withAcquiredLock } from 'freedom-locking-types';
 import type { DynamicSyncableItemName, LocalItemMetadata, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import { extractSyncableItemTypeFromPath, isCompleteLocalItemMetadata } from 'freedom-sync-types';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
@@ -12,8 +12,6 @@ import { getNearestFolderPath } from '../../utils/get/getNearestFolderPath.ts';
 import { markSyncableNeedsRecomputeLocalMetadataAtPath } from '../utils/markSyncableNeedsRecomputeLocalMetadataAtPath.ts';
 import { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import type { FolderOperationsHandler } from './FolderOperationsHandler.ts';
-
-const tempLockStore = new InMemoryLockStore();
 
 export interface DefaultMutableSyncableItemAccessorBaseConstructorArgs {
   backing: SyncableStoreBacking;
@@ -129,7 +127,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      const updated = await withAcquiredLock(trace, tempLockStore.lock(store.uid), {}, async (trace) => {
+      const updated = await withAcquiredLock(trace, store.metadataLockStore.lock(store.uid), {}, async (trace) => {
         const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, {
           hash: undefined,
           numDescendants: 0,
@@ -173,7 +171,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
 
       DEV: store.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
 
-      const updated = await withAcquiredLock(trace, tempLockStore.lock(store.uid), {}, async (trace) => {
+      const updated = await withAcquiredLock(trace, store.metadataLockStore.lock(store.uid), {}, async (trace) => {
         const localItemMetadata = await this.computeLocalItemMetadata_(trace);
         if (!localItemMetadata.ok) {
           return localItemMetadata;

@@ -2,6 +2,7 @@ import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
+import { InMemoryLockStore, type LockStore } from 'freedom-locking-types';
 import { NotificationManager } from 'freedom-notification-types';
 import type { SaltId, StorageRootId } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
@@ -18,6 +19,7 @@ export interface DefaultSyncableStoreConstructorArgs {
   userKeys: UserKeys;
   creatorPublicKeys: CombinationCryptoKeySet;
   saltsById: Partial<Record<SaltId, string>>;
+  metadataLockStore?: LockStore<string>;
 }
 
 export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
@@ -26,14 +28,23 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
   public readonly userKeys: UserKeys;
   public readonly saltsById: Partial<Record<SaltId, string>>;
 
+  public readonly metadataLockStore: LockStore<string>;
   public readonly localTrustMarks = new InMemoryTrustMarkStore();
 
-  constructor({ storageRootId, backing, userKeys, creatorPublicKeys, saltsById }: DefaultSyncableStoreConstructorArgs) {
+  constructor({
+    storageRootId,
+    backing,
+    userKeys,
+    creatorPublicKeys,
+    saltsById,
+    metadataLockStore = new InMemoryLockStore()
+  }: DefaultSyncableStoreConstructorArgs) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
     const path = new SyncablePath(storageRootId);
 
     super({ backing, syncTracker, path });
 
+    this.metadataLockStore = metadataLockStore;
     this.creatorPublicKeys = creatorPublicKeys;
     this.userKeys = userKeys;
     this.saltsById = saltsById;

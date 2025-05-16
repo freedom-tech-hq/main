@@ -27,6 +27,7 @@ export const getServerSyncableStore = makeAsyncResultFunc(
     const syncableStore = new DefaultSyncableStore({
       ...options,
       backing: backing
+      // metadataLockStore // TODO: hook this up
     });
 
     return makeSuccess(syncableStore);
