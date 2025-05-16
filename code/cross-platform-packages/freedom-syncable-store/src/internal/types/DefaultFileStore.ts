@@ -3,6 +3,7 @@ import { debugTopic, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freed
 import { ConflictError, generalizeFailureResult, InternalStateError, NotFoundError } from 'freedom-common-errors';
 import { type Trace } from 'freedom-contexts';
 import { generateSha256HashForEmptyString, generateSha256HashFromBuffer, generateSha256HashFromHashesById } from 'freedom-crypto';
+import { withAcquiredLock } from 'freedom-locking-types';
 import type { SyncableId, SyncableItemMetadata, SyncablePath } from 'freedom-sync-types';
 import { isSyncableItemEncrypted, uuidId } from 'freedom-sync-types';
 import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
@@ -230,14 +231,12 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
     ): PR<MutableSyncableFileAccessor, 'conflict'> => {
       const newPath = this.path_.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-binary', pathString: newPath.toString() });
-
-      const exists = await this.backing_.existsAtPath(trace, newPath);
-      if (!exists.ok) {
-        return exists;
-      } else if (exists.value) {
-        return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
+      const store = this.weakStore_.deref();
+      if (store === undefined) {
+        return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
+
+      DEV: store.devLogging.appendLogEntry?.({ type: 'create-binary', pathString: newPath.toString() });
 
       const hash = await generateSha256HashFromBuffer(trace, encodedData);
       /* node:coverage disable */
@@ -253,27 +252,46 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
         sizeBytes: encodedData.byteLength
       };
 
-      const createdFile = await this.backing_.createBinaryFileWithPath(trace, newPath, {
-        data: encodedData,
-        metadata: backingMetadata
-      });
-      if (!createdFile.ok) {
-        return generalizeFailureResult(trace, createdFile, ['not-found', 'wrong-type']);
-      }
+      const itemAccessor = await withAcquiredLock(
+        trace,
+        store.lockStore.lock(store.uid),
+        {},
+        async (trace): PR<MutableSyncableFileAccessor, 'conflict'> => {
+          const exists = await this.backing_.existsAtPath(trace, newPath);
+          if (!exists.ok) {
+            return exists;
+          } else if (exists.value) {
+            return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
+          }
 
-      const itemAccessor = this.makeItemAccessor_(newPath, 'file');
+          const created = await this.backing_.createBinaryFileWithPath(trace, newPath, {
+            data: encodedData,
+            metadata: backingMetadata
+          });
+          if (!created.ok) {
+            return generalizeFailureResult(trace, created, ['not-found', 'wrong-type']);
+          }
 
-      const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
-      /* node:coverage disable */
-      if (!marked.ok) {
-        return marked;
+          const itemAccessor = this.makeItemAccessor_(newPath, 'file');
+
+          const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
+          /* node:coverage disable */
+          if (!marked.ok) {
+            return marked;
+          }
+          /* node:coverage enable */
+
+          return makeSuccess(itemAccessor);
+        }
+      );
+      if (!itemAccessor.ok) {
+        return generalizeFailureResult(trace, itemAccessor, 'lock-timeout');
       }
-      /* node:coverage enable */
 
       DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for file ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value, viaSync });
 
-      return makeSuccess(itemAccessor);
+      return makeSuccess(itemAccessor.value);
     }
   );
 
@@ -287,19 +305,12 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
     ): PR<MutableSyncableBundleAccessor, 'conflict'> => {
       const newPath = this.path_.append(id);
 
-      DEV: this.weakStore_.deref()?.devLogging.appendLogEntry?.({ type: 'create-bundle', pathString: newPath.toString() });
-
-      const exists = await this.backing_.existsAtPath(trace, newPath);
-      if (!exists.ok) {
-        return exists;
-      } else if (exists.value) {
-        return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
-      }
-
       const store = this.weakStore_.deref();
       if (store === undefined) {
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
+
+      DEV: store.devLogging.appendLogEntry?.({ type: 'create-bundle', pathString: newPath.toString() });
 
       const hash = await generateSha256HashFromHashesById(trace, {});
       /* node:coverage disable */
@@ -310,24 +321,43 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
 
       const backingMetadata: SyncableStoreBackingItemMetadata = { ...metadata, hash: hash.value, numDescendants: 0, sizeBytes: 0 };
 
-      const createdBundle = await this.backing_.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
-      if (!createdBundle.ok) {
-        return generalizeFailureResult(trace, createdBundle, ['not-found', 'wrong-type']);
-      }
+      const itemAccessor = await withAcquiredLock(
+        trace,
+        store.lockStore.lock(store.uid),
+        {},
+        async (trace): PR<MutableSyncableBundleAccessor, 'conflict'> => {
+          const exists = await this.backing_.existsAtPath(trace, newPath);
+          if (!exists.ok) {
+            return exists;
+          } else if (exists.value) {
+            return makeFailure(new ConflictError(trace, { message: `${newPath.toString()} already exists`, errorCode: 'conflict' }));
+          }
 
-      const itemAccessor = this.makeMutableItemAccessor_(newPath, 'bundle');
+          const createdBundle = await this.backing_.createFolderWithPath(trace, newPath, { metadata: backingMetadata });
+          if (!createdBundle.ok) {
+            return generalizeFailureResult(trace, createdBundle, ['not-found', 'wrong-type']);
+          }
 
-      const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
-      /* node:coverage disable */
-      if (!marked.ok) {
-        return marked;
+          const itemAccessor = this.makeMutableItemAccessor_(newPath, 'bundle');
+
+          const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
+          /* node:coverage disable */
+          if (!marked.ok) {
+            return marked;
+          }
+          /* node:coverage enable */
+
+          return makeSuccess(itemAccessor);
+        }
+      );
+      if (!itemAccessor.ok) {
+        return generalizeFailureResult(trace, itemAccessor, 'lock-timeout');
       }
-      /* node:coverage enable */
 
       DEV: debugTopic('SYNC', (log) => log(trace, `Notifying itemAdded for bundle ${newPath.toShortString()}`));
       this.syncTracker_.notify('itemAdded', { path: newPath, hash: hash.value, viaSync });
 
-      return makeSuccess(itemAccessor);
+      return makeSuccess(itemAccessor.value);
     }
   );
 }
