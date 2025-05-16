@@ -115,8 +115,22 @@ const baseConfig = [
       '@typescript-eslint/no-duplicate-type-constituents': 'off',
       '@typescript-eslint/no-use-before-define': 'off',
       '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/strict-boolean-expressions': 'error',
+      '@typescript-eslint/strict-boolean-expressions': [
+        'error',
+        {
+          allowAny: false,
+          allowNullableBoolean: false,
+          allowNullableEnum: false,
+          allowNullableNumber: false,
+          allowNullableObject: false,
+          allowNullableString: false,
+          allowNumber: false,
+          allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing: false,
+          allowString: false
+        }
+      ],
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      curly: ['error', 'all'],
       'no-constant-condition': 'off',
       'no-extra-boolean-cast': 'off',
       'no-unused-labels': 'off',

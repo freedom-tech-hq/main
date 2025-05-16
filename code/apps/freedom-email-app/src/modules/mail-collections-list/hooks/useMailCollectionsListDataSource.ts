@@ -39,7 +39,7 @@ export const useMailCollectionsListDataSource = (): DataSource<MailCollectionsLi
   }, [tasks]);
 
   useEffect(() => {
-    if (!tasks) {
+    if (tasks === undefined) {
       return;
     }
 

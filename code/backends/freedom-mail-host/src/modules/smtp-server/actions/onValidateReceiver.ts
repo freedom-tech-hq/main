@@ -21,7 +21,7 @@ export const onValidateReceiver: SmtpServerParams['onValidateReceiver'] = makeAs
     // Get the domain part of the email
     const [, domain] = emailAddress.split('@');
 
-    if (!domain) {
+    if (domain.length === 0) {
       return makeFailure(
         new NotFoundError(trace, {
           errorCode: 'malformed-email-address',

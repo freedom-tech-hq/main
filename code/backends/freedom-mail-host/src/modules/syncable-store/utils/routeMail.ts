@@ -46,7 +46,7 @@ export const routeMail = makeAsyncResultFunc(
 
       // Classify
       const [, domain] = recipient.split('@');
-      if (domain && config.SMTP_OUR_DOMAINS.includes(domain)) {
+      if (domain.length > 0 && config.SMTP_OUR_DOMAINS.includes(domain)) {
         // Internal target
         internalRecipients.push(recipient);
       } else if (recipient !== denotedRecipient) {

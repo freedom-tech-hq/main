@@ -28,7 +28,9 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
 
     // Helper function to fetch the latest outbound emails for a specific user
     async function pollOutboundEmailsForUser(user: User, syncableStore: MutableSyncableStore): Promise<void> {
-      if (!isActive) return;
+      if (!isActive) {
+        return;
+      }
 
       const result = await listOutboundMailIds(trace, syncableStore, {});
       if (!result.ok) {
@@ -40,7 +42,7 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
 
       // Get or initialize the set of last seen IDs for this user
       let lastSeenIds = lastSeenIdsByUser.get(user.userId);
-      if (!lastSeenIds) {
+      if (lastSeenIds === undefined) {
         lastSeenIds = new Set<string>();
         lastSeenIdsByUser.set(user.userId, lastSeenIds);
       }
@@ -61,7 +63,9 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
 
     // Poll outbound emails for all users
     async function pollAllUsers(): Promise<void> {
-      if (!isActive) return;
+      if (!isActive) {
+        return;
+      }
 
       const usersResult = await getAllUsers(trace);
 
@@ -75,7 +79,9 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
 
       // Process each user sequentially
       for (const user of users) {
-        if (!isActive) return;
+        if (!isActive) {
+          return;
+        }
 
         const syncableStore = await uncheckedResult(getEmailAgentSyncableStoreForUser(trace, user));
 

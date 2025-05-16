@@ -17,7 +17,7 @@ const port = env.get('PORT').default('3000').asInt();
 const host = env.get('HOST').default('localhost').asString();
 
 // Using custom validators
-const result = env.get('CUSTOM_VAR').asCustom((value) => {
+const result = env.getAsCustom('CUSTOM_VAR', (value) => {
   const [key, val] = value.split(':');
   return { key, value: Number(val) };
 });

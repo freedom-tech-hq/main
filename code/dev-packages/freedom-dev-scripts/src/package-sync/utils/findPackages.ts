@@ -15,7 +15,7 @@ export async function findPackages(): Promise<FoundPackage[]> {
 
   // Extract workspaces.packages patterns
   const workspacePatterns = rootPackage.workspaces?.packages ?? [];
-  if (!workspacePatterns.length) {
+  if (workspacePatterns.length === 0) {
     throw new Error('No workspace patterns found in root package.json');
   }
 

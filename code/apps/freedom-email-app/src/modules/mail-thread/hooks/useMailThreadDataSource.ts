@@ -42,7 +42,7 @@ export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, 
   useBindingEffect(
     selectedThreadId,
     (selectedThreadId, selectedThreadIdBinding) => {
-      if (!tasks) {
+      if (tasks === undefined) {
         return;
       }
 
