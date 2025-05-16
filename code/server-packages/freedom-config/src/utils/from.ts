@@ -34,13 +34,23 @@ export function from<Container extends Record<string, string | undefined>>(env: 
       return undefined;
     }
 
-    return transformer(value);
+    try {
+      return transformer(value);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      throw new Error(`env-var: ${JSON.stringify(varName)}${message.length > 0 ? ` ${message}` : ''}`);
+    }
   };
 
   out.getRequiredAsCustom = <T>(varName: keyof Container, transformer: (value: string) => T): T => {
     const value = defaultFrom.get(varName).required().asString();
 
-    return transformer(value);
+    try {
+      return transformer(value);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      throw new Error(`env-var: ${JSON.stringify(varName)}${message.length > 0 ? ` ${message}` : ''}`);
+    }
   };
 
   return out as typeof defaultFrom & ExtendedFrom<Container>;
