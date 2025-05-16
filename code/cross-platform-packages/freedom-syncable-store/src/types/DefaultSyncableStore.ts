@@ -2,6 +2,7 @@ import { makeUuid } from 'freedom-contexts';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
 import { makeDevLoggingSupport } from 'freedom-dev-logging-support';
+import { InMemoryLockStore, type LockStore } from 'freedom-locking-types';
 import { NotificationManager } from 'freedom-notification-types';
 import type { SaltId, StorageRootId } from 'freedom-sync-types';
 import { SyncablePath } from 'freedom-sync-types';
@@ -18,6 +19,7 @@ export interface DefaultSyncableStoreConstructorArgs {
   userKeys: UserKeys;
   creatorPublicKeys: CombinationCryptoKeySet;
   saltsById: Partial<Record<SaltId, string>>;
+  lockStore?: LockStore<string>;
 }
 
 export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
@@ -26,14 +28,26 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
   public readonly userKeys: UserKeys;
   public readonly saltsById: Partial<Record<SaltId, string>>;
 
+  public readonly lockStore: LockStore<string>;
   public readonly localTrustMarks = new InMemoryTrustMarkStore();
 
-  constructor({ storageRootId, backing, userKeys, creatorPublicKeys, saltsById }: DefaultSyncableStoreConstructorArgs) {
+  constructor({
+    storageRootId,
+    backing,
+    userKeys,
+    creatorPublicKeys,
+    saltsById,
+    // TODO: Revise this. Backing and lock store cannot be independent variables.
+    //  We can define packages for syncable store like WebSyncableStore, ServerSyncableStore, MobileSyncableStore
+    //  that will contain connected parameter sets for the respective envs
+    lockStore = new InMemoryLockStore()
+  }: DefaultSyncableStoreConstructorArgs) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
     const path = new SyncablePath(storageRootId);
 
     super({ backing, syncTracker, path });
 
+    this.lockStore = lockStore;
     this.creatorPublicKeys = creatorPublicKeys;
     this.userKeys = userKeys;
     this.saltsById = saltsById;

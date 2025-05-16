@@ -73,6 +73,18 @@
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-in-memory-syncable-store-backing/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-get-or-create/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-in-memory-cache/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-local-sync/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-remote-sync/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-syncable-store-backing-types/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-file-lock-store/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-json-file-object-store/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-redlock-store/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-sqlite-object-store/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/web-packages/freedom-indexeddb-object-store/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/web-packages/freedom-logical-web-components/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/web-packages/freedom-react-binding-persistence/lib" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
     </content>
     <orderEntry type="inheritedJdk" />
