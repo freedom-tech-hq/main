@@ -13,7 +13,7 @@ import type { SyncableFolderAccessor } from './SyncableFolderAccessor.ts';
 export interface SyncableStore extends SyncableFolderAccessor, Notifiable<SyncTrackerNotifications> {
   readonly uid: string;
 
-  readonly metadataLockStore: LockStore<string>;
+  readonly lockStore: LockStore<string>;
   readonly localTrustMarks: MutableTrustMarkStore;
 
   readonly creatorPublicKeys: CombinationCryptoKeySet;

@@ -19,7 +19,7 @@ export interface DefaultSyncableStoreConstructorArgs {
   userKeys: UserKeys;
   creatorPublicKeys: CombinationCryptoKeySet;
   saltsById: Partial<Record<SaltId, string>>;
-  metadataLockStore?: LockStore<string>;
+  lockStore?: LockStore<string>;
 }
 
 export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBase implements MutableSyncableStore {
@@ -28,7 +28,7 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
   public readonly userKeys: UserKeys;
   public readonly saltsById: Partial<Record<SaltId, string>>;
 
-  public readonly metadataLockStore: LockStore<string>;
+  public readonly lockStore: LockStore<string>;
   public readonly localTrustMarks = new InMemoryTrustMarkStore();
 
   constructor({
@@ -40,14 +40,14 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
     // TODO: Revise this. Backing and lock store cannot be independent variables.
     //  We can define packages for syncable store like WebSyncableStore, ServerSyncableStore, MobileSyncableStore
     //  that will contain connected parameter sets for the respective envs
-    metadataLockStore = new InMemoryLockStore()
+    lockStore = new InMemoryLockStore()
   }: DefaultSyncableStoreConstructorArgs) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
     const path = new SyncablePath(storageRootId);
 
     super({ backing, syncTracker, path });
 
-    this.metadataLockStore = metadataLockStore;
+    this.lockStore = lockStore;
     this.creatorPublicKeys = creatorPublicKeys;
     this.userKeys = userKeys;
     this.saltsById = saltsById;

@@ -127,7 +127,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
         return makeFailure(new InternalStateError(trace, { message: 'store was released' }));
       }
 
-      const updated = await withAcquiredLock(trace, store.metadataLockStore.lock(store.uid), {}, async (trace) => {
+      const updated = await withAcquiredLock(trace, store.lockStore.lock(store.uid), {}, async (trace) => {
         const updatedHash = await this.backing_.updateLocalMetadataAtPath(trace, this.path, {
           hash: undefined,
           numDescendants: 0,
@@ -171,7 +171,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
 
       DEV: store.devLogging.appendLogEntry?.({ type: 'get-metadata', pathString: this.path.toString() });
 
-      const updated = await withAcquiredLock(trace, store.metadataLockStore.lock(store.uid), {}, async (trace) => {
+      const updated = await withAcquiredLock(trace, store.lockStore.lock(store.uid), {}, async (trace) => {
         const localItemMetadata = await this.computeLocalItemMetadata_(trace);
         if (!localItemMetadata.ok) {
           return localItemMetadata;
