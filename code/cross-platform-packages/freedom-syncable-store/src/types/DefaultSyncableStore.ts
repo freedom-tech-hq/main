@@ -37,6 +37,9 @@ export class DefaultSyncableStore extends DefaultMutableSyncableFolderAccessorBa
     userKeys,
     creatorPublicKeys,
     saltsById,
+    // TODO: Revise this. Backing and lock store cannot be independent variables.
+    //  We can define packages for syncable store like WebSyncableStore, ServerSyncableStore, MobileSyncableStore
+    //  that will contain connected parameter sets for the respective envs
     metadataLockStore = new InMemoryLockStore()
   }: DefaultSyncableStoreConstructorArgs) {
     const syncTracker = new NotificationManager<SyncTrackerNotifications>();
