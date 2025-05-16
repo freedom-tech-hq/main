@@ -117,6 +117,9 @@ export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
 
         try {
           await found.redlockLock.release();
+
+          this.heldLocks_.delete(token);
+
           return makeSuccess(undefined);
         } catch (e) {
           /* node:coverage disable */
