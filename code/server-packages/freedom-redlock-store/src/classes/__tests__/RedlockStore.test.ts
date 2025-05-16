@@ -1,6 +1,7 @@
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { makeTestsForLockStore } from 'freedom-locking-types/tests';
 import Redis from 'ioredis';
+import { DateTime } from 'luxon';
 
 import { RedlockStore } from '../RedlockStore.ts';
 
@@ -30,7 +31,10 @@ makeTestsForLockStore('RedlockStore', async () => {
     });
   });
 
-  const storeInstance = new RedlockStore<string>([redisClient]);
+  const storeInstance = new RedlockStore<string>([redisClient], {
+    // We cannot rely on cleanups, so use unique prefix each time
+    prefix: `freedom_test_${DateTime.now().toFormat('yyyyMMdd_HHmmss_SSS')}_`
+  });
   const teardown = async () => {
     await redisClient.quit();
   };

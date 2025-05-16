@@ -8,7 +8,14 @@ import type { Lock, LockOptions, LockStore, LockToken } from 'freedom-locking-ty
 import { DEFAULT_LOCK_AUTO_RELEASE_AFTER_MSEC, DEFAULT_LOCK_TIMEOUT_MSEC, lockTokenInfo } from 'freedom-locking-types';
 import type Redis from 'ioredis';
 
-// TODO: move to its own package
+// Default Redlock settings - not typically changed per instance
+/**
+ * The expected clock drift, which is multiplied by lock ttl to determine drift time
+ * @see {@link https://redis.io/topics/distlock}
+ */
+const DRIFT_FACTOR = 0.01;
+const RETRY_DELAY_MSEC = 5;
+const RETRY_JITTER_MSEC = 5;
 
 interface HeldLockInfo<KeyT extends string> {
   key: KeyT;
@@ -16,50 +23,36 @@ interface HeldLockInfo<KeyT extends string> {
 }
 
 export interface RedlockStoreOptions {
-  /**
-   * The expected clock drift, which is multiplied by lock ttl to determine drift time
-   * @see {@link https://redis.io/topics/distlock}
-   */
-  driftFactor?: number;
-  /** @defaultValue `5` */
-  retryDelayMSec?: number;
-  /** @defaultValue `5` */
-  retryJitterMSec?: number;
+  // We can have multiple functions per Redis instance
+  // Additionally one Redis instance can serve multiple dev envs
+  // So a prefix is mandatory
+  prefix: string;
 }
-
-const defaultOptions: Required<RedlockStoreOptions> = {
-  driftFactor: 0.01,
-  retryDelayMSec: 5,
-  retryJitterMSec: 5
-};
 
 export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
   public readonly uid = makeUuid();
 
+  public readonly prefix: string;
+
   private readonly redlock_: Redlock;
   private readonly heldLocks_ = new Map<LockToken, HeldLockInfo<KeyT>>();
-  private readonly storeOptions_: Required<RedlockStoreOptions>;
 
   /**
    * Creates an instance of RedlockStore.
    * @param redisClients - An array of one or more ioredis client instances.
    * @param options - Optional configuration for the Redlock instance.
    */
-  constructor(redisClients: Redis[], options?: RedlockStoreOptions) {
+  constructor(redisClients: Redis[], options: RedlockStoreOptions) {
     /* node:coverage disable */
     if (redisClients.length === 0) {
       throw new Error('At least one Redis client must be provided to RedlockStore.');
     }
     /* node:coverage enable */
 
-    this.storeOptions_ = {
-      driftFactor: options?.driftFactor ?? defaultOptions.driftFactor,
-      retryDelayMSec: options?.retryDelayMSec ?? defaultOptions.retryDelayMSec,
-      retryJitterMSec: options?.retryJitterMSec ?? defaultOptions.retryJitterMSec
-    };
+    this.prefix = options.prefix;
 
     // Default redlock options can be fine-tuned here if needed
-    this.redlock_ = new Redlock(redisClients, { driftFactor: this.storeOptions_.driftFactor, retryCount: 0 });
+    this.redlock_ = new Redlock(redisClients, { driftFactor: DRIFT_FACTOR, retryCount: 0 });
 
     // It's good practice to listen for errors on the redlock instance
     this.redlock_.on('error', (error) => {
@@ -83,7 +76,10 @@ export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
         const start = performance.now();
         do {
           try {
-            const redlockLock: RedlockLock = await this.redlock_.acquire([key], autoReleaseAfterMSec);
+            const redlockLock: RedlockLock = await this.redlock_.acquire(
+              [`${this.prefix}:${key}`], // Physical key is prefixed. For unlocking it is saved inside redlockLock
+              autoReleaseAfterMSec
+            );
 
             const token = lockTokenInfo.make(makeUuid());
             this.heldLocks_.set(token, { key, redlockLock });
@@ -92,7 +88,7 @@ export class RedlockStore<KeyT extends string> implements LockStore<KeyT> {
           } catch (_e) {
             // Redlock throws an error if the lock cannot be acquired after all retries.
             // This error is typically an ExecutionError or ResourceLockedError.
-            await sleep(this.storeOptions_.retryDelayMSec + Math.random() * this.storeOptions_.retryJitterMSec);
+            await sleep(RETRY_DELAY_MSEC + Math.random() * RETRY_JITTER_MSEC);
           }
         } while (performance.now() - start < timeoutMSec);
 
