@@ -175,11 +175,11 @@ const makePrettyPrintLoggingFunc =
       paleLines.push(`  ${key}: ${formatPrettyPrintValue(value)}`);
     });
 
+    const message = (msgContent?.length ?? 0) > 0 ? msgContent : '<No message>';
+
     loggingFunc(
       // Form the main bright line and wrap the pale lines with 'faint' color
-      `${prettyTime} - ${paintedSeverity} - ${msgContent || '<No message>'}${
-        paleLines.length > 0 ? `\n\x1b[2m${paleLines.join('\n')}\x1b[0m` : ''
-      }`
+      `${prettyTime} - ${paintedSeverity} - ${message}${paleLines.length > 0 ? `\n\x1b[2m${paleLines.join('\n')}\x1b[0m` : ''}`
     );
   };
 

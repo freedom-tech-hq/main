@@ -8,12 +8,10 @@ describe('from', () => {
 
   it('should implement custom validator', () => {
     // Act
-    const envValue = from(env)
-      .get('THE_VAR')
-      .asCustom((value: string) => {
-        const [key, val] = value.split(':');
-        return { key, value: Number(val) };
-      });
+    const envValue = from(env).getAsCustom('THE_VAR', (value: string) => {
+      const [key, val] = value.split(':');
+      return { key, value: Number(val) };
+    });
 
     // Assert
     assert.deepStrictEqual(envValue, { key: 'value', value: 123 });
@@ -23,11 +21,9 @@ describe('from', () => {
     assert.throws(
       // Act
       () =>
-        from(env)
-          .get('THE_VAR')
-          .asCustom(() => {
-            throw new Error('The error message');
-          }),
+        from(env).getAsCustom('THE_VAR', () => {
+          throw new Error('The error message');
+        }),
       // Assert
       { message: 'env-var: "THE_VAR" The error message' }
     );

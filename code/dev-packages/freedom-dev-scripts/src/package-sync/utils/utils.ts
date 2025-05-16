@@ -11,6 +11,7 @@ export function isEffectiveValueObject(value: EffectiveValue): value is Effectiv
 }
 
 export function formatPath(path: PropertyPath): string {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   return path.join('.') || '.';
 }
 

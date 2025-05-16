@@ -46,7 +46,7 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
   useBindingEffect(
     selectedCollectionId,
     (selectedCollectionId, selectedCollectionBinding) => {
-      if (!tasks) {
+      if (tasks === undefined) {
         return;
       }
 

@@ -331,7 +331,7 @@ describe('defineSmtpServer', () => {
       // Mock the validation function to return appropriate responses
       onValidateReceiver.mock.mockImplementation(async (_trace, email) => {
         const result = addressResponses.get(email);
-        if (!result) {
+        if (result === undefined) {
           throw new Error(`Unexpected email address: ${email}`);
         }
         return makeSuccess(result);
@@ -545,7 +545,7 @@ describe('defineSmtpServer', () => {
             });
 
             // Assert
-            if (expectError) {
+            if (expectError !== null) {
               await expect(clientResult).rejects.toThrow(expectError);
             } else {
               await clientResult;

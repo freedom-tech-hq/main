@@ -11,18 +11,15 @@ const env = loadEnv(rootDir);
 // SMTP server
 
 /** Ports to run the SMTP server on (comma-separated list) */
-export const SMTP_PORTS = env
-  .get('SMTP_PORTS')
-  .required()
-  .asCustom((value) =>
-    value.split(',').map((port) => {
-      const portNum = parseInt(port.trim(), 10);
-      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
-        throw new Error(`Invalid port number: '${port}'`);
-      }
-      return portNum;
-    })
-  ) as number[];
+export const SMTP_PORTS = env.getRequiredAsCustom('SMTP_PORTS', (value) =>
+  value.split(',').map((port) => {
+    const portNum = parseInt(port.trim(), 10);
+    if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      throw new Error(`Invalid port number: '${port}'`);
+    }
+    return portNum;
+  })
+);
 
 /** Host to bind the SMTP server to */
 export const SMTP_HOST = env.get('SMTP_HOST').required().asString();
@@ -32,28 +29,21 @@ export const SMTP_HOST_NAME = env.get('SMTP_HOST_NAME').required().asString();
 
 /** TLS certificate path for SMTP server */
 export const SMTP_TLS_CERT_RAW =
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   (env.get('SMTP_TLS_CERT_RAW').asString() ?? '') ||
-  (env
-    .get('SMTP_TLS_CERT')
-    .required()
-    .asCustom((value) => fs.readFileSync(path.resolve(rootDir, value), 'utf8')) as string);
+  env.getRequiredAsCustom('SMTP_TLS_CERT', (value) => fs.readFileSync(path.resolve(rootDir, value), 'utf8'));
 
 /** TLS key path for SMTP server */
 export const SMTP_TLS_KEY_RAW =
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   (env.get('SMTP_TLS_KEY_RAW').asString() ?? '') ||
-  (env
-    .get('SMTP_TLS_KEY')
-    .required()
-    .asCustom((value) => fs.readFileSync(path.resolve(rootDir, value), 'utf8')) as string);
+  env.getRequiredAsCustom('SMTP_TLS_KEY', (value) => fs.readFileSync(path.resolve(rootDir, value), 'utf8'));
 
 /** Maximum email size in bytes */
 export const SMTP_MAX_EMAIL_SIZE = env.get('SMTP_MAX_EMAIL_SIZE').required().asInt();
 
 /** Domains we accept mail for */
-export const SMTP_OUR_DOMAINS = env
-  .get('SMTP_OUR_DOMAINS')
-  .required()
-  .asCustom((value) => value.split(',').map((domain) => domain.trim())) as string[];
+export const SMTP_OUR_DOMAINS = env.getRequiredAsCustom('SMTP_OUR_DOMAINS', (value) => value.split(',').map((domain) => domain.trim()));
 
 /** Forwarding routes */
 export const FORWARDING_ROUTES = JSON.parse(
@@ -73,16 +63,13 @@ export const SMTP_UPSTREAM_PORT = env.get('SMTP_UPSTREAM_PORT').default('25').as
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Storage
 
-export const STORAGE_ROOT_PATH = env
-  .get('STORAGE_ROOT_PATH')
-  .required()
-  .asCustom((value) => resolveConfigPath(rootDir, value)) as string;
+export const STORAGE_ROOT_PATH = env.getRequiredAsCustom('STORAGE_ROOT_PATH', (value) => resolveConfigPath(rootDir, value));
 
 // Temporary disabled in favor of File System Backing and a Docker volume
 // /** Google Cloud Storage credentials file contents (not name) */
 // export const GOOGLE_APPLICATION_CREDENTIALS_RAW =
-//   (env.get('GOOGLE_APPLICATION_CREDENTIALS_RAW').asCustom((value) => (value ? JSON.parse(value) : undefined)) as {} | undefined) ||
-//   (env.get('GOOGLE_APPLICATION_CREDENTIALS').asCustom((value) =>
+//   (env.getAsCustom('GOOGLE_APPLICATION_CREDENTIALS_RAW', (value) => (value ? JSON.parse(value) : undefined)) as {} | undefined) ||
+//   (env.getAsCustom('GOOGLE_APPLICATION_CREDENTIALS', (value) =>
 //     value ? JSON.parse(fs.readFileSync(path.resolve(rootDir, value), 'utf8')) : undefined // In GCP, we use machine-wise implicit credentials
 //   ) as {} | undefined);
 //

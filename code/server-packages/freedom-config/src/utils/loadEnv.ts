@@ -39,6 +39,7 @@ function config(options: DotenvConfigOptions) {
  * @returns True if at least one .env file was loaded, false otherwise
  */
 export function loadEnv(rootDir: string) {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   const nodeEnv = (myProcess.env.NODE_ENV ?? '') || 'development';
 
   if (nodeEnv === 'test') {

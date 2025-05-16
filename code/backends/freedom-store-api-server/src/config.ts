@@ -10,10 +10,7 @@ const env = loadEnv(rootDir);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Domains
 
-export const CORS_ORIGINS = env
-  .get('CORS_ORIGINS')
-  .required()
-  .asCustom((value) => value.split(',').map((domain) => domain.trim())) as string[];
+export const CORS_ORIGINS = env.getRequiredAsCustom('CORS_ORIGINS', (value) => value.split(',').map((domain) => domain.trim()));
 
 export const EMAIL_DOMAIN = env.get('EMAIL_DOMAIN').required().asString();
 
@@ -23,21 +20,20 @@ export const EMAIL_DOMAIN = env.get('EMAIL_DOMAIN').required().asString();
 export const PORT = env.get('PORT').required().asPortNumber();
 
 export const HTTPS_SERVER_CERT =
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   (env.get('HTTPS_SERVER_CERT_RAW').asString() ?? '') ||
-  (env.get('HTTPS_SERVER_CERT_PATH').asCustom((value) => value && fs.readFileSync(path.resolve(rootDir, value), 'utf8')) as
-    | string
-    | undefined);
+  env.getAsCustom('HTTPS_SERVER_CERT_PATH', (value) =>
+    value.length > 0 ? fs.readFileSync(path.resolve(rootDir, value), 'utf8') : undefined
+  );
 
 export const HTTPS_SERVER_KEY =
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   (env.get('HTTPS_SERVER_KEY_RAW').asString() ?? '') ||
-  (env.get('HTTPS_SERVER_KEY_PATH').asCustom((value) => value && fs.readFileSync(path.resolve(rootDir, value), 'utf8')) as
-    | string
-    | undefined);
+  env.getAsCustom('HTTPS_SERVER_KEY_PATH', (value) =>
+    value.length > 0 ? fs.readFileSync(path.resolve(rootDir, value), 'utf8') : undefined
+  );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Storage
 
-export const STORAGE_ROOT_PATH = env
-  .get('STORAGE_ROOT_PATH')
-  .required()
-  .asCustom((value) => resolveConfigPath(rootDir, value)) as string;
+export const STORAGE_ROOT_PATH = env.getRequiredAsCustom('STORAGE_ROOT_PATH', (value) => resolveConfigPath(rootDir, value));
