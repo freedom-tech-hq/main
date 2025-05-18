@@ -20,7 +20,13 @@ export function defineConfig<Config extends Record<string, unknown>>(testDefault
    * @param config - Partial configuration object that overrides defaults
    */
   function initConfigForTests(config: Partial<Config>): void {
-    activeConfig = { ...testDefaults, ...config };
+    // Clone preserving testDefaults getters
+    activeConfig = Object.create({}, Object.getOwnPropertyDescriptors(testDefaults)) as Config;
+
+    // Apply overrides
+    for (const [key, value] of Object.entries(config)) {
+      activeConfig[key as keyof Config] = value as Config[keyof Config];
+    }
   }
 
   /**
