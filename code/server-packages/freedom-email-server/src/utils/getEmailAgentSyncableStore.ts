@@ -1,10 +1,11 @@
 import { type PR, uncheckedResult } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
 import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
-import { getMailAgentUserKeys } from 'freedom-db';
 import type { SaltsById, StorageRootId } from 'freedom-sync-types';
 import { getServerSyncableStore } from 'freedom-syncable-store-server';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
+
+import { getMailAgentUserKeys } from './getMailAgentUserKeys.ts';
 
 export const getEmailAgentSyncableStore = makeAsyncResultFunc(
   [import.meta.filename],

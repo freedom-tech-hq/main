@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { loadEnv, resolveConfigPath } from 'freedom-config';
+import { getFileEnvVar, loadEnv, resolveConfigPath } from 'freedom-config';
+import { privateCombinationCryptoKeySetSchema } from 'freedom-crypto-data';
 
 // Load env settings
 const rootDir = `${import.meta.dirname}/..`;
@@ -43,6 +44,15 @@ export const REDIS_PASSWORD = env.get('REDIS_PASSWORD').asString();
 
 /** Redis lock store prefix */
 export const REDIS_LOCK_STORE_PREFIX = env.get('REDIS_LOCK_STORE_PREFIX').required().asString();
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Mail Agent
+
+// Note: with synchronous parsing in getFileEnvVar() we are getting clearer error messages. But this schema does not support sync parsing.
+// Alternatively, use here serializedSchema and hydrate only on demand
+export const MAIL_AGENT_USER_KEYS = await privateCombinationCryptoKeySetSchema.parseAsync(
+  getFileEnvVar(env, rootDir, 'MAIL_AGENT_USER_KEYS_', (v) => v)
+);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Storage
