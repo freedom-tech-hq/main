@@ -17,6 +17,7 @@ import type {
 import { generateProvenanceForFileAtPath } from '../../utils/generateProvenanceForFileAtPath.ts';
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
+import { markSyncableNeedsRecomputeLocalMetadataAtPath } from '../utils/markSyncableNeedsRecomputeLocalMetadataAtPath.ts';
 import { getOrCreateDefaultMutableSyncableBundleAccessor } from './DefaultMutableSyncableBundleAccessor.ts';
 import { getOrCreateDefaultMutableSyncableFileAccessor } from './DefaultMutableSyncableFileAccessor.ts';
 import type { DefaultStoreBaseConstructorArgs } from './DefaultStoreBase.ts';
@@ -272,16 +273,17 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
             return generalizeFailureResult(trace, created, ['not-found', 'wrong-type']);
           }
 
-          const itemAccessor = this.makeItemAccessor_(newPath, 'file');
-
-          const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
-          /* node:coverage disable */
-          if (!marked.ok) {
-            return marked;
+          const parentPath = newPath.parentPath;
+          if (parentPath !== undefined) {
+            const marked = await markSyncableNeedsRecomputeLocalMetadataAtPath(trace, store, parentPath);
+            /* node:coverage disable */
+            if (!marked.ok) {
+              return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
+            }
+            /* node:coverage enable */
           }
-          /* node:coverage enable */
 
-          return makeSuccess(itemAccessor);
+          return makeSuccess(this.makeItemAccessor_(newPath, 'file'));
         }
       );
       if (!itemAccessor.ok) {
@@ -338,16 +340,17 @@ export class DefaultFileStore extends DefaultStoreBase implements MutableFileSto
             return generalizeFailureResult(trace, createdBundle, ['not-found', 'wrong-type']);
           }
 
-          const itemAccessor = this.makeMutableItemAccessor_(newPath, 'bundle');
-
-          const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
-          /* node:coverage disable */
-          if (!marked.ok) {
-            return marked;
+          const parentPath = newPath.parentPath;
+          if (parentPath !== undefined) {
+            const marked = await markSyncableNeedsRecomputeLocalMetadataAtPath(trace, store, parentPath);
+            /* node:coverage disable */
+            if (!marked.ok) {
+              return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
+            }
+            /* node:coverage enable */
           }
-          /* node:coverage enable */
 
-          return makeSuccess(itemAccessor);
+          return makeSuccess(this.makeMutableItemAccessor_(newPath, 'bundle'));
         }
       );
       if (!itemAccessor.ok) {

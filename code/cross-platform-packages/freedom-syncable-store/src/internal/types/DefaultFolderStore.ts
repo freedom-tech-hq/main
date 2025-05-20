@@ -15,6 +15,7 @@ import type {
 
 import { generateProvenanceForFolderLikeItemAtPath } from '../../utils/generateProvenanceForFolderLikeItemAtPath.ts';
 import { isSyncableDeleted } from '../../utils/isSyncableDeleted.ts';
+import { markSyncableNeedsRecomputeLocalMetadataAtPath } from '../utils/markSyncableNeedsRecomputeLocalMetadataAtPath.ts';
 import type { DefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import { getOrCreateDefaultMutableSyncableFolderAccessor } from './DefaultMutableSyncableFolderAccessor.ts';
 import type { DefaultStoreBaseConstructorArgs } from './DefaultStoreBase.ts';
@@ -163,21 +164,24 @@ export class DefaultFolderStore extends DefaultStoreBase implements MutableFolde
             return generalizeFailureResult(trace, createdFolder, ['not-found', 'wrong-type']);
           }
 
-          const itemAccessor = getOrCreateDefaultMutableSyncableFolderAccessor({
-            store,
-            backing: this.backing_,
-            path: newPath,
-            syncTracker: this.syncTracker_
-          });
-
-          const marked = await itemAccessor.markNeedsRecomputeLocalMetadata(trace);
-          /* node:coverage disable */
-          if (!marked.ok) {
-            return marked;
+          const parentPath = newPath.parentPath;
+          if (parentPath !== undefined) {
+            const marked = await markSyncableNeedsRecomputeLocalMetadataAtPath(trace, store, parentPath);
+            /* node:coverage disable */
+            if (!marked.ok) {
+              return generalizeFailureResult(trace, marked, ['not-found', 'untrusted', 'wrong-type']);
+            }
+            /* node:coverage enable */
           }
-          /* node:coverage enable */
 
-          return makeSuccess(itemAccessor);
+          return makeSuccess(
+            getOrCreateDefaultMutableSyncableFolderAccessor({
+              store,
+              backing: this.backing_,
+              path: newPath,
+              syncTracker: this.syncTracker_
+            })
+          );
         }
       );
       if (!itemAccessor.ok) {
