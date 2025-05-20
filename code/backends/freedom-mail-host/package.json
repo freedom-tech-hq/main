@@ -4,6 +4,7 @@
     "freedom-common-errors": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-crypto-data": "0.0.0",
     "freedom-db": "0.0.0",
     "freedom-email-server": "0.0.0",
     "freedom-email-sync": "0.0.0",

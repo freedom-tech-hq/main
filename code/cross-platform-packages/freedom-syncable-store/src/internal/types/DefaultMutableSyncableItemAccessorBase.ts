@@ -146,7 +146,7 @@ export abstract class DefaultMutableSyncableItemAccessorBase implements MutableS
       }
 
       const parentPath = this.path.parentPath;
-      if (store !== undefined && parentPath !== undefined) {
+      if (parentPath !== undefined) {
         const marked = await markSyncableNeedsRecomputeLocalMetadataAtPath(trace, store, parentPath);
         /* node:coverage disable */
         if (!marked.ok) {
