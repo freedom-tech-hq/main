@@ -1,9 +1,9 @@
-import type { PR } from 'freedom-async';
+import { bestEffort, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
 import type { User } from 'freedom-db';
-import { getAllUsers } from 'freedom-db';
-import { listOutboundMailIds } from 'freedom-email-sync';
+import { getAllUsers, isMailSent, markMailSent } from 'freedom-db';
+import { listOutboundMailIds, type MailId } from 'freedom-email-sync';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import type { OutboundEmailHandlerArgs } from '../types/OutboundEmailHandlerArgs.ts';
@@ -23,9 +23,6 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
   async (trace, handler: (trace: Trace, args: OutboundEmailHandlerArgs) => PR<undefined>): PR<() => void> => {
     let isActive = true;
 
-    // Track last seen IDs for each user
-    const lastSeenIdsByUser = new Map<string, Set<string>>();
-
     // Helper function to fetch the latest outbound emails for a specific user
     async function pollOutboundEmailsForUser(user: User, syncableStore: MutableSyncableStore): Promise<void> {
       if (!isActive) {
@@ -40,22 +37,27 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
         return;
       }
 
-      // Get or initialize the set of last seen IDs for this user
-      let lastSeenIds = lastSeenIdsByUser.get(user.userId);
-      if (lastSeenIds === undefined) {
-        lastSeenIds = new Set<string>();
-        lastSeenIdsByUser.set(user.userId, lastSeenIds);
-      }
-      // if (lastSeenIds.size > 0) {
-      //   console.log(`Skipping emails ${Array.from(lastSeenIds).join(', ')}`);
-      // }
-
       // Find new IDs that we haven't seen before
       const currentIds = result.value.items;
-      const newIds = currentIds.filter((id) => !lastSeenIds.has(id));
+      const newIds = [] as MailId[];
 
-      // Update our tracking set with all current IDs
-      lastSeenIdsByUser.set(user.userId, new Set([...currentIds]));
+      for (const id of currentIds) {
+        const isSentResult = await isMailSent(trace, id);
+        if (!isSentResult.ok) {
+          console.error(`Failed to check mail sent status for ID: ${id}`);
+          continue;
+        }
+
+        if (!isSentResult.value) {
+          newIds.push(id);
+
+          // Do not try the same email twice
+          // TODO: This is dirty. In reality we should handle it smarter. Detect the outcome and report either success or bounce
+          await bestEffort(trace, markMailSent(trace, id));
+        } else {
+          // console.log(`Skipping email ${id}`);
+        }
+      }
 
       // Call the handler with new IDs if there are any
       if (newIds.length > 0) {

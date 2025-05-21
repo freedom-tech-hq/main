@@ -4,4 +4,6 @@ export { findUserByEmail } from './findUserByEmail.ts';
 export { getAllUserEmailAddresses } from './getAllUserEmailAddresses.ts';
 export { getAllUsers } from './getAllUsers.ts';
 export { getUserById } from './getUserById.ts';
+export { isMailSent } from './isMailSent.ts';
+export { markMailSent } from './markMailSent.ts';
 export { saveUserCredentials } from './saveUserCredentials.ts';
