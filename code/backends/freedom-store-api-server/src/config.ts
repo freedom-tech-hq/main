@@ -43,7 +43,7 @@ export const REDIS_PORT = env.get('REDIS_PORT').required().asPortNumber();
 export const REDIS_PASSWORD = env.get('REDIS_PASSWORD').asString();
 
 /** Redis lock store prefix */
-export const REDIS_LOCK_STORE_PREFIX = env.get('REDIS_LOCK_STORE_PREFIX').required().asString();
+export const REDIS_PREFIX = env.get('REDIS_PREFIX').asString() ?? '';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Mail Agent

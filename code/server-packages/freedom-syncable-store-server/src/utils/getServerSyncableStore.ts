@@ -34,7 +34,7 @@ export const getServerSyncableStore = makeAsyncResultFunc(
         host: getConfig('REDIS_HOST'),
         port: getConfig('REDIS_PORT'),
         password: getConfig('REDIS_PASSWORD'),
-        prefix: getConfig('REDIS_LOCK_STORE_PREFIX')
+        prefix: getConfig('REDIS_PREFIX') + 'store_lock:'
       });
       if (!lockStoreResult.ok) {
         return lockStoreResult;
