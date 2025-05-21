@@ -46,6 +46,9 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
         lastSeenIds = new Set<string>();
         lastSeenIdsByUser.set(user.userId, lastSeenIds);
       }
+      // if (lastSeenIds.size > 0) {
+      //   console.log(`Skipping emails ${Array.from(lastSeenIds).join(', ')}`);
+      // }
 
       // Find new IDs that we haven't seen before
       const currentIds = result.value.items;
@@ -56,9 +59,20 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
 
       // Call the handler with new IDs if there are any
       if (newIds.length > 0) {
+        // console.log(`pollOutboundEmailsForUser: Processing an email`);
         // TODO: Revise error handling here after replacing the implementation
-        await handler(trace, { user, syncableStore, emailIds: newIds });
+        try {
+          const r = await handler(trace, { user, syncableStore, emailIds: newIds });
+          if (!r.ok) {
+            console.error(`Failed to process outbound emails for user ${user.userId}:`, r.value.errorCode, r.value.message);
+          }
+        } catch (e) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          console.error(`Failed to process outbound emails for user ${user.userId}:`, (e as any).errorCode, (e as any).message);
+        }
       }
+
+      // console.log(`pollOutboundEmailsForUser: Done`);
     }
 
     // Poll outbound emails for all users
@@ -70,25 +84,43 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
       const usersResult = await getAllUsers(trace);
 
       if (!usersResult.ok) {
-        console.error('Failed to retrieve users:', usersResult.value);
+        console.error('pollAllUsers: Failed to retrieve users:', usersResult.value);
         setTimeout(pollAllUsers, 1000);
         return;
       }
 
       const users = usersResult.value;
+      // console.log(`pollAllUsers: Found ${users.length} users:\n${users.map((u) => u.email).join('\n')}`);
 
       // Process each user sequentially
       for (const user of users) {
         if (!isActive) {
           return;
         }
+        // These are corrupted. TODO: Delete this check when the DB is restarted
+        if (
+          user.userId.startsWith('EMAILUSER_bbca7fed-930b-4e9e-9730-819df232a861[') ||
+          user.userId.startsWith('EMAILUSER_cf1f66e7-fb51-4c06-aff1-b32ecfa500d1[')
+        ) {
+          // console.log(`pollAllUsers: Skipping user ${user.email}`);
+          continue;
+        }
 
         const syncableStore = await uncheckedResult(getEmailAgentSyncableStoreForUser(trace, user));
 
-        await pollOutboundEmailsForUser(user, syncableStore);
+        try {
+          // console.log(`Polling ${user.email} ${user.userId}`);
+          await pollOutboundEmailsForUser(user, syncableStore);
+        } catch (e) {
+          console.error('Failed to poll outbound emails for user', user.userId, ':', e);
+        }
+        // console.log(`pollOutboundEmailsForUser: pollOutboundEmailsForUser is done`);
       }
+
+      // console.log(`pollOutboundEmailsForUser: before continue, isActive=${isActive}`);
       // Continue polling if subscription is still active
       if (isActive) {
+        // console.log('Renew polling');
         setTimeout(pollAllUsers, 5000);
       }
     }

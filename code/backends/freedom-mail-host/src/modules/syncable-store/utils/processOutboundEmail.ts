@@ -1,5 +1,5 @@
 import type { PR } from 'freedom-async';
-import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import type { OutboundEmailHandlerArgs } from 'freedom-email-server';
 import { getOutboundMailById, moveOutboundMailToStorage } from 'freedom-email-sync';
@@ -8,19 +8,13 @@ import { routeMail } from './routeMail.ts';
 
 /**
  * Pub/sub handler for outbound emails
- *
- * @param trace - Trace for async operations
- * @param args - Arguments for outbound email handling
- * @returns PR resolving when all emails are processed
  */
 export const processOutboundEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, args: OutboundEmailHandlerArgs): PR<undefined> => {
-    const { syncableStore, emailIds } = args;
-
+  async (trace, { user, syncableStore, emailIds }: OutboundEmailHandlerArgs): PR<undefined> => {
     // Process each email ID
     for (const mailId of emailIds) {
-      DEV: debugTopic('SMTP', (log) => log(trace, `Sending outbound email ${mailId}`));
+      // console.log(`processOutboundEmail: Sending outbound email ${mailId}`);
 
       // Get the email content
       const outboundMail = await getOutboundMailById(trace, syncableStore, mailId);
@@ -40,6 +34,14 @@ export const processOutboundEmail = makeAsyncResultFunc(
         ...(mail.bcc ?? [])
       ]);
 
+      // Set from address
+      // TODO: Validate, if the user attempted to add non-sense. Provide feedback to the user.
+      // 'sender' is a current implementation on the frontend. It should be fixed in the future.
+      if (mail.from === 'sender') {
+        mail.from = user.email;
+      }
+
+      // console.log(`processOutboundEmail: Routing`, mail, `to`, recipients);
       const routeResult = await routeMail(trace, {
         recipients,
         mail,
@@ -49,7 +51,7 @@ export const processOutboundEmail = makeAsyncResultFunc(
         return routeResult;
       }
 
-      DEV: debugTopic('SMTP', (log) => log(trace, `Before moveOutboundMailToStorage`));
+      // console.log(`processOutboundEmail: Before moveOutboundMailToStorage`);
 
       // Move to permanent storage after successful sending
       const moved = await moveOutboundMailToStorage(trace, syncableStore, mailId);
@@ -57,7 +59,7 @@ export const processOutboundEmail = makeAsyncResultFunc(
         return generalizeFailureResult(trace, moved, 'not-found');
       }
 
-      DEV: debugTopic('SMTP', (log) => log(trace, `Sent outbound email ${mailId}`));
+      // console.log(`processOutboundEmail: Sent outbound email ${mailId}`);
     }
 
     return makeSuccess(undefined);
