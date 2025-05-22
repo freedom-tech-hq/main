@@ -1,21 +1,15 @@
 import fs from 'node:fs/promises';
 
-import type { PR } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import { objectEntries } from 'freedom-cast';
-import { generalizeFailureResult } from 'freedom-common-errors';
+import { makeFailure, type PR, type Result, uncheckedResult } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { ConflictError, NotFoundError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
-import { makeTrace, makeUuid } from 'freedom-contexts';
-import {
-  InMemoryObjectStore,
-  type MutableObjectAccessor,
-  type MutableObjectStore,
-  type ObjectAccessor,
-  type StorableObject
-} from 'freedom-object-store-types';
+import { makeUuid } from 'freedom-contexts';
+import type { IndexedEntries, IndexStore } from 'freedom-indexing-types';
+import { InMemoryIndexStore } from 'freedom-indexing-types';
+import type { MutableObjectAccessor, MutableObjectStore, ObjectAccessor, StorableObject } from 'freedom-object-store-types';
 import { parse, stringify } from 'freedom-serialization';
-import { TaskQueue } from 'freedom-task-queue';
-import { once } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { type Schema, schema } from 'yaschema';
 
 export type JsonFileObjectStoreConstructorArgs<KeyT extends string, T> = {
@@ -27,35 +21,60 @@ export type JsonFileObjectStoreConstructorArgs<KeyT extends string, T> = {
 export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjectStore<KeyT, T> {
   public readonly uid = makeUuid();
 
-  public readonly inMemoryStore_: InMemoryObjectStore<KeyT, T>;
-  public get keys() {
-    return this.inMemoryStore_.keys;
-  }
-
   private readonly path_: string;
-  private readonly persistenceTaskQueue_ = new TaskQueue('json-object-store-persistence', makeTrace(import.meta.filename));
 
   private readonly recordSchema_: Schema<Partial<Record<KeyT, T>>>;
 
   constructor({ path, schema: valueSchema }: JsonFileObjectStoreConstructorArgs<KeyT, T>) {
     this.recordSchema_ = schema.record(schema.string(), valueSchema);
     this.path_ = path;
-
-    this.inMemoryStore_ = new InMemoryObjectStore<KeyT, T>({ schema: valueSchema });
-    this.persistenceTaskQueue_.start();
   }
 
-  /** Optionally call to forcibly load.  Otherwise, this will happen lazily */
-  public readonly initialize = makeAsyncResultFunc(
-    [import.meta.filename, 'initialize'],
-    async (trace): PR<undefined> => await this.loadIfNeeded_(trace)
-  );
+  public get keys(): IndexStore<KeyT, unknown> {
+    const getStore = async (trace: Trace) => {
+      return await uncheckedResult(
+        this.accessFile_(trace, false, (contents) => {
+          const impl = new InMemoryIndexStore<KeyT, unknown>({ config: { type: 'key' } });
+          for (const key of Object.keys(contents) as KeyT[]) {
+            impl.addToIndex(trace, key, undefined);
+          }
 
-  /** Wait for any outstanding persistence operations to complete */
-  public readonly waitForPersistence = makeAsyncResultFunc([import.meta.filename, 'waitForPersistence'], async (_trace): PR<undefined> => {
-    await this.persistenceTaskQueue_.wait();
-    return makeSuccess(undefined);
-  });
+          return makeSuccess(impl);
+        })
+      );
+    };
+
+    return {
+      uid: this.uid,
+      count: makeAsyncResultFunc([import.meta.filename, 'count'], async (...args): PR<number> => {
+        return await (await getStore(args[0])).count(...args);
+      }),
+
+      asc: (options, filters): IndexedEntries<KeyT, T> => {
+        return {
+          entries: () => {
+            throw new Error('Not implemented');
+          },
+          forEach: () => {
+            throw new Error('Not implemented');
+          },
+          keys: async (trace) => {
+            if (!isEmpty(filters)) {
+              throw new Error('Not implemented');
+            }
+            return await (await getStore(trace)).asc(options).keys(trace);
+          },
+          map: () => {
+            throw new Error('Not implemented');
+          }
+        };
+      },
+
+      desc: (): IndexedEntries<KeyT, T> => {
+        throw new Error('Not implemented');
+      }
+    };
+  }
 
   // MutableObjectStore Methods
 
@@ -65,25 +84,14 @@ export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjec
     const create = makeAsyncResultFunc(
       [import.meta.filename, 'mutableObject', 'create'],
       async (trace: Trace, initialValue: T): PR<T, 'conflict'> => {
-        await uncheckedResult(this.loadIfNeeded_(trace));
-
-        const created = await this.inMemoryStore_.mutableObject(key).create(trace, initialValue);
-        if (!created.ok) {
-          return created;
-        }
-
-        this.persistenceTaskQueue_.add({ key: 'persist', version: makeUuid() }, this.persistToFile_);
-
-        return makeSuccess(created.value);
-      }
-    );
-
-    const getMutable = makeAsyncResultFunc(
-      [import.meta.filename, 'mutableObject', 'getMutable'],
-      async (trace): PR<StorableObject<T>, 'not-found'> => {
-        await uncheckedResult(this.loadIfNeeded_(trace));
-
-        return await this.inMemoryStore_.mutableObject(key).getMutable(trace);
+        return await this.accessFile_(trace, true, (contents): Result<T, 'conflict'> => {
+          if (Object.hasOwn(contents, key)) {
+            return makeFailure(new ConflictError(trace, { message: `${key} already exists`, errorCode: 'conflict' }));
+          } else {
+            contents[key] = initialValue;
+            return makeSuccess(initialValue);
+          }
+        });
       }
     );
 
@@ -93,33 +101,39 @@ export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjec
       create,
 
       delete: makeAsyncResultFunc([import.meta.filename, 'mutableObject', 'delete'], async (trace): PR<undefined, 'not-found'> => {
-        await uncheckedResult(this.loadIfNeeded_(trace));
-
-        const deleted = await this.inMemoryStore_.mutableObject(key).delete(trace);
-        if (!deleted.ok) {
-          return deleted;
-        }
-
-        this.persistenceTaskQueue_.add({ key: 'persist', version: makeUuid() }, this.persistToFile_);
-
-        return makeSuccess(deleted.value);
+        return await this.accessFile_(trace, true, (contents): Result<undefined, 'not-found'> => {
+          if (!Object.hasOwn(contents, key)) {
+            return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
+          } else {
+            delete contents[key];
+            return makeSuccess(undefined);
+          }
+        });
       }),
 
-      getMutable,
+      getMutable: async (...args) => {
+        const result = await readonlyValues.get(...args);
+        if (!result.ok) {
+          return result;
+        }
+
+        return makeSuccess<StorableObject<T>>({
+          storedValue: result.value,
+          updateCount: 0 // We do not have this information
+        });
+      },
 
       update: makeAsyncResultFunc(
         [import.meta.filename, 'mutableObject', 'update'],
         async (trace, newValue: StorableObject<T>): PR<undefined, 'not-found' | 'out-of-date'> => {
-          await uncheckedResult(this.loadIfNeeded_(trace));
+          return await this.accessFile_(trace, true, (contents): Result<undefined, 'not-found' | 'out-of-date'> => {
+            if (!Object.hasOwn(contents, key)) {
+              return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
+            }
 
-          const updated = await this.inMemoryStore_.mutableObject(key).update(trace, newValue);
-          if (!updated.ok) {
-            return updated;
-          }
-
-          this.persistenceTaskQueue_.add({ key: 'persist', version: makeUuid() }, this.persistToFile_);
-
-          return makeSuccess(updated.value);
+            contents[key] = newValue.storedValue;
+            return makeSuccess(undefined);
+          });
         }
       )
     };
@@ -130,93 +144,92 @@ export class JsonFileObjectStore<KeyT extends string, T> implements MutableObjec
   public object(key: KeyT): ObjectAccessor<T> {
     return {
       exists: makeAsyncResultFunc([import.meta.filename, 'object', 'exists'], async (trace): PR<boolean> => {
-        await uncheckedResult(this.loadIfNeeded_(trace));
-
-        return await this.inMemoryStore_.object(key).exists(trace);
+        const result = await this.accessFile_(trace, false, (contents): Result<boolean> => {
+          return makeSuccess(Object.hasOwn(contents, key));
+        });
+        return result;
       }),
 
       get: makeAsyncResultFunc([import.meta.filename, 'object', 'get'], async (trace): PR<T, 'not-found'> => {
-        await uncheckedResult(this.loadIfNeeded_(trace));
+        return await this.accessFile_(trace, false, (contents): Result<T, 'not-found'> => {
+          if (!Object.hasOwn(contents, key)) {
+            return makeFailure(new NotFoundError(trace, { message: `No object found for key: ${key}`, errorCode: 'not-found' }));
+          }
 
-        return await this.inMemoryStore_.object(key).get(trace);
+          return makeSuccess<T>(contents[key]!);
+        });
       })
     };
   }
 
   public async getMultiple(trace: Trace, keys: KeyT[]): PR<{ found: Partial<Record<KeyT, T>>; notFound: KeyT[] }> {
-    await uncheckedResult(this.loadIfNeeded_(trace));
+    return await this.accessFile_(trace, false, (contents): Result<{ found: Partial<Record<KeyT, T>>; notFound: KeyT[] }> => {
+      const found: Partial<Record<KeyT, T>> = {};
+      const notFound: KeyT[] = [];
 
-    return await this.inMemoryStore_.getMultiple(trace, keys);
+      for (const key of keys) {
+        if (Object.hasOwn(contents, key)) {
+          found[key] = contents[key];
+        } else {
+          notFound.push(key);
+        }
+      }
+
+      return makeSuccess({ found, notFound });
+    });
   }
 
   // Private Methods
 
-  private readonly loadIfNeeded_ = makeAsyncResultFunc(
-    [import.meta.filename, 'loadIfNeeded_'],
-    once(async (trace): PR<undefined> => {
+  /**
+   * Read file from disk, execute callback on contents, save if needed, and forget.
+   * This method never caches the value, always reads from disk, and doesn't maintain any state.
+   * TODO: Implement locking (don't forget to make it cross-process)
+   */
+  private readonly accessFile_ = makeAsyncResultFunc(
+    [import.meta.filename, 'accessFile_'],
+    async <R, E extends string = never>(
+      trace: Trace,
+      writeAfter: boolean,
+      callback: (contents: Partial<Record<KeyT, T>>) => Result<R, E>
+    ): PR<R, E> => {
+      // Read from disk
       let jsonString = '{}';
       try {
         jsonString = await fs.readFile(this.path_, 'utf-8');
       } catch (_e) {
         // Ignoring file read errors, since this probably means the file doesn't exist
+        // TODO: Make distinction
       }
 
-      const parsed = await parse(trace, jsonString, this.recordSchema_);
-      /* node:coverage disable */
-      if (!parsed.ok) {
-        return parsed;
+      // Parse the file contents
+      const parseResult = await parse(trace, jsonString, this.recordSchema_);
+      if (!parseResult.ok) {
+        return parseResult;
       }
-      /* node:coverage enable */
 
-      const initialized = await allResultsMapped(trace, objectEntries(parsed.value), {}, async (trace, [key, value]) => {
-        if (value === undefined) {
-          return makeSuccess(undefined);
-        }
-
-        const created = await this.inMemoryStore_.mutableObject(key).create(trace, value);
-        /* node:coverage disable */
-        if (!created.ok) {
-          // Conflicts should never happen here since we're initializing a new object store
-          return generalizeFailureResult(trace, created, 'conflict');
-        }
-        /* node:coverage enable */
-
-        return makeSuccess(undefined);
-      });
-      /* node:coverage disable */
-      if (!initialized.ok) {
-        return initialized;
+      // Execute the callback with the contents
+      const result = callback(parseResult.value);
+      if (!result.ok) {
+        return result;
       }
-      /* node:coverage enable */
 
-      return makeSuccess(undefined);
-    })
+      if (!writeAfter) {
+        return result;
+      }
+
+      // Only write back to disk if the callback modified the contents
+      // This is determined by checking if the result is successful
+      const writeResult = await stringify(trace, parseResult.value, this.recordSchema_, { space: 2 });
+      if (!writeResult.ok) {
+        return writeResult;
+      }
+
+      // Write back to disk
+      await fs.writeFile(this.path_, writeResult.value, 'utf-8');
+
+      // Return the result from the callback
+      return result;
+    }
   );
-
-  private readonly persistToFile_ = makeAsyncResultFunc([import.meta.filename, 'persistToFile_'], async (trace): PR<undefined> => {
-    const keys = await this.inMemoryStore_.keys.asc().keys(trace);
-    /* node:coverage disable */
-    if (!keys.ok) {
-      return keys;
-    }
-    /* node:coverage enable */
-
-    const got = await this.inMemoryStore_.getMultiple(trace, keys.value);
-    /* node:coverage disable */
-    if (!got.ok) {
-      return got;
-    }
-    /* node:coverage enable */
-
-    const jsonString = await stringify(trace, got.value.found, this.recordSchema_, { space: 2 });
-    /* node:coverage disable */
-    if (!jsonString.ok) {
-      return jsonString;
-    }
-    /* node:coverage enable */
-
-    await fs.writeFile(this.path_, jsonString.value, 'utf-8');
-
-    return makeSuccess(undefined);
-  });
 }
