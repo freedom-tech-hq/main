@@ -1,9 +1,9 @@
+import type { DataSource } from 'freedom-data-source';
 import type { ThreadLikeId } from 'freedom-email-user';
+import type { VirtualListKeyboardDelegate } from 'freedom-web-virtual-list';
 import { useMemo } from 'react';
 
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
-import type { DataSource } from '../../../types/DataSource.ts';
-import type { VirtualListKeyboardDelegate } from '../../virtual-list/types/VirtualListKeyboardDelegate.ts';
 import type { MailCollectionDataSourceItem } from '../types/MailCollectionDataSourceItem.ts';
 
 export const useMailCollectionSelectionDelegate = (

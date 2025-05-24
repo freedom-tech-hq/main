@@ -1,6 +1,6 @@
 import { ArrowForwardIosOutlined, DownloadForOfflineOutlined as DownloadIcon, Fingerprint } from '@mui/icons-material';
 import type { ListItemTextSlotsAndSlotProps } from '@mui/material';
-import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, Typography, useTheme } from '@mui/material';
+import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, Typography } from '@mui/material';
 import { bestEffort } from 'freedom-async';
 import { base64String, type Uuid } from 'freedom-basic-data';
 import { log, makeTrace, makeUuid } from 'freedom-contexts';
@@ -21,11 +21,11 @@ import { useActiveLocallyStoredCredentialUuid } from '../contexts/active-locally
 import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useTasks } from '../contexts/tasks.tsx';
 import { useTransientContent } from '../contexts/transient-content.tsx';
+import { useAppTheme } from '../contexts/useAppTheme.tsx';
 import { useTaskWaitable } from '../hooks/useTaskWaitable.ts';
 import { getTaskWorkerConfig } from '../task-worker-configs/configs.ts';
 import { makeBrowserDownloadLocallyStoredEncryptedEmailCredential } from '../utils/makeBrowserDownloadLocallyStoredEncryptedEmailCredential.ts';
 import { registerWebAuthnCredential } from '../utils/webauthn/registerWebAuthnCredential.ts';
-import type { AppTheme } from './AppTheme.tsx';
 import { LoginFromServerDialog } from './auth/LoginFromServerDialog.tsx';
 import { NewAccountEmailAndMasterPasswordDialog } from './auth/NewAccountEmailAndMasterPasswordDialog.tsx';
 import { UnlockAccountMasterPasswordDialog } from './auth/UnlockAccountMasterPasswordDialog.tsx';
@@ -52,7 +52,7 @@ export const AccountCreationOrLogin = () => {
   const history = useHistory();
   const t = useT();
   const tasks = useTasks();
-  const theme = useTheme<AppTheme>();
+  const theme = useAppTheme();
   const transientContent = useTransientContent();
   const uuid = useMemo(() => makeUuid(), []);
 

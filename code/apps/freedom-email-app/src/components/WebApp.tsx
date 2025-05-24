@@ -2,7 +2,9 @@ import { Box, CssBaseline } from '@mui/material';
 import { proxy } from 'comlink';
 import type { Uuid } from 'freedom-basic-data';
 import { log, makeUuid } from 'freedom-contexts';
+import { TARGET_FPS_MSEC } from 'freedom-web-animation';
 import { HistoryProvider, useCreateBrowserHistory } from 'freedom-web-navigation';
+import { VirtualListThemeProvider } from 'freedom-web-virtual-list';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
@@ -10,11 +12,9 @@ import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { TasksProvider, useTasks } from '../contexts/tasks.tsx';
 import { TransientContentProvider } from '../contexts/transient-content.tsx';
-import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
-import { AppGlobalStyles } from './AppGlobalStyles.tsx';
 import { AppMainContent } from './AppMainContent.tsx';
 import { AppNavbar } from './AppNavbar.tsx';
-import { AppTheme } from './AppTheme.tsx';
+import { AppThemeProvider } from './AppTheme.tsx';
 import { SideMenu } from './SideMenu.tsx';
 
 export const WebApp = () => {
@@ -23,11 +23,12 @@ export const WebApp = () => {
   return (
     <HistoryProvider history={history}>
       <TasksProvider>
-        <AppTheme>
-          <AppGlobalStyles />
-          <CssBaseline enableColorScheme={true} />
-          <BootstrappedWebApp />
-        </AppTheme>
+        <AppThemeProvider>
+          <VirtualListThemeProvider>
+            <CssBaseline enableColorScheme={true} />
+            <BootstrappedWebApp />
+          </VirtualListThemeProvider>
+        </AppThemeProvider>
       </TasksProvider>
     </HistoryProvider>
   );

@@ -1,17 +1,22 @@
 import { CircularProgress, ListItem, ListItemText } from '@mui/material';
+import type { DataSource } from 'freedom-data-source';
 import type { CollectionLikeId, MailCollection } from 'freedom-email-user';
 import { mailCollectionGroupIdInfo, makeCollectionLikeIdForCollection } from 'freedom-email-user';
+import { LOCALIZE } from 'freedom-localization';
+import { useT } from 'freedom-react-localization';
+import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
 import { useMemo } from 'react';
 
-import type { DataSource } from '../../../types/DataSource.ts';
-import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailCollectionGroupTitleListItem } from '../components/MailCollectionGroupTitleListItem.tsx';
 import { MailCollectionListItem } from '../components/MailCollectionListItem.tsx';
 import { MailCollectionSeparatorListItem } from '../components/MailCollectionSeparatorListItem.tsx';
 import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
 import { useMailCollectionsListSelectionDelegate } from './useMailCollectionsListSelectionDelegate.ts';
+
+const ns = 'ui';
+const $noCollectionsFound = LOCALIZE('No Collections Found')({ ns });
 
 export const useMailCollectionsListDelegate = (
   dataSource: DataSource<MailCollectionsListDataSourceItem, MailCollectionsListDataSourceKey>,
@@ -25,6 +30,8 @@ export const useMailCollectionsListDelegate = (
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
 ): VirtualListDelegate<MailCollectionsListDataSourceItem, MailCollectionsListDataSourceKey, 'collection' | 'separator' | 'group-title'> => {
+  const t = useT();
+
   const selectionDelegate = useMailCollectionsListSelectionDelegate(dataSource, { onArrowLeft, onArrowRight });
 
   return useMemo(
@@ -47,7 +54,7 @@ export const useMailCollectionsListDelegate = (
       },
       renderEmptyIndicator: () => (
         <ListItem>
-          <ListItemText secondary="No Collections Found" />
+          <ListItemText secondary={$noCollectionsFound(t)} />
         </ListItem>
       ),
       renderLoadingIndicator: () => (
@@ -57,7 +64,7 @@ export const useMailCollectionsListDelegate = (
       ),
       onKeyDown: selectionDelegate.onKeyDown
     }),
-    [dataSource, onCollectionClicked, selectionDelegate.onKeyDown]
+    [dataSource, onCollectionClicked, selectionDelegate.onKeyDown, t]
   );
 };
 

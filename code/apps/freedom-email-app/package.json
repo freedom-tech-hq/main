@@ -25,14 +25,17 @@
     "freedom-cast": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-data-source": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "freedom-email-tasks-web-worker": "0.0.0",
     "freedom-email-user": "0.0.0",
     "freedom-localization": "0.0.0",
     "freedom-logical-web-components": "0.0.0",
-    "freedom-notification-types": "0.0.0",
     "freedom-react-localization": "0.0.0",
+    "freedom-web-animation": "0.0.0",
+    "freedom-web-focus": "0.0.0",
     "freedom-web-navigation": "0.0.0",
+    "freedom-web-virtual-list": "0.0.0",
     "i18next": "25.0.2",
     "lodash-es": "4.17.21",
     "react": "19.1.0",
@@ -40,7 +43,7 @@
     "react-dom": "19.1.0",
     "react-waitables": "2.3.10",
     "yaschema": "5.2.1",
-    "yasorted-array": "1.0.3"
+    "yasorted-array": "1.0.6"
   },
   "devDependencies": {
     "@types/email-addresses": "3.0.0",

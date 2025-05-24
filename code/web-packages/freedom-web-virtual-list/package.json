@@ -1,0 +1,59 @@
+{
+  "dependencies": {
+    "@emotion/react": "11.14.0",
+    "@mui/material": "7.0.2",
+    "freedom-cast": "0.0.0",
+    "freedom-contexts": "0.0.0",
+    "freedom-data-source": "0.0.0",
+    "freedom-web-animation": "0.0.0",
+    "freedom-web-focus": "0.0.0",
+    "freedom-web-resize-observer": "0.0.0",
+    "lodash-es": "4.17.21",
+    "pseudo-words": "1.0.1",
+    "react-bindings": "1.19.8",
+    "yaschema": "5.2.1",
+    "yasorted-array": "1.0.6"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "4.17.12",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "freedom-build-tools": "0.0.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "typescript": "5.8.3"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
+  },
+  "type": "module",
+  "main": "lib/exports.mjs",
+  "name": "freedom-web-virtual-list",
+  "nx": {
+    "tags": [
+      "type:lib",
+      "platform:web"
+    ]
+  },
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.mjs.json --emitDeclarationOnly && node ../../dev-packages/freedom-build-tools/bin/freedom-build.mjs --tsconfig tsconfig.mjs.json",
+    "build:dev": "FREEDOM_BUILD_MODE=DEV yarn build",
+    "build:tests": "tsc",
+    "build-up": "npx nx run-many --parallel=10 -t build --projects=$(basename `pwd`)",
+    "build-up:dev": "FREEDOM_BUILD_MODE=DEV yarn build-up",
+    "clean": "rimraf ./build.demo ./coverage ./lib",
+    "depcheck": "depcheck --ignores=freedom-build-tools || (code ./package.json && exit 1)",
+    "lint": "eslint 'src/**/*.ts?(x)' --max-warnings 0",
+    "prep:build.demo-dir": "rimraf ./build.demo && mkdir -p ./build.demo && node ../../dev-packages/freedom-build-tools/bin/copy-template.mjs --include './public.demo/**/*' --drop-prefixes 'public.demo/' --outdir ./build.demo",
+    "start:demo": "export FREEDOM_BUILD_UUID=${FREEDOM_BUILD_UUID:-$(uuidgen)} && yarn prep:build.demo-dir && node ../../dev-packages/freedom-build-tools/bin/freedom-serve.mjs --tsconfig tsconfig.mjs.json --entry-points ./src/demo/index.tsx --serve-dir ./build.demo",
+    "test": "yarn test:unit-tests",
+    "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
+    "test:perf": "FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} yarn test:debug",
+    "test:unit-tests": "NODE_OPTIONS='--experimental-transform-types --disable-warning=ExperimentalWarning' node --experimental-test-coverage --test-coverage-include='src/**/*' --test-coverage-exclude='src/**/**.test.ts' --test-concurrency=1 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-lines=90 --test-timeout=300000 --test",
+    "deploy:extract": "../../poc/repo/deploy.extract.sh"
+  },
+  "types": "lib/exports.d.ts",
+  "version": "0.0.0"
+}

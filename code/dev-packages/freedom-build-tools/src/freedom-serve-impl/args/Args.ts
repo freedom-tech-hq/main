@@ -6,4 +6,7 @@ export interface ServeArgs {
 
   /** @defaultValue `web` */
   platform?: 'any' | 'web' | 'node';
+
+  /** @defaultValue `build` */
+  serveDir: string;
 }

@@ -46,6 +46,9 @@
             "path": "cross-platform-packages/freedom-crypto"
         },
         {
+            "path": "cross-platform-packages/freedom-data-source"
+        },
+        {
             "path": "cross-platform-packages/freedom-dev-logging-support"
         },
         {
@@ -202,7 +205,19 @@
             "path": "web-packages/freedom-react-localization"
         },
         {
+            "path": "web-packages/freedom-web-animation"
+        },
+        {
+            "path": "web-packages/freedom-web-focus"
+        },
+        {
             "path": "web-packages/freedom-web-navigation"
+        },
+        {
+            "path": "web-packages/freedom-web-resize-observer"
+        },
+        {
+            "path": "web-packages/freedom-web-virtual-list"
         },
         {
             "path": "web-worker-packages/freedom-opfs-syncable-store-backing"

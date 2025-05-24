@@ -1,5 +1,7 @@
 import { Box, Collapse, Drawer, useTheme } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
+import { TARGET_FPS_MSEC } from 'freedom-web-animation';
+import type { FocusControls } from 'freedom-web-focus';
 import { useMemo, useRef } from 'react';
 import { BC, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
@@ -7,8 +9,6 @@ import { useActiveUserId } from '../contexts/active-user-id.tsx';
 import { useSelectedMailCollectionId } from '../contexts/selected-mail-collection.tsx';
 import { useSideMenuWidth } from '../contexts/side-menu-width.tsx';
 import { useAppBarHeight } from '../hooks/useAppBarHeight.ts';
-import { TARGET_FPS_MSEC } from '../modules/virtual-list/consts/animation.ts';
-import type { FocusControls } from '../types/FocusControls.ts';
 import { MailMenuContent } from './MailMenuContent.tsx';
 import { MainMenuContent } from './MainMenuContent.tsx';
 

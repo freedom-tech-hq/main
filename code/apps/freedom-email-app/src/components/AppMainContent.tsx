@@ -6,7 +6,7 @@ import { MailThread } from '../modules/mail-thread/components/MailThread.tsx';
 import { AccountCreationOrLogin } from './AccountCreationOrLogin.tsx';
 
 export interface AppMainContentProps {
-  scrollParent: HTMLElement | string;
+  scrollParent: HTMLElement | string | Window;
 }
 
 export const AppMainContent = ({ scrollParent }: AppMainContentProps) => {

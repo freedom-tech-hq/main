@@ -3,6 +3,7 @@ export * from './getEnv.ts';
 export * from './getTraceStack.ts';
 export * from './getTraceStackTop.ts';
 export * from './getTraceStackWithAttachments.ts';
+export * from './makeShortUid.ts';
 export * from './makeUuid.ts';
 export * from './traceToString.ts';
 export * from './wrapLogger.ts';

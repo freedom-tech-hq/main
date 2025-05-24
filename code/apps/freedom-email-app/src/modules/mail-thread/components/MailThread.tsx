@@ -1,16 +1,16 @@
 import type { SxProps, Theme } from '@mui/material';
 import { Stack } from '@mui/material';
+import { VirtualList } from 'freedom-web-virtual-list';
 import { BC } from 'react-bindings';
 
 import { AuxSearchField } from '../../../components/AuxSearchField.tsx';
 import { useIsDataSourceLoadingBinding } from '../../../hooks/useIsDataSourceLoadingBinding.ts';
-import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
 import { useMailThreadDataSource } from '../hooks/useMailThreadDataSource.ts';
 import { useMailThreadDelegate } from '../hooks/useMailThreadDelegate.tsx';
 import { MailThreadActionsMenu } from './MailThreadActionsMenu.tsx';
 
 export interface MailThreadProps {
-  scrollParent: HTMLElement | string;
+  scrollParent: HTMLElement | string | Window;
 }
 
 export const MailThread = ({ scrollParent }: MailThreadProps) => {

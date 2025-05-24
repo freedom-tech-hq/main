@@ -4,15 +4,15 @@ import { inline } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
+import type { DataSource } from 'freedom-data-source';
+import { ArrayDataSource } from 'freedom-data-source';
 import type { GetMailCollectionPacket } from 'freedom-email-tasks-web-worker';
 import type { MailCollectionGroup } from 'freedom-email-user';
 import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
+import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useTasks } from '../../../contexts/tasks.tsx';
-import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
-import type { DataSource } from '../../../types/DataSource.ts';
-import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
 

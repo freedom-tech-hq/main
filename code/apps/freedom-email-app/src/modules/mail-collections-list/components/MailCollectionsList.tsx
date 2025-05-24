@@ -1,16 +1,16 @@
 import type { CollectionLikeId } from 'freedom-email-user';
+import type { VirtualListControls } from 'freedom-web-virtual-list';
+import { VirtualList } from 'freedom-web-virtual-list';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
-import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
-import type { VirtualListControls } from '../../virtual-list/types/VirtualListControls.ts';
 import { useMailCollectionsListDataSource } from '../hooks/useMailCollectionsListDataSource.ts';
 import { useMailCollectionsListDelegate } from '../hooks/useMailCollectionsListDelegate.tsx';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
 
 export interface MailCollectionsListProps {
-  scrollParent: HTMLElement | string;
+  scrollParent: HTMLElement | string | Window;
   controls?: VirtualListControls<MailCollectionsListDataSourceKey>;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;

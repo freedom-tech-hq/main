@@ -1,12 +1,12 @@
 import { CircularProgress, ListItem, ListItemText } from '@mui/material';
+import type { DataSource } from 'freedom-data-source';
 import type { MailId } from 'freedom-email-sync';
 import { mailIdInfo } from 'freedom-email-sync';
 import type { Mail, MailDraftId, MailLikeId } from 'freedom-email-user';
 import { mailDraftIdInfo } from 'freedom-email-user';
+import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { useMemo } from 'react';
 
-import type { DataSource } from '../../../types/DataSource.ts';
-import type { VirtualListDelegate } from '../../virtual-list/types/VirtualListDelegate.ts';
 import { MailDraftListItem } from '../components/MailDraftListItem.tsx';
 import { MailListItem } from '../components/MailListItem.tsx';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';

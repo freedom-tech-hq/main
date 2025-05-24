@@ -1,16 +1,16 @@
 import { keyframes } from '@emotion/react';
-import { GlobalStyles, useTheme } from '@mui/material';
+import { GlobalStyles } from '@mui/material';
+import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 
-import type { AppTheme } from '../../../components/AppTheme.tsx';
-import { ANIMATION_DURATION_MSEC } from '../consts/animation.ts';
+import { useVirtualListTheme } from '../../context/virtual-list-theme.tsx';
 
 export const GlobalVirtualListStyles = () => {
-  const theme = useTheme<AppTheme>();
+  const theme = useVirtualListTheme();
 
   return (
     <GlobalStyles
       styles={{
-        '.VirtualList': {
+        [`.VirtualList-${theme.uid}`]: {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start',
@@ -66,12 +66,12 @@ export const GlobalVirtualListStyles = () => {
             }
           }
         },
-        '.VirtualList-itemPrototype': {
+        [`.VirtualList-${theme.uid}-itemPrototype`]: {
           height: 0,
           overflow: 'hidden',
           pointerEvents: 'none'
         },
-        '.VirtualList-scrollPositionMarker': {
+        [`.VirtualList-${theme.uid}-scrollPositionMarker`]: {
           position: 'absolute',
           visibility: 'hidden',
           pointerEvents: 'none',
@@ -80,8 +80,8 @@ export const GlobalVirtualListStyles = () => {
           left: 0,
           right: 0
         },
-        '.VirtualList-renderedItems': { position: 'relative' },
-        '.VirtualList-item': {
+        [`.VirtualList-${theme.uid}-renderedItems`]: { position: 'relative' },
+        [`.VirtualList-${theme.uid}-item`]: {
           position: 'absolute',
           left: 0,
           right: 0,

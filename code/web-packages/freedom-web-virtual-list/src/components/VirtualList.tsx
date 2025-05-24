@@ -1,18 +1,19 @@
-import { Collapse } from '@mui/material';
+import { Collapse, Stack } from '@mui/material';
 import { objectEntries, objectKeys, objectValues } from 'freedom-cast';
 import { makeUuid } from 'freedom-contexts';
+import type { DataSource, IsDataSourceLoading } from 'freedom-data-source';
+import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from 'freedom-web-animation';
+import { ResizingObservingDiv } from 'freedom-web-resize-observer';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { BC, useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { makeStringSubtypeArray } from 'yaschema';
 
-import { ResizingObservingDiv } from '../../../components/ResizingObservingDiv.tsx';
-import { ListHasFocusProvider } from '../../../contexts/list-has-focus.tsx';
-import type { DataSource, IsDataSourceLoading } from '../../../types/DataSource.ts';
-import { doRangesIntersect } from '../../../utils/doRangesIntersect.ts';
-import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from '../consts/animation.ts';
-import { DEFAULT_MIN_OVERSCAN_AMOUNT_PX, DEFAULT_OVERSCAN_NUM_ITEMS } from '../consts/overscan.ts';
+import { ListHasFocusProvider } from '../context/list-has-focus.tsx';
+import { useVirtualListTheme } from '../context/virtual-list-theme.tsx';
+import { DEFAULT_MIN_OVERSCAN_AMOUNT_PX, DEFAULT_OVERSCAN_NUM_ITEMS } from '../internal/consts/overscan.ts';
+import { doRangesIntersect } from '../internal/utils/doRangesIntersect.ts';
 import type { VirtualListControls } from '../types/VirtualListControls.ts';
 import type { VirtualListDelegate } from '../types/VirtualListDelegate.ts';
 
@@ -27,7 +28,7 @@ export interface VirtualListProps<T, KeyT extends string, TemplateIdT extends st
   /** @defaultValue `'vertical'` */
   direction?: 'vertical';
 
-  scrollParent: HTMLElement | string;
+  scrollParent: HTMLElement | string | Window;
 
   /**
    * The number of px above or below the visible area to render content for
@@ -51,6 +52,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   isFocusable = true
 }: VirtualListProps<T, KeyT, TemplateIdT>) => {
   const uuid = useMemo(() => makeUuid(), []);
+  const theme = useVirtualListTheme();
 
   const isEmpty = useBinding(() => dataSource.getNumItems() === 0, { id: 'isEmpty', detectChanges: true, deps: [dataSource] });
   const showLoadingIndicator = useBinding(() => dataSource.isLoading(), {
@@ -238,19 +240,29 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     }
   });
 
+  /** Used when renderItems should be triggered immediately, without debouncing.  We need lastRenderedItemsByItemIndex to be updated after
+   * each onItems… function, otherwise, for example, deleting index 1 and then index 2 would lead to out of sync use of
+   * lastRenderedItemsByItemIndex.  We could have manually renumbered the lastRenderedItemsByItemIndex immediately instead, but this would
+   * have made the code a bit more complex and since this is only for data changes, isn't frequent enough to optimize for.
+   */
   const forceRenderCount = useBinding(() => 0, { id: 'forceRenderCount' });
+  /** Used when renderItems should be triggered eventually, with debouncing */
+  const debouncedForceRenderCount = useBinding(() => 0, { id: 'debouncedForceRenderCount' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const lastRenderedItemsByItemIndex = useMemo<Map<number, [KeyT, ReactNode, topPx: number]>>(() => new Map(), [dataSource]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const removingItems = useMemo<Partial<Record<KeyT, [ReactNode, topPx: number]>>>(() => ({}), [dataSource]);
+
   const renderedItems = useDerivedBinding(
-    { visibleRangeIndices, forceRenderCount },
-    ({ visibleRangeIndices }): ReactNode[] => {
+    forceRenderCount,
+    (): ReactNode[] => {
       const currentItemSizes = itemSizes.get();
 
+      const theVisibleRangeIndices = visibleRangeIndices.get();
+
       const offsetsByItemIndex: Record<number, number> = {};
-      let currentItemOffset = visibleRangeIndices[2];
-      for (let itemIndex = visibleRangeIndices[0]; itemIndex < visibleRangeIndices[1]; itemIndex += 1) {
+      let currentItemOffset = theVisibleRangeIndices[2];
+      for (let itemIndex = theVisibleRangeIndices[0]; itemIndex < theVisibleRangeIndices[1]; itemIndex += 1) {
         offsetsByItemIndex[itemIndex] = currentItemOffset;
 
         const itemSize = currentItemSizes[itemIndex][1];
@@ -302,8 +314,15 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       }
 
       lastRenderedItemsByItemIndex.clear();
-      for (let itemIndex = visibleRangeIndices[0]; itemIndex < visibleRangeIndices[1]; itemIndex += 1) {
+      const tempUsedKeys = new Set<string>();
+      const tempPrimaryKeys = new Set<string>();
+      for (let itemIndex = theVisibleRangeIndices[0]; itemIndex < theVisibleRangeIndices[1]; itemIndex += 1) {
         const key = dataSource.getKeyForItemAtIndex(itemIndex);
+        if (tempUsedKeys.has(key)) {
+          console.log('FOUND primary duplicate', key);
+        }
+        tempUsedKeys.add(key);
+        tempPrimaryKeys.add(key);
         const item = dataSource.getItemAtIndex(itemIndex);
         const templateId = delegate.getTemplateIdForItemAtIndex(itemIndex);
 
@@ -319,7 +338,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
           <ResizingObservingDiv
             key={key}
             id={`${uuid}-${key}`}
-            className={`VirtualList-item ${isNewItem ? 'fade-in' : ''} ${isExistingItem ? 'animated-top' : ''} ${isMovingItem ? 'moving' : ''}`}
+            className={`VirtualList-${theme.uid}-item ${isNewItem ? 'fade-in' : ''} ${isExistingItem ? 'animated-top' : ''} ${isMovingItem ? 'moving' : ''}`}
             style={{ top: `${topPx}px`, visibility: shouldBeVisible ? 'visible' : 'hidden' }}
             tag={itemIndex}
             onResize={onItemResize}
@@ -340,13 +359,18 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
             continue;
           }
 
+          if (tempUsedKeys.has(key)) {
+            console.log('FOUND secondary duplicate', key, Array.from(tempPrimaryKeys).join(', '));
+          }
+          tempUsedKeys.add(key);
+
           const [renderedItem, topPx] = value;
 
           const wrappedRenderedItem = (
             <ResizingObservingDiv
               key={key}
               id={`${uuid}-${key}`}
-              className={`VirtualList-item fade-out`}
+              className={`VirtualList-${theme.uid}-item fade-out`}
               style={{ top: `${topPx}px` }}
               tag={undefined}
               onResize={noop}
@@ -363,13 +387,16 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       out.sort((a, b) => a[0].localeCompare(b[0]));
 
       if (hadAnyPendingChanges) {
-        setTimeout(() => forceRenderCount.set(forceRenderCount.get() + 1), ANIMATION_DURATION_MSEC);
+        setTimeout(() => debouncedForceRenderCount.set(debouncedForceRenderCount.get() + 1), ANIMATION_DURATION_MSEC);
       }
 
       return out.map(([_key, node]) => node);
     },
-    { id: 'renderedItems', detectOutputChanges: false, deps: [dataSource] }
+    { id: 'renderedItems', detectOutputChanges: false, deps: [dataSource], limitType: 'none' }
   );
+
+  useBindingEffect(debouncedForceRenderCount, () => forceRenderCount.set(forceRenderCount.get() + 1));
+  useBindingEffect(visibleRangeIndices, () => debouncedForceRenderCount.set(debouncedForceRenderCount.get() + 1));
 
   // If the item sizes have changed, update the positions of the rendered items
   useBindingEffect(
@@ -417,11 +444,19 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
     return () => {
       const elemRect = listElem.getBoundingClientRect();
-      const scrollParentRect = scrollParentElem.getBoundingClientRect();
-
-      const top = Math.max(elemRect.top, scrollParentRect.top);
       const currentTotalSize = totalSize.get();
-      const bottom = Math.min(elemRect.top + currentTotalSize, scrollParentRect.bottom);
+
+      let top: number;
+      let bottom: number;
+      if (scrollParentElem instanceof Window) {
+        top = Math.max(elemRect.top, 0);
+        bottom = Math.min(elemRect.top + currentTotalSize, window.innerHeight);
+      } else {
+        const scrollParentRect = scrollParentElem.getBoundingClientRect();
+
+        top = Math.max(elemRect.top, scrollParentRect.top);
+        bottom = Math.min(elemRect.top + currentTotalSize, scrollParentRect.bottom);
+      }
 
       const overscanAmountPx = computedOverscanAmountPx.get();
       visibleRangePx.set([
@@ -460,10 +495,6 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     }
 
     pendingClear.current = true;
-    // for (const [key, renderedItem, topPx] of lastRenderedItemsByItemIndex.values()) {
-    //   addStateForKey(key, 'remove');
-    //   removingItems[key] = [renderedItem, topPx];
-    // }
 
     itemSizes.set([]);
 
@@ -686,58 +717,64 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
     if (lastContainerSize.current !== undefined) {
       makeOnVisibleRangeChange()?.();
-      forceRenderCount.set(forceRenderCount.get() + 1);
+      debouncedForceRenderCount.set(debouncedForceRenderCount.get() + 1);
     }
     lastContainerSize.current = width;
   });
 
   return (
-    <ListHasFocusProvider listHasFocus={hasFocus}>
-      <ResizingObservingDiv
-        id={uuid}
-        className="VirtualList"
-        tabIndex={isFocusable ? 0 : undefined}
-        onFocus={isFocusable ? hasFocus.reset : undefined}
-        onBlur={isFocusable ? hasFocus.reset : undefined}
-        onClick={isFocusable ? focus : undefined}
-        onKeyDown={isFocusable ? delegate.onKeyDown : undefined}
-        tag={undefined}
-        onResize={onContainerResize}
-      >
-        {/* Rendering Prototypes to Observe Size Changes */}
-        {objectEntries(delegate.itemPrototypes).map(([templateId, { Component }]) => (
-          <div key={`prototype-${templateId}`} className="VirtualList-itemPrototype">
-            <ResizingObservingDiv id={`${uuid}-template-${templateId}`} tag={templateId} onResize={onPrototypeResize}>
-              <Component />
-            </ResizingObservingDiv>
+    <Stack>
+      <ListHasFocusProvider listHasFocus={hasFocus}>
+        <ResizingObservingDiv
+          id={uuid}
+          className={`VirtualList-${theme.uid}`}
+          tabIndex={isFocusable ? 0 : undefined}
+          onFocus={isFocusable ? hasFocus.reset : undefined}
+          onBlur={isFocusable ? hasFocus.reset : undefined}
+          onClick={isFocusable ? focus : undefined}
+          onKeyDown={isFocusable ? delegate.onKeyDown : undefined}
+          tag={undefined}
+          onResize={onContainerResize}
+        >
+          {/* Rendering Prototypes to Observe Size Changes */}
+          {objectEntries(delegate.itemPrototypes).map(([templateId, { Component }]) => (
+            <div key={`prototype-${templateId}`} className={`VirtualList-${theme.uid}-itemPrototype`}>
+              <ResizingObservingDiv id={`${uuid}-template-${templateId}`} tag={templateId} onResize={onPrototypeResize}>
+                <Component />
+              </ResizingObservingDiv>
+            </div>
+          ))}
+          {delegate.renderLoadingIndicator !== undefined
+            ? BC(delayedShowLoadingIndicator, (show) => (
+                <Collapse key="top-loading-indicator" in={show[0] && show[1] === 'start'} unmountOnExit={true}>
+                  {delegate.renderLoadingIndicator?.() ?? null}
+                </Collapse>
+              ))
+            : null}
+          <div
+            id={`${uuid}-rendered-items`}
+            className={`VirtualList-${theme.uid}-renderedItems`}
+            style={{ height: `${totalSize.get()}px` }}
+          >
+            <div id={`${uuid}-scroll-position-marker`} className={`VirtualList-${theme.uid}-scrollPositionMarker`} />
+            {BC(renderedItems, (renderedItems) => renderedItems)}
           </div>
-        ))}
-        {delegate.renderLoadingIndicator !== undefined
-          ? BC(delayedShowLoadingIndicator, (show) => (
-              <Collapse key="top-loading-indicator" in={show[0] && show[1] === 'start'} unmountOnExit={true}>
-                {delegate.renderLoadingIndicator?.() ?? null}
-              </Collapse>
-            ))
-          : null}
-        <div id={`${uuid}-rendered-items`} className="VirtualList-renderedItems" style={{ height: `${totalSize.get()}px` }}>
-          <div id={`${uuid}-scroll-position-marker`} className="VirtualList-scrollPositionMarker" />
-          {BC(renderedItems, (renderedItems) => renderedItems)}
-        </div>
-        {delegate.renderEmptyIndicator !== undefined
-          ? BC({ isEmpty, showLoadingIndicator }, ({ isEmpty, showLoadingIndicator }) => (
-              <Collapse key="empty-indicator" in={!showLoadingIndicator[0] && isEmpty} timeout={0} unmountOnExit={true}>
-                {delegate.renderEmptyIndicator?.() ?? null}
-              </Collapse>
-            ))
-          : null}
-        {delegate.renderLoadingIndicator !== undefined
-          ? BC(delayedShowLoadingIndicator, (show) => (
-              <Collapse key="bottom-loading-indicator" in={show[0] && show[1] === 'end'} unmountOnExit={true}>
-                {delegate.renderLoadingIndicator?.() ?? null}
-              </Collapse>
-            ))
-          : null}
-      </ResizingObservingDiv>
-    </ListHasFocusProvider>
+          {delegate.renderEmptyIndicator !== undefined
+            ? BC({ isEmpty, showLoadingIndicator }, ({ isEmpty, showLoadingIndicator }) => (
+                <Collapse key="empty-indicator" in={!showLoadingIndicator[0] && isEmpty} timeout={0} unmountOnExit={true}>
+                  {delegate.renderEmptyIndicator?.() ?? null}
+                </Collapse>
+              ))
+            : null}
+          {delegate.renderLoadingIndicator !== undefined
+            ? BC(delayedShowLoadingIndicator, (show) => (
+                <Collapse key="bottom-loading-indicator" in={show[0] && show[1] === 'end'} unmountOnExit={true}>
+                  {delegate.renderLoadingIndicator?.() ?? null}
+                </Collapse>
+              ))
+            : null}
+        </ResizingObservingDiv>
+      </ListHasFocusProvider>
+    </Stack>
   );
 };

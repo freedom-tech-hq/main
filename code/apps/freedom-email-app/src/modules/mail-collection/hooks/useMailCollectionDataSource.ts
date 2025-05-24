@@ -3,18 +3,18 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
+import type { DataSource } from 'freedom-data-source';
+import { ArrayDataSource } from 'freedom-data-source';
 import { mailIdInfo } from 'freedom-email-sync';
 import type { GetMailThreadsForCollectionPacket } from 'freedom-email-tasks-web-worker';
 import type { ThreadLikeId } from 'freedom-email-user';
+import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 import { SortedArray } from 'yasorted-array';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
-import type { DataSource } from '../../../types/DataSource.ts';
-import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailCollectionDataSourceItem } from '../types/MailCollectionDataSourceItem.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 
@@ -64,17 +64,16 @@ export const useMailCollectionDataSource = (): DataSource<MailCollectionDataSour
 
         switch (packet.value.type) {
           case 'mail-added': {
-            dataSource.itemsAdded({
-              indices: items.addMultiple(
-                ...packet.value.threadIds.map(
-                  (threadId): MailThreadDataSourceItem => ({
-                    type: 'mail-thread',
-                    id: threadId,
-                    timeMSec: mailIdInfo.is(threadId) ? mailIdInfo.extractTimeMSec(threadId) : 0
-                  })
-                )
+            const indices = items.addMultiple(
+              ...packet.value.threadIds.map(
+                (threadId): MailThreadDataSourceItem => ({
+                  type: 'mail-thread',
+                  id: threadId,
+                  timeMSec: mailIdInfo.is(threadId) ? mailIdInfo.extractTimeMSec(threadId) : 0
+                })
               )
-            });
+            );
+            dataSource.itemsAdded({ indices });
 
             break;
           }

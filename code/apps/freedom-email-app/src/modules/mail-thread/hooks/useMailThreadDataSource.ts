@@ -3,18 +3,18 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { log, makeUuid } from 'freedom-contexts';
+import type { DataSource } from 'freedom-data-source';
+import { ArrayDataSource } from 'freedom-data-source';
 import { mailIdInfo } from 'freedom-email-sync';
 import type { GetMailForThreadPacket } from 'freedom-email-tasks-web-worker';
 import type { MailLikeId } from 'freedom-email-user';
 import { mailDraftIdInfo } from 'freedom-email-user';
+import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
-import { ArrayDataSource } from '../../../types/ArrayDataSource.ts';
-import type { DataSource } from '../../../types/DataSource.ts';
-import { ANIMATION_DURATION_MSEC } from '../../virtual-list/consts/animation.ts';
 import type { MailThreadDataSourceItem } from '../types/MailThreadDataSourceItem.ts';
 
 export const useMailThreadDataSource = (): DataSource<MailThreadDataSourceItem, MailLikeId> => {

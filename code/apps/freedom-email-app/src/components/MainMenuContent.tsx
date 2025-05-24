@@ -1,10 +1,10 @@
 import { Stack } from '@mui/material';
+import type { FocusControls } from 'freedom-web-focus';
 
 import { MailCollectionsList } from '../modules/mail-collections-list/components/MailCollectionsList.tsx';
-import type { FocusControls } from '../types/FocusControls.ts';
 
 export interface MainMenuContentProps {
-  scrollParent: HTMLElement | string;
+  scrollParent: HTMLElement | string | Window;
   controls?: FocusControls;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;

@@ -1,10 +1,9 @@
 import { DoubleLinkedList } from 'doublell';
+import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useMemo } from 'react';
 import { BC, useBinding } from 'react-bindings';
-
-import { ANIMATION_DURATION_MSEC } from '../modules/virtual-list/consts/animation.ts';
 
 export type TransientNodeMaker = (args: { dismiss: () => void }) => ReactNode;
 

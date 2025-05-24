@@ -6,16 +6,15 @@ import {
   SendOutlined as SentIcon
 } from '@mui/icons-material';
 import type { SvgIconOwnProps } from '@mui/material';
-import { Chip, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
+import { Chip, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import type { MailCollection, MailCollectionType } from 'freedom-email-user';
 import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
 import { useT } from 'freedom-react-localization';
+import { useListHasFocus, useVirtualListTheme } from 'freedom-web-virtual-list';
 import type { TFunction } from 'i18next';
 import type { ComponentType } from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
-import type { AppTheme } from '../../../components/AppTheme.tsx';
-import { useListHasFocus } from '../../../contexts/list-has-focus.tsx';
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { $mailCollectionType } from '../../../localizations/mail-collection-types.ts';
 import type { MailCollectionsListCollectionDataSourceItem } from '../types/MailCollectionsListCollectionDataSourceItem.ts';
@@ -29,7 +28,7 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
   const listHasFocus = useListHasFocus();
   const selectedCollectionId = useSelectedMailCollectionId();
   const t = useT();
-  const theme = useTheme<AppTheme>();
+  const virtualListTheme = useVirtualListTheme();
 
   const taggedOnClick = useCallbackRef(() => onClick(tag));
 
@@ -50,7 +49,8 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
               <IconComponent
                 sx={{
                   color:
-                    theme.palette.list[listHasFocus ? 'focused' : 'unfocused'].listItem[isSelected ? 'selected' : 'unselected'].iconColor
+                    virtualListTheme.palette.list[listHasFocus ? 'focused' : 'unfocused'].listItem[isSelected ? 'selected' : 'unselected']
+                      .iconColor
                 }}
               />
             ))}

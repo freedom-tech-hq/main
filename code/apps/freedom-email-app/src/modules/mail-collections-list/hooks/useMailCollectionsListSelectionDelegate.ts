@@ -1,8 +1,8 @@
+import type { DataSource } from 'freedom-data-source';
+import type { VirtualListKeyboardDelegate } from 'freedom-web-virtual-list';
 import { useMemo } from 'react';
 
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
-import type { DataSource } from '../../../types/DataSource.ts';
-import type { VirtualListKeyboardDelegate } from '../../virtual-list/types/VirtualListKeyboardDelegate.ts';
 import type { MailCollectionsListDataSourceItem } from '../types/MailCollectionsListDataSourceItem.ts';
 import type { MailCollectionsListDataSourceKey } from '../types/MailCollectionsListDataSourceKey.ts';
 

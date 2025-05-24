@@ -3,6 +3,7 @@ deployable-*
 bin
 lib
 build
+build.*
 dist
 coverage
 .*.json

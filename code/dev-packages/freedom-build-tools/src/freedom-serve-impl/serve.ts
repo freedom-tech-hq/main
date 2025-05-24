@@ -28,7 +28,7 @@ export const serve = async (args: ServeArgs) => {
 
     const esbuildContext = await esbuild.context({
       entryPoints: args.entryPoints?.map(String) ?? ['./src/index.tsx'],
-      outdir: './build',
+      outdir: args.serveDir,
       define: FORWARDED_ENV(),
       dropLabels,
       sourcemap: true,
@@ -57,8 +57,8 @@ export const serve = async (args: ServeArgs) => {
       port: Number(process.env.PORT ?? 3000),
       certfile: process.env.CERTFILE,
       keyfile: process.env.KEYFILE,
-      servedir: 'build',
-      fallback: 'build/index.html'
+      servedir: args.serveDir,
+      fallback: `${args.serveDir}/index.html`
     });
 
     console.log(`Serving app at ${serveResult.hosts.map((host) => `${host}:${serveResult.port}`).join(', ')}`);

@@ -1,8 +1,7 @@
+import type { DataSource, IsDataSourceLoading } from 'freedom-data-source';
 import { useEffect } from 'react';
 import type { ReadonlyBinding } from 'react-bindings';
 import { useBinding, useCallbackRef } from 'react-bindings';
-
-import type { DataSource, IsDataSourceLoading } from '../types/DataSource.ts';
 
 export const useIsDataSourceLoadingBinding = (dataSource: DataSource<any, any>): ReadonlyBinding<boolean> => {
   const isDataSourceLoading = useBinding(() => dataSource.isLoading()[0], {

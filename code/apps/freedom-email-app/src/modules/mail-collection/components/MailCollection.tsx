@@ -1,16 +1,16 @@
 import type { ThreadLikeId } from 'freedom-email-user';
+import type { VirtualListControls } from 'freedom-web-virtual-list';
+import { VirtualList } from 'freedom-web-virtual-list';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { SelectedMailCollectionIdProvider, useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
-import { VirtualList } from '../../virtual-list/components/VirtualList.tsx';
-import type { VirtualListControls } from '../../virtual-list/types/VirtualListControls.ts';
 import { useMailCollectionDataSource } from '../hooks/useMailCollectionDataSource.ts';
 import { useMailCollectionDelegate } from '../hooks/useMailCollectionDelegate.tsx';
 
 export interface MailCollectionProps {
-  scrollParent: HTMLElement | string;
+  scrollParent: HTMLElement | string | Window;
   controls?: VirtualListControls<ThreadLikeId>;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;

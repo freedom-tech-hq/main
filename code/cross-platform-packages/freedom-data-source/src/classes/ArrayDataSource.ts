@@ -1,7 +1,7 @@
 import { NotificationManager } from 'freedom-notification-types';
 import { isEqual } from 'lodash-es';
 
-import type { DataSource, DataSourceLoadingSide, DataSourceNotifications, IsDataSourceLoading } from './DataSource.ts';
+import type { DataSource, DataSourceLoadingSide, DataSourceNotifications, IsDataSourceLoading } from '../types/DataSource.ts';
 
 /** The array associated with this data source is unowned by the data source.  Updated must be synchronously tracked using the
  * `item{Added,Moved,Removed,Updated}` methods */
