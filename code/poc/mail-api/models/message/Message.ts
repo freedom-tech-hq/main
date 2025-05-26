@@ -25,6 +25,8 @@ export interface Message {
   hasAttachments: boolean;
   /** All system + user labels */
   labelIds: string[];
+  /** true → DRAFT system label present. TODO: consider making this dynamic */
+  isDraft: boolean;
   /** Raw RFC length (bytes) */
   size: number;
   /** Heuristic priority */
