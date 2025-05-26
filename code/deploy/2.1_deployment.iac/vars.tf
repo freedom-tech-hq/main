@@ -56,8 +56,8 @@ variable "mail_domain" {
   type        = string
 }
 
-variable "mail_admin_email" {
-  description = "Mail admin email address"
+variable "mail_dmarc" {
+  description = "Part of DMARC record, specific for the environment. At least rua and ruf. Trailing ; is mandatory"
   type        = string
 }
 

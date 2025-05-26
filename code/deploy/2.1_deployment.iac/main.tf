@@ -111,7 +111,7 @@ resource "google_dns_record_set" "dmarc_record" {
   ttl          = 300
   rrdatas      = [
     # Use https://dmarcguide.globalcyberalliance.org/dmarc to configure
-    "\"v=DMARC1; p=none; rua=mailto:${var.mail_admin_email}; ruf=mailto:${var.mail_admin_email}; sp=reject; fo=1; aspf=s; adkim=s; ri=86400\""
+    "\"v=DMARC1; p=none; ${var.mail_dmarc} sp=reject; fo=1; aspf=s; adkim=s; ri=86400\""
   ]
 }
 

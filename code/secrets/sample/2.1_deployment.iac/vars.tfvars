@@ -6,7 +6,7 @@ gcp_region     = "us-central1"
 gcp_service_account_id = "compute-service-account-dev"
 
 # Network
-# IPs: https://docs.google.com/spreadsheets/d/17e-5nwrVJ55u-JOIm4LDL9at8fGGpc0MjAmWqIejgjs/edit
+# IP registry: https://docs.google.com/spreadsheets/d/17e-5nwrVJ55u-JOIm4LDL9at8fGGpc0MjAmWqIejgjs/edit
 api_server_ip    = "82.26.157.999"
 smtp_outbound_ip = "82.26.157.999"
 smtp_hostname    = "smtp1.domain.com"
@@ -16,7 +16,8 @@ frontend_cname_target = "something.web.app."
 
 # Mail
 mail_domain = "mail-host.dev.domain.com"
-mail_admin_email = "admin@mail-host.dev.domain.com"
+# In per-developer environments, use your real public email address. Trailing ; is mandatory
+mail_dmarc = "rua=mailto:john@domain.com; ruf=mailto:john@domain.com;"
 
 # Generate by code/backends/delivery-host/README.md
 # Keep chunks exactly as in opendkim/keys/<domain.com>/mail.txt
