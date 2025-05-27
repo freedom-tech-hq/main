@@ -12,7 +12,7 @@
     "yaschema": "5.2.1"
   },
   "devDependencies": {
-    "fake-indexeddb": "6.0.0",
+    "fake-indexeddb": "6.0.1",
     "freedom-build-tools": "0.0.0",
     "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "better-sqlite3": "11.9.1",
+    "better-sqlite3": "11.10.0",
     "freedom-async": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",

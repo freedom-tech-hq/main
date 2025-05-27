@@ -4,6 +4,7 @@ import esbuildPluginTsc from 'esbuild-plugin-tsc';
 
 import { FORWARDED_ENV } from '../consts/forwarded-env.ts';
 import { makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin } from '../esbuild-plugins/freedomBuildAndFixImportAndExportFileExtensionsPlugin.ts';
+import { tailwindCssPlugin } from '../esbuild-plugins/tailwindCssPlugin.ts';
 import { readPackageJson } from '../utils/readPackageJson.ts';
 import type { ServeArgs } from './args/Args.ts';
 
@@ -27,7 +28,7 @@ export const serve = async (args: ServeArgs) => {
     }
 
     const esbuildContext = await esbuild.context({
-      entryPoints: args.entryPoints?.map(String) ?? ['./src/index.tsx'],
+      entryPoints: [...(args.entryPoints?.map(String) ?? ['./src/index.tsx']), ...(args.tailwindCssEntryPoints?.map(String) ?? [])],
       outdir: args.serveDir,
       define: FORWARDED_ENV(),
       dropLabels,
@@ -46,7 +47,8 @@ export const serve = async (args: ServeArgs) => {
       plugins: [
         inlineImage({ limit: 0 }),
         esbuildPluginTsc({ force: true, tsconfigPath: args.tsconfig }),
-        makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin({ packageName, bundle: true })
+        makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin({ packageName, bundle: true }),
+        tailwindCssPlugin()
       ]
     });
 
