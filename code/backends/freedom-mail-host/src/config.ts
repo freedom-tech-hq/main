@@ -64,8 +64,6 @@ export const SMTP_UPSTREAM_PORT = env.get('SMTP_UPSTREAM_PORT').default('25').as
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Mail Agent
 
-// Note: with synchronous parsing in getFileEnvVar() we are getting clearer error messages. But this schema does not support sync parsing.
-// Alternatively, use here serializedSchema and hydrate only on demand
 export const MAIL_AGENT_USER_KEYS = await privateCombinationCryptoKeySetSchema.parseAsync(
   getFileEnvVar(env, rootDir, 'MAIL_AGENT_USER_KEYS_', (v) => v)
 );
@@ -84,15 +82,20 @@ export const REDIS_PREFIX = env.get('REDIS_PREFIX').asString() ?? '';
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Storage
 
+// TODO: Make optional when becomes not required by freedom-db
 export const STORAGE_ROOT_PATH = env.getRequiredAsCustom('STORAGE_ROOT_PATH', (value) => resolveConfigPath(rootDir, value));
 
-// Temporary disabled in favor of File System Backing and a Docker volume
-// /** Google Cloud Storage credentials file contents (not name) */
-// export const GOOGLE_APPLICATION_CREDENTIALS_RAW =
-//   (env.getAsCustom('GOOGLE_APPLICATION_CREDENTIALS_RAW', (value) => (value ? JSON.parse(value) : undefined)) as {} | undefined) ||
-//   (env.getAsCustom('GOOGLE_APPLICATION_CREDENTIALS_PATH', (value) =>
-//     value ? JSON.parse(fs.readFileSync(path.resolve(rootDir, value), 'utf8')) : undefined // In GCP, we use machine-wise implicit credentials
-//   ) as {} | undefined);
-//
-// /** Google Cloud Storage bucket for storing emails and user data */
-// export const APP_BUCKET = env.get('APP_BUCKET').required().asString();
+/** GCP access credentials file */
+export const GOOGLE_APPLICATION_CREDENTIALS = getFileEnvVar<object | undefined>(
+  env,
+  rootDir,
+  'GOOGLE_APPLICATION_CREDENTIALS_',
+  JSON.parse
+);
+
+/** Google Cloud Storage bucket for storing emails and user data */
+export const GOOGLE_STORAGE_BUCKET = env.get('GOOGLE_STORAGE_BUCKET').asString();
+
+if (STORAGE_ROOT_PATH === undefined && (GOOGLE_APPLICATION_CREDENTIALS === undefined || GOOGLE_STORAGE_BUCKET === undefined)) {
+  throw new Error('Need to specify either STORAGE_ROOT_PATH or GOOGLE_APPLICATION_CREDENTIALS+GOOGLE_STORAGE_BUCKET');
+}

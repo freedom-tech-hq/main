@@ -14,7 +14,7 @@ const config = Object.freeze({ ...rawConfig });
 export const initApp = makeAsyncResultFunc([import.meta.filename], async (_trace): PR<void> => {
   // Dev-env startup simplifications
   DEV: {
-    if (!fs.existsSync(config.STORAGE_ROOT_PATH)) {
+    if (config.STORAGE_ROOT_PATH !== undefined && !fs.existsSync(config.STORAGE_ROOT_PATH)) {
       fs.mkdirSync(config.STORAGE_ROOT_PATH, { recursive: true });
     }
     console.log(`STORAGE_ROOT_PATH=${config.STORAGE_ROOT_PATH}`);

@@ -63,7 +63,50 @@ describe('subjectFunction', () => {
 });
 ```
 
+### Assertions
+
+It is wrong to assert complex structures line by line. When it fails, you only know the line where it has failed,
+and it costs you time to dig up the failure.
+
+```ts
+// Wrong (although popular):
+assert.equal(initialExistsResult.ok, true);
+assert.equal(initialExistsResult.value, false);
+```
+
+Use deep equal checks instead. And also `expect()` - its DSL reads natural and the output is compatible with diff
+rendering in some IDE tools.
+
+```ts
+import { expect } from 'expect';
+
+// Fantastic readability both in code and on failure:
+expect(initialExistsResult).toEqual({
+  ok: true,
+  value: false
+});
+```
+
+### Mocked strings
+
+Use format `the-<object kind>`. This way every time we see the value we know what it references, even if its variable name shows different aspect when we look at the code.
+
+```ts
+something({
+  // Wrong:
+  userId: 'test',
+  userId: 'dummy',
+  
+  // Right:
+  userId: 'the-user', // In most cases this is better
+  userId: 'the-user-id', // If we accent on the id value processing, not the idea of a user
+  name: 'The User',
+  description: 'The Description'
+});
+```
+
 ## AI Knowledge
 
 - Run single test file: `yarn test /Users/...test.ts`
 - Fixture file path making: `path.resolve(import.meta.dirname, 'fixtures/file.json')`
+- Init trace in Arrange: const trace = makeTrace();

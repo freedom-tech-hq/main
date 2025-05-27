@@ -9,6 +9,7 @@ export * from './expectEventually.ts';
 export * from './expectIncludes.ts';
 export * from './expectNotOk.ts';
 export * from './expectOk.ts';
+export * from './getDiffAnchor.ts';
 export * from './getJsFixture.ts';
 export * from './getJsonFixture.ts';
 export * from './getSerializedFixture.ts';

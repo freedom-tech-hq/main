@@ -86,6 +86,8 @@
       <excludeFolder url="file://$MODULE_DIR$/code/web-packages/freedom-logical-web-components/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/web-packages/freedom-react-binding-persistence/lib" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-syncable-store-backing-types/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-google-storage-syncable-store-backing/lib" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
