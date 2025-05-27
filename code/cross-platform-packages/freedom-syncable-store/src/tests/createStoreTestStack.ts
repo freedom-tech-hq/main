@@ -1,12 +1,12 @@
 import { makeTrace, makeUuid } from 'freedom-contexts';
-import { privateCombinationCryptoKeySetSchema } from 'freedom-crypto-data';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, type SaltsById, storageRootIdInfo } from 'freedom-sync-types';
-import { expectOk, getSerializedFixture } from 'freedom-testing-tools';
+import { expectOk } from 'freedom-testing-tools';
 
 import { DefaultSyncableStore } from '../types/DefaultSyncableStore.ts';
 import { generateProvenanceForNewSyncableStore } from '../utils/generateProvenanceForNewSyncableStore.ts';
 import { initializeRoot } from '../utils/initializeRoot.ts';
+import { getPrivateKeysFixture } from './getPrivateKeysFixture.ts';
 import { makeUserKeysForTesting } from './makeUserKeysForTesting.ts';
 
 export async function createStoreTestStack({
@@ -26,17 +26,7 @@ export async function createStoreTestStack({
   };
 
   // User Keys
-  // How to generate:
-  //   const internalCryptoKeys = await generateCryptoCombinationKeySet(trace);
-  //   expectOk(internalCryptoKeys);
-  //   const privateKeys = internalCryptoKeys.value;
-  //
-  //   const x = await privateCombinationCryptoKeySetSchema.serializeAsync(privateKeys);
-  //   fs.writeFileSync(
-  //     'fixtures/keys.json',
-  //     JSON.stringify(x.serialized, null, 2)
-  //   );
-  const privateKeys = await getSerializedFixture(import.meta.dirname, 'fixtures/keys.json', privateCombinationCryptoKeySetSchema);
+  const privateKeys = await getPrivateKeysFixture();
 
   // Crypto Service Mock
   const userKeys = makeUserKeysForTesting({ privateKeys });

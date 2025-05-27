@@ -169,6 +169,9 @@
             "path": "server-packages/freedom-file-system-syncable-store-backing"
         },
         {
+            "path": "server-packages/freedom-google-storage-syncable-store-backing"
+        },
+        {
             "path": "server-packages/freedom-json-file-object-store"
         },
         {

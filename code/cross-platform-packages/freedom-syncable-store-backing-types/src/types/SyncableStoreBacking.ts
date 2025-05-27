@@ -8,12 +8,21 @@ import type { SyncableStoreBackingFolderAccessor } from './accessors/SyncableSto
 import type { SyncableStoreBackingItemAccessor } from './accessors/SyncableStoreBackingItemAccessor.ts';
 import type { SyncableStoreBackingItemMetadata } from './SyncableStoreBackingItemMetadata.ts';
 
+// TODO: Consider splitting constant and mutable metadata in separate parameters
 export interface SyncableStoreBacking {
   readonly existsAtPath: PRFunc<boolean, never, [path: SyncablePath]>;
 
+  // TODO: Revise the very existence of this method. The scope is not clear.
+  //  Should it validate the existence of the object (slow)? It is not obvious because the returned shape
+  //  is an inputs transformation product with a file getter.
+  //  Split this into existsAtPath() that is already here and readBinaryFileAtPath()
+  //  Also consider removing 'atPath' from the names - it is the default modus operandi
   readonly getAtPath: <T extends SyncableItemType = SyncableItemType>(
     trace: Trace,
     path: SyncablePath,
+
+    // TODO: Remove this parameter as we determine the type by id that also comes from the outside
+    // So this validation is out of scope for Backing
     expectedType?: SingleOrArray<T>
   ) => PR<SyncableStoreBackingItemAccessor & { type: T }, 'not-found' | 'wrong-type'>;
 
