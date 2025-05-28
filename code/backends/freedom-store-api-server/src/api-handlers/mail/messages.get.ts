@@ -12,7 +12,8 @@ const PAGE_SIZE = 10;
 const db: types.mail.ListMessage[] = Array.from({ length: 30 }, (_, i) => ({
   id: `msg-${i + 1}`,
   transferredAt: new Date(Date.now() - i * 3600000).toISOString() as IsoDateTime, // Each message 1 hour apart
-  listMessage: new Uint8Array(),
+  listMessage:
+    'B64_AAEAAAA3Q1JZUFRPS0VZU0VUX2NvbWJvLTc0NDFiNjYzLWRlMDQtNDg1Ny1hYmRmLWM3ZjZhMmMwOTIxOQEDYswohVo3kkImiS1OH92O0TunlaGV4ZvFtujYLdphsJF9W4zfjjuqDzHy5cvmKG+tS6KmeL7ImwQUj5tLXeiG4aU8GbAuKKwmVdVBip4Np99J4B9tsYLElm51v77NhYPnyyP0fuK4IIaWr+8sYuWplBtMyBmGNvB2XaL+fGyuWMxJR2FcHUoS0fDd0rpRn473aBXVUu4b7sqvi+MQHNlbqLqb08f57rK1rbgDhaSSeP83zFVs3o1rWmcXCsdadUUTEdozgbTEUvNuNPSUn0b/s8fzLuC/aWzYmEYQz/DlddW4cEvShLdnZCtZjIW6QZFMZA4IYS0RyWsdm5as+8X5XD7eLLP63HvVB/RAsbA6zFPqoKYurIATzAeg0GE0Ga8wCe6ZLSYwoVVxQnRnqYD4Y+P7kljc8yEILT4gk3pLozJrkiFxfCmTsqb5Ct1fAHOqpf04BOOfR+iPSM2LtLuslsXMDu5qUzqxUC3fNhEyhA2aR2dpYfORwU9mONRPDy6nmfMwy7oaUH6eulcx1o3rEdknP/miycZouFKBOEiG+64Agu8CM3kkYgKHwG1QClcGhndhPP/ZHRxQzfx+5dssIvcrI8c85ukVGRFlRI9amwElM3RcFFqANtek2fg+6YChPi1ESeH/0/k048UQQydSIlC4KnkVG3a8w3DhfzwdwA==',
   // subject: `Test Message ${i + 1}`,
   // snippet: `This is a test message ${i + 1} with some sample content...`,
   hasAttachments: i % 3 === 0 // Every third message has attachments

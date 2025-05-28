@@ -279,8 +279,7 @@ export const AccountCreationOrLogin = () => {
         // Call the testNewApi task to demonstrate direct API calling
         try {
           console.log('Calling testNewApi task to demonstrate API integration...');
-          const apiTestResult = await tasks.testNewApi();
-          console.log('testNewApi task result:', apiTestResult);
+          await tasks.testNewApi();
         } catch (error) {
           console.error('Error calling testNewApi task:', error);
         }

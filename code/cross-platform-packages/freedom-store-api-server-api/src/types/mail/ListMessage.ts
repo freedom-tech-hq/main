@@ -1,4 +1,4 @@
-import { isoDateTimeSchema, uint8ArraySchema } from 'freedom-basic-data';
+import { base64String, isoDateTimeSchema } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
 // Should match DbMessage and the shared part of DecryptedListMessage.
@@ -11,7 +11,7 @@ export const listMessageSchema = schema.object({
   // assumed // folder,
 
   // Encrypted fields
-  listMessage: uint8ArraySchema,
+  listMessage: base64String.schema,
 
   // Dynamic
   hasAttachments: schema.boolean()
