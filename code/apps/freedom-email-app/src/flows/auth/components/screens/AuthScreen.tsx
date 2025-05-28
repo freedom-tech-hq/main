@@ -16,9 +16,9 @@ export const AuthScreen = () => {
           case 'xl':
           case 'lg':
             return (
-              <Stack direction="row" alignItems="stretch" sx={{ width: '100%', height: '100dvh', minHeight: '650px' }}>
+              <Stack direction="row" alignItems="stretch" sx={{ width: '100%', minHeight: '100dvh' }}>
                 <AuthHeroSidebar />
-                <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 2, py: 5 }}>
+                <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 3, py: 5 }}>
                   <AuthSelection showLogo={false} />
                 </Stack>
               </Stack>
@@ -26,15 +26,21 @@ export const AuthScreen = () => {
 
           case 'md':
             return (
-              <Stack>
+              <Stack sx={{ minHeight: '100dvh' }}>
                 <AuthHeroBanner />
-                <Stack sx={{ minHeight: '64px', backgroundColor: 'red' }}></Stack>
+                <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 2, py: 5 }}>
+                  <AuthSelection showLogo={false} />
+                </Stack>
               </Stack>
             );
 
           case 'sm':
           case 'xs':
-            return <></>;
+            return (
+              <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 2, py: 5, minHeight: '100dvh' }}>
+                <AuthSelection showLogo={true} />
+              </Stack>
+            );
         }
       })}
     </>

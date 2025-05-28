@@ -9,7 +9,6 @@ export const useSizeClass = () => {
   const determineSizeClass = useCallbackRef((): Breakpoint => {
     const width = window.visualViewport?.width ?? window.innerWidth;
     const breakpointValues = theme.breakpoints.values;
-    console.log('breakpointValues', breakpointValues);
     if (width >= breakpointValues.xl) {
       return 'xl';
     } else if (width >= breakpointValues.lg) {
