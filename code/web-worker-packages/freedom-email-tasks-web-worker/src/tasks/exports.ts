@@ -20,6 +20,7 @@ import type { getMailForThread } from './mail/getMailForThread.ts';
 import type { getMailThread } from './mail/getMailThread.ts';
 import type { getMailThreadsForCollection } from './mail/getMailThreadsForCollection.ts';
 import type { sendMail } from './mail/sendMail.ts';
+import type { testNewApi } from './mail/testNewApi.ts';
 import type { checkEmailAvailability } from './user/checkEmailAvailability.ts';
 import type { createUser } from './user/createUser.ts';
 import type { startSyncService } from './user/startSyncService.ts';
@@ -110,6 +111,9 @@ class TasksImpl {
 
   public readonly sendMail = async (...args: ParametersExceptFirst<typeof sendMail>) =>
     await (await import('./mail/sendMail.ts')).sendMail(this.#trace, ...args);
+
+  public readonly testNewApi = async (...args: ParametersExceptFirst<typeof testNewApi>) =>
+    await (await import('./mail/testNewApi.ts')).testNewApi(this.#trace, ...args);
 
   // User
 

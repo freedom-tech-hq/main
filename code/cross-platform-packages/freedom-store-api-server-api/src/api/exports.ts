@@ -1,5 +1,6 @@
 export * as checkNameAvailability from './check-name-availability.ts';
 export * as health from './health.ts';
+export * as mail from './mail/exports.ts';
 export * as publicKeys from './publicKeys.ts';
 export * as pull from './pull.ts';
 export * as push from './push.ts';
