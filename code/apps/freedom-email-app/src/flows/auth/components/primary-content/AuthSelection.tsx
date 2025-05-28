@@ -1,19 +1,27 @@
-import { Button, List, ListItem, ListItemText, Stack, Typography, useTheme } from '@mui/material';
+import { Button, Stack, useTheme } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
+import { BC } from 'react-bindings';
+import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
+import { Divider } from '../../../../components/reusable/Divider.tsx';
+import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
+import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { CompanyLogoIcon } from '../../../../icons/CompanyLogoIcon.ts';
+import { ImportIcon } from '../../../../icons/ImportIcon.ts';
 import { UserRoundPlusIcon } from '../../../../icons/UserRoundPlusIcon.ts';
+import { AccountList } from '../secondary-content/AccountList.tsx';
 
 const ns = 'ui';
+const $createNewAccount = LOCALIZE('Create New Account')({ ns });
+const $importCredential = LOCALIZE('Import Credential')({ ns });
 const $instructions = LOCALIZE('Choose an account to continue')({ ns });
-const $signIn = LOCALIZE('Sign In')({ ns });
+const $or = LOCALIZE('or')({ ns });
+const $signInToAccount = LOCALIZE('Sign in to Account')({ ns });
 const $signInToAnotherAccount = LOCALIZE('Sign in to Another Account')({ ns });
 const $welcome = LOCALIZE('Welcome to Freedom Mail!')({ ns });
-
-const hasAtLeastOneAccount = Math.random() < 0.5;
 
 export interface AuthSelectionProps {
   showLogo: boolean;
@@ -22,35 +30,72 @@ export interface AuthSelectionProps {
 export const AuthSelection = ({ showLogo }: AuthSelectionProps) => {
   const t = useT();
   const theme = useTheme();
+  const isMdOrLarger = useIsSizeClass('>=', 'md');
+
+  const locallyStoredEncryptedEmailCredentials = useTaskWaitable((tasks) => tasks.listLocallyStoredEncryptedEmailCredentials(), {
+    id: 'locallyStoredEncryptedEmailCredentials'
+  });
+  const hasAtLeastOneAccount = useDerivedWaitable(locallyStoredEncryptedEmailCredentials, (accounts) => accounts.length > 0, {
+    id: 'hasAtLeastOneAccount'
+  });
 
   return (
-    <Stack alignItems="center" justifyContent="center" gap={2} sx={{ px: 2, py: 5 }}>
-      {IF(showLogo, () => (
-        <CompanyLogoIcon sx={{ color: 'var(--base-primary)', width: '40px', height: '40px' }} />
+    <>
+      {BC(isMdOrLarger, (isMdOrLarger) => (
+        <Stack alignItems="center" justifyContent="center">
+          <Stack
+            alignItems="center"
+            justifyContent="center"
+            gap={isMdOrLarger ? 3 : 2}
+            sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}
+          >
+            {IF(showLogo, () => (
+              <CompanyLogoIcon color="primary" className="lg-icon" />
+            ))}
+
+            <Stack alignItems="center" justifyContent="center" gap={2}>
+              <Stack alignItems="center" justifyContent="center">
+                <Txt variant="h2" className="semibold" textAlign="center">
+                  {$welcome(t)}
+                </Txt>
+                {IF(hasAtLeastOneAccount, () => (
+                  <Txt variant="body1" textAlign="center">
+                    {$instructions(t)}
+                  </Txt>
+                ))}
+              </Stack>
+
+              <AccountList />
+            </Stack>
+
+            <Button variant="text" sx={{ alignSelf: 'stretch', gap: 1 }}>
+              <UserRoundPlusIcon className="text-primary sm-icon" />
+              {BC(hasAtLeastOneAccount.value, (hasAtLeastOneAccount) => (
+                <Txt variant="button" className="medium text-primary" textTransform="none">
+                  {(hasAtLeastOneAccount ?? false) ? $signInToAnotherAccount(t) : $signInToAccount(t)}
+                </Txt>
+              ))}
+            </Button>
+
+            <Divider label={$or(t)} />
+
+            <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
+              <Button variant="contained" color="primary">
+                <Txt variant="button" className="mediumim" textTransform="none">
+                  {$createNewAccount(t)}
+                </Txt>
+              </Button>
+
+              <Button variant="text" sx={{ gap: 1 }}>
+                <ImportIcon className="text-primary sm-icon" />
+                <Txt variant="button" className="medium text-primary" textTransform="none">
+                  {$importCredential(t)}
+                </Txt>
+              </Button>
+            </Stack>
+          </Stack>
+        </Stack>
       ))}
-
-      <Stack alignItems="center" justifyContent="center" gap={1}>
-        <Txt variant="h2-semibold" textAlign="center">
-          {$welcome(t)}
-        </Txt>
-        <Txt variant="p1-regular" textAlign="center">
-          {$instructions(t)}
-        </Txt>
-      </Stack>
-
-      {/* TODO: TEMP */}
-      <List sx={{ alignSelf: 'stretch', px: 5 }}>
-        <ListItem>
-          <ListItemText primary="Hello World" />
-        </ListItem>
-      </List>
-
-      <Button sx={{ gap: 1 }}>
-        <UserRoundPlusIcon className="foreground" sx={{ width: '16px', height: '16px' }} />
-        <Txt variant="button-medium" className="foreground" textTransform="none">
-          {hasAtLeastOneAccount ? $signInToAnotherAccount(t) : $signIn(t)}
-        </Txt>
-      </Button>
-    </Stack>
+    </>
   );
 };
