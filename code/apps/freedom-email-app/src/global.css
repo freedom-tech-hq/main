@@ -9,11 +9,21 @@
     --default-font-weight: normal;
 
     --colors-secondary-text: #3F3F46;
+    --colors-disabled-text: #71717A;
 
     --colors-background: #fff;
+    --colors-accent: #F4F4F5;
+    --colors-muted: #F5F5F5;
     --colors-primary: #FFB43C;
     --colors-primary-contrast: #171717;
+    --colors-input-border: #E4E4E7;
     --colors-divider: #E4E4E7;
+    --colors-error: #DC2626;
+    --colors-success: #16A34A;
+
+    --font-weight-regular: 500;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
 
     /* H1 */
     --h1-font-size: 30px;
@@ -42,13 +52,26 @@
     /* Button */
     --button-font-size: 14px;
     --button-line-height: 20px;
+    --button-font-weight: --font-weight-medium;
+
+    /* Input */
+    --input-font-size: 14px;
+    --input-line-height: 20px;
+
+    /* Input Label */
+    --input-label-font-size: 14px;
+    --input-label-line-height: 14px;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --colors-background: #000;      
+      --colors-background: #000;
+      --colors-accent: #27272A;
+      --colors-muted: #171717;
       --colors-default-text: #F4F4F5;
       --colors-secondary-text: #FAFAFA;
+      --colors-disabled-text: #A1A1AA;
+      --colors-input-border: #27272A;
       --colors-divider: #27272A;
     }
   }
@@ -68,26 +91,35 @@ body, h1, h2, h3, h4, h5, h6, p, svg {
   color: var(--colors-default-text);
 }
 
-h1, h2, h3, h4, h5, h6, p, span, svg {
-  &.text-primary {
+h1, h2, h3, h4, h5, h6, p, span, svg, .MuiButton-text {
+  &.default-text {
     color: var(--colors-default-text);
   }
-  &.text-secondary {
+  &.secondary-text {
     color: var(--colors-secondary-text);
   }
   &.primary-contrast {
     color: var(--colors-primary-contrast);
   }
+  &.regular {
+    font-weight: var(--font-weight-regular);
+  }
   &.medium {
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
   }
   &.semibold {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
   }
 }
 
 .primary-color-bg {
   background-color: var(--colors-primary);
+}
+.accent-color-bg {
+  background-color: var(--colors-accent);
+}
+.muted-color-bg {
+  background-color: var(--colors-muted);
 }
 
 svg {

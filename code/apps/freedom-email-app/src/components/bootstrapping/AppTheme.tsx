@@ -24,13 +24,21 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     const captionLineHeight = documentStyle.getPropertyValue('--caption-line-height');
     const buttonFontSize = documentStyle.getPropertyValue('--button-font-size');
     const buttonLineHeight = documentStyle.getPropertyValue('--button-line-height');
+    const buttonFontWeight = documentStyle.getPropertyValue('--button-font-weight');
+    const inputFontSize = documentStyle.getPropertyValue('--input-font-size');
+    const inputLineHeight = documentStyle.getPropertyValue('--input-line-height');
+    const inputLabelFontSize = documentStyle.getPropertyValue('--input-label-font-size');
+    const inputLabelLineHeight = documentStyle.getPropertyValue('--input-label-line-height');
 
     const defaultTextColor = documentStyle.getPropertyValue('--colors-default-text');
     const secondaryTextColor = documentStyle.getPropertyValue('--colors-secondary-text');
+    const disabledTextColor = documentStyle.getPropertyValue('--colors-disabled-text');
 
     const colorsBackground = documentStyle.getPropertyValue('--colors-background');
+    const colorsAccent = documentStyle.getPropertyValue('--colors-accent');
     const colorsPrimary = documentStyle.getPropertyValue('--colors-primary');
     const colorsPrimaryContrast = documentStyle.getPropertyValue('--colors-primary-contrast');
+    const colorsInputBorder = documentStyle.getPropertyValue('--colors-input-border');
     const colorsDivider = documentStyle.getPropertyValue('--colors-divider');
 
     const theme = createTheme({
@@ -76,10 +84,14 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
         },
         button: {
           fontSize: buttonFontSize,
-          lineHeight: buttonLineHeight
+          lineHeight: buttonLineHeight,
+          fontWeight: buttonFontWeight
         }
       },
       palette: {
+        action: {
+          disabledBackground: ''
+        },
         background: {
           default: colorsBackground
         },
@@ -90,13 +102,79 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
         },
         text: {
           primary: defaultTextColor,
-          secondary: secondaryTextColor
+          secondary: secondaryTextColor,
+          disabled: disabledTextColor
         }
       },
       components: {
         MuiButton: {
           defaultProps: {
             disableElevation: true
+          },
+          styleOverrides: {
+            startIcon: {
+              margin: '0 8px 0 0'
+            },
+            root: {
+              borderRadius: '12px',
+              fontSize: buttonFontSize,
+              lineHeight: buttonLineHeight,
+              fontWeight: buttonFontWeight,
+              padding: '8px 16px',
+              textTransform: 'none'
+            }
+          }
+        },
+        MuiChip: {
+          styleOverrides: {
+            root: {
+              borderRadius: '8px'
+            },
+            label: {
+              padding: '2px 4px',
+              fontSize: inputFontSize,
+              lineHeight: inputLineHeight
+            }
+          }
+        },
+        MuiFormControl: {
+          styleOverrides: {
+            root: {
+              margin: 0
+            }
+          }
+        },
+        MuiFormHelperText: {
+          styleOverrides: {
+            root: {
+              fontSize: inputFontSize,
+              lineHeight: inputLineHeight,
+              margin: 0,
+              marginTop: '4px'
+            }
+          }
+        },
+        MuiInputBase: {
+          styleOverrides: {
+            root: {
+              borderRadius: '12px',
+              padding: '4px 12px'
+            },
+            input: {
+              fontSize: inputFontSize,
+              lineHeight: inputLineHeight
+            }
+          }
+        },
+        MuiInputLabel: {
+          styleOverrides: {
+            root: {
+              '&.outside': {
+                fontSize: inputLabelFontSize,
+                lineHeight: inputLabelLineHeight,
+                marginBottom: '8px'
+              }
+            }
           }
         },
         MuiListItemButton: {
@@ -104,6 +182,32 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
             disableRipple: true,
             disableTouchRipple: true,
             tabIndex: -1
+          }
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: {
+              borderRadius: '12px',
+
+              '& fieldset': {
+                borderColor: colorsInputBorder
+              }
+            },
+            input: {
+              padding: '3px 0'
+            }
+          }
+        },
+        MuiTooltip: {
+          styleOverrides: {
+            tooltip: {
+              color: defaultTextColor,
+              borderRadius: '8px',
+              padding: '6px 12px',
+              backgroundColor: colorsAccent,
+              fontSize: captionFontSize,
+              lineHeight: captionLineHeight
+            }
           }
         }
       }

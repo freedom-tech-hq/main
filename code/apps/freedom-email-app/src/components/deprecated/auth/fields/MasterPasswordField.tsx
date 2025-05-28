@@ -1,60 +1,49 @@
-import { LockOutlined as MasterPasswordIcon } from '@mui/icons-material';
-import type { StandardTextFieldProps } from '@mui/material';
-import { Box } from '@mui/material';
-import { LOCALIZE } from 'freedom-localization';
-import { useT } from 'freedom-react-localization';
-import type { Binding } from 'react-bindings';
-import { BC } from 'react-bindings';
-import type { Waitable } from 'react-waitables';
+import { Button } from '@mui/material';
+import { BC, useBinding, useCallbackRef } from 'react-bindings';
 
+import { EyeIcon } from '../../../../icons/EyeIcon.ts';
+import type { ControlledTextFieldProps } from '../../../reusable/form/ControlledTextField.tsx';
 import { ControlledTextField } from '../../../reusable/form/ControlledTextField.tsx';
 
-const ns = 'ui';
-const $masterPassword = LOCALIZE('Master Password')({ ns });
+export type MasterPasswordFieldProps = ControlledTextFieldProps;
 
-export interface MasterPasswordFieldProps {
-  value: Binding<string>;
-  isBusy: Binding<boolean>;
-  error?: Waitable<string | null>;
-  autoFocus?: boolean;
-}
+export const MasterPasswordField = (props: MasterPasswordFieldProps) => {
+  const showPassword = useBinding<boolean>(() => false, { id: 'showPassword', detectChanges: true });
 
-export const MasterPasswordField = ({ value, error, isBusy, autoFocus }: MasterPasswordFieldProps) => {
-  const t = useT();
+  const onToggleShowPasswordClick = useCallbackRef(() => showPassword.set(!showPassword.get()));
+
+  const defaultEndAdornment = (
+    <Button sx={{ minWidth: 0, p: 1 }} onClick={onToggleShowPasswordClick}>
+      {BC(showPassword, (showPassword) => (
+        <EyeIcon className="sm-icon" sx={{ color: showPassword ? 'var(--colors-default-text)' : 'var(--colors-disabled-text)' }} />
+      ))}
+    </Button>
+  );
 
   return (
     <>
-      {BC({ error: error?.value, isBusy }, ({ error = null, isBusy }) => (
+      {BC(showPassword, (showPassword) => (
         <ControlledTextField
-          type="password"
-          value={value}
+          type={showPassword ? 'text' : 'password'}
           autoComplete="new-password"
-          autoFocus={autoFocus}
           required
           margin="dense"
           id="password"
           name="master-password"
-          label={$masterPassword(t)}
+          labelPosition="outside"
           fullWidth
-          variant="standard"
-          error={error !== null}
-          disabled={isBusy}
-          helperText={error ?? ' '}
-          slotProps={passwordSlotProps}
+          variant="outlined"
+          {...props}
+          slotProps={{
+            ...props.slotProps,
+            input: {
+              sx: { pr: '6px' },
+              endAdornment: defaultEndAdornment,
+              ...props.slotProps?.input
+            }
+          }}
         />
       ))}
     </>
   );
-};
-
-// Helpers
-
-const passwordSlotProps: StandardTextFieldProps['slotProps'] = {
-  input: {
-    startAdornment: (
-      <Box sx={{ mr: 0.5 }}>
-        <MasterPasswordIcon />
-      </Box>
-    )
-  }
 };
