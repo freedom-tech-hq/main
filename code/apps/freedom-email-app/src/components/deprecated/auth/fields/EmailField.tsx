@@ -1,59 +1,36 @@
-import { EmailOutlined as EmailIcon } from '@mui/icons-material';
-import { Typography } from '@mui/material';
-import { LOCALIZE } from 'freedom-localization';
-import { useT } from 'freedom-react-localization';
-import type { ReactNode } from 'react';
-import type { Binding } from 'react-bindings';
-import { BC } from 'react-bindings';
-import type { Waitable } from 'react-waitables';
+import { Chip } from '@mui/material';
 
 import { getTaskWorkerConfig } from '../../../../task-worker-configs/configs.ts';
+import type { ControlledTextFieldProps } from '../../../reusable/form/ControlledTextField.tsx';
 import { ControlledTextField } from '../../../reusable/form/ControlledTextField.tsx';
 
-const ns = 'ui';
-const $email = LOCALIZE('Email')({ ns });
+export type EmailFieldProps = ControlledTextFieldProps;
 
-export interface EmailFieldProps {
-  value: Binding<string>;
-  isBusy: Binding<boolean>;
-  error?: Waitable<string | null>;
-  startAdornment?: ReactNode;
-  autoFocus?: boolean;
-}
-
-export const EmailField = ({ value, error, startAdornment = <EmailIcon sx={{ mr: 0.5 }} />, isBusy, autoFocus }: EmailFieldProps) => {
-  const t = useT();
+export const EmailField = (props: EmailFieldProps) => {
+  const defaultEndAdornment = (
+    <Chip className="muted-color-bg" disabled label={`@${getTaskWorkerConfig().defaultEmailDomain}`} sx={{ ml: 0.5 }} />
+  );
 
   return (
-    <>
-      {BC({ error: error?.value, isBusy }, ({ error = null, isBusy }) => (
-        <ControlledTextField
-          type="text"
-          value={value}
-          autoFocus={autoFocus}
-          autoComplete="username"
-          required
-          margin="dense"
-          id="username"
-          name="username"
-          label={$email(t)}
-          fullWidth
-          variant="standard"
-          error={error !== null}
-          helperText={error ?? ' '}
-          disabled={isBusy}
-          slotProps={{
-            input: {
-              startAdornment: startAdornment,
-              endAdornment: (
-                <Typography variant="body1" color="textDisabled">
-                  {`@${getTaskWorkerConfig().defaultEmailDomain}`}
-                </Typography>
-              )
-            }
-          }}
-        />
-      ))}
-    </>
+    <ControlledTextField
+      type="text"
+      autoComplete="username"
+      required
+      margin="dense"
+      id="username"
+      name="username"
+      labelPosition="outside"
+      fullWidth
+      variant="outlined"
+      {...props}
+      slotProps={{
+        ...props.slotProps,
+        input: {
+          sx: { pr: '6px' },
+          endAdornment: defaultEndAdornment,
+          ...props.slotProps?.input
+        }
+      }}
+    />
   );
 };

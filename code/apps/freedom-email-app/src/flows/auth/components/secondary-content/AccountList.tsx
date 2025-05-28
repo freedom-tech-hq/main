@@ -3,23 +3,21 @@ import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-ta
 import { WC } from 'react-waitables';
 
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
-import { AccountListItemButton } from './AccountListItemButton.tsx';
+import { AccountListItem } from './AccountListItem.tsx';
 
-export const AccountList = () => {
+export interface AccountListProps {
+  onAccountClick: (account: LocallyStoredEncryptedEmailCredentialInfo) => void;
+}
+
+export const AccountList = ({ onAccountClick }: AccountListProps) => {
   const locallyStoredEncryptedEmailCredentials = useTaskWaitable((tasks) => tasks.listLocallyStoredEncryptedEmailCredentials(), {
     id: 'locallyStoredEncryptedEmailCredentials'
   });
 
-  // TODO: TEMP
-  const onAccountClick = (account: LocallyStoredEncryptedEmailCredentialInfo) => {
-    console.log('clicked', account);
-  };
-
-  // TODO: TEMP
   return (
     <List>
       {WC(locallyStoredEncryptedEmailCredentials, (accounts) =>
-        accounts.map((account) => <AccountListItemButton key={account.localUuid} account={account} onClick={onAccountClick} />)
+        accounts.map((account) => <AccountListItem key={account.localUuid} account={account} onClick={onAccountClick} />)
       )}
     </List>
   );

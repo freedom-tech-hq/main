@@ -4,7 +4,7 @@ import { BC } from 'react-bindings';
 import { useSizeClass } from '../../../../hooks/useSizeClass.ts';
 import { AuthHeroBanner } from '../heros/AuthHeroBanner.tsx';
 import { AuthHeroSidebar } from '../heros/AuthHeroSidebar.tsx';
-import { AuthSelection } from '../primary-content/AuthSelection.tsx';
+import { AuthPanel } from '../primary-content/AuthPanel.tsx';
 
 export const AuthScreen = () => {
   const sizeClass = useSizeClass();
@@ -18,9 +18,7 @@ export const AuthScreen = () => {
             return (
               <Stack direction="row" alignItems="stretch" sx={{ width: '100%', minHeight: '100dvh' }}>
                 <AuthHeroSidebar />
-                <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 3, py: 5 }}>
-                  <AuthSelection showLogo={false} />
-                </Stack>
+                <AuthPanel />
               </Stack>
             );
 
@@ -28,17 +26,15 @@ export const AuthScreen = () => {
             return (
               <Stack sx={{ minHeight: '100dvh' }}>
                 <AuthHeroBanner />
-                <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 2, py: 5 }}>
-                  <AuthSelection showLogo={false} />
-                </Stack>
+                <AuthPanel />
               </Stack>
             );
 
           case 'sm':
           case 'xs':
             return (
-              <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, px: 2, py: 5, minHeight: '100dvh' }}>
-                <AuthSelection showLogo={true} />
+              <Stack sx={{ minHeight: '100dvh' }}>
+                <AuthPanel />
               </Stack>
             );
         }

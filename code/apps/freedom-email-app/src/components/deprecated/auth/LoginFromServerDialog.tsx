@@ -9,8 +9,6 @@ import type { TypeOrPromisedType } from 'yaschema';
 
 import { useTasks } from '../../../contexts/tasks.tsx';
 import { getTaskWorkerConfig } from '../../../task-worker-configs/configs.ts';
-import { EmailField } from './fields/EmailField.tsx';
-import { MasterPasswordField } from './fields/MasterPasswordField.tsx';
 
 const ns = 'ui';
 const $cancel = LOCALIZE('Cancel')({ ns });
@@ -77,8 +75,8 @@ export const LoginFromServerDialog = ({ dismiss, onSubmit }: LoginFromServerDial
       <DialogTitle>{$signIn(t)}</DialogTitle>
       <DialogContent>
         <DialogContentText>{$loginFromServerInstructions(t)}</DialogContentText>
-        <EmailField autoFocus value={emailUsername} isBusy={isBusy} />
-        <MasterPasswordField value={masterPassword} isBusy={isBusy} />
+        {/* <EmailField autoFocus value={emailUsername} isBusy={isBusy} />
+        <MasterPasswordField value={masterPassword} isBusy={isBusy} /> */}
       </DialogContent>
       <DialogActions>
         <Button onClick={dismiss} disabled={isBusy.get()}>

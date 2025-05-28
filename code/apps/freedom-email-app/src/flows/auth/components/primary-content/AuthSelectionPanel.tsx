@@ -1,4 +1,5 @@
 import { Button, Stack, useTheme } from '@mui/material';
+import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
@@ -23,14 +24,23 @@ const $signInToAccount = LOCALIZE('Sign in to Account')({ ns });
 const $signInToAnotherAccount = LOCALIZE('Sign in to Another Account')({ ns });
 const $welcome = LOCALIZE('Welcome to Freedom Mail!')({ ns });
 
-export interface AuthSelectionProps {
-  showLogo: boolean;
+export interface AuthSelectionPanelProps {
+  onAccountClick: (account: LocallyStoredEncryptedEmailCredentialInfo) => void;
+  onCreateNewAccountClick: () => void;
+  onImportCredentialClick: () => void;
+  onSignInWithRemoteClick: () => void;
 }
 
-export const AuthSelection = ({ showLogo }: AuthSelectionProps) => {
+export const AuthSelectionPanel = ({
+  onAccountClick,
+  onCreateNewAccountClick,
+  onImportCredentialClick,
+  onSignInWithRemoteClick
+}: AuthSelectionPanelProps) => {
   const t = useT();
   const theme = useTheme();
   const isMdOrLarger = useIsSizeClass('>=', 'md');
+  const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
   const locallyStoredEncryptedEmailCredentials = useTaskWaitable((tasks) => tasks.listLocallyStoredEncryptedEmailCredentials(), {
     id: 'locallyStoredEncryptedEmailCredentials'
@@ -41,15 +51,15 @@ export const AuthSelection = ({ showLogo }: AuthSelectionProps) => {
 
   return (
     <>
-      {BC(isMdOrLarger, (isMdOrLarger) => (
-        <Stack alignItems="center" justifyContent="center">
+      {BC({ isMdOrLarger, isLgOrLarger }, ({ isMdOrLarger, isLgOrLarger }) => (
+        <Stack alignItems="center" justifyContent="center" sx={{ px: isLgOrLarger ? 3 : 2, py: 5 }}>
           <Stack
             alignItems="center"
             justifyContent="center"
             gap={isMdOrLarger ? 3 : 2}
             sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}
           >
-            {IF(showLogo, () => (
+            {IF(!isMdOrLarger, () => (
               <CompanyLogoIcon color="primary" className="lg-icon" />
             ))}
 
@@ -65,32 +75,35 @@ export const AuthSelection = ({ showLogo }: AuthSelectionProps) => {
                 ))}
               </Stack>
 
-              <AccountList />
+              <AccountList onAccountClick={onAccountClick} />
             </Stack>
 
-            <Button variant="text" sx={{ alignSelf: 'stretch', gap: 1 }}>
-              <UserRoundPlusIcon className="text-primary sm-icon" />
-              {BC(hasAtLeastOneAccount.value, (hasAtLeastOneAccount) => (
-                <Txt variant="button" className="medium text-primary" textTransform="none">
-                  {(hasAtLeastOneAccount ?? false) ? $signInToAnotherAccount(t) : $signInToAccount(t)}
-                </Txt>
-              ))}
+            <Button
+              variant="text"
+              className="default-text"
+              sx={{ alignSelf: 'stretch' }}
+              startIcon={<UserRoundPlusIcon className="default-text sm-icon" />}
+              onClick={onSignInWithRemoteClick}
+            >
+              {BC(hasAtLeastOneAccount.value, (hasAtLeastOneAccount) =>
+                (hasAtLeastOneAccount ?? false) ? $signInToAnotherAccount(t) : $signInToAccount(t)
+              )}
             </Button>
 
             <Divider label={$or(t)} />
 
             <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
-              <Button variant="contained" color="primary">
-                <Txt variant="button" className="mediumim" textTransform="none">
-                  {$createNewAccount(t)}
-                </Txt>
+              <Button variant="contained" color="primary" onClick={onCreateNewAccountClick}>
+                {$createNewAccount(t)}
               </Button>
 
-              <Button variant="text" sx={{ gap: 1 }}>
-                <ImportIcon className="text-primary sm-icon" />
-                <Txt variant="button" className="medium text-primary" textTransform="none">
-                  {$importCredential(t)}
-                </Txt>
+              <Button
+                variant="text"
+                className="default-text"
+                onClick={onImportCredentialClick}
+                startIcon={<ImportIcon className="default-text sm-icon" />}
+              >
+                {$importCredential(t)}
               </Button>
             </Stack>
           </Stack>

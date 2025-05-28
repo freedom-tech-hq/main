@@ -1,9 +1,6 @@
-import { CheckOutlined as AvailableIcon, EmailOutlined as EmailIcon, ErrorOutlineOutlined as UnavailableIcon } from '@mui/icons-material';
 import {
-  Box,
   Button,
   Checkbox,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,14 +12,13 @@ import {
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
-import { useDerivedWaitable, WaitablesConsumer } from 'react-waitables';
+import { useDerivedWaitable } from 'react-waitables';
 import type { TypeOrPromisedType } from 'yaschema';
 
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../consts/timing.ts';
 import { useTaskWaitable } from '../../../hooks/useTaskWaitable.ts';
 import type { AppTheme } from '../../bootstrapping/AppTheme.tsx';
 import { EmailField } from './fields/EmailField.tsx';
-import { MasterPasswordField } from './fields/MasterPasswordField.tsx';
 
 const ns = 'ui';
 const $cancel = LOCALIZE('Cancel')({ ns });
@@ -117,27 +113,27 @@ export const NewAccountEmailAndMasterPasswordDialog = ({ dismiss, onSubmit }: Ne
         <EmailField
           autoFocus
           value={emailUsername}
-          isBusy={isBusy}
-          error={emailError}
-          startAdornment={
-            <Box sx={{ width: '24px', height: '24px', mr: 0.5 }}>
-              <WaitablesConsumer dependencies={{ checkedEmailAvailability, emailUsername }}>
-                {{
-                  ifLoaded: ({ checkedEmailAvailability: { available } }) =>
-                    available ? <AvailableIcon color="success" /> : <UnavailableIcon color="error" />,
-                  ifLoading: ({ emailUsername }) =>
-                    emailUsername.length === 0 ? (
-                      <EmailIcon />
-                    ) : (
-                      <CircularProgress size={16} sx={{ m: '4px', color: theme.palette.text.disabled }} variant="indeterminate" />
-                    ),
-                  ifError: () => <EmailIcon />
-                }}
-              </WaitablesConsumer>
-            </Box>
-          }
+          // isBusy={isBusy}
+          // error={emailError}
+          // startAdornment={
+          //   <Box sx={{ width: '24px', height: '24px', mr: 0.5 }}>
+          //     <WaitablesConsumer dependencies={{ checkedEmailAvailability, emailUsername }}>
+          //       {{
+          //         ifLoaded: ({ checkedEmailAvailability: { available } }) =>
+          //           available ? <AvailableIcon color="success" /> : <UnavailableIcon color="error" />,
+          //         ifLoading: ({ emailUsername }) =>
+          //           emailUsername.length === 0 ? (
+          //             <EmailIcon />
+          //           ) : (
+          //             <CircularProgress size={16} sx={{ m: '4px', color: theme.palette.text.disabled }} variant="indeterminate" />
+          //           ),
+          //         ifError: () => <EmailIcon />
+          //       }}
+          //     </WaitablesConsumer>
+          //   </Box>
+          // }
         />
-        <MasterPasswordField value={masterPassword} isBusy={isBusy} />
+        {/* <MasterPasswordField value={masterPassword} isBusy={isBusy} /> */}
         {/* TODO: make controlled checkbox */}
         {BC(saveCredentialsOnRemote, (saveCredentialsOnRemote, binding) => (
           <>
