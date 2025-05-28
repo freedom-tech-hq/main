@@ -88,6 +88,8 @@
       <excludeFolder url="file://$MODULE_DIR$/data" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-syncable-store-backing-types/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/server-packages/freedom-google-storage-syncable-store-backing/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-data-source/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-dev-logging-support/lib" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

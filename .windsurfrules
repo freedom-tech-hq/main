@@ -7,3 +7,14 @@
 - Project uses yarn workspaces and nx. Root is at /code/
 - New tests follow AAA
 - DO NOT catch errors unless asked explicitly. Never catch to log or replace text.
+- Do not import files from other project packages like `import { X } from 'freedom-something/src/file.ts'`. Constrain to package and its 'exports' like `import { X } from 'freedom-something'`. Assume exports include what you need.
+
+Follow patterns when relevant:
+
+return makeFailure(
+    new SomeError(trace, {
+        message: '...',
+        errorCode: 'conflict'
+    })
+);
+SomeError is from code/cross-platform-packages/freedom-common-errors/src/types
