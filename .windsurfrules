@@ -7,3 +7,13 @@
 - Project uses yarn workspaces and nx. Root is at /code/
 - New tests follow AAA
 - DO NOT catch errors unless asked explicitly. Never catch to log or replace text.
+
+Follow patterns when relevant:
+
+return makeFailure(
+    new SomeError(trace, {
+        message: '...',
+        errorCode: 'conflict'
+    })
+);
+SomeError is from code/cross-platform-packages/freedom-common-errors/src/types
