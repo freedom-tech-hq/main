@@ -2,8 +2,8 @@ import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import { log } from 'freedom-contexts';
 
 import { dbQuery } from '../../db/postgresClient.ts';
-import type { RawUser } from '../internal/types/RawUser.ts';
-import { type User, userSchema } from '../types/User.ts';
+import { getUserFromRawUser, type RawUser } from '../internal/types/RawUser.ts';
+import type { User } from '../types/User.ts';
 
 export const getAllUsers = makeAsyncResultFunc([import.meta.filename, 'getAllUsers'], async (trace): PR<User[]> => {
   // Find
@@ -12,11 +12,11 @@ export const getAllUsers = makeAsyncResultFunc([import.meta.filename, 'getAllUse
   // Deserialize
   const users: User[] = [];
   for (const row of result.rows) {
-    const deserialization = userSchema.deserialize(row);
-    if (deserialization.error !== undefined) {
-      log().error?.(trace, 'Failed to deserialize user', deserialization.error);
+    const userResult = await getUserFromRawUser(trace, row);
+    if (!userResult.ok) {
+      log().error?.(trace, 'Failed to deserialize user', userResult.value.message);
     } else {
-      users.push(deserialization.deserialized);
+      users.push(userResult.value);
     }
   }
 

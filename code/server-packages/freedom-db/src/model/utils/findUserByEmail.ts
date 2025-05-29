@@ -1,10 +1,9 @@
 import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
-import { InternalSchemaValidationError, NotFoundError } from 'freedom-common-errors';
+import { NotFoundError } from 'freedom-common-errors';
 
 import { dbQuery } from '../../db/postgresClient.ts';
-import type { RawUser } from '../internal/types/RawUser.ts';
+import { getUserFromRawUser, type RawUser } from '../internal/types/RawUser.ts';
 import type { User } from '../types/exports.ts';
-import { userSchema } from '../types/User.ts';
 
 export const findUserByEmail = makeAsyncResultFunc(
   [import.meta.filename, 'findUserByEmail'],
@@ -21,15 +20,11 @@ export const findUserByEmail = makeAsyncResultFunc(
     }
 
     // Deserialize
-    const deserialization = userSchema.deserialize(result.rows[0]);
-    if (deserialization.error !== undefined) {
-      return makeFailure(
-        new InternalSchemaValidationError(trace, {
-          message: `Deserialization failed: ${deserialization.error}`
-        })
-      );
+    const userResult = await getUserFromRawUser(trace, result.rows[0]);
+    if (!userResult.ok) {
+      return userResult;
     }
 
-    return makeSuccess(deserialization.deserialized);
+    return makeSuccess(userResult.value);
   }
 );
