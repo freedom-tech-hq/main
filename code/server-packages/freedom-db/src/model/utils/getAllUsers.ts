@@ -1,22 +1,24 @@
-import { makeAsyncResultFunc, makeSuccess, type PR, uncheckedResult } from 'freedom-async';
-import { objectValues } from 'freedom-cast';
+import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
+import { log } from 'freedom-contexts';
 
-import { getUserStore } from '../internal/utils/getUserStore.ts';
-import type { User } from '../types/User.ts';
-import { getAllUserEmailAddresses } from './getAllUserEmailAddresses.ts';
+import { dbQuery } from '../../db/postgresClient.ts';
+import type { RawUser } from '../internal/types/RawUser.ts';
+import { type User, userSchema } from '../types/User.ts';
 
 export const getAllUsers = makeAsyncResultFunc([import.meta.filename, 'getAllUsers'], async (trace): PR<User[]> => {
-  const userStore = await uncheckedResult(getUserStore(trace));
+  // Find
+  const result = await dbQuery<RawUser>('SELECT * FROM users');
 
-  const allEmailAddresses = await getAllUserEmailAddresses(trace);
-  if (!allEmailAddresses.ok) {
-    return allEmailAddresses;
+  // Deserialize
+  const users: User[] = [];
+  for (const row of result.rows) {
+    const deserialization = userSchema.deserialize(row);
+    if (deserialization.error !== undefined) {
+      log().error?.(trace, 'Failed to deserialize user', deserialization.error);
+    } else {
+      users.push(deserialization.deserialized);
+    }
   }
 
-  const got = await userStore.getMultiple(trace, allEmailAddresses.value);
-  if (!got.ok) {
-    return got;
-  }
-
-  return makeSuccess(objectValues(got.value.found).filter((v) => v !== undefined));
+  return makeSuccess(users);
 });

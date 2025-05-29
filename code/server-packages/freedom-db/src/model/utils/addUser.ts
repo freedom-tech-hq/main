@@ -1,82 +1,73 @@
-import { allResults, makeAsyncResultFunc, makeFailure, makeSuccess, type PR, uncheckedResult } from 'freedom-async';
-import { ConflictError, generalizeFailureResult } from 'freedom-common-errors';
-import { forceSetObjectValue } from 'freedom-object-store-types';
-import { disableLam } from 'freedom-trace-logging-and-metrics';
+import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { ConflictError, InternalStateError } from 'freedom-common-errors';
 import { isEqual } from 'lodash-es';
+import { DatabaseError } from 'pg';
 
-import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.ts';
-import { getUserStore } from '../internal/utils/getUserStore.ts';
-import type { User } from '../types/User.ts';
+import { dbQuery } from '../../db/postgresClient.ts';
+import type { RawUser } from '../internal/types/RawUser.ts';
+import { type User, userSchema } from '../types/User.ts';
 
 type ErrorCodes = 'already-created' | 'conflict' | 'email-unavailable';
 
 export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], async (trace, user: User): PR<User, ErrorCodes> => {
-  const userStore = await uncheckedResult(getUserStore(trace));
-  const emailByUserIdStore = await uncheckedResult(getEmailByUserIdStore(trace));
-
-  // TODO: Revise the transaction logic here when we have the final decision on DB engine
-  //  until that moment - keep it trivial
-
-  // Check if a user with this userId already exists
-  const existingEmailResult = await disableLam('not-found', emailByUserIdStore.object(user.userId).get)(trace);
-  if (existingEmailResult.ok) {
-    // A user with this userId exists, check if the email matches
-    if (existingEmailResult.value !== user.email) {
-      return makeFailure(
-        new ConflictError(trace, {
-          message: `User with id ${user.userId} already exists with a different email: ${existingEmailResult.value}`,
-          errorCode: 'conflict'
-        })
-      );
-    }
-
-    // Get the whole user record
-    const existingUserResult = await userStore.object(existingEmailResult.value).get(trace);
-    if (!existingUserResult.ok) {
-      return generalizeFailureResult(trace, existingUserResult, ['not-found']);
-    }
-
-    // Detect a duplicate request to handle it softly
-    if (isEqual(existingUserResult.value, user)) {
-      return makeFailure(
-        new ConflictError(trace, {
-          message: 'User already exists with identical information',
-          errorCode: 'already-created'
-        })
-      );
-    }
-
-    // User with this userId already exists
+  // Validate and convert
+  const serialization = await userSchema.serializeAsync(user);
+  if (serialization.error !== undefined) {
     return makeFailure(
-      new ConflictError(trace, {
-        message: 'User with this userId already exists',
-        errorCode: 'conflict'
+      new InternalStateError(trace, {
+        message: `Incorrect user data: ${serialization.error}`
       })
     );
   }
 
-  // Check if the email is already taken by another userId
-  const userByEmailResult = await disableLam('not-found', userStore.object(user.email).get)(trace);
-  if (userByEmailResult.ok && userByEmailResult.value.userId !== user.userId) {
-    return makeFailure(
-      new ConflictError(trace, {
-        message: `Email ${user.email} is already assigned to userId ${userByEmailResult.value.userId}`,
-        errorCode: 'email-unavailable'
-      })
+  // TODO: Study typing problem for serializing
+  const rawUser = serialization.serialized as unknown as RawUser;
+  rawUser.encryptedCredentials = rawUser.encryptedCredentials ?? null;
+
+  try {
+    await dbQuery(
+      `
+        INSERT INTO users (email, "userId", "publicKeys", "defaultSalt", "encryptedCredentials")
+        VALUES ($1, $2, $3, $4, $5)
+      `,
+      [rawUser.email, rawUser.userId, rawUser.publicKeys, rawUser.defaultSalt, rawUser.encryptedCredentials ?? null]
     );
+    return makeSuccess(user);
+  } catch (error: unknown) {
+    if (error instanceof DatabaseError && error.code === '23505') {
+      // Duplicate userId
+      if (error.constraint === 'users_pkey') {
+        // errorCode = already-created
+        // Transaction is not required
+        const existingUserResult = await dbQuery<RawUser>('SELECT * FROM users WHERE "userId" = $1', [user.userId]);
+        if (existingUserResult.rows.length === 1 && isEqual(existingUserResult.rows[0], rawUser)) {
+          return makeFailure(
+            new ConflictError(trace, {
+              message: 'User already exists',
+              errorCode: 'already-created'
+            })
+          );
+        }
+
+        // errorCode = conflict
+        return makeFailure(
+          new ConflictError(trace, {
+            message: 'UserId has already been registered',
+            errorCode: 'conflict'
+          })
+        );
+      }
+
+      // Duplicate email
+      if (error.constraint === 'users_email_key') {
+        return makeFailure(
+          new ConflictError(trace, {
+            message: 'Email already exists',
+            errorCode: 'email-unavailable'
+          })
+        );
+      }
+    }
+    throw error;
   }
-
-  // All checks passed, proceed with creating the user
-  const userAccessor = userStore.mutableObject(user.email);
-  const emailByUserIdAccessor = emailByUserIdStore.mutableObject(user.userId);
-
-  const setResult = await allResults(trace, [
-    forceSetObjectValue(trace, userAccessor, user),
-    forceSetObjectValue(trace, emailByUserIdAccessor, user.email)
-  ]);
-  if (!setResult.ok) {
-    return setResult;
-  }
-
-  return makeSuccess(user);
 });

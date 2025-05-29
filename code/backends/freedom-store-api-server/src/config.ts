@@ -72,3 +72,13 @@ export const GOOGLE_STORAGE_BUCKET = env.get('GOOGLE_STORAGE_BUCKET').asString()
 if (STORAGE_ROOT_PATH === undefined && (GOOGLE_APPLICATION_CREDENTIALS === undefined || GOOGLE_STORAGE_BUCKET === undefined)) {
   throw new Error('Need to specify either STORAGE_ROOT_PATH or GOOGLE_APPLICATION_CREDENTIALS+GOOGLE_STORAGE_BUCKET');
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DB
+
+export const PG_HOST = env.get('PG_HOST').required().asString();
+export const PG_PORT = env.get('PG_PORT').required().asPortNumber();
+export const PG_DATABASE = env.get('PG_DATABASE').required().asString();
+export const PG_USER = env.get('PG_USER').required().asString();
+export const PG_PASSWORD = env.get('PG_PASSWORD').required().asString();
+export const PG_USE_NATIVE = env.get('PG_USE_NATIVE').default('true').asBool();

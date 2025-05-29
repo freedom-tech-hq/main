@@ -1,6 +1,7 @@
 import { buildMode } from 'freedom-contexts';
 
 export * from './config.ts';
+export * from './db/postgresClient.ts';
 export * from './model/exports.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
