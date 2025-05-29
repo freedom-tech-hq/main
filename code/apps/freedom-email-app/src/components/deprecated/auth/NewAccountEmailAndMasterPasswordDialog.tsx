@@ -18,7 +18,7 @@ import type { TypeOrPromisedType } from 'yaschema';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../consts/timing.ts';
 import { useTaskWaitable } from '../../../hooks/useTaskWaitable.ts';
 import type { AppTheme } from '../../bootstrapping/AppTheme.tsx';
-import { EmailField } from './fields/EmailField.tsx';
+import { EmailField } from '../../reusable/form/fields/EmailField.tsx';
 
 const ns = 'ui';
 const $cancel = LOCALIZE('Cancel')({ ns });

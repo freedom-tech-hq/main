@@ -13,6 +13,7 @@ import type { importEmailCredential } from './email-credential/importEmailCreden
 import type { importEmailCredentialFromRemote } from './email-credential/importEmailCredentialFromRemote.ts';
 import type { listLocallyStoredEncryptedEmailCredentials } from './email-credential/listLocallyStoredEncryptedEmailCredentials.ts';
 import type { removeEncryptionForBiometricsFromLocallyStoredEmailCredential } from './email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts';
+import type { removeLocallyStoredEncryptedEmailCredential } from './email-credential/removeLocallyStoredEncryptedEmailCredential.ts';
 import type { storeCredentialsOnServer } from './email-credential/storeCredentialsOnServer.ts';
 import type { createMailDraft } from './mail/createMailDraft.ts';
 import type { getMailCollections } from './mail/getMailCollections.ts';
@@ -87,6 +88,13 @@ class TasksImpl {
     await (
       await import('./email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts')
     ).removeEncryptionForBiometricsFromLocallyStoredEmailCredential(this.#trace, ...args);
+
+  public readonly removeLocallyStoredEncryptedEmailCredential = async (
+    ...args: ParametersExceptFirst<typeof removeLocallyStoredEncryptedEmailCredential>
+  ) =>
+    await (
+      await import('./email-credential/removeLocallyStoredEncryptedEmailCredential.ts')
+    ).removeLocallyStoredEncryptedEmailCredential(this.#trace, ...args);
 
   public readonly storeCredentialsOnServer = async (...args: ParametersExceptFirst<typeof storeCredentialsOnServer>) =>
     await (await import('./email-credential/storeCredentialsOnServer.ts')).storeCredentialsOnServer(this.#trace, ...args);

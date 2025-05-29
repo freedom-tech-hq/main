@@ -8,6 +8,7 @@ import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
 import { Divider } from '../../../../components/reusable/Divider.tsx';
+import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { CompanyLogoIcon } from '../../../../icons/CompanyLogoIcon.ts';
@@ -38,6 +39,7 @@ export const AuthSelectionPanel = ({
   onSignInWithRemoteClick
 }: AuthSelectionPanelProps) => {
   const t = useT();
+  const tasks = useTasks();
   const theme = useTheme();
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
@@ -102,6 +104,7 @@ export const AuthSelectionPanel = ({
                 className="default-text"
                 onClick={onImportCredentialClick}
                 startIcon={<ImportIcon className="default-text sm-icon" />}
+                disabled={tasks === undefined}
               >
                 {$importCredential(t)}
               </Button>
