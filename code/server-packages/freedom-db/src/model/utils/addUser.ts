@@ -5,11 +5,11 @@ import { DatabaseError } from 'pg';
 
 import { dbQuery } from '../../db/postgresClient.ts';
 import { getRawUserFromUser, type RawUser } from '../internal/types/RawUser.ts';
-import type { User } from '../types/User.ts';
+import type { DbUser } from '../types/DbUser.ts';
 
 type ErrorCodes = 'already-created' | 'conflict' | 'email-unavailable';
 
-export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], async (trace, user: User): PR<User, ErrorCodes> => {
+export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], async (trace, user: DbUser): PR<DbUser, ErrorCodes> => {
   // Validate and convert
   const rawUserResult = await getRawUserFromUser(trace, user);
   if (!rawUserResult.ok) {

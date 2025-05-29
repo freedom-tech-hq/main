@@ -1,1 +1,1 @@
-export type { User } from './User.ts';
+export type { DbUser } from './DbUser.ts';

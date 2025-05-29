@@ -2,7 +2,7 @@ import { makeFailure, makeSuccess, type PR } from 'freedom-async';
 import { InternalSchemaValidationError } from 'freedom-common-errors';
 import type { Trace } from 'freedom-contexts';
 
-import { type User, userSchema } from '../../types/User.ts';
+import { type DbUser, dbUserSchema } from '../../types/DbUser.ts';
 
 // Note from Pavel: we need an additional user type because of the schema with serialization.
 // The very existence of non-serializable in-memory data formats amplifies code complexity.
@@ -14,8 +14,8 @@ export interface RawUser {
   encryptedCredentials: string | null; // Convert to undefined on read
 }
 
-export async function getRawUserFromUser(trace: Trace, user: User): PR<RawUser> {
-  const serialization = await userSchema.serializeAsync(user);
+export async function getRawUserFromUser(trace: Trace, user: DbUser): PR<RawUser> {
+  const serialization = await dbUserSchema.serializeAsync(user);
 
   if (serialization.error !== undefined) {
     return makeFailure(
@@ -33,8 +33,8 @@ export async function getRawUserFromUser(trace: Trace, user: User): PR<RawUser> 
   return makeSuccess(rawUser);
 }
 
-export async function getUserFromRawUser(trace: Trace, rawUser: RawUser): PR<User> {
-  const deserialization = await userSchema.deserializeAsync({
+export async function getUserFromRawUser(trace: Trace, rawUser: RawUser): PR<DbUser> {
+  const deserialization = await dbUserSchema.deserializeAsync({
     ...rawUser,
     encryptedCredentials: rawUser.encryptedCredentials ?? undefined
   });

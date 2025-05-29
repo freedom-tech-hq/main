@@ -3,11 +3,11 @@ import { NotFoundError } from 'freedom-common-errors';
 
 import { dbQuery } from '../../db/postgresClient.ts';
 import { getUserFromRawUser, type RawUser } from '../internal/types/RawUser.ts';
-import type { User } from '../types/exports.ts';
+import type { DbUser } from '../types/exports.ts';
 
 export const findUserByEmail = makeAsyncResultFunc(
   [import.meta.filename, 'findUserByEmail'],
-  async (trace, email: string): PR<User, 'not-found'> => {
+  async (trace, email: string): PR<DbUser, 'not-found'> => {
     // Find
     const result = await dbQuery<RawUser>('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {

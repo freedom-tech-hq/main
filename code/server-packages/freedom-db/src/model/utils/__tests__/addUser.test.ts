@@ -9,7 +9,7 @@ import { getSerializedFixture } from 'freedom-testing-tools';
 import { initConfigForTests } from '../../../config.ts';
 import { closePostgres } from '../../../db/postgresClient.ts';
 import { testsResetDb } from '../../../tests/testsResetDb.ts';
-import type { User } from '../../types/User.ts';
+import type { DbUser } from '../../types/DbUser.ts';
 import { addUser } from '../addUser.ts';
 
 async function getTestKeys() {
@@ -33,7 +33,7 @@ describe('addUser', () => {
     // Arrange
     initConfigForTests({});
     await testsResetDb();
-    const user: User = {
+    const user: DbUser = {
       userId: 'EMAILUSER_the-id',
       email: 'typical@example.com',
       publicKeys: await getTestKeys(),
@@ -61,13 +61,13 @@ describe('addUser', () => {
     initConfigForTests({});
     await testsResetDb();
     const trace = makeTrace();
-    const user1: User = {
+    const user1: DbUser = {
       userId: 'EMAILUSER_dup-id',
       email: 'first@example.com',
       publicKeys: await getTestKeys(),
       defaultSalt: 'salt-1'
     };
-    const user2: User = {
+    const user2: DbUser = {
       userId: 'EMAILUSER_dup-id',
       email: 'second@example.com',
       publicKeys: await getTestKeys(),
@@ -88,13 +88,13 @@ describe('addUser', () => {
     initConfigForTests({});
     await testsResetDb();
     const trace = makeTrace();
-    const user1: User = {
+    const user1: DbUser = {
       userId: 'EMAILUSER_id1',
       email: 'same@example.com',
       publicKeys: await getTestKeys(),
       defaultSalt: 'salt-1'
     };
-    const user2: User = {
+    const user2: DbUser = {
       userId: 'EMAILUSER_id2',
       email: 'same@example.com',
       publicKeys: await getTestKeys(),
@@ -115,7 +115,7 @@ describe('addUser', () => {
     initConfigForTests({});
     await testsResetDb();
     const trace = makeTrace();
-    const user: User = {
+    const user: DbUser = {
       userId: 'EMAILUSER_missing',
       email: 'missing@example.com',
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

@@ -4,9 +4,9 @@ import type { EmailUserId } from 'freedom-email-sync';
 
 import { dbQuery } from '../../db/postgresClient.ts';
 import { getUserFromRawUser, type RawUser } from '../internal/types/RawUser.ts';
-import type { User } from '../types/exports.ts';
+import type { DbUser } from '../types/exports.ts';
 
-export const getUserById = makeAsyncResultFunc([import.meta.filename], async (trace, userId: EmailUserId): PR<User, 'not-found'> => {
+export const getUserById = makeAsyncResultFunc([import.meta.filename], async (trace, userId: EmailUserId): PR<DbUser, 'not-found'> => {
   // Find
   const result = await dbQuery<RawUser>('SELECT * FROM users WHERE "userId" = $1', [userId]);
   if (result.rows.length === 0) {
