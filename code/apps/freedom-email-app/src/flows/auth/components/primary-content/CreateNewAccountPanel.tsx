@@ -5,9 +5,9 @@ import type { ReactNode } from 'react';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
-import { EmailField } from '../../../../components/deprecated/auth/fields/EmailField.tsx';
-import { MasterPasswordField } from '../../../../components/deprecated/auth/fields/MasterPasswordField.tsx';
 import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
+import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
+import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../../consts/timing.ts';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
@@ -17,7 +17,7 @@ import { InfoIcon } from '../../../../icons/InfoIcon.ts';
 import { XIcon } from '../../../../icons/XIcon.ts';
 
 const ns = 'ui';
-const $back = LOCALIZE('Back')({ ns });
+const $back = LOCALIZE('Go Back')({ ns });
 const $chooseEmail = LOCALIZE('Choose your email')({ ns });
 const $createAccount = LOCALIZE('Create Account')({ ns });
 const $createNewAccount = LOCALIZE('Create New Account')({ ns });
@@ -25,7 +25,7 @@ const $createPassword = LOCALIZE('Create your password')({ ns });
 const $emailAvailable = LOCALIZE('This email is available')({ ns });
 const $emailUnavailable = LOCALIZE('This email is already taken')({ ns });
 const $invalidEmailUsername = LOCALIZE("This email isn't allowed")({ ns });
-const $masterPasswordTooltip = LOCALIZE(
+const $passwordTooltip = LOCALIZE(
   "Your password is used to access your account settings and mail.  It is only used locally on your device and is never sent to our servers.  If forgotten, it cannot be recovered – you'll need to create a new account."
 )({ ns });
 
@@ -40,7 +40,7 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
   const emailUsername = useBinding<string>(() => '', { id: 'emailUsername', detectChanges: true });
-  const masterPassword = useBinding<string>(() => '', { id: 'masterPassword', detectChanges: true });
+  const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
   const isBusy = useBinding<boolean>(() => false, { id: 'isBusy', detectChanges: true });
 
   const checkedEmailAvailability = useTaskWaitable((tasks) => tasks.checkEmailAvailability({ emailUsername: emailUsername.get() }), {
@@ -91,9 +91,9 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
 
   // TODO: use real form validation
   const isFormReady = useDerivedWaitable(
-    { isBusy, emailUsername, masterPassword, checkedEmailAvailability },
-    ({ isBusy, emailUsername, masterPassword, checkedEmailAvailability }) =>
-      !isBusy && emailUsername.length > 0 && masterPassword.length > 0 && checkedEmailAvailability.available,
+    { isBusy, emailUsername, password, checkedEmailAvailability },
+    ({ isBusy, emailUsername, password, checkedEmailAvailability }) =>
+      !isBusy && emailUsername.length > 0 && password.length > 0 && checkedEmailAvailability.available,
     { id: 'isFormReady', limitType: 'none' }
   );
 
@@ -105,7 +105,7 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
     }
 
     // TODO: TEMP
-    console.log('onSubmit', masterPassword.get(), isBusy.get());
+    console.log('onSubmit', password.get(), isBusy.get());
   });
 
   return (
@@ -133,13 +133,13 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
                 error={emailError.value}
                 helperText={emailHelperText.value}
               />
-              <MasterPasswordField
-                value={masterPassword}
+              <PasswordField
+                value={password}
                 disabled={isBusy}
                 label={
                   <Stack direction="row" alignItems="center" gap={1.5}>
                     <Txt variant="inherit">{$createPassword(t)}</Txt>
-                    <Tooltip title={$masterPasswordTooltip(t)}>
+                    <Tooltip title={$passwordTooltip(t)}>
                       <InfoIcon color="disabled" className="sm-icon" />
                     </Tooltip>
                   </Stack>
@@ -148,16 +148,11 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
             </Stack>
 
             <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
-              {/* {BC(isFormReady.value, (isFormReady = false) => ( */}
-              <Button
-                type="submit"
-                variant="contained"
-                // disabled={!isFormReady}
-                disabled={true}
-              >
-                {$createAccount(t)}
-              </Button>
-              {/* ))} */}
+              {BC(isFormReady.value, (isFormReady = false) => (
+                <Button type="submit" variant="contained" disabled={!isFormReady}>
+                  {$createAccount(t)}
+                </Button>
+              ))}
 
               <Button
                 variant="text"

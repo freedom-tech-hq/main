@@ -1,8 +1,8 @@
 import { Chip } from '@mui/material';
 
 import { getTaskWorkerConfig } from '../../../../task-worker-configs/configs.ts';
-import type { ControlledTextFieldProps } from '../../../reusable/form/ControlledTextField.tsx';
-import { ControlledTextField } from '../../../reusable/form/ControlledTextField.tsx';
+import type { ControlledTextFieldProps } from '../ControlledTextField.tsx';
+import { ControlledTextField } from '../ControlledTextField.tsx';
 
 export type EmailFieldProps = ControlledTextFieldProps;
 

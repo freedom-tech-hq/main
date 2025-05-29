@@ -14,14 +14,14 @@ const ns = 'ui';
 const $back = LOCALIZE('Go Back')({ ns });
 const $enterPassword = LOCALIZE('Enter your password')({ ns });
 const $signIn = LOCALIZE('Sign In')({ ns });
-const $welcomeBack = LOCALIZE('Welcome back,')({ ns });
+const $unlockAccount = LOCALIZE('Unlock Account')({ ns });
 
-export interface LocalSignInPanelProps {
+export interface ImportCredentialPanelProps {
   account: LocallyStoredEncryptedEmailCredentialInfo;
   onBackClick: () => void;
 }
 
-export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps) => {
+export const ImportCredentialPanel = ({ account, onBackClick }: ImportCredentialPanelProps) => {
   const t = useT();
   const theme = useTheme();
   const isMdOrLarger = useIsSizeClass('>=', 'md');
@@ -49,7 +49,7 @@ export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps
           >
             <Stack alignItems="center" justifyContent="center" gap={1}>
               <Txt variant="h2" className="semibold" textAlign="center">
-                {$welcomeBack(t)}
+                {$unlockAccount(t)}
               </Txt>
               <AccountListItem account={account} />
             </Stack>

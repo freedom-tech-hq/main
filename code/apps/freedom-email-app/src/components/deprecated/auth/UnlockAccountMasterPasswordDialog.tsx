@@ -16,7 +16,7 @@ import type { TypeOrPromisedType } from 'yaschema';
 
 import { authenticateWithWebAuthn } from '../../../utils/webauthn/authenticateWithWebAuthn.ts';
 import { isWebAuthnAvailable as checkIsWebAuthnAvailable } from '../../../utils/webauthn/isWebAuthnAvailable.ts';
-import { MasterPasswordField } from './fields/MasterPasswordField.tsx';
+import { PasswordField } from '../../reusable/form/fields/PasswordField.tsx';
 
 const ns = 'ui';
 const $cancel = LOCALIZE('Cancel')({ ns });
@@ -126,7 +126,7 @@ export const UnlockAccountMasterPasswordDialog = ({ credentialInfo, dismiss, onS
           </>
         ))}
 
-        <MasterPasswordField autoFocus value={masterPassword} isBusy={isBusy} />
+        <PasswordField autoFocus value={masterPassword} isBusy={isBusy} />
       </DialogContent>
       <DialogActions>
         <Button onClick={dismiss}>{$cancel(t)}</Button>

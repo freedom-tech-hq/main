@@ -2,12 +2,12 @@ import { Button } from '@mui/material';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 
 import { EyeIcon } from '../../../../icons/EyeIcon.ts';
-import type { ControlledTextFieldProps } from '../../../reusable/form/ControlledTextField.tsx';
-import { ControlledTextField } from '../../../reusable/form/ControlledTextField.tsx';
+import type { ControlledTextFieldProps } from '../ControlledTextField.tsx';
+import { ControlledTextField } from '../ControlledTextField.tsx';
 
-export type MasterPasswordFieldProps = ControlledTextFieldProps;
+export type PasswordFieldProps = ControlledTextFieldProps;
 
-export const MasterPasswordField = (props: MasterPasswordFieldProps) => {
+export const PasswordField = (props: PasswordFieldProps) => {
   const showPassword = useBinding<boolean>(() => false, { id: 'showPassword', detectChanges: true });
 
   const onToggleShowPasswordClick = useCallbackRef(() => showPassword.set(!showPassword.get()));
@@ -29,7 +29,7 @@ export const MasterPasswordField = (props: MasterPasswordFieldProps) => {
           required
           margin="dense"
           id="password"
-          name="master-password"
+          name="password"
           labelPosition="outside"
           fullWidth
           variant="outlined"
