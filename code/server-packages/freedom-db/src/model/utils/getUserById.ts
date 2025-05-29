@@ -1,23 +1,28 @@
-import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { NotFoundError } from 'freedom-common-errors';
 import type { EmailUserId } from 'freedom-email-sync';
 
-import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.ts';
+import { dbQuery } from '../../db/postgresClient.ts';
+import { getUserFromRawUser, type RawUser } from '../internal/types/RawUser.ts';
 import type { User } from '../types/exports.ts';
-import { findUserByEmail } from './findUserByEmail.ts';
 
 export const getUserById = makeAsyncResultFunc([import.meta.filename], async (trace, userId: EmailUserId): PR<User, 'not-found'> => {
-  const emailByUserIdStore = await uncheckedResult(getEmailByUserIdStore(trace));
-
-  const email = await emailByUserIdStore.object(userId).get(trace);
-  if (!email.ok) {
-    return email;
+  // Find
+  const result = await dbQuery<RawUser>('SELECT * FROM users WHERE "userId" = $1', [userId]);
+  if (result.rows.length === 0) {
+    return makeFailure(
+      new NotFoundError(trace, {
+        errorCode: 'not-found',
+        message: `User not found by email`
+      })
+    );
   }
 
-  const user = await findUserByEmail(trace, email.value);
-  if (!user.ok) {
-    return user;
+  // Deserialize
+  const userResult = await getUserFromRawUser(trace, result.rows[0]);
+  if (!userResult.ok) {
+    return userResult;
   }
 
-  return makeSuccess(user.value);
+  return makeSuccess(userResult.value);
 });
