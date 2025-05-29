@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
 import { bestEffort, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { Base64String, Uuid } from 'freedom-basic-data';
+import type { Uuid } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-sync';
 import {
   createEmailCredential,
   createInitialSyncableStoreStructureForUser,
@@ -15,7 +15,7 @@ import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';
 import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import { reserveEmail } from '../../internal/tasks/user/reserveEmail.ts';
-import { getConfig } from '../config/setConfig.ts';
+import { getConfig } from '../config/config.ts';
 import { storeCredentialsOnServer } from '../email-credential/storeCredentialsOnServer.ts';
 
 /**
@@ -41,7 +41,10 @@ export const createUser = makeAsyncResultFunc(
       masterPassword: string;
       saveCredentialsOnRemote: boolean;
     }
-  ): PR<{ userId: EmailUserId; encryptedEmailCredential: Base64String; locallyStoredCredentialUuid?: Uuid }, 'email-unavailable'> => {
+  ): PR<
+    { userId: EmailUserId; encryptedEmailCredential: EncryptedEmailCredential; locallyStoredCredentialUuid?: Uuid },
+    'email-unavailable'
+  > => {
     const activeCredential = useActiveCredential(trace);
 
     // --- Creating credential and store ---
@@ -73,22 +76,23 @@ export const createUser = makeAsyncResultFunc(
 
     // --- Storing encrypted email credential ---
 
-    const credentialDescription = `${emailUsername}@${getConfig().defaultEmailDomain}`;
+    const email = `${emailUsername}@${getConfig().defaultEmailDomain}`;
 
-    const encryptedCredential = await encryptEmailCredentialWithPassword(trace, { credential: credential.value, password: masterPassword });
+    const encryptedCredential = await encryptEmailCredentialWithPassword(trace, {
+      email,
+      credential: credential.value,
+      password: masterPassword
+    });
     if (!encryptedCredential.ok) {
       return encryptedCredential;
     }
 
-    const storedEncryptedCredential = await storeEncryptedEmailCredentialLocally(trace, {
-      description: credentialDescription,
-      encryptedEmailCredential: encryptedCredential.value
-    });
-    if (!storedEncryptedCredential.ok) {
-      return storedEncryptedCredential;
+    const stored = await storeEncryptedEmailCredentialLocally(trace, { encryptedEmailCredential: encryptedCredential.value });
+    if (!stored.ok) {
+      return stored;
     }
 
-    const locallyStoredCredentialUuid = storedEncryptedCredential.value.locallyStoredCredentialUuid;
+    const locallyStoredCredentialId = stored.value.locallyStoredCredentialId;
 
     // --- Saving encrypted email credential on remote, if desired ---
 
@@ -98,7 +102,7 @@ export const createUser = makeAsyncResultFunc(
         trace,
         storeCredentialsOnServer(trace, {
           userId,
-          encryptedCredentials: encryptedCredential.value,
+          encryptedCredential: encryptedCredential.value,
           signingKeys: credential.value.privateKeys
         })
       );
@@ -123,7 +127,7 @@ export const createUser = makeAsyncResultFunc(
     return makeSuccess({
       userId,
       encryptedEmailCredential: encryptedCredential.value,
-      locallyStoredCredentialUuid
+      locallyStoredCredentialId
     });
   }
 );

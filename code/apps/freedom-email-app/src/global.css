@@ -14,6 +14,7 @@
     --colors-background: #fff;
     --colors-accent: #F4F4F5;
     --colors-muted: #F5F5F5;
+    --colors-default-text-contrast: #FAFAF9;
     --colors-primary: #FFB43C;
     --colors-primary-contrast: #171717;
     --colors-input-border: #E4E4E7;
@@ -61,6 +62,10 @@
     /* Input Label */
     --input-label-font-size: 14px;
     --input-label-line-height: 14px;
+
+    /* Smallest Text */
+    --smallest-font-size: 10px;
+    --smallest-line-height: 12px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -69,6 +74,7 @@
       --colors-accent: #27272A;
       --colors-muted: #171717;
       --colors-default-text: #F4F4F5;
+      --colors-default-text-contrast: #1C1917;
       --colors-secondary-text: #FAFAFA;
       --colors-disabled-text: #A1A1AA;
       --colors-input-border: #27272A;
@@ -112,6 +118,12 @@ h1, h2, h3, h4, h5, h6, p, span, svg, .MuiButton-text {
   }
 }
 
+.default-bg {
+  background-color: var(--colors-background);
+}
+.blurred-overlay-bg {
+  backdrop-filter: blur(16px);
+}
 .primary-color-bg {
   background-color: var(--colors-primary);
 }
@@ -126,6 +138,11 @@ svg {
   &.sm-icon {
     width: 16px;
     height: 16px;
+  }
+
+  &.md-icon {
+    width: 32px;
+    height: 32px;
   }
 
   &.lg-icon {

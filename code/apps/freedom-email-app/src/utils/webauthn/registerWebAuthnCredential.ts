@@ -15,7 +15,7 @@ export const registerWebAuthnCredential = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { localCredentialUuid, description }: { localCredentialUuid: Uuid; description: string }
+    { localCredentialUuid, email }: { localCredentialUuid: Uuid; email: string }
   ): PR<string, 'not-supported' | 'unauthorized'> => {
     try {
       // Check if WebAuthn is supported
@@ -38,7 +38,7 @@ export const registerWebAuthnCredential = makeAsyncResultFunc(
           },
           user: {
             id: Buffer.from(makeUuid(), 'utf-8'),
-            name: description,
+            name: email,
             displayName: 'Freedom Email Account'
           },
           pubKeyCredParams: [

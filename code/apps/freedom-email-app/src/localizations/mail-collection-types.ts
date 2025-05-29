@@ -6,8 +6,9 @@ export const $mailCollectionType = {
   archive: LOCALIZE('Archive')({ ns }),
   // custom not really used, but including for completeness
   custom: LOCALIZE('Custom')({ ns }),
+  drafts: LOCALIZE('Drafts')({ ns }),
   inbox: LOCALIZE('Inbox')({ ns }),
   sent: LOCALIZE('Sent')({ ns }),
   spam: LOCALIZE('Spam')({ ns }),
   trash: LOCALIZE('Trash')({ ns })
-} satisfies Record<MailCollectionType, any>;
+} satisfies Record<MailCollectionType | 'drafts', any>;

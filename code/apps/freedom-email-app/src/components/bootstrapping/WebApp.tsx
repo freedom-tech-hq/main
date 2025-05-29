@@ -1,5 +1,4 @@
 import { HistoryProvider, useCreateBrowserHistory } from 'freedom-web-navigation';
-import { VirtualListThemeProvider } from 'freedom-web-virtual-list';
 
 import { TasksProvider } from '../../contexts/tasks.tsx';
 import { TransientContentProvider } from '../../contexts/transient-content.tsx';
@@ -13,11 +12,9 @@ export const WebApp = () => {
     <HistoryProvider history={history}>
       <TasksProvider>
         <AppThemeProvider>
-          <VirtualListThemeProvider>
-            <TransientContentProvider>
-              <AppRouter />
-            </TransientContentProvider>
-          </VirtualListThemeProvider>
+          <TransientContentProvider>
+            <AppRouter />
+          </TransientContentProvider>
         </AppThemeProvider>
       </TasksProvider>
     </HistoryProvider>

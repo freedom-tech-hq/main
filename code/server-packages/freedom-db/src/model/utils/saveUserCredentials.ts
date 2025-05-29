@@ -1,7 +1,6 @@
 import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR, uncheckedResult } from 'freedom-async';
-import type { Base64String } from 'freedom-basic-data';
 import { NotFoundError } from 'freedom-common-errors';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-sync';
 import { forceSetObjectValue } from 'freedom-object-store-types';
 
 import { getEmailByUserIdStore } from '../internal/utils/getEmailByUserIdStore.ts';
@@ -10,7 +9,7 @@ import { getUserStore } from '../internal/utils/getUserStore.ts';
 /** An `undefined` value for `encryptedCredentials` will clear the stored credentials */
 export const saveUserCredentials = makeAsyncResultFunc(
   [import.meta.filename, 'saveUserCredentials'],
-  async (trace, userId: EmailUserId, encryptedCredentials: Base64String | undefined): PR<void, 'not-found'> => {
+  async (trace, userId: EmailUserId, encryptedCredential: EncryptedEmailCredential | undefined): PR<void, 'not-found'> => {
     const userStore = await uncheckedResult(getUserStore(trace));
     const emailByUserIdStore = await uncheckedResult(getEmailByUserIdStore(trace));
 
@@ -41,10 +40,7 @@ export const saveUserCredentials = makeAsyncResultFunc(
     const user = userResult.value;
 
     // Update only the encryptedCredentials field
-    const updatedUser = {
-      ...user,
-      encryptedCredentials
-    };
+    const updatedUser = { ...user, encryptedCredential };
 
     // Save the updated user back to the store
     const userAccessor = userStore.mutableObject(email);

@@ -1,7 +1,8 @@
 import { Stack } from '@mui/material';
-import { base64String } from 'freedom-basic-data';
-import { log, makeUuid } from 'freedom-contexts';
+import { log, makeTrace, makeUuid } from 'freedom-contexts';
+import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
+import { parse } from 'freedom-serialization';
 import { useMemo } from 'react';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 
@@ -50,7 +51,7 @@ export const AuthPanel = () => {
   });
 
   const removeImportedAccountAndResetPanelState = useCallbackRef(async () => {
-    const removed = await tasks!.removeLocallyStoredEncryptedEmailCredential(selectedAccount.get()!.localUuid);
+    const removed = await tasks!.removeLocallyStoredEncryptedEmailCredential(selectedAccount.get()!.locallyStoredCredentialId);
     if (!removed.ok) {
       log().error?.('Failed to remove imported email credential', removed.value);
     }
@@ -76,18 +77,22 @@ export const AuthPanel = () => {
     const firstFile = input.files[0];
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const encryptedEmailCredential = e.target?.result;
-      if (typeof encryptedEmailCredential !== 'string') {
-        return;
-      } else if (!base64String.is(encryptedEmailCredential)) {
+      const jsonString = e.target?.result;
+      if (typeof jsonString !== 'string') {
         return;
       }
 
-      // TODO: should have a better name here
-      const imported = await tasks.importEmailCredential({
-        description: `Imported - ${new Date().toISOString()}`,
-        encryptedEmailCredential
-      });
+      const encryptedCredential = await parse(
+        makeTrace(import.meta.filename, 'onCredentialFileChange'),
+        jsonString,
+        encryptedEmailCredentialSchema
+      );
+      if (!encryptedCredential.ok) {
+        log().error?.('Failed to parse email credential file', encryptedCredential.value);
+        return;
+      }
+
+      const imported = await tasks.importEmailCredential({ encryptedCredential: encryptedCredential.value });
       if (!imported.ok) {
         log().error?.('Failed to import email credential', imported.value);
         return;
@@ -100,7 +105,7 @@ export const AuthPanel = () => {
       }
 
       const importedAccount = locallyStoredEncryptedEmailCredentials.value.find(
-        (cred) => cred.localUuid === imported.value.locallyStoredCredentialUuid
+        (cred) => cred.locallyStoredCredentialId === imported.value.locallyStoredCredentialId
       );
       if (importedAccount === undefined) {
         log().error?.('Failed to import email credential');

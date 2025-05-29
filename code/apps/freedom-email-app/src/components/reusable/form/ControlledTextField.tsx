@@ -6,7 +6,7 @@ import { BC, BindingsConsumer, ifBinding, resolveTypeOrBindingType, useCallbackR
 
 export type ControlledTextFieldProps = Omit<
   StandardTextFieldProps | FilledTextFieldProps | OutlinedTextFieldProps,
-  'disabled' | 'error' | 'helperText' | 'labelPosition' | 'value'
+  'disabled' | 'error' | 'helperText' | 'labelPosition' | 'onChange' | 'value'
 > & {
   value: Binding<string>;
   labelPosition?: 'default' | 'outside';

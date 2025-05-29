@@ -1,17 +1,14 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc } from 'freedom-async';
-import type { Uuid } from 'freedom-contexts';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
+import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
 import { importEmailCredential } from './importEmailCredential.ts';
 
 // Create API fetch task for retrieving credentials
-const retrieveCredentialsFromRemote = makeApiFetchTask(
-  [import.meta.filename, 'retrieveCredentialsFromRemote'],
-  api.retrieveCredentials.POST
-);
+const retrieveCredentialFromRemote = makeApiFetchTask([import.meta.filename, 'retrieveCredentialFromRemote'], api.retrieveCredential.POST);
 
 /**
  * Retrieves encrypted user credentials from the server using an email address
@@ -20,8 +17,8 @@ const retrieveCredentialsFromRemote = makeApiFetchTask(
  */
 export const importEmailCredentialFromRemote = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { email }: { email: string }): PR<{ locallyStoredCredentialUuid: Uuid }, 'not-found'> => {
-    const retrieved = await retrieveCredentialsFromRemote(trace, {
+  async (trace, { email }: { email: string }): PR<{ locallyStoredCredentialId: LocallyStoredCredentialId }, 'not-found'> => {
+    const retrieved = await retrieveCredentialFromRemote(trace, {
       body: { email },
       context: getDefaultApiRoutingContext()
     });
@@ -30,9 +27,6 @@ export const importEmailCredentialFromRemote = makeAsyncResultFunc(
     }
 
     // TODO: if there's already once with the same name, replace it
-    return await importEmailCredential(trace, {
-      description: email,
-      encryptedEmailCredential: retrieved.value.body.encryptedCredentials
-    });
+    return await importEmailCredential(trace, { encryptedCredential: retrieved.value.body.encryptedCredential });
   }
 );

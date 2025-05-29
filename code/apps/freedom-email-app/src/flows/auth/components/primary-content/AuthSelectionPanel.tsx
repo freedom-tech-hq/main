@@ -7,7 +7,7 @@ import { BC } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
-import { Divider } from '../../../../components/reusable/Divider.tsx';
+import { AppDivider } from '../../../../components/reusable/AppDivider.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
@@ -92,7 +92,7 @@ export const AuthSelectionPanel = ({
               )}
             </Button>
 
-            <Divider label={$or(t)} />
+            <AppDivider label={$or(t)} />
 
             <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
               <Button variant="contained" color="primary" onClick={onCreateNewAccountClick}>
