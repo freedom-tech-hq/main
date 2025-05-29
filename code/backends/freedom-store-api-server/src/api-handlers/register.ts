@@ -1,6 +1,6 @@
 import { bestEffort, callAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import { addUser, deleteUserByUserId } from 'freedom-db';
+import { addUser, deleteUser } from 'freedom-db';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { api } from 'freedom-store-api-server-api';
@@ -56,7 +56,7 @@ export default makeHttpApiHandler(
       {
         // Tear down
         onError: () => {
-          bestEffort(trace, deleteUserByUserId(trace, userId));
+          bestEffort(trace, deleteUser(trace, userId));
         }
       },
       async (trace) => {
