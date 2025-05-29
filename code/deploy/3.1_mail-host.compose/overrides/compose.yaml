@@ -92,6 +92,28 @@ services:
       timeout: 3s
       retries: 1
 
+  db:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=freedom_user
+      - POSTGRES_PASSWORD=${DEPLOY_POSTGRES_PASSWORD}
+      - POSTGRES_DB=freedom
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+    ports: []
+      # Currently all the consumers are in the same compose.yaml
+      # Will be exposed to be readable from GCP. Then will move to GCP.
+      # - "${DEPLOY_LISTEN_IP:-0.0.0.0}:5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
     # Open Redis. Eval is here: https://www.youtube.com/watch?v=9hDvWVJtljE
     image: valkey/valkey
@@ -117,6 +139,7 @@ services:
       - redis-data:/data
 
 volumes:
+  postgres-data:
   delivery-host-mail-state:
   syncable-store-data:
   redis-data:
