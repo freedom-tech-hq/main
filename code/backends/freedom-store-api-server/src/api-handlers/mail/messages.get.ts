@@ -1,12 +1,11 @@
-import { makeFailure, makeSuccess } from 'freedom-async';
+import { makeFailure, makeSuccess, type PR } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
-import { pageTokenInfo } from 'freedom-paginated-data';
+import { InvalidArgumentError } from 'freedom-common-errors';
+import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db'; // Removed FindManyMessagesCursor, findManyMessages
+import { type PageToken, pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import type { types } from 'freedom-store-api-server-api';
 import { api } from 'freedom-store-api-server-api';
-import { dbQuery, type DbMessage, type MessageFolder } from 'freedom-db'; // Removed FindManyMessagesCursor, findManyMessages
-import { Buffer } from 'node:buffer'; // For base64 encoding/decoding
-import { InvalidArgumentError } from 'freedom-common-errors';
 
 // Constants
 const PAGE_SIZE = 10;
@@ -42,8 +41,8 @@ export default makeHttpApiHandler(
     {
       input: {
         query: { pageToken }
-      },
-      auth // Assuming auth.userId is available from the handler context
+      }
+      // auth // Assuming auth.userId is available from the handler context
     }
   ) => {
     // TODO: Get userId from actual auth context
@@ -103,30 +102,34 @@ export default makeHttpApiHandler(
       dbQuery<{ total_count: string | number }>(countQuery, [currentUserId, currentFolder])
     ]);
 
-    const dbMessages: DbMessage[] = messagesResult.rows.map((row: MessageDbRow): DbMessage => ({
-      id: row.id,
-      userId: { id: row.userId, type: 'email' }, // Assuming type is always 'email'
-      transferredAt: row.transferredAt.toISOString() as IsoDateTime,
-      folder: row.folder,
-      listMessage: new Uint8Array(row.listMessage),
-      viewMessage: new Uint8Array(row.viewMessage),
-      rawMessage: new Uint8Array(row.rawMessage)
-    }));
+    const dbMessages: DbMessage[] = messagesResult.rows.map(
+      (row: MessageDbRow): DbMessage => ({
+        id: row.id,
+        userId: { id: row.userId, type: 'email' }, // Assuming type is always 'email'
+        transferredAt: row.transferredAt.toISOString() as IsoDateTime,
+        folder: row.folder,
+        listMessage: new Uint8Array(row.listMessage),
+        viewMessage: new Uint8Array(row.viewMessage),
+        rawMessage: new Uint8Array(row.rawMessage)
+      })
+    );
 
     const totalCount = parseInt(countResult.rows[0]?.total_count?.toString() ?? '0', 10);
 
     const hasMoreItems = dbMessages.length > PAGE_SIZE;
     const itemsForResponse = hasMoreItems ? dbMessages.slice(0, PAGE_SIZE) : dbMessages;
 
-    const responseItems = itemsForResponse.map((dbMsg: DbMessage): types.mail.ListMessage => ({
-      id: dbMsg.id,
-      transferredAt: dbMsg.transferredAt,
-      listMessage: Buffer.from(dbMsg.listMessage).toString('base64'),
-      // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
-      hasAttachments: false,
-    }));
+    const responseItems = itemsForResponse.map(
+      (dbMsg: DbMessage): types.mail.ListMessage => ({
+        id: dbMsg.id,
+        transferredAt: dbMsg.transferredAt,
+        listMessage: Buffer.from(dbMsg.listMessage).toString('base64'),
+        // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
+        hasAttachments: false
+      })
+    );
 
-    let nextPageToken: string | undefined;
+    let nextPageToken: PageToken | undefined;
     if (hasMoreItems && responseItems.length > 0) {
       const lastItemOnPage = responseItems[responseItems.length - 1];
       const nextCursorPayload: PageTokenPayload = {
