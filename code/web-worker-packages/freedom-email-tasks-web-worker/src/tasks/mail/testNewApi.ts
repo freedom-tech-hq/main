@@ -2,7 +2,7 @@ import { makeFailure, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import { userDecryptValue, userEncryptValue } from 'freedom-crypto-service';
-import { type DecryptedListMessage, decryptedListMessagePartSchema } from 'freedom-email-user';
+import { type DecryptedListMessage, decryptedListMessagePartSchema } from 'freedom-email-sync';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';

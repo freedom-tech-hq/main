@@ -7,6 +7,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { type DbMessage, dbQuery, findUserByEmail } from 'freedom-db';
 import { type StoredMail } from 'freedom-email-sync';
+import { decryptedListMessagePartSchema } from 'freedom-email-sync';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
