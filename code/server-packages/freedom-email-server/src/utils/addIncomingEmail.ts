@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 
 import type { PR } from 'freedom-async';
@@ -6,7 +5,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { type DbMessage, dbQuery, findUserByEmail } from 'freedom-db';
-import { type StoredMail } from 'freedom-email-sync';
+import { type StoredMail, storedMailSchema } from 'freedom-email-sync';
 import { decryptedListMessagePartSchema, decryptedViewMessagePartSchema } from 'freedom-email-sync';
 
 export const addIncomingEmail = makeAsyncResultFunc(
@@ -34,7 +33,6 @@ export const addIncomingEmail = makeAsyncResultFunc(
     if (!listMessageResult.ok) {
       return listMessageResult;
     }
-    const listMessage = listMessageResult.value;
 
     // viewMessage
     const viewMessageResult = await userEncryptValue(trace, {
@@ -53,7 +51,14 @@ export const addIncomingEmail = makeAsyncResultFunc(
     }
 
     // rawMessage
-    const rawMessage = Buffer.from(mail.body ?? '').toString('base64'); // Assuming rawMessage is also the body for now
+    const rawMessageResult = await userEncryptValue(trace, {
+      schema: storedMailSchema,
+      value: mail,
+      publicKeys: user.value.publicKeys
+    });
+    if (!rawMessageResult.ok) {
+      return rawMessageResult;
+    }
 
     const sql = `
       INSERT INTO "messages" ("id", "userId", "transferredAt", "folder", "listMessage", "viewMessage", "rawMessage")
@@ -62,12 +67,12 @@ export const addIncomingEmail = makeAsyncResultFunc(
 
     const params: unknown[] = [
       messageId,
-      recipientEmail, // This is a string, matching the 'users'.'userId' TEXT column type
+      user.value.userId,
       transferredAt,
       folder,
-      listMessage,
-      viewMessage,
-      rawMessage
+      listMessageResult.value,
+      viewMessageResult.value,
+      rawMessageResult.value
     ];
 
     await dbQuery(sql, params);
