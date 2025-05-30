@@ -38,8 +38,6 @@ export default makeHttpApiHandler(
       WHERE "id" = $1 AND "userId" = $2
     `;
 
-    // Fetching listMessage and viewMessage as per the revised ViewMessage schema in the API definition.
-    // Folder and rawMessage are not part of the revised ViewMessage schema.
     const result = await dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listMessage' | 'viewMessage'>>(sql, [
       messageId,
       currentUserId
@@ -56,8 +54,6 @@ export default makeHttpApiHandler(
 
     const dbMsg = result.rows[0];
 
-    // The ViewMessage schema in freedom-store-api-server-api (Step 177) now expects these as encrypted base64 strings.
-    // No decryption is performed in this handler.
     const responseBody: types.mail.ViewMessage = {
       id: dbMsg.id,
       transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
