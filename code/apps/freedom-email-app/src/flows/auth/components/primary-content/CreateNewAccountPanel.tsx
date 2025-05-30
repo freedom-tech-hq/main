@@ -1,15 +1,21 @@
 import { Button, Stack, Tooltip, useTheme } from '@mui/material';
+import { log, makeTrace, makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import { useHistory } from 'freedom-web-navigation';
 import type { ReactNode } from 'react';
-import React from 'react';
-import { BC, useBinding, useCallbackRef } from 'react-bindings';
+import React, { useMemo } from 'react';
+import { BC, useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
+import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../../consts/timing.ts';
+import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
+import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
+import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
@@ -18,6 +24,7 @@ import { InfoIcon } from '../../../../icons/InfoIcon.ts';
 import { XIcon } from '../../../../icons/XIcon.ts';
 
 const ns = 'ui';
+const $apiEmailTaken = LOCALIZE('Oops, it looks like someone else ended up getting this email.')({ ns });
 const $back = LOCALIZE('Go Back')({ ns });
 const $chooseEmail = LOCALIZE('Choose your email')({ ns });
 const $createAccount = LOCALIZE('Create Account')({ ns });
@@ -35,14 +42,22 @@ export interface CreateNewAccountPanelProps {
 }
 
 export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProps) => {
+  const activeAccountInfo = useActiveAccountInfo();
+  const history = useHistory();
+  const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
+  const tasks = useTasks();
   const theme = useTheme();
+  const uuid = useMemo(() => makeUuid(), []);
+
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
   const emailUsername = useBinding<string>(() => '', { id: 'emailUsername', detectChanges: true });
   const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
-  const isBusy = useBinding<boolean>(() => false, { id: 'isBusy', detectChanges: true });
+
+  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
+  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
 
   const checkedEmailAvailability = useTaskWaitable((tasks) => tasks.checkEmailAvailability({ emailUsername: emailUsername.get() }), {
     id: 'isEmailAddressAvailable',
@@ -98,15 +113,59 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
     { id: 'isFormReady', limitType: 'none' }
   );
 
-  const onSubmit = useCallbackRef((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!(isFormReady.value.get() ?? false)) {
+  const submit = useCallbackRef(async () => {
+    if (tasks === undefined || !(isFormReady.value.get() ?? false)) {
       return;
     }
 
-    // TODO: TEMP
-    console.log('onSubmit', password.get(), isBusy.get());
+    isBusyCount.set(isBusyCount.get() + 1);
+    try {
+      const created = await tasks.createUser({
+        emailUsername: emailUsername.get(),
+        masterPassword: password.get(),
+        // TODO: in the future, consider exposing an option to advanced users to not save their credentials on the remote
+        saveCredentialsOnRemote: true
+      });
+      if (!created.ok) {
+        log().error?.(makeTrace(import.meta.filename, 'submit'), 'Failed to create user', created.value);
+
+        switch (created.value.errorCode) {
+          case 'email-unavailable':
+            presentErrorMessage($apiEmailTaken(t), {
+              onClose: () => {
+                emailUsername.set('');
+
+                const emailFieldElem = document.getElementById(`${uuid}-email`);
+                if (emailFieldElem !== null) {
+                  emailFieldElem.focus();
+                }
+              }
+            });
+            return;
+
+          case 'generic':
+            presentErrorMessage($apiGenericError(t), {
+              action: ({ dismissThen }) => (
+                <Button color="error" onClick={dismissThen(submit)}>
+                  {$tryAgain(t)}
+                </Button>
+              )
+            });
+            return;
+        }
+      }
+
+      activeAccountInfo.set({ email: created.value.encryptedEmailCredential.email });
+      history.push('/mail');
+    } finally {
+      isBusyCount.set(isBusyCount.get() - 1);
+    }
+  });
+
+  const onSubmit = useCallbackRef((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    submit();
   });
 
   return (
@@ -127,6 +186,7 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
 
             <Stack alignSelf="stretch" alignItems="stretch" gap={3} sx={{ mt: 2 }}>
               <EmailField
+                id={`${uuid}-email`}
                 value={emailUsername}
                 disabled={isBusy}
                 autoFocus

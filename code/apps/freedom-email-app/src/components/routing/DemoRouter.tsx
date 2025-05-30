@@ -1,4 +1,4 @@
-import { IF } from 'freedom-logical-web-components';
+import { IF, NOT } from 'freedom-logical-web-components';
 import React, { useEffect, useRef } from 'react';
 import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
@@ -18,7 +18,7 @@ DEV: DemoRouter = ({ relativePath }: DemoRouterProps) => {
   const tasks = useTasks();
 
   const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
-  const isReady = useDerivedBinding(isBusyCount, (count) => count === 0, { id: 'isReady', limitType: 'none' });
+  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
 
   const wantsDemoMode = useRef(false);
   const updateDemoMode = useCallbackRef(async () => {
@@ -41,7 +41,7 @@ DEV: DemoRouter = ({ relativePath }: DemoRouterProps) => {
 
   return (
     <>
-      {IF(isReady, () => {
+      {IF(NOT(isBusy), () => {
         if (relativePath[0] === 'auth-screen') {
           return <AuthScreen />;
         } else if (relativePath[0] === 'mail-screen') {

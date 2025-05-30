@@ -251,7 +251,8 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiFormControlLabel: {
           styleOverrides: {
             root: {
-              gap: sp(1)
+              gap: sp(1),
+              margin: 0
             }
           }
         },
@@ -335,6 +336,39 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
             },
             input: {
               padding: '3px 0'
+            }
+          }
+        },
+        MuiSnackbar: {
+          styleOverrides: {
+            root: {
+              '& .MuiPaper-root': {
+                backgroundColor: colorsBackground,
+                border: `1px solid ${colorsInputBorder}`,
+                borderRadius: br(3),
+                padding: `${sp(1.5)} ${sp(2)}`,
+                justifyContent: 'space-between',
+                gap: sp(1)
+              }
+            }
+          }
+        },
+        MuiSnackbarContent: {
+          styleOverrides: {
+            action: {
+              margin: 0,
+              padding: 0,
+
+              '& .MuiButton-root': {
+                borderRadius: br(3),
+                border: `1px solid ${colorsInputBorder}`,
+                padding: `${sp(1)} ${sp(2)}`
+              }
+            },
+            message: {
+              color: defaultTextColor,
+              fontSize: inputFontSize,
+              lineHeight: inputLineHeight
             }
           }
         },
