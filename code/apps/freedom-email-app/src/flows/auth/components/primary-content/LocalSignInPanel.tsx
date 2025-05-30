@@ -1,12 +1,19 @@
 import { Button, Stack, useTheme } from '@mui/material';
+import { log, makeTrace } from 'freedom-contexts';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import { useHistory } from 'freedom-web-navigation';
 import React from 'react';
-import { BC, useBinding, useCallbackRef } from 'react-bindings';
+import { BC, useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
+import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
+import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
+import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
+import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
 import { AccountListItem } from '../secondary-content/AccountListItem.tsx';
@@ -23,19 +30,67 @@ export interface LocalSignInPanelProps {
 }
 
 export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps) => {
+  const activeAccountInfo = useActiveAccountInfo();
+  const history = useHistory();
+  const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
+  const tasks = useTasks();
   const theme = useTheme();
+
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
   const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
-  const isBusy = useBinding<boolean>(() => false, { id: 'isBusy', detectChanges: true });
+
+  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
+  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
+
+  // TODO: use real form validation
+  const isFormReady = useDerivedWaitable({ isBusy, password }, ({ isBusy, password }) => !isBusy && password.length > 0, {
+    id: 'isFormReady',
+    limitType: 'none'
+  });
+
+  const submit = useCallbackRef(async () => {
+    if (tasks === undefined || !(isFormReady.value.get() ?? false)) {
+      return;
+    }
+
+    isBusyCount.set(isBusyCount.get() + 1);
+    try {
+      const activated = await tasks.activateUserWithLocallyStoredEncryptedEmailCredentials({
+        locallyStoredCredentialId: account.locallyStoredCredentialId,
+        password: password.get(),
+        passwordType: 'master'
+      });
+      if (!activated.ok) {
+        log().error?.(makeTrace(import.meta.filename, 'submit'), 'Failed to activate user', activated.value);
+
+        switch (activated.value.errorCode) {
+          case 'not-found':
+          case 'generic':
+            presentErrorMessage($apiGenericError(t), {
+              action: ({ dismissThen }) => (
+                <Button color="error" onClick={dismissThen(submit)}>
+                  {$tryAgain(t)}
+                </Button>
+              )
+            });
+            return;
+        }
+      }
+
+      activeAccountInfo.set({ email: account.email });
+      history.push('/mail');
+    } finally {
+      isBusyCount.set(isBusyCount.get() - 1);
+    }
+  });
 
   const onSubmit = useCallbackRef((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // TODO: TEMP
-    console.log('onSubmit', password.get(), isBusy.get());
+    submit();
   });
 
   return (

@@ -85,7 +85,7 @@ export const SecondaryMailSidebar = () => {
         id={`${uuid}-scrollable`}
         alignItems="stretch"
         className="overflow-y-auto"
-        sx={{ width: `${secondarySidebarWidthPx}px`, px: 3.5 }}
+        sx={{ width: `${secondarySidebarWidthPx}px`, px: 2 }}
       >
         <AppToolbar>
           {/* TODO: handle custom collection names */}
@@ -99,31 +99,33 @@ export const SecondaryMailSidebar = () => {
           <FormControlLabel control={<ControlledSwitch checked={showUnreadOnly} />} label={$unread(t)} labelPlacement="start" />
         </AppToolbar>
 
-        <ControlledTextField
-          value={search}
-          placeholder={$searchPlaceholder(t)}
-          slotProps={{ input: { startAdornment: <SearchIcon className="sm-icon secondary-text" sx={{ mr: 1 }} /> } }}
-        />
+        <Stack alignItems="stretch" sx={{ px: 1.5 }}>
+          <ControlledTextField
+            value={search}
+            placeholder={$searchPlaceholder(t)}
+            slotProps={{ input: { startAdornment: <SearchIcon className="sm-icon secondary-text" sx={{ mr: 1 }} /> } }}
+          />
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-          <Stack direction="row" alignItems="center" gap={2}>
-            <ControlledCheckbox checked={selectAll} sx={{ ml: 1.5 }} />
+          <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+            <Stack direction="row" alignItems="center" gap={2}>
+              <ControlledCheckbox checked={selectAll} sx={{ ml: 1.5 }} />
 
-            <Button sx={{ p: 1 }}>
-              <RefreshIcon className="sm-icon secondary-text" />
-            </Button>
+              <Button sx={{ p: 1 }}>
+                <RefreshIcon className="sm-icon secondary-text" />
+              </Button>
 
-            <Button sx={{ p: 1 }}>
-              <MarkReadIcon className="sm-icon secondary-text" />
-            </Button>
+              <Button sx={{ p: 1 }}>
+                <MarkReadIcon className="sm-icon secondary-text" />
+              </Button>
+            </Stack>
+
+            {/* TODO: TEMP value */}
+            <Txt variant="body2">{$emails(1234, p, { count: formatInt(1234) })}</Txt>
           </Stack>
 
-          {/* TODO: TEMP value */}
-          <Txt variant="body2">{$emails(1234, p, { count: formatInt(1234) })}</Txt>
+          {/* TODO: handle onArrowLeft/right */}
+          <MailThreadsList collectionId={lastDefinedCollectionId} scrollParent={`${uuid}-scrollable`} />
         </Stack>
-
-        {/* TODO: handle onArrowLeft/right */}
-        <MailThreadsList collectionId={lastDefinedCollectionId} scrollParent={`${uuid}-scrollable`} />
       </Stack>
     </Stack>
   );
