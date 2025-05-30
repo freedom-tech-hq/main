@@ -6,4 +6,3 @@ export { getUserById } from './getUserById.ts';
 export { isMailSent } from './isMailSent.ts';
 export { markMailSent } from './markMailSent.ts';
 export { saveUserCredentials } from './saveUserCredentials.ts';
-export { findManyMessages } from './findManyMessages.ts';
