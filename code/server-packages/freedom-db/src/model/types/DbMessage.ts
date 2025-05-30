@@ -1,4 +1,4 @@
-import { base64String, isoDateTimeSchema } from 'freedom-basic-data';
+import { base64String } from 'freedom-basic-data';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import { schema } from 'yaschema';
 
@@ -15,7 +15,7 @@ export const dbMessageSchema = schema.object({
   // Open fields
   id: schema.string(),
   userId: emailUserIdInfo.schema,
-  transferredAt: isoDateTimeSchema,
+  transferredAt: schema.date(),
   folder: schema.string<MessageFolder>(...messageFolders),
 
   // Encrypted fields

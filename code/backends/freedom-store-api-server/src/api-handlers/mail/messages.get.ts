@@ -119,7 +119,7 @@ export default makeHttpApiHandler(
     const responseItems = itemsForResponse.map(
       (dbMsg): types.mail.ListMessage => ({
         id: dbMsg.id,
-        transferredAt: dbMsg.transferredAt,
+        transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
         listMessage: dbMsg.listMessage,
         // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
         hasAttachments: false

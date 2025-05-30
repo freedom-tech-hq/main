@@ -277,12 +277,16 @@ export const AccountCreationOrLogin = () => {
         activeUserId.set(unlocked.value.userId);
 
         // Call the testNewApi task to demonstrate direct API calling
-        try {
-          console.log('Calling testNewApi task to demonstrate API integration...');
-          await tasks.testNewApi();
-        } catch (error) {
-          console.error('Error calling testNewApi task:', error);
-        }
+        const callNewApi = async () => {
+          try {
+            console.log('Calling testNewApi task to demonstrate API integration...');
+            await tasks.testNewApi();
+          } catch (error) {
+            console.error('Error calling testNewApi task:', error);
+          }
+        };
+        await callNewApi();
+        eval('window.callNewApi = callNewApi');
 
         // After successful unlock using a master password, try to register a WebAuthn credential
         if (passwordType === 'master' && window.PublicKeyCredential !== undefined) {
