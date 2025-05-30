@@ -1,63 +1,95 @@
-import { makeSuccess } from 'freedom-async';
+import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import type { types } from 'freedom-store-api-server-api';
 import { api } from 'freedom-store-api-server-api';
+import { findManyMessages, type DbMessage, type MessageFolder, type FindManyMessagesCursor } from 'freedom-db';
+import { Buffer } from 'node:buffer'; // For base64 encoding/decoding
+import { NotFoundError, InvalidArgumentError } from 'freedom-common-errors';
 
 // Constants
 const PAGE_SIZE = 10;
 
-// Generate sample messages for testing - ordered by transferredAt descending (newest first)
-const db: types.mail.ListMessage[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `msg-${i + 1}`,
-  transferredAt: new Date(Date.now() - i * 3600000).toISOString() as IsoDateTime, // Each message 1 hour apart
-  listMessage:
-    'B64_AAEAAAA3Q1JZUFRPS0VZU0VUX2NvbWJvLTc0NDFiNjYzLWRlMDQtNDg1Ny1hYmRmLWM3ZjZhMmMwOTIxOQEDYswohVo3kkImiS1OH92O0TunlaGV4ZvFtujYLdphsJF9W4zfjjuqDzHy5cvmKG+tS6KmeL7ImwQUj5tLXeiG4aU8GbAuKKwmVdVBip4Np99J4B9tsYLElm51v77NhYPnyyP0fuK4IIaWr+8sYuWplBtMyBmGNvB2XaL+fGyuWMxJR2FcHUoS0fDd0rpRn473aBXVUu4b7sqvi+MQHNlbqLqb08f57rK1rbgDhaSSeP83zFVs3o1rWmcXCsdadUUTEdozgbTEUvNuNPSUn0b/s8fzLuC/aWzYmEYQz/DlddW4cEvShLdnZCtZjIW6QZFMZA4IYS0RyWsdm5as+8X5XD7eLLP63HvVB/RAsbA6zFPqoKYurIATzAeg0GE0Ga8wCe6ZLSYwoVVxQnRnqYD4Y+P7kljc8yEILT4gk3pLozJrkiFxfCmTsqb5Ct1fAHOqpf04BOOfR+iPSM2LtLuslsXMDu5qUzqxUC3fNhEyhA2aR2dpYfORwU9mONRPDy6nmfMwy7oaUH6eulcx1o3rEdknP/miycZouFKBOEiG+64Agu8CM3kkYgKHwG1QClcGhndhPP/ZHRxQzfx+5dssIvcrI8c85ukVGRFlRI9amwElM3RcFFqANtek2fg+6YChPi1ESeH/0/k048UQQydSIlC4KnkVG3a8w3DhfzwdwA==',
-  // subject: `Test Message ${i + 1}`,
-  // snippet: `This is a test message ${i + 1} with some sample content...`,
-  hasAttachments: i % 3 === 0 // Every third message has attachments
-}));
+interface PageTokenPayload {
+  id: string;
+  transferredAt: IsoDateTime;
+}
 
 export default makeHttpApiHandler(
   [import.meta.filename],
   { api: api.mail.messages.GET },
   async (
-    _trace,
+    trace,
     {
       input: {
         query: { pageToken }
-      }
+      },
+      auth // Assuming auth.userId is available from the handler context
     }
   ) => {
-    // Extract message ID from token if present (token format is already validated by schema)
-    const lastMessageId = pageToken !== undefined ? pageTokenInfo.removePrefix(pageToken) : null;
+    // TODO: Get userId from actual auth context
+    const userId = auth?.userId;
+    if (!userId) {
+      return makeFailure(new InvalidArgumentError(trace, { message: 'User ID not found in auth context' }));
+    }
 
-    // Find starting position for this page
-    let startIndex = 0;
+    // TODO: The API definition (api.mail.messages.GET) should be updated to accept `folder` as a query parameter.
+    // For now, hardcoding to 'inbox'.
+    const folder: MessageFolder = 'inbox';
 
-    if (lastMessageId !== null) {
-      // Use Map for O(1) lookup if this were a production app with many messages
-      // For this mock implementation with 30 messages, findIndex is fine
-      const lastMessageIndex = db.findIndex((message) => message.id === lastMessageId);
-      if (lastMessageIndex !== -1) {
-        startIndex = lastMessageIndex + 1;
+    let cursor: FindManyMessagesCursor | undefined;
+    if (pageToken) {
+      try {
+        const rawTokenData = pageTokenInfo.removePrefix(pageToken);
+        const decodedString = Buffer.from(rawTokenData, 'base64').toString('utf-8');
+        const tokenPayload = JSON.parse(decodedString) as PageTokenPayload;
+        if (!tokenPayload.id || !tokenPayload.transferredAt) {
+          return makeFailure(new InvalidArgumentError(trace, { message: 'Invalid page token payload' }));
+        }
+        cursor = tokenPayload;
+      } catch (error) {
+        return makeFailure(new InvalidArgumentError(trace, { message: 'Failed to parse page token', cause: error }));
       }
     }
 
-    // Get items for current page - guaranteed to be O(1) with V8's implementation of slice
-    const items = db.slice(startIndex, startIndex + PAGE_SIZE);
+    // Fetch one extra item to determine if there's a next page
+    const result = await findManyMessages(trace, userId, folder, PAGE_SIZE + 1, cursor);
 
-    // Determine if we need to provide a next page token
-    const hasMoreItems = startIndex + PAGE_SIZE < db.length;
+    if (!result.ok) {
+      // Pass through the error from findManyMessages
+      return result;
+    }
 
-    // Only create a token if we have items and there are more to fetch
-    const nextPageToken = hasMoreItems && items.length > 0 ? pageTokenInfo.make(items[items.length - 1].id) : undefined;
+    const { items: dbMessages, totalCount } = result.value;
+
+    const hasMoreItems = dbMessages.length > PAGE_SIZE;
+    const itemsForResponse = hasMoreItems ? dbMessages.slice(0, PAGE_SIZE) : dbMessages;
+
+    const responseItems: types.mail.ListMessage[] = itemsForResponse.map((dbMsg: DbMessage) => ({
+      id: dbMsg.id,
+      transferredAt: dbMsg.transferredAt,
+      listMessage: Buffer.from(dbMsg.listMessage).toString('base64'),
+      // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
+      // This field is part of the API contract (types.mail.ListMessage).
+      hasAttachments: false, 
+    }));
+
+    let nextPageToken: string | undefined;
+    if (hasMoreItems && responseItems.length > 0) {
+      const lastItemOnPage = responseItems[responseItems.length - 1];
+      const nextCursorPayload: PageTokenPayload = {
+        id: lastItemOnPage.id,
+        transferredAt: lastItemOnPage.transferredAt
+      };
+      const nextPageTokenString = Buffer.from(JSON.stringify(nextCursorPayload)).toString('base64');
+      nextPageToken = pageTokenInfo.make(nextPageTokenString);
+    }
 
     return makeSuccess({
       body: {
-        items,
-        estCount: db.length,
+        items: responseItems,
+        estCount: totalCount,
         nextPageToken
       }
     });
