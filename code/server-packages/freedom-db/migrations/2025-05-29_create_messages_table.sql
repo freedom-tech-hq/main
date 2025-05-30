@@ -4,9 +4,9 @@ CREATE TABLE "messages" (
   "userId" TEXT NOT NULL REFERENCES "users" ("userId") ON DELETE CASCADE,
   "transferredAt" TIMESTAMPTZ NOT NULL,
   "folder" TEXT NOT NULL CHECK ("folder" IN ('inbox', 'outbox', 'sent', 'drafts')),
-  "listMessage" BYTEA NOT NULL,
-  "viewMessage" BYTEA NOT NULL,
-  "rawMessage" BYTEA NOT NULL
+  "listMessage" TEXT NOT NULL,
+  "viewMessage" TEXT NOT NULL,
+  "rawMessage" TEXT NOT NULL
 );
 
 -- Index for efficient querying and pagination

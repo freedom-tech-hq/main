@@ -1,4 +1,4 @@
-import { isoDateTimeSchema, uint8ArraySchema } from 'freedom-basic-data';
+import { base64String, isoDateTimeSchema } from 'freedom-basic-data';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import { schema } from 'yaschema';
 
@@ -19,9 +19,9 @@ export const dbMessageSchema = schema.object({
   folder: schema.string<MessageFolder>(...messageFolders),
 
   // Encrypted fields
-  listMessage: uint8ArraySchema,
-  viewMessage: uint8ArraySchema,
-  rawMessage: uint8ArraySchema
+  listMessage: base64String.schema,
+  viewMessage: base64String.schema,
+  rawMessage: base64String.schema
 });
 
 export type DbMessage = typeof dbMessageSchema.valueType;

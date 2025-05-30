@@ -1,5 +1,5 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
-import { base64String, type IsoDateTime } from 'freedom-basic-data';
+import { type IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db'; // Removed FindManyMessagesCursor, findManyMessages
 import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
@@ -41,16 +41,8 @@ function decodePageToken(pageToken: PageToken | undefined): DbQueryCursor | unde
   }
 }
 
-// Interface representing the raw row structure from the 'messages' table (camelCase due to quoted identifiers in SQL)
-interface MessageDbRow {
-  id: string;
-  userId: EmailUserId;
-  transferredAt: IsoDateTime;
-  folder: MessageFolder;
-  listMessage: Buffer; // Will be converted to Uint8Array
-  viewMessage: Buffer; // Will be converted to Uint8Array
-  rawMessage: Buffer; // Will be converted to Uint8Array
-}
+// Type for the subset of DbMessage fields we need
+type MessageRow = Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'folder' | 'listMessage'>;
 
 function getUserIdFromAuthorizationHeader(headers: Record<string, string> | undefined): EmailUserId | undefined {
   const authorizationHeader = headers?.authorization;
@@ -97,7 +89,7 @@ export default makeHttpApiHandler(
     // Fetch one extra item to determine if there's a next page
     params.push(PAGE_SIZE + 1);
     const messagesQuery = `
-      SELECT "id", "userId", "transferredAt", "folder", "listMessage", "viewMessage", "rawMessage"
+      SELECT "id", "userId", "transferredAt", "folder", "listMessage"
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2
       ${cursorClause}
@@ -113,21 +105,11 @@ export default makeHttpApiHandler(
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([
-      dbQuery<MessageDbRow>(messagesQuery, params),
+      dbQuery<MessageRow>(messagesQuery, params),
       dbQuery<{ total_count: string | number }>(countQuery, [currentUserId, currentFolder])
     ]);
 
-    const dbMessages: DbMessage[] = messagesResult.rows.map(
-      (row: MessageDbRow): DbMessage => ({
-        id: row.id,
-        userId: row.userId,
-        transferredAt: row.transferredAt,
-        folder: row.folder,
-        listMessage: new Uint8Array(row.listMessage),
-        viewMessage: new Uint8Array(row.viewMessage),
-        rawMessage: new Uint8Array(row.rawMessage)
-      })
-    );
+    const dbMessages = messagesResult.rows;
 
     const totalCount = parseInt(countResult.rows[0]?.total_count?.toString() ?? '0', 10);
 
@@ -135,10 +117,10 @@ export default makeHttpApiHandler(
     const itemsForResponse = hasMoreItems ? dbMessages.slice(0, PAGE_SIZE) : dbMessages;
 
     const responseItems = itemsForResponse.map(
-      (dbMsg: DbMessage): types.mail.ListMessage => ({
+      (dbMsg): types.mail.ListMessage => ({
         id: dbMsg.id,
         transferredAt: dbMsg.transferredAt,
-        listMessage: base64String.makeWithBuffer(dbMsg.listMessage),
+        listMessage: dbMsg.listMessage,
         // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
         hasAttachments: false
       })
