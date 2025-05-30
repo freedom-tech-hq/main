@@ -1,3 +1,4 @@
+import React from 'react';
 import { type HTMLAttributes, useEffect } from 'react';
 
 export interface ResizingObservingDivProps<TagT> extends Omit<HTMLAttributes<HTMLDivElement>, 'onResize'> {

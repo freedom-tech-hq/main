@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import type { IHistory } from '../types/IHistory.ts';
 
@@ -18,6 +18,6 @@ export interface HistoryProviderProps {
   history: IHistory;
 }
 
-export const HistoryProvider = ({ children, history }: HistoryProviderProps & { children: ReactNode }) => {
+export const HistoryProvider = ({ children, history }: HistoryProviderProps & { children?: ReactNode }) => {
   return <HistoryContext.Provider value={history}>{children}</HistoryContext.Provider>;
 };

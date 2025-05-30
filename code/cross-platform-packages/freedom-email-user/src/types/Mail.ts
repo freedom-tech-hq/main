@@ -1,3 +1,5 @@
+import type { MailAttachmentInfo } from 'freedom-email-sync';
+
 import type { MailLikeId } from './MailLikeId.ts';
 
 export interface Mail {
@@ -8,4 +10,5 @@ export interface Mail {
   readonly body: string;
   readonly timeMSec: number;
   readonly isUnread: boolean;
+  readonly attachments: MailAttachmentInfo[];
 }

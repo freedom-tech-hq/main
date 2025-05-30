@@ -2,9 +2,10 @@ import { Button, Stack, useTheme } from '@mui/material';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import React from 'react';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
+import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';

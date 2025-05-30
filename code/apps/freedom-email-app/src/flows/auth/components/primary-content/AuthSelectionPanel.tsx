@@ -3,10 +3,11 @@ import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-ta
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
+import React from 'react';
 import { BC } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
+import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { AppDivider } from '../../../../components/reusable/AppDivider.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
@@ -51,66 +52,57 @@ export const AuthSelectionPanel = ({
     id: 'hasAtLeastOneAccount'
   });
 
-  return (
-    <>
-      {BC({ isMdOrLarger, isLgOrLarger }, ({ isMdOrLarger, isLgOrLarger }) => (
-        <Stack alignItems="center" justifyContent="center" sx={{ px: isLgOrLarger ? 3 : 2, py: 5 }}>
-          <Stack
-            alignItems="center"
-            justifyContent="center"
-            gap={isMdOrLarger ? 3 : 2}
-            sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}
-          >
-            {IF(!isMdOrLarger, () => (
-              <CompanyLogoIcon color="primary" className="lg-icon" />
+  return BC({ isMdOrLarger, isLgOrLarger }, ({ isMdOrLarger, isLgOrLarger }) => (
+    <Stack alignItems="center" justifyContent="center" sx={{ px: isLgOrLarger ? 3 : 2, py: 5 }}>
+      <Stack alignItems="center" justifyContent="center" gap={isMdOrLarger ? 3 : 2} sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}>
+        {IF(!isMdOrLarger, () => (
+          <CompanyLogoIcon color="primary" className="lg-icon" />
+        ))}
+
+        <Stack alignItems="center" justifyContent="center" gap={2}>
+          <Stack alignItems="center" justifyContent="center">
+            <Txt variant="h2" className="semibold" textAlign="center">
+              {$welcome(t)}
+            </Txt>
+            {IF(hasAtLeastOneAccount, () => (
+              <Txt variant="body1" textAlign="center">
+                {$instructions(t)}
+              </Txt>
             ))}
-
-            <Stack alignItems="center" justifyContent="center" gap={2}>
-              <Stack alignItems="center" justifyContent="center">
-                <Txt variant="h2" className="semibold" textAlign="center">
-                  {$welcome(t)}
-                </Txt>
-                {IF(hasAtLeastOneAccount, () => (
-                  <Txt variant="body1" textAlign="center">
-                    {$instructions(t)}
-                  </Txt>
-                ))}
-              </Stack>
-
-              <AccountList onAccountClick={onAccountClick} />
-            </Stack>
-
-            <Button
-              variant="text"
-              className="self-stretch default-text"
-              startIcon={<UserRoundPlusIcon className="default-text sm-icon" />}
-              onClick={onSignInWithRemoteClick}
-            >
-              {BC(hasAtLeastOneAccount.value, (hasAtLeastOneAccount) =>
-                (hasAtLeastOneAccount ?? false) ? $signInToAnotherAccount(t) : $signInToAccount(t)
-              )}
-            </Button>
-
-            <AppDivider label={$or(t)} />
-
-            <Stack gap={2} className="self-stretch">
-              <Button variant="contained" color="primary" onClick={onCreateNewAccountClick}>
-                {$createNewAccount(t)}
-              </Button>
-
-              <Button
-                variant="text"
-                className="default-text"
-                onClick={onImportCredentialClick}
-                startIcon={<ImportIcon className="default-text sm-icon" />}
-                disabled={tasks === undefined}
-              >
-                {$importCredential(t)}
-              </Button>
-            </Stack>
           </Stack>
+
+          <AccountList onAccountClick={onAccountClick} />
         </Stack>
-      ))}
-    </>
-  );
+
+        <Button
+          variant="text"
+          className="self-stretch default-text"
+          startIcon={<UserRoundPlusIcon className="default-text sm-icon" />}
+          onClick={onSignInWithRemoteClick}
+        >
+          {BC(hasAtLeastOneAccount.value, (hasAtLeastOneAccount) =>
+            (hasAtLeastOneAccount ?? false) ? $signInToAnotherAccount(t) : $signInToAccount(t)
+          )}
+        </Button>
+
+        <AppDivider label={$or(t)} />
+
+        <Stack gap={2} className="self-stretch">
+          <Button variant="contained" color="primary" onClick={onCreateNewAccountClick}>
+            {$createNewAccount(t)}
+          </Button>
+
+          <Button
+            variant="text"
+            className="default-text"
+            onClick={onImportCredentialClick}
+            startIcon={<ImportIcon className="default-text sm-icon" />}
+            disabled={tasks === undefined}
+          >
+            {$importCredential(t)}
+          </Button>
+        </Stack>
+      </Stack>
+    </Stack>
+  ));
 };

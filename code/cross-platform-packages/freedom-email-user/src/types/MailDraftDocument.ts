@@ -1,7 +1,7 @@
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { ConflictFreeDocument } from 'freedom-conflict-free-document';
 import type { EncodedConflictFreeDocumentSnapshot } from 'freedom-conflict-free-document-data';
-import { attachmentInfoSchema, type MailId } from 'freedom-email-sync';
+import { mailAttachmentInfoSchema, type MailId } from 'freedom-email-sync';
 import type { ConflictFreeDocumentEvaluator } from 'freedom-syncable-store-types';
 import { schema } from 'yaschema';
 
@@ -79,7 +79,7 @@ export class MailDraftDocument extends ConflictFreeDocument<MailDraftDocumentPre
     return this.generic.getTextField('body');
   }
 
-  public get attachmentInfo() {
-    return this.generic.getMapField('attachmentInfo', attachmentInfoSchema);
+  public get attachmentInfos() {
+    return this.generic.getArrayField('attachmentInfos', mailAttachmentInfoSchema);
   }
 }

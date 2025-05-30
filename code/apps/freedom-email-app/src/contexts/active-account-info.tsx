@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
@@ -13,7 +13,7 @@ export interface ActiveAccountInfoProviderProps {
   activeAccountInfo: Binding<ActiveAccountInfo | undefined>;
 }
 
-export const ActiveAccountInfoProvider = ({ children, activeAccountInfo }: ActiveAccountInfoProviderProps & { children: ReactNode }) => (
+export const ActiveAccountInfoProvider = ({ children, activeAccountInfo }: ActiveAccountInfoProviderProps & { children?: ReactNode }) => (
   <ActiveAccountInfoContext value={activeAccountInfo}>{children}</ActiveAccountInfoContext>
 );
 

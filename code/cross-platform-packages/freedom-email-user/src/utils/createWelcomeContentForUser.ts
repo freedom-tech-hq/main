@@ -11,7 +11,8 @@ export const createWelcomeContentForUser = makeAsyncResultFunc(
       to: ['test@freedomtechhq.com'],
       subject: 'Welcome to Freedom!',
       body: 'This is a test email',
-      timeMSec: Date.now()
+      timeMSec: Date.now(),
+      attachments: []
     });
     if (!emailAdded.ok) {
       return emailAdded;

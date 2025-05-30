@@ -2,9 +2,9 @@ import { Box, Button, Stack } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { Txt } from '../../../components/reusable/aliases/Txt.tsx';
+import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { $appName } from '../../../consts/common-strings.ts';
 import { primarySidebarWidthPx } from '../../../consts/sizes.ts';
@@ -22,7 +22,7 @@ export const PrimaryMailSidebar = () => {
 
   return (
     <Stack alignItems="stretch" className="relative default-bg z-10" sx={{ width: `${primarySidebarWidthPx}px` }}>
-      <Stack alignItems="stretch" id={uuid} className="overflow-y-auto">
+      <Stack alignItems="stretch" id={`${uuid}-scrollable`} className="overflow-y-auto">
         <AppToolbar>
           <CompanyLogoIcon color="primary" className="md-icon" />
           <Txt variant="body1">{$appName(t)}</Txt>
@@ -34,7 +34,7 @@ export const PrimaryMailSidebar = () => {
 
         <Stack alignItems="stretch" sx={{ mx: 1.5, my: 1 }}>
           {/* TODO: handle onArrowLeft/right */}
-          <MailCollectionsList scrollParent={uuid} />
+          <MailCollectionsList scrollParent={`${uuid}-scrollable`} />
         </Stack>
 
         {/* Rendering a second copy of the active account button to make sure the scroller has enough space allocated */}

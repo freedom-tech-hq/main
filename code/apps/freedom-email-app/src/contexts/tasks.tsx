@@ -4,7 +4,7 @@ import { devGetAllEnvOverrides, log } from 'freedom-contexts';
 import type { Tasks } from 'freedom-email-tasks-web-worker';
 import { once } from 'lodash-es';
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useWaitableFunction, WaitablesConsumer } from 'react-waitables';
 
 import { getAppEnvironment } from '../consts/appEnvironments.ts';
@@ -13,7 +13,7 @@ import { getRemoteConstructor } from '../utils/getRemoteConstructor.ts';
 
 const TasksContext = createContext<Tasks | undefined>(undefined);
 
-export const TasksProvider = ({ children }: { children: ReactNode }) => {
+export const TasksProvider = ({ children }: { children?: ReactNode }) => {
   const tasks = useWaitableFunction<Tasks, TraceableError>(
     async () => {
       const appEnv = getAppEnvironment();

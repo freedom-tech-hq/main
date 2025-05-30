@@ -3,7 +3,7 @@ import { log, makeTrace, makeUuid } from 'freedom-contexts';
 import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { parse } from 'freedom-serialization';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 
 import { useTasks } from '../../../../contexts/tasks.tsx';

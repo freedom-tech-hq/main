@@ -6,7 +6,7 @@ import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { MailCollectionListItem } from './MailCollectionListItem.tsx';
 import type { MailCollectionsListCollectionDataSourceItem } from './MailCollectionsListCollectionDataSourceItem.ts';

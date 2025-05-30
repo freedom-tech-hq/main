@@ -1,5 +1,6 @@
 import type { PR, SuccessResult } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { allResultsMapped, makeAsyncResultFunc, makeSuccess, sleep, uncheckedResult } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
@@ -12,7 +13,7 @@ export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<LocallyStoredEncryptedEmailCredentialInfo[]> => {
     DEV: if (isDemoMode()) {
-      return makeDemoModeResult();
+      return await makeDemoModeResult();
     }
 
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
@@ -39,15 +40,18 @@ export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
 
 // Helpers
 
-let makeDemoModeResult: () => SuccessResult<LocallyStoredEncryptedEmailCredentialInfo[]> = () => {
+let makeDemoModeResult: () => Promise<SuccessResult<LocallyStoredEncryptedEmailCredentialInfo[]>> = () => {
   throw new Error();
 };
 
-DEV: makeDemoModeResult = () =>
-  makeSuccess([
+DEV: makeDemoModeResult = async () => {
+  await sleep(Math.random() * ONE_SEC_MSEC);
+
+  return makeSuccess([
     {
       email: `demo@${getConfig().defaultEmailDomain}`,
       hasBiometricEncryption: false,
       locallyStoredCredentialId: locallyStoredCredentialIdInfo.make('demo')
     } satisfies LocallyStoredEncryptedEmailCredentialInfo
   ]);
+};

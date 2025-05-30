@@ -1,6 +1,6 @@
 import { ListItemText } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 export interface UuidListItemTextProps {
   short?: boolean;

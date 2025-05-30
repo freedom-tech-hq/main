@@ -1,4 +1,5 @@
 import { Chip } from '@mui/material';
+import React from 'react';
 
 import { getTaskWorkerConfig } from '../../../../task-worker-configs/configs.ts';
 import type { ControlledTextFieldProps } from '../ControlledTextField.tsx';

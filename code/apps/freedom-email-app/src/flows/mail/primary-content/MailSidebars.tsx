@@ -1,4 +1,5 @@
 import { Stack } from '@mui/material';
+import React from 'react';
 
 import { PrimaryMailSidebar } from './PrimaryMailSidebar.tsx';
 import { SecondaryMailSidebar } from './SecondaryMailSidebar.tsx';

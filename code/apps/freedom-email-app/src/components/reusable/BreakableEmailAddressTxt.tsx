@@ -1,17 +1,20 @@
-import type { TypographyProps } from '@mui/material';
 import type { HTMLAttributes } from 'react';
+import React from 'react';
 
-import { Txt } from './aliases/Txt.tsx';
+import type { TxtProps } from './aliases/Txt.ts';
+import { Txt } from './aliases/Txt.ts';
 
-export interface BreakableEmailAddressTxtProps extends TypographyProps {
+export interface BreakableEmailAddressTxtProps extends TxtProps {
   namePartProps?: HTMLAttributes<HTMLSpanElement>;
   domainPartProps?: HTMLAttributes<HTMLSpanElement>;
+  breakAnywhere?: boolean;
 }
 
 export const BreakableEmailAddressTxt = ({
   children: email,
   namePartProps,
   domainPartProps,
+  breakAnywhere = false,
   ...props
 }: { children: string } & BreakableEmailAddressTxtProps) => {
   let indexOfFirstAt = email.indexOf('@');
@@ -22,12 +25,12 @@ export const BreakableEmailAddressTxt = ({
   const [namePart, domainPart] = [email.substring(0, indexOfFirstAt), email.substring(indexOfFirstAt)];
 
   return (
-    <Txt {...props}>
-      <span {...namePartProps} style={{ wordBreak: 'break-all', ...namePartProps?.style }}>
+    <Txt variant="inherit" {...props}>
+      <span {...namePartProps} style={{ wordBreak: breakAnywhere ? 'break-all' : undefined, ...namePartProps?.style }}>
         {namePart}
       </span>
       <span style={{ display: 'inline-block' }}>
-        <span {...domainPartProps} style={{ wordBreak: 'break-all', ...domainPartProps?.style }}>
+        <span {...domainPartProps} style={{ wordBreak: breakAnywhere ? 'break-all' : undefined, ...domainPartProps?.style }}>
           {domainPart}
         </span>
       </span>

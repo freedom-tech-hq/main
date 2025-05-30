@@ -9,4 +9,5 @@ export interface MailThread {
   readonly timeMSec: number;
   readonly numMessages: number;
   readonly numUnread: number;
+  readonly numAttachments: number;
 }

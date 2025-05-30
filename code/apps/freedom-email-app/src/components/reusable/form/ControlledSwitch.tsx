@@ -1,5 +1,6 @@
 import type { SwitchProps } from '@mui/material';
 import { Switch } from '@mui/material';
+import React from 'react';
 import { type Binding, BindingsConsumer, useCallbackRef } from 'react-bindings';
 
 export interface ControlledSwitchProps extends Omit<SwitchProps, 'onChange' | 'checked'> {

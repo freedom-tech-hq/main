@@ -1,9 +1,11 @@
 import type { CheckboxProps } from '@mui/material';
 import { Checkbox } from '@mui/material';
+import React from 'react';
 import { type Binding, BindingsConsumer, useCallbackRef } from 'react-bindings';
 
 import { CheckboxCheckedIcon } from '../../../icons/CheckboxCheckedIcon.ts';
 import { CheckboxMixedIcon } from '../../../icons/CheckboxMixedIcon.ts';
+import { EmptyIcon } from '../../../icons/EmptyIcon.ts';
 
 export interface ControlledCheckboxProps extends Omit<CheckboxProps, 'onChange' | 'checked'> {
   checked: Binding<boolean>;
@@ -18,7 +20,7 @@ export const ControlledCheckbox = ({ checked, ...props }: ControlledCheckboxProp
     <BindingsConsumer bindings={checked} limitType="none">
       {(checked) => (
         <Checkbox
-          icon={<></>}
+          icon={<EmptyIcon className="sm-icon" />}
           checkedIcon={<CheckboxCheckedIcon className="sm-icon" />}
           indeterminateIcon={<CheckboxMixedIcon className="sm-icon" />}
           {...props}

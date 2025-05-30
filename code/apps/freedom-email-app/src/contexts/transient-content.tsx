@@ -2,7 +2,7 @@ import { DoubleLinkedList } from 'doublell';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { BC, useBinding } from 'react-bindings';
 
 export type TransientNodeMaker = (args: { dismiss: () => void }) => ReactNode;
@@ -13,7 +13,7 @@ export interface TransientContentController {
 
 const TransientContentContext = createContext<TransientContentController>({ present: () => noop });
 
-export const TransientContentProvider = ({ children }: { children: ReactNode }) => {
+export const TransientContentProvider = ({ children }: { children?: ReactNode }) => {
   const presented = useBinding(() => new DoubleLinkedList<ReactNode>(), { id: 'presented' });
 
   const controller = useMemo<TransientContentController>(

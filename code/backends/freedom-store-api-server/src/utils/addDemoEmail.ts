@@ -25,7 +25,8 @@ export const addDemoEmail = makeAsyncResultFunc(
       to: ['test@freedomtechhq.com'],
       subject: `Test Email (${new Date().toISOString()})`,
       body: 'This is a test email',
-      timeMSec: Date.now()
+      timeMSec: Date.now(),
+      attachments: []
     });
     if (!added.ok) {
       return added;

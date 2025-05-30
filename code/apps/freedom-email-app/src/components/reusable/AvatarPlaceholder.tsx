@@ -1,5 +1,6 @@
 import type { AvatarProps } from '@mui/material';
 import { Avatar } from '@mui/material';
+import React from 'react';
 
 export type AvatarPlaceholderProps = AvatarProps;
 

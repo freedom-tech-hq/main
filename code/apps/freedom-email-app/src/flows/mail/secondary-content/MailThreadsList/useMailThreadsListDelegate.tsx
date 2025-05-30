@@ -4,7 +4,7 @@ import type { ThreadLikeId } from 'freedom-email-user';
 import { mailThreadIdInfo } from 'freedom-email-user';
 import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { MailThreadListItem } from './MailThreadListItem.tsx';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
@@ -52,7 +52,7 @@ export const useMailCollectionDelegate = (
 
 const itemPrototypes = {
   'mail-thread': {
-    defaultEstimatedSizePx: 136,
+    defaultEstimatedSizePx: 154,
     isSizeDynamic: false,
     Component: () => <MailThreadListItem id={mailThreadIdInfo.make()} timeMSec={Date.now()} tag={undefined} onClick={noop} />
   }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
@@ -9,7 +9,7 @@ export interface ListHasFocusProviderProps {
   listHasFocus: Binding<boolean>;
 }
 
-export const ListHasFocusProvider = ({ children, listHasFocus }: ListHasFocusProviderProps & { children: ReactNode }) => (
+export const ListHasFocusProvider = ({ children, listHasFocus }: ListHasFocusProviderProps & { children?: ReactNode }) => (
   <ListHasFocusContext value={listHasFocus}>{children}</ListHasFocusContext>
 );
 

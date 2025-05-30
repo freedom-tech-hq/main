@@ -1,5 +1,6 @@
 import type { PR, Result, SuccessResult } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, sleep } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import type { MailCollection, MailCollectionGroup } from 'freedom-email-user';
 import { mailCollectionGroupIdInfo } from 'freedom-email-user';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -17,7 +18,7 @@ export const getMailCollections = makeAsyncResultFunc(
     _onData: (value: Result<GetMailCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailCollection_GroupsAddedPacket> => {
     DEV: if (isDemoMode()) {
-      return makeDemoModeResult();
+      return await makeDemoModeResult();
     }
 
     const credential = useActiveCredential(trace).credential;
@@ -73,11 +74,13 @@ export const getMailCollections = makeAsyncResultFunc(
 
 // Helpers
 
-let makeDemoModeResult = (): SuccessResult<GetMailCollection_GroupsAddedPacket> => {
+let makeDemoModeResult: () => Promise<SuccessResult<GetMailCollection_GroupsAddedPacket>> = () => {
   throw new Error();
 };
 
-DEV: makeDemoModeResult = () => {
+DEV: makeDemoModeResult = async () => {
+  await sleep(Math.random() * ONE_SEC_MSEC);
+
   const collections: MailCollection[] = [
     { collectionType: 'inbox', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined },
     { collectionType: 'sent', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined },

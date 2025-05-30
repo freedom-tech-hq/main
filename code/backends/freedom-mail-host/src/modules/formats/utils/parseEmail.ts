@@ -14,12 +14,14 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
   const parsed = await simpleParser(emailData);
 
   // Convert to StoredMail
+  // TODO: handle attachments
   const storedMail: StoredMail = {
     from: parsed.from?.text ?? '',
     to: parsed.to !== undefined ? convertAddressObject(parsed.to) : [],
     subject: parsed.subject ?? '',
     body: parsed.text ?? '',
-    timeMSec: Date.now() // Not parsed.date
+    timeMSec: Date.now(), // Not parsed.date
+    attachments: []
   };
 
   if (parsed.cc !== undefined) {

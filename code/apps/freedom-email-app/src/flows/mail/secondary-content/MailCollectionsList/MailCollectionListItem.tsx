@@ -4,6 +4,7 @@ import type { MailCollection, MailCollectionType } from 'freedom-email-user';
 import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
 import { useT } from 'freedom-react-localization';
 import type { TFunction } from 'i18next';
+import React from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
@@ -34,26 +35,22 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
 
   const IconComponent = iconComponentsByCollectionType[collection.collectionType];
 
-  return (
-    <>
-      {BC(isSelected, (isSelected) => (
-        <ListItemButton selected={isSelected} onClick={taggedOnClick} className="mail-collection-list-item">
-          <ListItemIcon>
-            <IconComponent className="sm-icon" />
-          </ListItemIcon>
-          <ListItemText
-            primary={getTitleForMailCollection(collection, t)}
-            slotProps={{
-              primary: { variant: 'body2', className: 'medium', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
-            }}
-          />
-          {shouldShowUnreadCountByCollectionType[collection.collectionType] ? (
-            <Chip className={`mail-collection-list-item-chip-${isSelected ? 'selected' : 'not-selected'}`} label={collection.unreadCount} />
-          ) : null}
-        </ListItemButton>
-      ))}
-    </>
-  );
+  return BC(isSelected, (isSelected) => (
+    <ListItemButton selected={isSelected} onClick={taggedOnClick} className="mail-collection-list-item">
+      <ListItemIcon>
+        <IconComponent className="sm-icon" />
+      </ListItemIcon>
+      <ListItemText
+        primary={getTitleForMailCollection(collection, t)}
+        slotProps={{
+          primary: { variant: 'body2', className: 'medium', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+        }}
+      />
+      {shouldShowUnreadCountByCollectionType[collection.collectionType] ? (
+        <Chip className={`mail-collection-list-item-chip-${isSelected ? 'selected' : 'not-selected'}`} label={collection.unreadCount} />
+      ) : null}
+    </ListItemButton>
+  ));
 };
 
 // Helpers
