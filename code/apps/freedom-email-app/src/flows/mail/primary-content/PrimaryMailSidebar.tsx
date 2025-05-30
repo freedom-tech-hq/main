@@ -21,8 +21,8 @@ export const PrimaryMailSidebar = () => {
   const uuid = useMemo(() => makeUuid(), []);
 
   return (
-    <Stack alignItems="stretch" className="default-bg" sx={{ position: 'relative', width: `${primarySidebarWidthPx}px`, zIndex: 10 }}>
-      <Stack alignItems="stretch" id={uuid} sx={{ overflowY: 'auto' }}>
+    <Stack alignItems="stretch" className="relative default-bg z-10" sx={{ width: `${primarySidebarWidthPx}px` }}>
+      <Stack alignItems="stretch" id={uuid} className="overflow-y-auto">
         <AppToolbar>
           <CompanyLogoIcon color="primary" className="md-icon" />
           <Txt variant="body1">{$appName(t)}</Txt>
@@ -38,13 +38,13 @@ export const PrimaryMailSidebar = () => {
         </Stack>
 
         {/* Rendering a second copy of the active account button to make sure the scroller has enough space allocated */}
-        <Box sx={{ visibility: 'hidden' }}>
+        <Box className="invisible">
           <ActiveAccountButton />
         </Box>
       </Stack>
 
       {/* TODO: hook up onClick */}
-      <Box className="blurred-overlay-bg" sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2 }}>
+      <Box className="absolute blurred-overlay-bg bottom-0 left-0 right-0 z-2">
         <ActiveAccountButton />
       </Box>
     </Stack>

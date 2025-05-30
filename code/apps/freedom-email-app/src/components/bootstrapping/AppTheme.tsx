@@ -152,7 +152,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
               lineHeight: buttonLineHeight,
               fontWeight: buttonFontWeight,
               padding: `${sp(1)} ${sp(2)}`,
-              minWidth: '32px',
+              minWidth: 'auto',
               textTransform: 'none'
             }
           }
@@ -259,6 +259,13 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         },
+        MuiListItemAvatar: {
+          styleOverrides: {
+            root: {
+              minWidth: 'auto'
+            }
+          }
+        },
         MuiListItemButton: {
           defaultProps: {
             disableRipple: true,
@@ -272,7 +279,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
                 padding: sp(1.5),
 
                 '& .MuiListItemIcon-root': {
-                  minWidth: 0,
+                  minWidth: 'auto',
                   marginRight: sp(1)
                 }
               },

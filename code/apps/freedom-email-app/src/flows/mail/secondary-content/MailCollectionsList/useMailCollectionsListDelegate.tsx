@@ -47,7 +47,7 @@ export const useMailCollectionsListDelegate = (
         </ListItem>
       ),
       renderLoadingIndicator: () => (
-        <ListItem sx={{ justifyContent: 'center' }}>
+        <ListItem className="justify-center">
           <CircularProgress size={22} />
         </ListItem>
       ),

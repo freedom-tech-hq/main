@@ -19,7 +19,7 @@ export const MailScreen = () => {
           case 'xs':
             // TODO: TEMP (md,sm,xs shouldnt be here)
             return (
-              <Stack direction="row" alignItems="stretch" sx={{ width: '100%', height: '100dvh' }}>
+              <Stack direction="row" alignItems="stretch" className="w-full h-dvh">
                 <MailSidebars />
                 <SelectedMailViewerPanel />
               </Stack>
@@ -27,7 +27,7 @@ export const MailScreen = () => {
 
           //   case 'md':
           //     return (
-          //       <Stack sx={{ minHeight: '100dvh' }}>
+          //       <Stack className="min-h-dvh">
           //         <AuthHeroBanner />
           //         <AuthPanel />
           //       </Stack>
@@ -36,7 +36,7 @@ export const MailScreen = () => {
           //   case 'sm':
           //   case 'xs':
           //     return (
-          //       <Stack sx={{ minHeight: '100dvh' }}>
+          //       <Stack className="min-h-dvh">
           //         <AuthPanel />
           //       </Stack>
           //     );

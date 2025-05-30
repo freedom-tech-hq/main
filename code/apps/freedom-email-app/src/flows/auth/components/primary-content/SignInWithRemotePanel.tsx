@@ -70,7 +70,7 @@ export const SignInWithRemotePanel = ({ onBackClick }: SignInWithRemotePanelProp
               <PasswordField value={password} disabled={isBusy} label={$enterPassword(t)} />
             </Stack>
 
-            <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
+            <Stack gap={2} className="self-stretch">
               {BC(isFormReady.value, (isFormReady = false) => (
                 <Button type="submit" variant="contained" disabled={!isFormReady}>
                   {$signIn(t)}

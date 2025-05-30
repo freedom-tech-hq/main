@@ -58,7 +58,7 @@ export const ImportCredentialPanel = ({ account, onBackClick }: ImportCredential
               <PasswordField value={password} disabled={isBusy} autoFocus label={$enterPassword(t)} />
             </Stack>
 
-            <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
+            <Stack gap={2} className="self-stretch">
               <Button type="submit" variant="contained">
                 {$signIn(t)}
               </Button>

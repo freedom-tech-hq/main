@@ -82,8 +82,7 @@ export const AuthSelectionPanel = ({
 
             <Button
               variant="text"
-              className="default-text"
-              sx={{ alignSelf: 'stretch' }}
+              className="self-stretch default-text"
               startIcon={<UserRoundPlusIcon className="default-text sm-icon" />}
               onClick={onSignInWithRemoteClick}
             >
@@ -94,7 +93,7 @@ export const AuthSelectionPanel = ({
 
             <AppDivider label={$or(t)} />
 
-            <Stack gap={2} sx={{ alignSelf: 'stretch' }}>
+            <Stack gap={2} className="self-stretch">
               <Button variant="contained" color="primary" onClick={onCreateNewAccountClick}>
                 {$createNewAccount(t)}
               </Button>

@@ -40,7 +40,7 @@ export const useMailCollectionDelegate = (
         </ListItem>
       ),
       renderLoadingIndicator: () => (
-        <ListItem sx={{ justifyContent: 'center' }}>
+        <ListItem className="justify-center">
           <CircularProgress size={22} />
         </ListItem>
       ),
@@ -52,7 +52,7 @@ export const useMailCollectionDelegate = (
 
 const itemPrototypes = {
   'mail-thread': {
-    defaultEstimatedSizePx: 113,
+    defaultEstimatedSizePx: 136,
     isSizeDynamic: false,
     Component: () => <MailThreadListItem id={mailThreadIdInfo.make()} timeMSec={Date.now()} tag={undefined} onClick={noop} />
   }

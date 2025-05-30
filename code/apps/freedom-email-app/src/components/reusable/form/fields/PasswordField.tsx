@@ -13,7 +13,7 @@ export const PasswordField = (props: PasswordFieldProps) => {
   const onToggleShowPasswordClick = useCallbackRef(() => showPassword.set(!showPassword.get()));
 
   const defaultEndAdornment = (
-    <Button sx={{ minWidth: 0, p: 1 }} onClick={onToggleShowPasswordClick}>
+    <Button sx={{ p: 1 }} onClick={onToggleShowPasswordClick}>
       {BC(showPassword, (showPassword) => (
         <EyeIcon className="sm-icon" sx={{ color: showPassword ? 'var(--colors-default-text)' : 'var(--colors-disabled-text)' }} />
       ))}

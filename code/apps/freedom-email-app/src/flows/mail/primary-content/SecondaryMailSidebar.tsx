@@ -4,6 +4,7 @@ import type { MailCollectionType } from 'freedom-email-user';
 import { mailCollectionTypes } from 'freedom-email-user';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
 import { useP, useT } from 'freedom-react-localization';
+import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useMemo } from 'react';
 import { BC, useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
@@ -75,17 +76,21 @@ export const SecondaryMailSidebar = () => {
     <Stack
       id={uuid}
       alignItems="stretch"
+      className="relative overflow-hidden"
       sx={{
-        position: 'relative',
         marginLeft: hasSelectedCollectionId.get() ? '0px' : `-${secondarySidebarWidthPx}px`,
-        overflow: 'hidden',
-        transition: 'margin-left 300ms ease-in-out'
+        transition: `margin-left ${ANIMATION_DURATION_MSEC}ms ease-in-out`
       }}
     >
-      <Stack id={`${uuid}-scrollable`} alignItems="stretch" sx={{ overflowY: 'auto', width: `${secondarySidebarWidthPx}px` }}>
+      <Stack
+        id={`${uuid}-scrollable`}
+        alignItems="stretch"
+        className="overflow-y-auto"
+        sx={{ width: `${secondarySidebarWidthPx}px`, px: 3.5 }}
+      >
         <AppToolbar>
           {/* TODO: handle custom collection names */}
-          <Txt variant="h3" className="semibold" sx={{ flex: 1 }}>
+          <Txt variant="h3" className="flex-auto semibold">
             {BC(lastDefinedCollectionId, (collectionId) =>
               (collectionId !== undefined && mailCollectionTypes.has(collectionId)) || collectionId === 'drafts'
                 ? $mailCollectionType[collectionId as MailCollectionType | 'drafts'](t)
