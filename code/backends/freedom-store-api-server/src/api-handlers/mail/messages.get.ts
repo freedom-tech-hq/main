@@ -86,7 +86,7 @@ export default makeHttpApiHandler(
     // Fetch one extra item to determine if there's a next page
     params.push(PAGE_SIZE + 1);
     const messagesQuery = `
-      SELECT "id", "userId", "transferredAt", "folder", "listMessage"
+      SELECT "id", "userId", "transferredAt", "listMessage"
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2
       ${cursorClause}
@@ -102,13 +102,13 @@ export default makeHttpApiHandler(
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([
-      dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'folder' | 'listMessage'>>(messagesQuery, params),
-      dbQuery<{ total_count: string | number }>(countQuery, [currentUserId, currentFolder])
+      dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listMessage'>>(messagesQuery, params),
+      dbQuery<{ total_count: number }>(countQuery, [currentUserId, currentFolder])
     ]);
 
     const dbMessages = messagesResult.rows;
 
-    const totalCount = parseInt(countResult.rows[0]?.total_count?.toString() ?? '0', 10);
+    const totalCount = countResult.rows[0]?.total_count ?? 0;
 
     const hasMoreItems = dbMessages.length > PAGE_SIZE;
     const itemsForResponse = hasMoreItems ? dbMessages.slice(0, PAGE_SIZE) : dbMessages;
