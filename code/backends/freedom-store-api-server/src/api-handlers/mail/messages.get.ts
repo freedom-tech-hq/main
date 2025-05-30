@@ -23,6 +23,23 @@ interface DbQueryCursor {
   id: string;
 }
 
+function decodePageToken(pageToken: string | undefined): DbQueryCursor | undefined {
+  if (pageToken === undefined) {
+    return undefined;
+  }
+  try {
+    const rawTokenData = pageTokenInfo.removePrefix(pageToken);
+    const decodedString = Buffer.from(rawTokenData, 'base64').toString('utf-8');
+    const tokenPayload = JSON.parse(decodedString) as PageTokenPayload;
+    if (!tokenPayload.id || !tokenPayload.transferredAt) {
+      return undefined;
+    }
+    return tokenPayload;
+  } catch {
+    return undefined;
+  }
+}
+
 // Interface representing the raw row structure from the 'messages' table (camelCase due to quoted identifiers in SQL)
 interface MessageDbRow {
   id: string;
@@ -66,19 +83,7 @@ export default makeHttpApiHandler(
     const currentFolder: MessageFolder = 'inbox';
 
     let cursor: DbQueryCursor | undefined;
-    if (pageToken !== undefined) {
-      try {
-        const rawTokenData = pageTokenInfo.removePrefix(pageToken);
-        const decodedString = Buffer.from(rawTokenData, 'base64').toString('utf-8');
-        const tokenPayload = JSON.parse(decodedString) as PageTokenPayload;
-        if (!tokenPayload.id || !tokenPayload.transferredAt) {
-          return makeFailure(new InputSchemaValidationError(trace, { message: 'Invalid page token payload' }));
-        }
-        cursor = tokenPayload;
-      } catch (error) {
-        return makeFailure(new InputSchemaValidationError(trace, { message: 'Failed to parse page token', cause: error }));
-      }
-    }
+    cursor = decodePageToken(pageToken);
 
     // Construct the database query
     const params: unknown[] = [currentUserId, currentFolder];
