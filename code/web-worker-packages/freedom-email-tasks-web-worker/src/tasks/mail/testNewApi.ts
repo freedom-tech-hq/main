@@ -25,6 +25,7 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
   }
 
   const userKeys = makeUserKeysFromEmailCredential(credential);
+  const publicKeys = credential.privateKeys.publicOnly();
   // /Access credentials
 
   // Generate test data
@@ -34,7 +35,7 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
       subject: 'Test subject',
       snippet: 'Test body'
     },
-    userKeys
+    publicKeys
   });
   if (!encryptedResult.ok) {
     return encryptedResult;

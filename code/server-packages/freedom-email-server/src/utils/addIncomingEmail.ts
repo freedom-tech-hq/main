@@ -1,28 +1,59 @@
+import { Buffer } from 'node:buffer';
+import { randomUUID } from 'node:crypto';
+
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { findUserByEmail } from 'freedom-db';
-import { addMail, type StoredMail } from 'freedom-email-sync';
-
-import { getEmailAgentSyncableStoreForUser } from './getEmailAgentSyncableStoreForUser.ts';
+import { userEncryptValue } from 'freedom-crypto-service';
+import { type DbMessage, dbQuery, findUserByEmail } from 'freedom-db';
+import { type StoredMail } from 'freedom-email-sync';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, recipientEmail: string, mail: StoredMail): PR<undefined> => {
+    const messageId = randomUUID();
+    const transferredAt = new Date(mail.timeMSec);
+    const folder: DbMessage['folder'] = 'inbox';
+
+    // Load user keys
     const user = await findUserByEmail(trace, recipientEmail);
     if (!user.ok) {
       return generalizeFailureResult(trace, user, 'not-found');
     }
 
-    const syncableStoreResult = await getEmailAgentSyncableStoreForUser(trace, user.value);
-    if (!syncableStoreResult.ok) {
-      return syncableStoreResult;
+    // According to DbMessage schema, these are Base64String
+    const listMessageResult = await userEncryptValue(trace, {
+      schema: decryptedListMessagePartSchema,
+      value: {
+        subject: mail.subject ?? '',
+        snippet: mail.body ?? ''
+      },
+      publicKeys: user.value.publicKeys
+    });
+    if (!listMessageResult.ok) {
+      return listMessageResult;
     }
 
-    const added = await addMail(trace, syncableStoreResult.value, mail);
-    if (!added.ok) {
-      return added;
-    }
+    const listMessage = listMessageResult.value;
+    const viewMessage = Buffer.from(mail.body ?? '').toString('base64');
+    const rawMessage = Buffer.from(mail.body ?? '').toString('base64'); // Assuming rawMessage is also the body for now
+
+    const sql = `
+      INSERT INTO "messages" ("id", "userId", "transferredAt", "folder", "listMessage", "viewMessage", "rawMessage")
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `;
+
+    const params: unknown[] = [
+      messageId,
+      recipientEmail, // This is a string, matching the 'users'.'userId' TEXT column type
+      transferredAt,
+      folder,
+      listMessage,
+      viewMessage,
+      rawMessage
+    ];
+
+    await dbQuery(sql, params);
 
     return makeSuccess(undefined);
   }
