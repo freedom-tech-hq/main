@@ -1,5 +1,5 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
-import type { IsoDateTime } from 'freedom-basic-data';
+import { base64String, type IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db'; // Removed FindManyMessagesCursor, findManyMessages
 import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
@@ -23,7 +23,7 @@ interface DbQueryCursor {
   id: string;
 }
 
-function decodePageToken(pageToken: string | undefined): DbQueryCursor | undefined {
+function decodePageToken(pageToken: PageToken | undefined): DbQueryCursor | undefined {
   if (pageToken === undefined) {
     return undefined;
   }
@@ -31,9 +31,10 @@ function decodePageToken(pageToken: string | undefined): DbQueryCursor | undefin
     const rawTokenData = pageTokenInfo.removePrefix(pageToken);
     const decodedString = Buffer.from(rawTokenData, 'base64').toString('utf-8');
     const tokenPayload = JSON.parse(decodedString) as PageTokenPayload;
-    if (!tokenPayload.id || !tokenPayload.transferredAt) {
-      return undefined;
-    }
+    // TOOO: Schema validation
+    // if (!tokenPayload.id || !tokenPayload.transferredAt) {
+    //   return undefined;
+    // }
     return tokenPayload;
   } catch {
     return undefined;
@@ -43,7 +44,7 @@ function decodePageToken(pageToken: string | undefined): DbQueryCursor | undefin
 // Interface representing the raw row structure from the 'messages' table (camelCase due to quoted identifiers in SQL)
 interface MessageDbRow {
   id: string;
-  userId: string; // Raw userId string from DB, will be mapped to DbMessage.userId object
+  userId: EmailUserId;
   transferredAt: Date; // Will be converted to IsoDateTime string
   folder: MessageFolder;
   listMessage: Buffer; // Will be converted to Uint8Array
@@ -82,14 +83,13 @@ export default makeHttpApiHandler(
     // For now, hardcoding to 'inbox'.
     const currentFolder: MessageFolder = 'inbox';
 
-    let cursor: DbQueryCursor | undefined;
-    cursor = decodePageToken(pageToken);
+    const cursor = decodePageToken(pageToken);
 
     // Construct the database query
     const params: unknown[] = [currentUserId, currentFolder];
     let cursorClause = '';
 
-    if (cursor) {
+    if (cursor !== undefined) {
       params.push(cursor.transferredAt, cursor.id);
       cursorClause = `AND ("transferredAt" < $${params.length - 1} OR ("transferredAt" = $${params.length - 1} AND "id" < $${params.length}))`;
     }
@@ -120,7 +120,7 @@ export default makeHttpApiHandler(
     const dbMessages: DbMessage[] = messagesResult.rows.map(
       (row: MessageDbRow): DbMessage => ({
         id: row.id,
-        userId: { id: row.userId, type: 'email' }, // Assuming type is always 'email'
+        userId: row.userId,
         transferredAt: row.transferredAt.toISOString() as IsoDateTime,
         folder: row.folder,
         listMessage: new Uint8Array(row.listMessage),
@@ -138,7 +138,7 @@ export default makeHttpApiHandler(
       (dbMsg: DbMessage): types.mail.ListMessage => ({
         id: dbMsg.id,
         transferredAt: dbMsg.transferredAt,
-        listMessage: Buffer.from(dbMsg.listMessage).toString('base64'),
+        listMessage: base64String.makeWithBuffer(dbMsg.listMessage),
         // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
         hasAttachments: false
       })
