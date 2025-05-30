@@ -52,6 +52,10 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
   console.log('Starting testNewApi task...');
 
   const apiResult = await getMessages(trace, {
+    headers: {
+      // TODO: Use signed JWT
+      authorization: `Bearer ${credential.userId}`
+    },
     query: {
       pageToken: undefined
     },
