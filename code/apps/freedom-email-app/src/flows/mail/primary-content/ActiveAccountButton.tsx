@@ -25,13 +25,13 @@ export const ActiveAccountButton = ({ onClick }: ActiveAccountButtonProps) => {
             endIcon={<CollapseExpandIcon className="sm-icon" />}
             onClick={onClick}
           >
-            <BreakableEmailAddressTxt variant="caption" sx={{ textAlign: 'left' }}>
+            <BreakableEmailAddressTxt variant="caption" className="text-left">
               {activeAccountInfo.email}
             </BreakableEmailAddressTxt>
           </Button>
         ) : (
           <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />}>
-            <TxtPlaceholder sx={{ width: '100%' }} />
+            <TxtPlaceholder className="w-full" />
           </Button>
         )
       )}

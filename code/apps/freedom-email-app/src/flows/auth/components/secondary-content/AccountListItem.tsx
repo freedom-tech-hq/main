@@ -15,7 +15,7 @@ export const AccountListItem = ({ account, onClick }: AccountListItemProps) => {
 
   const content = (
     <>
-      <ListItemAvatar sx={{ minWidth: 0, mr: 1.5 }}>
+      <ListItemAvatar sx={{ mr: 1.5 }}>
         <StringAvatar value={account.email} />
       </ListItemAvatar>
       <ListItemText primary={<BreakableEmailAddressTxt>{account.email}</BreakableEmailAddressTxt>} />

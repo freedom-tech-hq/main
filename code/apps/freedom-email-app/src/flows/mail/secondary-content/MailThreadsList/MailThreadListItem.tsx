@@ -67,26 +67,20 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
                   <StringAvatar className="md-avatar" value={thread.from} />
                 </Stack>
               </ListItemAvatar>
-              <Stack alignItems="stretch">
-                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-                  <Stack direction="row" alignItems="center" gap={1} sx={{ flex: 1, overflow: 'hidden' }}>
+              <Stack alignItems="stretch" className="overflow-hidden">
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1} className="overflow-hidden">
+                  <Stack direction="row" alignItems="center" gap={1} className="flex-auto overflow-hidden">
                     {thread.numUnread > 0 ? <UnreadIndicator /> : null}
-                    <Txt variant="body1" className="medium" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <Txt variant="body1" className="medium flex-auto whitespace-nowrap overflow-hidden text-ellipsis">
                       {fromTags}
                     </Txt>
                   </Stack>
-                  <Txt variant="caption" color="disabled" sx={{ whiteSpace: 'nowrap' }}>
+                  <Txt variant="caption" color="disabled" className="whitespace-no-wrap">
                     {formatTimeIfSameDateOrFormatDate(timeMSec)}
                   </Txt>
                 </Stack>
                 <ListItemText>
-                  <Txt
-                    variant="body2"
-                    sx={{
-                      overflow: 'hidden',
-                      maxHeight: '72px'
-                    }}
-                  >
+                  <Txt variant="body2" className="overflow-hidden" sx={{ height: '72px' }}>
                     {thread.subject}
                     {' – '}
                     <Txt component="span" color="textDisabled">

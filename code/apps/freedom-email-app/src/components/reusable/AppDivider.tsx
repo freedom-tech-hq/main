@@ -8,15 +8,15 @@ export interface AppDividerProps {
 
 export const AppDivider = ({ label }: AppDividerProps) => {
   if (label === undefined) {
-    return <hr style={{ width: '100%' }} />;
+    return <hr className="w-full" />;
   } else {
     return (
-      <Stack alignItems="center" gap={2} direction="row" sx={{ width: '100%' }}>
-        <hr style={{ flex: 1 }} />
+      <Stack alignItems="center" gap={2} direction="row" className="w-full">
+        <hr className="flex-auto" />
         <Txt variant="body2" className="secondary-text">
           {label}
         </Txt>
-        <hr style={{ flex: 1 }} />
+        <hr className="flex-auto" />
       </Stack>
     );
   }

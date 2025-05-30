@@ -20,30 +20,23 @@ export const AuthHeroSidebar = () => {
   const theme = useTheme();
 
   return (
-    <Stack sx={{ width: '50%', maxWidth: `${theme.breakpoints.values.lg}px`, p: 2 }}>
+    <Stack className="w-1/2" sx={{ maxWidth: `${theme.breakpoints.values.lg}px`, p: 2 }}>
       <Stack
         justifyContent="space-between"
-        className="primary-color-bg"
-        sx={{
-          position: 'relative',
-          borderRadius: 2,
-          flex: 1,
-          p: 5,
-          pb: 6,
-          overflow: 'hidden'
-        }}
+        className="relative flex-auto overflow-hidden primary-color-bg"
+        sx={{ borderRadius: 2, p: 5, pb: 6 }}
       >
-        <img src={Vector1} style={{ position: 'absolute', left: 0, top: 0 }} width="489px" />
-        <img src={Vector2} style={{ position: 'absolute', bottom: 0, right: 0 }} width="677px" />
-        <Stack direction="row" alignItems="center" gap={0.5} sx={{ zIndex: 1 }}>
+        <img src={Vector1} className="absolute left-0 top-0" width="489px" />
+        <img src={Vector2} className="absolute bottom-0 right-0" width="677px" />
+        <Stack direction="row" alignItems="center" gap={0.5} className="z-1">
           <CompanyLogoIcon className="primary-contrast" sx={{ width: '40px', height: '40px' }} />
           <Txt variant="h3" className="semibold primary-contrast">
             {$appName(t)}
           </Txt>
         </Stack>
-        <Stack gap={3} sx={{ zIndex: 1 }}>
+        <Stack gap={3} className="z-1">
           <img src={LockImage} width="200px" />
-          <Txt variant="h1" className="primary-contrast" style={{ fontSize: '72px', fontWeight: 700, lineHeight: '125%' }}>
+          <Txt variant="h1" className="primary-contrast" sx={{ fontSize: '72px', fontWeight: 700, lineHeight: '125%' }}>
             {$headline(t)}
           </Txt>
           <Txt variant="h3" className="primary-contrast">

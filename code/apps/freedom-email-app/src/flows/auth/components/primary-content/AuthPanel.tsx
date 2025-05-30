@@ -119,7 +119,7 @@ export const AuthPanel = () => {
   });
 
   return (
-    <Stack alignItems="center" justifyContent="center" sx={{ flex: 1 }}>
+    <Stack alignItems="center" justifyContent="center" className="flex-auto">
       <input
         id={`${uuid}-credential-file-input`}
         type="file"
