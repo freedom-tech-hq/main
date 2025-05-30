@@ -41,9 +41,6 @@ function decodePageToken(pageToken: PageToken | undefined): DbQueryCursor | unde
   }
 }
 
-// Type for the subset of DbMessage fields we need
-type MessageRow = Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'folder' | 'listMessage'>;
-
 function getUserIdFromAuthorizationHeader(headers: Record<string, string> | undefined): EmailUserId | undefined {
   const authorizationHeader = headers?.authorization;
   if (authorizationHeader === undefined || !authorizationHeader.startsWith('Bearer ')) {
@@ -105,7 +102,7 @@ export default makeHttpApiHandler(
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([
-      dbQuery<MessageRow>(messagesQuery, params),
+      dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'folder' | 'listMessage'>>(messagesQuery, params),
       dbQuery<{ total_count: string | number }>(countQuery, [currentUserId, currentFolder])
     ]);
 
