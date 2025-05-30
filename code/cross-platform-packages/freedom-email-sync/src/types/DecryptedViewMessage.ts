@@ -3,10 +3,10 @@ import { schema } from 'yaschema';
 
 export const decryptedViewMessagePartSchema = schema.object({
   from: schema.string(),
-  to: schema.string(), // TODO: Make typing
-  cc: schema.string(),
-  onBehalf: schema.string().optional(), // Assuming string, can be refined if needed
-  body: schema.string()
+  to: schema.string().allowEmptyString(), // TODO: Make typing
+  cc: schema.string().allowEmptyString(),
+  onBehalf: schema.string().allowEmptyString().optional(), // Assuming string, can be refined if needed
+  body: schema.string().allowEmptyString()
 });
 
 export const decryptedViewMessageSchema = schema.object({
@@ -18,10 +18,10 @@ export const decryptedViewMessageSchema = schema.object({
 
   // Decoded viewMessage
   from: schema.string(),
-  to: schema.string(),
-  cc: schema.string(),
-  onBehalf: schema.string().optional(), // Assuming string, can be refined if needed
-  body: schema.string()
+  to: schema.string().allowEmptyString(),
+  cc: schema.string().allowEmptyString(),
+  onBehalf: schema.string().allowEmptyString().optional(), // Assuming string, can be refined if needed
+  body: schema.string().allowEmptyString()
 
   // Dynamic
   // TODO: attachments

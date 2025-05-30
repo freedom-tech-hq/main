@@ -41,7 +41,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
         from: mail.from,
         to: mail.to.join(', '),
         cc: mail.cc?.join(', ') ?? '',
-        onBehalf: '',
+        // onBehalf: '',
         body: mail.body
       },
       publicKeys: user.value.publicKeys
