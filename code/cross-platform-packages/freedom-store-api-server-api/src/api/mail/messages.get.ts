@@ -1,4 +1,4 @@
-import { makeFailureWithCodeSchemas } from 'freedom-basic-data';
+import { authHeadersSchema, makeFailureWithCodeSchemas } from 'freedom-basic-data';
 import { makePaginatedSchema, paginationOptionsSchema } from 'freedom-paginated-data';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
@@ -13,6 +13,7 @@ export const GET = makeHttpApi({
   isSafeToRetry: true,
   schemas: {
     request: {
+      headers: authHeadersSchema,
       query: paginationOptionsSchema
     },
     successResponse: {

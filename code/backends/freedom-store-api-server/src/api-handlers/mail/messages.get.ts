@@ -1,7 +1,8 @@
-import { makeFailure, makeSuccess, type PR } from 'freedom-async';
+import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
-import { InvalidArgumentError } from 'freedom-common-errors';
+import { InputSchemaValidationError } from 'freedom-common-errors';
 import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db'; // Removed FindManyMessagesCursor, findManyMessages
+import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
 import { type PageToken, pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import type { types } from 'freedom-store-api-server-api';
@@ -33,6 +34,14 @@ interface MessageDbRow {
   rawMessage: Buffer; // Will be converted to Uint8Array
 }
 
+function getUserIdFromAuthorizationHeader(headers: Record<string, string> | undefined): EmailUserId | undefined {
+  const authorizationHeader = headers?.authorization;
+  if (authorizationHeader === undefined || !authorizationHeader.startsWith('Bearer ')) {
+    return undefined;
+  }
+  return emailUserIdInfo.parse(authorizationHeader, 7)?.value;
+}
+
 export default makeHttpApiHandler(
   [import.meta.filename],
   { api: api.mail.messages.GET },
@@ -40,15 +49,16 @@ export default makeHttpApiHandler(
     trace,
     {
       input: {
+        headers,
         query: { pageToken }
       }
       // auth // Assuming auth.userId is available from the handler context
     }
   ) => {
     // TODO: Get userId from actual auth context
-    const currentUserId = auth?.userId;
-    if (!currentUserId) {
-      return makeFailure(new InvalidArgumentError(trace, { message: 'User ID not found in auth context' }));
+    const currentUserId = getUserIdFromAuthorizationHeader(headers);
+    if (currentUserId === undefined) {
+      return makeFailure(new InputSchemaValidationError(trace, { message: 'User ID not found in auth context' }));
     }
 
     // TODO: The API definition (api.mail.messages.GET) should be updated to accept `folder` as a query parameter.
@@ -56,17 +66,17 @@ export default makeHttpApiHandler(
     const currentFolder: MessageFolder = 'inbox';
 
     let cursor: DbQueryCursor | undefined;
-    if (pageToken) {
+    if (pageToken !== undefined) {
       try {
         const rawTokenData = pageTokenInfo.removePrefix(pageToken);
         const decodedString = Buffer.from(rawTokenData, 'base64').toString('utf-8');
         const tokenPayload = JSON.parse(decodedString) as PageTokenPayload;
         if (!tokenPayload.id || !tokenPayload.transferredAt) {
-          return makeFailure(new InvalidArgumentError(trace, { message: 'Invalid page token payload' }));
+          return makeFailure(new InputSchemaValidationError(trace, { message: 'Invalid page token payload' }));
         }
         cursor = tokenPayload;
       } catch (error) {
-        return makeFailure(new InvalidArgumentError(trace, { message: 'Failed to parse page token', cause: error }));
+        return makeFailure(new InputSchemaValidationError(trace, { message: 'Failed to parse page token', cause: error }));
       }
     }
 
