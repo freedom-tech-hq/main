@@ -7,7 +7,7 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { type DbMessage, dbQuery, findUserByEmail } from 'freedom-db';
 import { type StoredMail } from 'freedom-email-sync';
-import { decryptedListMessagePartSchema } from 'freedom-email-sync';
+import { decryptedListMessagePartSchema, decryptedViewMessagePartSchema } from 'freedom-email-sync';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
@@ -27,7 +27,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
       schema: decryptedListMessagePartSchema,
       value: {
         subject: mail.subject,
-        snippet: mail.body
+        snippet: mail.body // TODO: Don't forget to trim
       },
       publicKeys: user.value.publicKeys
     });
@@ -37,7 +37,22 @@ export const addIncomingEmail = makeAsyncResultFunc(
     const listMessage = listMessageResult.value;
 
     // viewMessage
-    const viewMessage = Buffer.from(mail.body ?? '').toString('base64');
+    const viewMessageResult = await userEncryptValue(trace, {
+      schema: decryptedViewMessagePartSchema,
+      value: {
+        from: mail.from,
+        to: mail.to.join(', '),
+        cc: mail.cc?.join(', ') ?? '',
+        onBehalf: '',
+        body: mail.body
+      },
+      publicKeys: user.value.publicKeys
+    });
+    if (!viewMessageResult.ok) {
+      return viewMessageResult;
+    }
+
+    // rawMessage
     const rawMessage = Buffer.from(mail.body ?? '').toString('base64'); // Assuming rawMessage is also the body for now
 
     const sql = `

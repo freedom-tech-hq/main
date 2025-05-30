@@ -1,5 +1,5 @@
-import { schema } from 'yaschema';
 import { isoDateTimeSchema } from 'freedom-basic-data';
+import { schema } from 'yaschema';
 
 export const decryptedViewMessagePartSchema = schema.object({
   from: schema.string(),
