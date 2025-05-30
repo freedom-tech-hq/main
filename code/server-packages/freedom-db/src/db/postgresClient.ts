@@ -1,7 +1,13 @@
 import type { PoolConfig, QueryResult, QueryResultRow } from 'pg';
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
 
 import { getConfig } from '../config.ts';
+
+// Types transformation:
+// 1114 = timestamp without time zone
+types.setTypeParser(1114, (val) => val); // keep as string
+// 1184 = timestamp with time zone
+types.setTypeParser(1184, (val) => val); // keep as string
 
 // Configure PostgreSQL client options
 const getPostgresConfig = (): PoolConfig => {

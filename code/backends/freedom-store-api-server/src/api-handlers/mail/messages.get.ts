@@ -45,7 +45,7 @@ function decodePageToken(pageToken: PageToken | undefined): DbQueryCursor | unde
 interface MessageDbRow {
   id: string;
   userId: EmailUserId;
-  transferredAt: Date; // Will be converted to IsoDateTime string
+  transferredAt: IsoDateTime;
   folder: MessageFolder;
   listMessage: Buffer; // Will be converted to Uint8Array
   viewMessage: Buffer; // Will be converted to Uint8Array
@@ -121,7 +121,7 @@ export default makeHttpApiHandler(
       (row: MessageDbRow): DbMessage => ({
         id: row.id,
         userId: row.userId,
-        transferredAt: row.transferredAt.toISOString() as IsoDateTime,
+        transferredAt: row.transferredAt,
         folder: row.folder,
         listMessage: new Uint8Array(row.listMessage),
         viewMessage: new Uint8Array(row.viewMessage),
