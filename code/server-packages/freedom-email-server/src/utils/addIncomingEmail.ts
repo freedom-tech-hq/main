@@ -22,20 +22,21 @@ export const addIncomingEmail = makeAsyncResultFunc(
       return generalizeFailureResult(trace, user, 'not-found');
     }
 
-    // According to DbMessage schema, these are Base64String
+    // listMessage
     const listMessageResult = await userEncryptValue(trace, {
       schema: decryptedListMessagePartSchema,
       value: {
-        subject: mail.subject ?? '',
-        snippet: mail.body ?? ''
+        subject: mail.subject,
+        snippet: mail.body
       },
       publicKeys: user.value.publicKeys
     });
     if (!listMessageResult.ok) {
       return listMessageResult;
     }
-
     const listMessage = listMessageResult.value;
+
+    // viewMessage
     const viewMessage = Buffer.from(mail.body ?? '').toString('base64');
     const rawMessage = Buffer.from(mail.body ?? '').toString('base64'); // Assuming rawMessage is also the body for now
 
