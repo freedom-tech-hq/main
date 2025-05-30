@@ -1,20 +1,20 @@
 import { Stack } from '@mui/material';
 import { parseFrom, parseOneAddress } from 'email-addresses';
 import { LOCALIZE } from 'freedom-localization';
+import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
 import React from 'react';
 import { useBinding } from 'react-bindings';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { StringAvatar } from '../../../../components/reusable/StringAvatar.tsx';
+import { AttachmentButton } from './AttachmentButton.tsx';
 import type { MailListDataSourceMailItem } from './MailListDataSourceItem.ts';
 import { MailListItemFormattedEmailAddresses } from './MailListItemFormattedEmailAddresses.tsx';
 import { MailListItemTimeLabel } from './MailListItemTimeLabel.tsx';
 
 const ns = 'ui';
 const $attachments = LOCALIZE('Attachments')({ ns });
-const $forward = LOCALIZE('Forward')({ ns });
-const $reply = LOCALIZE('Reply')({ ns });
 const $to = LOCALIZE('to')({ ns });
 
 export type MailListItemProps = Omit<MailListDataSourceMailItem, 'type'>;
@@ -36,7 +36,7 @@ export const MailListItem = ({ mail }: MailListItemProps) => {
   const parsedTo = mail.to.map(parseOneAddress);
 
   return (
-    <Stack gap={3} sx={{ mx: 1, mb: 8 }}>
+    <Stack gap={3} sx={{ mx: 1, mb: 8 }} className="default-bg">
       <Stack direction="row" gap={1} className="flex-auto overflow-hidden">
         <Stack direction="row" gap={1.5} className="flex-auto overflow-hidden">
           <StringAvatar value={firstFromAddress} />
@@ -67,54 +67,23 @@ export const MailListItem = ({ mail }: MailListItemProps) => {
           {mail.subject}
         </Txt>
 
-        <Txt variant="body1" className="medium">
+        <Txt variant="body1" className="medium whitespace-pre-line">
           {mail.body}
         </Txt>
-      </Stack>
 
-      {/* <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch', py: 1.5 }}>
-        <Stack direction="row">
-          <ListItemAvatar sx={avatarStyle}>
-            <Stack direction="row" gap={1} alignItems="center">
-              <Avatar {...makeStringAvatarProps(mail.from)} />
-            </Stack>
-          </ListItemAvatar>
-          <Stack alignItems="stretch" sx={headerContentStyle}>
-            <div>
-              <Stack direction="row" gap={1} sx={{ float: 'right', ml: 1 }}>
-                <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
-                  {formatDate(mail.timeMSec)}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={noWrapStyle}>
-                  {formatTime(mail.timeMSec)}
-                </Typography>
-              </Stack>
-              <div>{fromTags}</div>
-            </div>
-            <Stack direction="row" gap={1}>
-              <Typography variant="body2">{$to(t)}</Typography>
-              <Typography variant="body2" color="textSecondary" sx={wrapTextAnywhereStyle}>
-                {mail.to}
-              </Typography>
+        {IF(mail.attachments.length > 0, () => (
+          <Stack sx={{ mt: 1 }} gap={2}>
+            <Txt variant="h3" color="textDisabled" className="semibold">
+              {$attachments(t)}
+            </Txt>
+            <Stack direction="row" gap={1.5}>
+              {mail.attachments.map((attachment) => (
+                <AttachmentButton key={attachment.id} attachment={attachment} />
+              ))}
             </Stack>
           </Stack>
-        </Stack>
-
-        <ListItemText primary={mail.subject} slotProps={subjectSlotProps} sx={{ mt: 1 }} />
-
-        <Divider sx={{ mx: -2, my: 1 }} />
-
-        {mail.body.split(/\n+/).map((paragraph, index) => (
-          <ListItemText key={index} secondary={paragraph} />
-        ))} */}
-      {/* </ListItem> */}
+        ))}
+      </Stack>
     </Stack>
   );
 };
-
-/** Returns a BindingsConsumer JSX Element.  This is useful as a shorthand especially when passing BindingsConsumers as props of other
- * components */
-// const BC = <DependenciesT extends BindingDependencies>(
-//   bindings: DependenciesT,
-//   children: BindingsConsumerRenderCallback<DependenciesT>
-// ) => <BindingsConsumer bindings={bindings}>{children}</BindingsConsumer>;

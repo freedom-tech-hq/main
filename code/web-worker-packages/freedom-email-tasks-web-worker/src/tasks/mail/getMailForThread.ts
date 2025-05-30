@@ -109,10 +109,10 @@ DEV: makeDemoModeResult = async () => {
           .fill(0)
           .map(() => generatePseudoWord())
           .join(' '),
-        body: Array(Math.floor(Math.random() * 200 + 10))
+        body: Array(Math.floor(Math.random() * 10 + 1))
           .fill(0)
-          .map(() => generatePseudoWord())
-          .join(' '),
+          .map(generatePseudoParagraph)
+          .join('\n\n'),
         timeMSec: Date.now() - Math.random() * 30 * ONE_DAY_MSEC,
         isUnread: Math.random() < 0.5,
         attachments: Array(Math.floor(Math.random() * 4))
@@ -128,3 +128,9 @@ DEV: makeDemoModeResult = async () => {
       }))
   });
 };
+
+const generatePseudoParagraph = () =>
+  Array(Math.floor(Math.random() * 200 + 10))
+    .fill(0)
+    .map(() => generatePseudoWord())
+    .join(' ');
