@@ -158,7 +158,13 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               fontWeight: buttonFontWeight,
               padding: `${sp(1)} ${sp(2)}`,
               minWidth: 'auto',
-              textTransform: 'none'
+              textTransform: 'none',
+
+              '&.AttachmentButton': {
+                borderColor: colorsInputBorder,
+                paddingTop: sp(1.5),
+                alignItems: 'flex-start'
+              }
             }
           }
         },
