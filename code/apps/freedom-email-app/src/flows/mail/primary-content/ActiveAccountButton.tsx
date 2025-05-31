@@ -1,20 +1,23 @@
 import { Button } from '@mui/material';
 import React from 'react';
-import { BC } from 'react-bindings';
+import { BC, useCallbackRef } from 'react-bindings';
 
 import { AvatarPlaceholder } from '../../../components/reusable/AvatarPlaceholder.tsx';
 import { BreakableEmailAddressTxt } from '../../../components/reusable/BreakableEmailAddressTxt.tsx';
 import { StringAvatar } from '../../../components/reusable/StringAvatar.tsx';
 import { TxtPlaceholder } from '../../../components/reusable/TxtPlaceholder.tsx';
 import { useActiveAccountInfo } from '../../../contexts/active-account-info.tsx';
+import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { CollapseExpandIcon } from '../../../icons/CollapseExpandIcon.ts';
 
-export interface ActiveAccountButtonProps {
-  onClick?: () => void;
-}
-
-export const ActiveAccountButton = ({ onClick }: ActiveAccountButtonProps) => {
+export const ActiveAccountButton = () => {
   const activeAccountInfo = useActiveAccountInfo();
+  const { presentErrorMessage } = useMessagePresenter();
+
+  const onClick = useCallbackRef(() => {
+    // TODO: implement
+    presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
+  });
 
   return BC(activeAccountInfo, (activeAccountInfo) =>
     activeAccountInfo !== undefined ? (
@@ -29,9 +32,15 @@ export const ActiveAccountButton = ({ onClick }: ActiveAccountButtonProps) => {
         </BreakableEmailAddressTxt>
       </Button>
     ) : (
-      <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />}>
-        <TxtPlaceholder className="w-full" />
-      </Button>
+      <ActiveAccountButtonPlaceholder />
     )
   );
 };
+
+// Helpers
+
+const ActiveAccountButtonPlaceholder = () => (
+  <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />} disabled>
+    <TxtPlaceholder className="w-full" />
+  </Button>
+);

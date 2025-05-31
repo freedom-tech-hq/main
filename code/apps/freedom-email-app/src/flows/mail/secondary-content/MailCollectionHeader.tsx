@@ -1,10 +1,10 @@
-import { Box, Button, FormControlLabel, Stack } from '@mui/material';
+import { Button, FormControlLabel, Stack } from '@mui/material';
 import type { MailCollectionType } from 'freedom-email-user';
 import { mailCollectionTypes } from 'freedom-email-user';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
 import { useP, useT } from 'freedom-react-localization';
 import React from 'react';
-import { BC, useBinding, useBindingEffect } from 'react-bindings';
+import { BC, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
@@ -13,6 +13,7 @@ import { ControlledSwitch, ControlledSwitchPlaceholder } from '../../../componen
 import { ControlledTextField, ControlledTextFieldPlaceholder } from '../../../components/reusable/form/ControlledTextField.tsx';
 import { IconPlaceholder } from '../../../components/reusable/IconPlaceholder.tsx';
 import { TxtPlaceholder } from '../../../components/reusable/TxtPlaceholder.tsx';
+import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
 import { MarkReadIcon } from '../../../icons/MarkReadIcon.ts';
 import { RefreshIcon } from '../../../icons/RefreshIcon.ts';
@@ -21,6 +22,8 @@ import { $mailCollectionType } from '../../../localizations/mail-collection-type
 import { formatInt } from '../../../utils/formatInt.ts';
 
 const ns = 'ui';
+const $markRead = LOCALIZE('Mark as Read')({ ns });
+const $refresh = LOCALIZE('Refresh')({ ns });
 const $searchPlaceholder = LOCALIZE('Search mail')({ ns });
 const $unread = LOCALIZE('Unread')({ ns });
 const $emails = PLURALIZE({
@@ -29,6 +32,7 @@ const $emails = PLURALIZE({
 });
 
 export const MailCollectionHeader = () => {
+  const { presentErrorMessage } = useMessagePresenter();
   const p = useP();
   const selectedCollectionId = useSelectedMailCollectionId();
   const t = useT();
@@ -52,6 +56,16 @@ export const MailCollectionHeader = () => {
   const showUnreadOnly = useBinding(() => false, { id: 'showUnreadOnly', detectChanges: true });
   const search = useBinding(() => '', { id: 'search', detectChanges: true });
   const selectAll = useBinding(() => false, { id: 'selectAll', detectChanges: true });
+
+  const onMarkReadClick = useCallbackRef(() => {
+    // TODO: implement
+    presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
+  });
+
+  const onRefreshClick = useCallbackRef(() => {
+    // TODO: implement
+    presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
+  });
 
   return (
     <>
@@ -79,11 +93,11 @@ export const MailCollectionHeader = () => {
           <Stack direction="row" alignItems="center" gap={2}>
             <ControlledCheckbox checked={selectAll} sx={{ ml: 1.5 }} />
 
-            <Button sx={{ p: 1 }}>
+            <Button sx={{ p: 1 }} title={$refresh(t)} onClick={onRefreshClick}>
               <RefreshIcon className="sm-icon secondary-text" />
             </Button>
 
-            <Button sx={{ p: 1 }}>
+            <Button sx={{ p: 1 }} title={$markRead(t)} onClick={onMarkReadClick}>
               <MarkReadIcon className="sm-icon secondary-text" />
             </Button>
           </Stack>
@@ -119,11 +133,11 @@ export const MailCollectionHeaderPlaceholder = () => {
           <Stack direction="row" alignItems="center" gap={2}>
             <ControlledCheckboxPlaceholder sx={{ ml: 1.5 }} />
 
-            <Button sx={{ p: 1 }}>
+            <Button sx={{ p: 1 }} disabled>
               <IconPlaceholder className="sm-icon" />
             </Button>
 
-            <Button sx={{ p: 1 }}>
+            <Button sx={{ p: 1 }} disabled>
               <IconPlaceholder className="sm-icon " />
             </Button>
           </Stack>
