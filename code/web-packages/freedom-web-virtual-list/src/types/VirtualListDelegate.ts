@@ -10,6 +10,7 @@ export interface VirtualListDelegate<T, KeyT extends string, TemplateIdT extends
   readonly renderItem: (key: KeyT, item: T, index: number) => ReactNode;
   readonly renderEmptyIndicator?: () => ReactNode;
   readonly renderLoadingIndicator?: () => ReactNode;
+  readonly loadingIndicatorTransitionDurationMSec?: number;
 
   readonly itemPrototypes: Record<
     TemplateIdT,

@@ -1,4 +1,4 @@
-import { CircularProgress, ListItem, ListItemText } from '@mui/material';
+import { ListItem, ListItemText } from '@mui/material';
 import type { DataSource } from 'freedom-data-source';
 import type { ThreadLikeId } from 'freedom-email-user';
 import { mailThreadIdInfo } from 'freedom-email-user';
@@ -6,7 +6,7 @@ import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
 
-import { MailThreadListItem } from './MailThreadListItem.tsx';
+import { MailThreadListItem, MailThreadListItemPlaceholder } from './MailThreadListItem.tsx';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 import { useMailCollectionSelectionDelegate } from './useMailThreadsListSelectionDelegate.ts';
 
@@ -40,9 +40,13 @@ export const useMailCollectionDelegate = (
         </ListItem>
       ),
       renderLoadingIndicator: () => (
-        <ListItem className="justify-center">
-          <CircularProgress size={22} />
-        </ListItem>
+        <>
+          <MailThreadListItemPlaceholder />
+          <MailThreadListItemPlaceholder />
+          <MailThreadListItemPlaceholder />
+          <MailThreadListItemPlaceholder />
+          <MailThreadListItemPlaceholder />
+        </>
       ),
       onKeyDown: selectionDelegate.onKeyDown
     }),

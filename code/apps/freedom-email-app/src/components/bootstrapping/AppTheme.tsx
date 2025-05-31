@@ -179,6 +179,10 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               '&.Mui-checked, &.MuiCheckbox-indeterminate': {
                 borderColor: colorsPrimary,
                 backgroundColor: colorsPrimary
+              },
+
+              '&.ControlledCheckboxPlaceholder': {
+                backgroundColor: colorsInputBorder
               }
             }
           }
@@ -330,7 +334,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
             root: {
               borderRadius: br(3),
 
-              '& fieldset': {
+              ':is(&, &.Mui-disabled, &.Mui-disabled.MuiOutlinedInput-notchedOutline) fieldset': {
                 borderColor: colorsInputBorder
               }
             },
@@ -369,6 +373,16 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               color: defaultTextColor,
               fontSize: inputFontSize,
               lineHeight: inputLineHeight
+            }
+          }
+        },
+        MuiSvgIcon: {
+          styleOverrides: {
+            root: {
+              '&.IconPlaceholder': {
+                backgroundColor: colorsInputBorder,
+                borderRadius: br(1)
+              }
             }
           }
         },
@@ -415,6 +429,22 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
                 backgroundColor: colorsInputBorder,
                 opacity: 1,
                 transition: 'background-color 500ms ease-in-out'
+              },
+              '&.ControlledSwitchPlaceholder': {
+                '& .MuiSwitch-switchBase': {
+                  backgroundColor: colorsInputBorder
+                }
+              }
+            }
+          }
+        },
+        MuiTextField: {
+          styleOverrides: {
+            root: {
+              '&.ControlledTextFieldPlaceholder': {
+                '& fieldset': {
+                  backgroundColor: colorsInputBorder
+                }
               }
             }
           }

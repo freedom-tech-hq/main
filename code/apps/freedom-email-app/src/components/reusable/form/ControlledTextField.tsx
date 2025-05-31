@@ -5,6 +5,8 @@ import React from 'react';
 import type { Binding, TypeOrBindingType } from 'react-bindings';
 import { BC, BindingsConsumer, ifBinding, resolveTypeOrBindingType, useCallbackRef } from 'react-bindings';
 
+import { TxtPlaceholder } from '../TxtPlaceholder.tsx';
+
 export type ControlledTextFieldProps = Omit<
   StandardTextFieldProps | FilledTextFieldProps | OutlinedTextFieldProps,
   'disabled' | 'error' | 'helperText' | 'labelPosition' | 'onChange' | 'value'
@@ -77,4 +79,38 @@ export const ControlledTextField = ({
         );
     }
   });
+};
+
+export const ControlledTextFieldPlaceholder = ({
+  label,
+  labelPosition = 'default',
+  ...fwd
+}: Omit<ControlledTextFieldProps, 'disabled' | 'error' | 'helperText' | 'value'> &
+  Pick<StandardTextFieldProps | FilledTextFieldProps | OutlinedTextFieldProps, 'helperText'>) => {
+  if (label === undefined) {
+    labelPosition = 'default';
+  }
+
+  switch (labelPosition) {
+    case 'default':
+      return (
+        <TextField
+          helperText=" "
+          {...fwd}
+          label={label}
+          value=""
+          disabled
+          className={`ControlledTextFieldPlaceholder ${fwd.className ?? ''}`}
+        />
+      );
+    case 'outside':
+      return (
+        <Stack>
+          <InputLabel shrink={false} htmlFor={'password'} className="outside medium">
+            <TxtPlaceholder>Label</TxtPlaceholder>
+          </InputLabel>
+          <TextField helperText=" " {...fwd} value="" disabled className={`ControlledTextFieldPlaceholder ${fwd.className ?? ''}`} />
+        </Stack>
+      );
+  }
 };

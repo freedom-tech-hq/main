@@ -22,7 +22,8 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
   const listControls = useRef<VirtualListControls<CollectionLikeId>>({});
 
   const selectFirstCollectionIfNothingIsSelected = useCallbackRef(() => {
-    if (selectedCollectionId.get() !== undefined) {
+    const theSelectedCollectionId = selectedCollectionId.get();
+    if (theSelectedCollectionId !== undefined && theSelectedCollectionId !== 'initial') {
       return;
     }
 
@@ -56,7 +57,7 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
   });
 
   useBindingEffect(selectedCollectionId, (selectedCollectionId) => {
-    if (selectedCollectionId === undefined) {
+    if (selectedCollectionId === undefined || selectedCollectionId === 'initial') {
       return;
     }
 

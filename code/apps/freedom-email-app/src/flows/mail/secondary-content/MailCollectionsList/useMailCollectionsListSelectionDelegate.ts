@@ -37,7 +37,10 @@ export const useMailCollectionsListSelectionDelegate = (
             }
 
             const theSelectedCollectionId = selectedCollectionId.get();
-            let index = theSelectedCollectionId !== undefined ? dataSource.getIndexOfItemWithKey(theSelectedCollectionId) : 0;
+            let index =
+              theSelectedCollectionId !== undefined && theSelectedCollectionId !== 'initial'
+                ? dataSource.getIndexOfItemWithKey(theSelectedCollectionId)
+                : 0;
             if (index < 0) {
               // Select the first collection
               for (index = 0; index < numItems; index += 1) {

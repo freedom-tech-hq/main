@@ -3,10 +3,12 @@ import { Chip, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import type { MailCollection, MailCollectionType } from 'freedom-email-user';
 import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
 import { useT } from 'freedom-react-localization';
-import type { TFunction } from 'i18next';
+import { type TFunction } from 'i18next';
 import React from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
+import { IconPlaceholder } from '../../../../components/reusable/IconPlaceholder.tsx';
+import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
 import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
 import { ArchiveIcon } from '../../../../icons/ArchiveIcon.ts';
 import { InboxIcon } from '../../../../icons/InboxIcon.ts';
@@ -52,6 +54,15 @@ export const MailCollectionListItem = <TagT,>({ collection, tag, onClick }: Mail
     </ListItemButton>
   ));
 };
+
+export const MailCollectionListItemPlaceholder = () => (
+  <ListItemButton disabled className="mail-collection-list-item">
+    <ListItemIcon>
+      <IconPlaceholder />
+    </ListItemIcon>
+    <ListItemText primary={<TxtPlaceholder variant="body2" className="medium w-full" />} />
+  </ListItemButton>
+);
 
 // Helpers
 
