@@ -34,7 +34,10 @@ export async function getRawUserFromUser(trace: Trace, user: User): PR<RawUser> 
 }
 
 export async function getUserFromRawUser(trace: Trace, rawUser: RawUser): PR<User> {
-  const deserialization = await userSchema.deserializeAsync(rawUser);
+  const deserialization = await userSchema.deserializeAsync({
+    ...rawUser,
+    encryptedCredentials: rawUser.encryptedCredentials ?? undefined
+  });
 
   if (deserialization.error !== undefined) {
     return makeFailure(
