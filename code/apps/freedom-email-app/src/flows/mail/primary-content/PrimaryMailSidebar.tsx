@@ -43,7 +43,6 @@ export const PrimaryMailSidebar = () => {
         </Box>
       </Stack>
 
-      {/* TODO: hook up onClick */}
       <Box className="absolute blurred-overlay-bg bottom-0 left-0 right-0 z-2">
         <ActiveAccountButton />
       </Box>

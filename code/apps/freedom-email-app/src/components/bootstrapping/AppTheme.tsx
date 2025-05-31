@@ -432,7 +432,11 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               },
               '&.ControlledSwitchPlaceholder': {
                 '& .MuiSwitch-switchBase': {
-                  backgroundColor: colorsInputBorder
+                  backgroundColor: colorsInputBorder,
+
+                  '& .MuiSwitch-thumb': {
+                    display: 'none'
+                  }
                 }
               }
             }

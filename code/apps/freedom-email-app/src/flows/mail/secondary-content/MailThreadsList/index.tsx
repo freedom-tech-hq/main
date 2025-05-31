@@ -67,7 +67,6 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
 
   useEffect(() =>
     dataSource.addListener('loadingStateChanged', () => {
-      // TODO: TEMP
       selectFirstMailIfNothingIsSelected();
     })
   );

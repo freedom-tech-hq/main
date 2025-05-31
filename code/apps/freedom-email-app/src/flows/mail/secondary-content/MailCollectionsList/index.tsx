@@ -23,7 +23,7 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
 
   const selectFirstCollectionIfNothingIsSelected = useCallbackRef(() => {
     const theSelectedCollectionId = selectedCollectionId.get();
-    if (theSelectedCollectionId !== undefined && theSelectedCollectionId !== 'initial') {
+    if (theSelectedCollectionId !== 'initial') {
       return;
     }
 
@@ -40,7 +40,6 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
 
   useEffect(() =>
     dataSource.addListener('loadingStateChanged', () => {
-      // TODO: TEMP
       selectFirstCollectionIfNothingIsSelected();
     })
   );
