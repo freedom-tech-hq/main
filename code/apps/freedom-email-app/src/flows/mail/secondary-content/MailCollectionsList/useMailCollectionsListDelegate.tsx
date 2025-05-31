@@ -1,4 +1,4 @@
-import { CircularProgress, ListItem, ListItemText } from '@mui/material';
+import { ListItem, ListItemText } from '@mui/material';
 import type { DataSource } from 'freedom-data-source';
 import type { CollectionLikeId, MailCollection } from 'freedom-email-user';
 import { makeCollectionLikeIdForCollection } from 'freedom-email-user';
@@ -8,7 +8,7 @@ import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
 
-import { MailCollectionListItem } from './MailCollectionListItem.tsx';
+import { MailCollectionListItem, MailCollectionListItemPlaceholder } from './MailCollectionListItem.tsx';
 import type { MailCollectionsListCollectionDataSourceItem } from './MailCollectionsListCollectionDataSourceItem.ts';
 import { useMailCollectionsListSelectionDelegate } from './useMailCollectionsListSelectionDelegate.ts';
 
@@ -46,10 +46,15 @@ export const useMailCollectionsListDelegate = (
           <ListItemText secondary={$noCollectionsFound(t)} />
         </ListItem>
       ),
+      loadingIndicatorTransitionDurationMSec: 0,
       renderLoadingIndicator: () => (
-        <ListItem className="justify-center">
-          <CircularProgress size={22} />
-        </ListItem>
+        <>
+          <MailCollectionListItemPlaceholder />
+          <MailCollectionListItemPlaceholder />
+          <MailCollectionListItemPlaceholder />
+          <MailCollectionListItemPlaceholder />
+          <MailCollectionListItemPlaceholder />
+        </>
       ),
       onKeyDown: selectionDelegate.onKeyDown
     }),

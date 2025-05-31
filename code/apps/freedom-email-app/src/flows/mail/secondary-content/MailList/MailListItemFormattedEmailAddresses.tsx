@@ -11,6 +11,7 @@ import { BC, useCallbackRef } from 'react-bindings';
 import type { TxtProps } from '../../../../components/reusable/aliases/Txt.ts';
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { BreakableEmailAddressTxt } from '../../../../components/reusable/BreakableEmailAddressTxt.tsx';
+import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
 import { formatInt } from '../../../../utils/formatInt.ts';
 import { makeTagsForParsedEmailAddresses } from '../../../../utils/makeTagsForParsedEmailAddresses.ts';
 
@@ -101,6 +102,19 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
     )
   });
 };
+
+export const MailListItemFormattedEmailAddressesPlaceholder = ({
+  mode
+}: Omit<MailListItemFormattedEmailAddressesProps, 'addresses' | 'showGroupMembers'>) => (
+  <Stack direction="row" flexWrap="wrap" alignItems="baseline" columnGap={1.5} className="flex-auto overflow-hidden">
+    <TxtPlaceholder variant={nameVariantByMode[mode]} className="semibold">
+      Placeholder
+    </TxtPlaceholder>
+    <TxtPlaceholder variant="body2" color="textDisabled" className="shrink overflow-hidden">
+      example@freedommail.me
+    </TxtPlaceholder>
+  </Stack>
+);
 
 // Helpers
 

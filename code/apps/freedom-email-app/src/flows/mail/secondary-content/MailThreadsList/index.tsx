@@ -10,7 +10,7 @@ import { useMailCollectionDataSource } from './useMailThreadsListDataSource.ts';
 import { useMailCollectionDelegate } from './useMailThreadsListDelegate.tsx';
 
 export interface MailThreadsListProps {
-  collectionId: TypeOrBindingType<CollectionLikeId | undefined>;
+  collectionId: TypeOrBindingType<CollectionLikeId | 'initial' | undefined>;
   scrollParent: HTMLElement | string | Window;
   controls?: VirtualListControls<CollectionLikeId>;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -19,7 +19,7 @@ export interface MailThreadsListProps {
 
 export const MailThreadsList = ({ collectionId, ...fwd }: MailThreadsListProps) => {
   const lastDefinedCollectionId = useBinding(() => resolveTypeOrBindingType(collectionId), {
-    id: 'lastSelectedCollectionId',
+    id: 'lastDefinedCollectionId',
     detectChanges: true
   });
 

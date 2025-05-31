@@ -61,7 +61,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   });
   const delayedShowLoadingIndicator = useDerivedBinding(showLoadingIndicator, (show) => show, {
     id: 'delayedShowLoadingIndicator',
-    limitMSec: ANIMATION_DURATION_MSEC
+    limitMSec: delegate.loadingIndicatorTransitionDurationMSec ?? ANIMATION_DURATION_MSEC
   });
 
   const prototypeSizes = useBinding<Record<TemplateIdT, number>>(
@@ -746,7 +746,12 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
           ))}
           {delegate.renderLoadingIndicator !== undefined
             ? BC(delayedShowLoadingIndicator, (show) => (
-                <Collapse key="top-loading-indicator" in={show[0] && show[1] === 'start'} unmountOnExit={true}>
+                <Collapse
+                  key="top-loading-indicator"
+                  in={show[0] && show[1] === 'start'}
+                  unmountOnExit={true}
+                  timeout={delegate.loadingIndicatorTransitionDurationMSec ?? ANIMATION_DURATION_MSEC}
+                >
                   {delegate.renderLoadingIndicator?.() ?? null}
                 </Collapse>
               ))
@@ -764,7 +769,12 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
             : null}
           {delegate.renderLoadingIndicator !== undefined
             ? BC(delayedShowLoadingIndicator, (show) => (
-                <Collapse key="bottom-loading-indicator" in={show[0] && show[1] === 'end'} unmountOnExit={true}>
+                <Collapse
+                  key="bottom-loading-indicator"
+                  in={show[0] && show[1] === 'end'}
+                  unmountOnExit={true}
+                  timeout={delegate.loadingIndicatorTransitionDurationMSec ?? ANIMATION_DURATION_MSEC}
+                >
                   {delegate.renderLoadingIndicator?.() ?? null}
                 </Collapse>
               ))

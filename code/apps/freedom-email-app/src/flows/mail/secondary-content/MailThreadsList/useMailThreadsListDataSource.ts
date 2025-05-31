@@ -85,7 +85,7 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
           return;
         }
 
-        if (selectedCollectionId !== undefined) {
+        if (selectedCollectionId !== undefined && selectedCollectionId !== 'initial') {
           dataSource.setIsLoading('end');
 
           let didClearOldData = false;

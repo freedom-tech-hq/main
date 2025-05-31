@@ -3,6 +3,8 @@ import type { MailAttachmentInfo } from 'freedom-email-sync';
 import React from 'react';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
+import { IconPlaceholder } from '../../../../components/reusable/IconPlaceholder.tsx';
+import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
 import { DownloadIcon } from '../../../../icons/DownloadIcon.ts';
 import { formatSizeBytes } from '../../../../utils/formatSizeBytes.ts';
 
@@ -26,3 +28,16 @@ export const AttachmentButton = ({ attachment }: AttachmentButtonProps) => {
     </Button>
   );
 };
+
+export const AttachmentButtonPlaceholder = () => (
+  <Button variant="outlined" className="AttachmentButton" startIcon={<IconPlaceholder width="20px" />} disabled>
+    <Stack alignItems="flex-start">
+      <TxtPlaceholder variant="body2" className="medium">
+        Example
+      </TxtPlaceholder>
+      <TxtPlaceholder variant="body2" className="medium">
+        1.2MB
+      </TxtPlaceholder>
+    </Stack>
+  </Button>
+);

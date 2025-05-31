@@ -31,3 +31,15 @@ export const ControlledCheckbox = ({ checked, ...props }: ControlledCheckboxProp
     </BindingsConsumer>
   );
 };
+
+export const ControlledCheckboxPlaceholder = (props: Omit<ControlledCheckboxProps, 'checked'>) => (
+  <Checkbox
+    icon={<EmptyIcon className="sm-icon" />}
+    checkedIcon={<CheckboxCheckedIcon className="sm-icon" />}
+    indeterminateIcon={<CheckboxMixedIcon className="sm-icon" />}
+    {...props}
+    className={`ControlledCheckboxPlaceholder ${props.className ?? ''}`}
+    checked={false}
+    disabled
+  />
+);

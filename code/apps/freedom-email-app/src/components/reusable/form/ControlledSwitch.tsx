@@ -18,3 +18,7 @@ export const ControlledSwitch = ({ checked, ...props }: ControlledSwitchProps) =
     </BindingsConsumer>
   );
 };
+
+export const ControlledSwitchPlaceholder = (props: Omit<ControlledSwitchProps, 'checked'>) => (
+  <Switch {...props} checked={false} disabled className={`ControlledSwitchPlaceholder ${props.className ?? ''}`} />
+);

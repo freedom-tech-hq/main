@@ -1,4 +1,4 @@
-import { CircularProgress, ListItem, ListItemText } from '@mui/material';
+import { ListItem, ListItemText } from '@mui/material';
 import type { DataSource } from 'freedom-data-source';
 import type { MailId } from 'freedom-email-sync';
 import { mailIdInfo } from 'freedom-email-sync';
@@ -7,7 +7,7 @@ import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import React, { useMemo } from 'react';
 
 import type { MailListDataSourceItem } from './MailListDataSourceItem.ts';
-import { MailListItem } from './MailListItem.tsx';
+import { MailListItem, MailListItemPlaceholder } from './MailListItem.tsx';
 
 export const useMailListDelegate = (dataSource: DataSource<MailListDataSourceItem, MailLikeId>) =>
   useMemo(
@@ -29,11 +29,7 @@ export const useMailListDelegate = (dataSource: DataSource<MailListDataSourceIte
           <ListItemText secondary="No Mail Found" />
         </ListItem>
       ),
-      renderLoadingIndicator: () => (
-        <ListItem sx={{ justifyContent: 'center' }}>
-          <CircularProgress size={22} />
-        </ListItem>
-      )
+      renderLoadingIndicator: () => <MailListItemPlaceholder />
     }),
     [dataSource]
   );
