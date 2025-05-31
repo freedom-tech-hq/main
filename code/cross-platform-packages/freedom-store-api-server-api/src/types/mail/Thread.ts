@@ -9,13 +9,14 @@ export const threadSchema = schema.object({
   // assumed // userId,
 
   // Encrypted fields
-  thread: base64String.schema,
+  // no need // thread: base64String.schema,
 
   // Dynamic
   messageCount: schema.number(),
 
   // Dynamic, of the last (unread?) message
   transferredAt: isoDateTimeSchema,
+  // TODO: isRead
   listMessage: base64String.schema,
   hasAttachments: schema.boolean()
 });

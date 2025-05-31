@@ -16,6 +16,7 @@ export const decryptedListMessageSchema = schema.object({
   // assumed // userId,
   transferredAt: isoDateTimeSchema,
   // assumed // folder,
+  // TODO: Place isRead somewhere
 
   // ### Decoded listMessage ###
   subject: schema.string().allowEmptyString(),

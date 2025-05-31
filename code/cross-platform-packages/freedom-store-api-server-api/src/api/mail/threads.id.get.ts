@@ -3,8 +3,9 @@ import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
 
-import { threadSchema } from '../../types/mail/Thread.ts';
+import { viewMessageSchema } from '../../types/mail/ViewMessage.ts';
 
+// Note: maybe we don't need this. Not implementing, use GET /messages with threadId
 export const GET = makeHttpApi({
   method: 'GET',
   routeType: 'rest',
@@ -19,7 +20,9 @@ export const GET = makeHttpApi({
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
-      body: threadSchema
+      body: schema.object({
+        messages: schema.array({ items: viewMessageSchema })
+      })
     },
     failureResponse: makeFailureWithCodeSchemas()
   }
