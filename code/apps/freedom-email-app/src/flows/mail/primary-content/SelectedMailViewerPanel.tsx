@@ -35,12 +35,12 @@ export const SelectedMailViewerPanel = () => {
 
   return (
     <Stack alignItems="stretch" className="self-stretch flex-auto relative overflow-hidden">
-      <Stack id={`${uuid}-scrollable`} alignItems="stretch" className="flex-auto overflow-y-auto">
+      <Stack id={`${uuid}-scrollable`} alignItems="stretch" className="relative flex-auto overflow-y-auto">
         {IF(
           hasSelectedThreadId,
           () => (
             <>
-              <AppToolbar justifyContent="space-between" gap={2}>
+              <AppToolbar justifyContent="space-between" gap={2} className="sticky top-0 default-bg z-5">
                 <Stack direction="row" alignItems="center" gap={2}>
                   <Button sx={{ p: 1 }}>
                     <ArchiveIcon className="sm-icon secondary-text" />
