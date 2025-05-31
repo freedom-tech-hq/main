@@ -84,7 +84,7 @@ export const useMailListDataSource = (): DataSource<MailListDataSourceItem, Mail
           return;
         }
 
-        if (selectedThreadId !== undefined) {
+        if (selectedThreadId !== undefined && selectedThreadId !== 'initial') {
           dataSource.setIsLoading('end');
 
           let didClearOldData = false;

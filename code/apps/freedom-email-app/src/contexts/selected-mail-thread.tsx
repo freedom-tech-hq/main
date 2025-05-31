@@ -4,12 +4,12 @@ import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
-const SelectedMailThreadContext = createContext<Binding<ThreadLikeId | undefined>>(
-  makeBinding<ThreadLikeId | undefined>(() => undefined, { id: 'selectedMailThreadId', detectChanges: true })
+const SelectedMailThreadContext = createContext<Binding<ThreadLikeId | 'initial' | undefined>>(
+  makeBinding<ThreadLikeId | 'initial' | undefined>(() => 'initial', { id: 'selectedMailThreadId', detectChanges: true })
 );
 
 export interface SelectedMailThreadProviderProps {
-  selectedMailThreadId: Binding<ThreadLikeId | undefined>;
+  selectedMailThreadId: Binding<ThreadLikeId | 'initial' | undefined>;
 }
 
 export const SelectedMailThreadProvider = ({
@@ -19,4 +19,5 @@ export const SelectedMailThreadProvider = ({
   <SelectedMailThreadContext value={selectedMailThreadId}>{children}</SelectedMailThreadContext>
 );
 
+/** If the value is `'initial'`, it's the same as `undefined` except that the user didn't specifically deselect */
 export const useSelectedMailThreadId = () => useContext(SelectedMailThreadContext);
