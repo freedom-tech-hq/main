@@ -37,7 +37,10 @@ export const useMailCollectionSelectionDelegate = (
             }
 
             const theSelectedThreadId = selectedThreadId.get();
-            let index = theSelectedThreadId !== undefined ? dataSource.getIndexOfItemWithKey(theSelectedThreadId) : 0;
+            let index =
+              theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial'
+                ? dataSource.getIndexOfItemWithKey(theSelectedThreadId)
+                : 0;
             if (index < 0) {
               // Select the first thread
               for (index = 0; index < numItems; index += 1) {

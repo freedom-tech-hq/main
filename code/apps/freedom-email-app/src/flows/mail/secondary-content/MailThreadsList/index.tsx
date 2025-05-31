@@ -50,7 +50,8 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
   const listControls = useRef<VirtualListControls<ThreadLikeId>>({});
 
   const selectFirstMailIfNothingIsSelected = useCallbackRef(() => {
-    if (selectedThreadId.get() !== undefined) {
+    const theSelectedThreadId = selectedThreadId.get();
+    if (theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial') {
       return;
     }
 
@@ -83,7 +84,7 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
   });
 
   useBindingEffect(selectedThreadId, (selectedThreadId) => {
-    if (selectedThreadId === undefined) {
+    if (selectedThreadId === undefined || selectedThreadId === 'initial') {
       return;
     }
 
