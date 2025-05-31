@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
 
-import { draftPayloadSchema } from '../../types/mail/DraftPayload.ts';
 import { viewMessageSchema } from '../../types/mail/ViewMessage.ts';
 
 export const POST = makeHttpApi({
@@ -14,7 +13,11 @@ export const POST = makeHttpApi({
   schemas: {
     request: {
       headers: authHeadersSchema,
-      body: draftPayloadSchema
+      body: schema.object({
+        // TODO: Consider having PUT for both create and update,
+        //  because we are moving to local-first where we allow the client to manage ids
+        // Otherwise the fields are the same as in PUT
+      })
     },
     successResponse: {
       status: schema.number(StatusCodes.CREATED),

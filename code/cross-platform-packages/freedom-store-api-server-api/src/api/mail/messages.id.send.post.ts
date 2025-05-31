@@ -1,4 +1,4 @@
-import { authHeadersSchema, makeFailureWithCodeSchemas } from 'freedom-basic-data';
+import { authHeadersSchema, base64String, makeFailureWithCodeSchemas } from 'freedom-basic-data';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
@@ -13,6 +13,18 @@ export const POST = makeHttpApi({
       headers: authHeadersSchema,
       params: schema.object({
         messageId: schema.string()
+      }),
+      body: schema.object({
+        // Same as in PUT
+        listMessage: base64String.schema,
+        viewMessage: base64String.schema,
+        rawMessage: base64String.schema,
+
+        // TODO: attachments
+
+        // Encrypted with Mail Agent's public key
+        // TODO: solve doubled message size
+        agentRawMessage: base64String.schema
       })
     },
     successResponse: {
