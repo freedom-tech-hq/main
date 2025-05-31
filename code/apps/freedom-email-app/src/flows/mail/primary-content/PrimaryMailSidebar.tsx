@@ -3,11 +3,13 @@ import { makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import React, { useMemo } from 'react';
+import { useCallbackRef } from 'react-bindings';
 
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { $appName } from '../../../consts/common-strings.ts';
 import { primarySidebarWidthPx } from '../../../consts/sizes.ts';
+import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { CompanyLogoIcon } from '../../../icons/CompanyLogoIcon.ts';
 import { NewEmailIcon } from '../../../icons/NewEmailIcon.ts';
 import { MailCollectionsList } from '../secondary-content/MailCollectionsList/index.tsx';
@@ -17,8 +19,14 @@ const ns = 'ui';
 const $newEmail = LOCALIZE('New Email')({ ns });
 
 export const PrimaryMailSidebar = () => {
+  const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
   const uuid = useMemo(() => makeUuid(), []);
+
+  const onNewMailClick = useCallbackRef(() => {
+    // TODO: implement
+    presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
+  });
 
   return (
     <Stack alignItems="stretch" className="relative default-bg z-10" sx={{ width: `${primarySidebarWidthPx}px` }}>
@@ -28,7 +36,13 @@ export const PrimaryMailSidebar = () => {
           <Txt variant="body1">{$appName(t)}</Txt>
         </AppToolbar>
 
-        <Button type="submit" variant="contained" startIcon={<NewEmailIcon className="primary-contrast sm-icon" />} sx={{ mx: 1.5, my: 1 }}>
+        <Button
+          type="submit"
+          variant="contained"
+          startIcon={<NewEmailIcon className="primary-contrast sm-icon" />}
+          sx={{ mx: 1.5, my: 1 }}
+          onClick={onNewMailClick}
+        >
           {$newEmail(t)}
         </Button>
 
