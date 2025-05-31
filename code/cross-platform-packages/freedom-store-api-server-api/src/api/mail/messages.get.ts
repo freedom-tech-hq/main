@@ -14,7 +14,12 @@ export const GET = makeHttpApi({
   schemas: {
     request: {
       headers: authHeadersSchema,
-      query: paginationOptionsSchema
+      query: schema.allOf(
+        paginationOptionsSchema,
+        schema.object({
+          threadId: schema.string().optional()
+        })
+      )
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
