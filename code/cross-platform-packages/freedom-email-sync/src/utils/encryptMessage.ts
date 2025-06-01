@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
-import { makeAsyncResultFunc, type PR } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import { userEncryptValue } from 'freedom-crypto-service';
 
 import type { ApiMessage } from '../types/ApiMessage.ts';
+import { decryptedListMessagePartSchema, decryptedViewMessagePartSchema } from '../types/DecryptedListMessage.ts';
 import type { DecryptedMessage } from '../types/DecryptedMessage.ts';
 
-export const encryptMessage = makeAsyncResultFunc([import.meta.filename], async (_trace, mail: DecryptedMessage): PR<ApiMessage> => {
+export const encryptMessage = makeAsyncResultFunc([import.meta.filename], async (trace, mail: DecryptedMessage): PR<ApiMessage> => {
   const messageId = randomUUID();
   const transferredAt = new Date(mail.timeMSec);
   const folder: DbMessage['folder'] = 'inbox';
