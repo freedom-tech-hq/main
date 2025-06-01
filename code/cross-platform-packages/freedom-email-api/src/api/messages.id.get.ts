@@ -1,8 +1,9 @@
 import { authHeadersSchema, makeFailureWithCodeSchemas } from 'freedom-basic-data';
-import { apiViewMessageSchema } from 'freedom-email-sync';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
+
+import { apiViewMessageSchema } from '../types/ApiViewMessage.ts';
 
 export const GET = makeHttpApi({
   method: 'GET',

@@ -1,15 +1,16 @@
 import { base64String, isoDateTimeSchema } from 'freedom-basic-data';
 import { schema } from 'yaschema';
+
+import { emailUserIdInfo } from './EmailUserId.ts';
 import { mailIdInfo } from './MailId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
-import { emailUserIdInfo } from './EmailUserId.ts';
 
 // Should match DbMessage and the shared part of DecryptedMessage.
 export const apiMessage = schema.object({
   // ### Open fields ###
   id: mailIdInfo.schema,
   userId: emailUserIdInfo.schema,
-  transferredAt: isoDateTimeSchema, // TODO: Rename to lastUpdatedAt
+  transferredAt: isoDateTimeSchema,
   folder: messageFolderSchema,
   // TODO: Place isRead somewhere
 

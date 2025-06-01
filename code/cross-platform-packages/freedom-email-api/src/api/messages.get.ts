@@ -1,9 +1,10 @@
 import { authHeadersSchema, makeFailureWithCodeSchemas } from 'freedom-basic-data';
-import { apiListMessageSchema } from 'freedom-email-sync';
 import { makePaginatedSchema, paginationOptionsSchema } from 'freedom-paginated-data';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
+
+import { apiListMessageSchema } from '../types/ApiListMessage.ts';
 
 export const GET = makeHttpApi({
   method: 'GET',
