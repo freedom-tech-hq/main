@@ -6,6 +6,7 @@ import type { types } from 'freedom-email-api';
 import { addIncomingEmail } from 'freedom-email-server';
 
 import * as config from '../../../config.ts';
+import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
 import { resolveMailAlias } from '../../forwarding/exports.ts';
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 import { deliverForwardedEmail } from '../../smtp-upstream/utils/deliverForwardedEmail.ts';
@@ -23,7 +24,7 @@ export const routeMail = makeAsyncResultFunc(
       mode
     }: {
       recipients: Set<string>;
-      mail: types.DecryptedMessage;
+      mail: ParsedMail;
       // Different modes assume different policies
       mode:
         | {

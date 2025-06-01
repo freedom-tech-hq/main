@@ -1,7 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { types } from 'freedom-email-api';
-import type { StoredMail } from 'freedom-email-sync';
 import type Mail from 'nodemailer/lib/mailer';
 
 import { transporter } from '../internal/utils/transporter.ts';

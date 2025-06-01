@@ -3,13 +3,13 @@ import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { schema } from 'yaschema';
 
-import type { ApiMessage } from '../types/ApiMessage.ts';
-import { type DecryptedMessage, listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/DecryptedMessage.ts';
-import { getMessageOpenFields } from './getMessageOpenFields.ts';
+import type { ApiMessageToSave } from '../types/ApiMessageToSave.ts';
+import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/DecryptedMessage.ts';
+import type { DecryptedMessageToSave } from '../types/DecryptedMessageToSave.ts';
 
 export const encryptMessageToSave = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessage): PR<ApiMessage> => {
+  async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessageToSave): PR<ApiMessageToSave> => {
     // listFields
     const listFieldsResult = await userEncryptValue(trace, {
       schema: listFieldsOfMessageSchema,
@@ -62,16 +62,15 @@ export const encryptMessageToSave = makeAsyncResultFunc(
       return rawMessageResult;
     }
 
-    return makeSuccess<ApiMessage>({
-      ...getMessageOpenFields(mail),
-      // id: mail.id,
-      // userId: mail.userId,
-      // transferredAt: mail.transferredAt,
-      // folder: mail.folder,
+    return makeSuccess<ApiMessageToSave>({
+      id: mail.id,
+      // server-controlled:
+      // 'userId'
+      // 'transferredAt'
+      // 'folder' - always 'drafts' for user and 'inbox' for MailAgent
       listFields: listFieldsResult.value,
       viewFields: viewFieldsResult.value,
       raw: rawMessageResult.value
-      // hasAttachments: mail.hasAttachments
     });
   }
 );

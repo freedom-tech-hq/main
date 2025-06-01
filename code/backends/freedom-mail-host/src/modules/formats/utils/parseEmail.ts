@@ -7,23 +7,24 @@ import { types } from 'freedom-email-api';
 import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
+import type { ParsedMail } from '../types/ParsedMail.ts';
 
 /**
- * Parse an email string into StoredMail
+ * Parse an email string into our ParsedMail
  *
  * @param _trace - Trace for async operations
  * @param emailData - Raw email data as a string
  * @returns PR resolving to the parsed email
  */
-export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<types.DecryptedMessage> => {
+export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<ParsedMail> => {
   const parsed = await simpleParser(emailData);
 
   const transferredAt = new Date();
   // TODO: Replace snippet extraction
   const snippet = parsed.text !== undefined ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '';
 
-  // Convert to DecryptedMessage with all required fields
-  const result: types.DecryptedMessage = {
+  // Map to our type
+  const result: ParsedMail = {
     // Open fields
     // TODO: Revise the security. Freezing extra data in IDs potentially disrupts the ability to fix privacy
     id: types.mailIdInfo.make(`${makeIsoDateTime(transferredAt)}-${makeUuid()}`),
@@ -44,14 +45,14 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- `html` is `string | false`
     body: (parsed.html || parsed.text) ?? '',
 
-    // Raw message (required by DecryptedMessage)
-    raw: emailData,
-
     // Optional fields
     messageId: parsed.messageId,
     inReplyTo: parsed.inReplyTo,
     references: parsed.references !== undefined ? (Array.isArray(parsed.references) ? parsed.references : [parsed.references]) : undefined,
-    date: parsed.date !== undefined ? (parsed.date.toISOString() as IsoDateTime) : undefined
+    date: parsed.date !== undefined ? (parsed.date.toISOString() as IsoDateTime) : undefined,
+
+    // Raw message
+    raw: emailData
   };
 
   return makeSuccess(result);
