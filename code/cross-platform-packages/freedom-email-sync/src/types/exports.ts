@@ -1,5 +1,6 @@
 export * from './AttachmentInfo.ts';
 export * from './DecryptedListMessage.ts';
+export * from './DecryptedThread.ts';
 export * from './DecryptedViewMessage.ts';
 export * from './EmailUserId.ts';
 export * from './headerTypes.ts';
