@@ -7,7 +7,7 @@ import type { ApiMessage } from '../types/ApiMessage.ts';
 import { type DecryptedMessage, listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/DecryptedMessage.ts';
 import { getMessageOpenFields } from './getMessageOpenFields.ts';
 
-export const encryptMessage = makeAsyncResultFunc(
+export const encryptMessageToSave = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessage): PR<ApiMessage> => {
     // listFields

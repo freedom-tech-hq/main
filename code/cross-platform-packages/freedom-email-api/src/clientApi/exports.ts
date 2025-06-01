@@ -1,2 +1,2 @@
-export * from './encryptMessage.ts';
+export * from './encryptMessageToSave.ts';
 export * from './getMessageOpenFields.ts';
