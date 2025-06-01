@@ -6,7 +6,7 @@ CREATE TABLE "messages" (
   "folder" TEXT NOT NULL CHECK ("folder" IN ('inbox', 'outbox', 'sent', 'drafts')),
   "listMessage" TEXT NOT NULL,
   "viewMessage" TEXT NOT NULL,
-  "rawMessage" TEXT NOT NULL
+  "raw" TEXT NOT NULL
 );
 
 -- Index for efficient querying and pagination

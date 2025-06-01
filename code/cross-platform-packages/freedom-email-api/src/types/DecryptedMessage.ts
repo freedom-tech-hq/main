@@ -30,7 +30,7 @@ export const decryptedMessageSchema = schema.object({
   // Only two modes: html and plain text
   // This is not the complete data, server decides what the client will use to render and saves only that part
   // The logic is primitive: if html is available, use it, otherwise use plain text
-  // The complete data is saved in DbMessage.rawMessage and is rarely demanded by the frontend
+  // The complete data is saved in DbMessage.raw and is rarely demanded by the frontend
   isBodyHtml: schema.boolean(),
   body: schema.string().allowEmptyString(),
 
@@ -45,8 +45,8 @@ export const decryptedMessageSchema = schema.object({
   date: isoDateTimeSchema.optional(),
   // ### End of Decoded viewMessage ###
 
-  // ### Decoded rawMessage ###
-  rawMessage: schema.string(),
+  // ### Decoded raw ###
+  raw: schema.string(),
 
   // ### Dynamic ###
   // TODO: // listAttachments - to render the list
@@ -56,7 +56,7 @@ export const decryptedMessageSchema = schema.object({
 
 export type DecryptedMessage = typeof decryptedMessageSchema.valueType;
 
-export const listMessageFieldSchema = schema.pick(decryptedMessageSchema, [
+export const listFieldsOfMessageSchema = schema.pick(decryptedMessageSchema, [
   // prettier-fix
   'subject',
   'from',
@@ -64,7 +64,7 @@ export const listMessageFieldSchema = schema.pick(decryptedMessageSchema, [
   'snippet'
 ]);
 
-export const viewMessageFieldSchema = schema.pick(decryptedMessageSchema, [
+export const viewFieldsOfMessageSchema = schema.pick(decryptedMessageSchema, [
   'to',
   'cc',
   'bcc',

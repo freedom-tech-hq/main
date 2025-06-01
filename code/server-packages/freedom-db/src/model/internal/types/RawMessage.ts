@@ -10,5 +10,5 @@ export interface RawMessage {
   folder: MessageFolder;
   listMessage: Buffer;
   viewMessage: Buffer;
-  rawMessage: Buffer;
+  raw: Buffer;
 }

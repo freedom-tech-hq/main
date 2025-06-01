@@ -22,7 +22,7 @@ export const dbMessageSchema = schema.object({
   // ### Encrypted fields ###
   listMessage: base64String.schema,
   viewMessage: base64String.schema,
-  rawMessage: base64String.schema
+  raw: base64String.schema
 
   // Note: on the first migration, add a formatVersion field here
 });

@@ -9,8 +9,8 @@ export const apiViewMessageSchema = schema.pick(apiMessage, [
   // assumed // folder,
 
   // Encrypted
-  'listMessage',
-  'viewMessage'
+  'listFields',
+  'viewFields'
 
   // Dynamic
   // TODO: 'attachmentsSummary',

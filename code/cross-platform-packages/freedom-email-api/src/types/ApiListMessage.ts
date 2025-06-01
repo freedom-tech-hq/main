@@ -9,7 +9,7 @@ export const apiListMessageSchema = schema.pick(apiMessage, [
   // assumed // folder,
 
   // Encrypted
-  'listMessage',
+  'listFields',
 
   // Dynamic
   'hasAttachments'

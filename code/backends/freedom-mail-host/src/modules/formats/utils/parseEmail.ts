@@ -41,7 +41,7 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
     body: parsed.html ?? parsed.text ?? '',
 
     // Raw message (required by DecryptedMessage)
-    rawMessage: emailData,
+    raw: emailData,
 
     // Optional fields
     messageId: parsed.messageId,

@@ -55,7 +55,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
       return viewMessageResult;
     }
 
-    // rawMessage
+    // raw
     const rawMessageResult = await userEncryptValue(trace, {
       schema: storedMailSchema,
       value: mail,
@@ -66,7 +66,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
     }
 
     const sql = `
-      INSERT INTO "messages" ("id", "userId", "transferredAt", "folder", "listMessage", "viewMessage", "rawMessage")
+      INSERT INTO "messages" ("id", "userId", "transferredAt", "folder", "listMessage", "viewMessage", "raw")
       VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
 

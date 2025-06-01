@@ -4,7 +4,7 @@ import { userEncryptValue } from 'freedom-crypto-service';
 import { schema } from 'yaschema';
 
 import type { ApiMessage } from '../types/ApiMessage.ts';
-import { type DecryptedMessage, listMessageFieldSchema, viewMessageFieldSchema } from '../types/DecryptedMessage.ts';
+import { type DecryptedMessage, listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/DecryptedMessage.ts';
 import { getMessageOpenFields } from './getMessageOpenFields.ts';
 
 export const encryptMessage = makeAsyncResultFunc(
@@ -12,10 +12,10 @@ export const encryptMessage = makeAsyncResultFunc(
   async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessage): PR<ApiMessage> => {
     // listMessage
     const listMessageResult = await userEncryptValue(trace, {
-      schema: listMessageFieldSchema,
+      schema: listFieldsOfMessageSchema,
       value: {
         // TODO: Consider passing the whole object, the schema will pick the relevant fields
-        ...mail,
+        ...mail
         // subject: mail.subject,
         // from: mail.from,
         // priority: mail.priority,
@@ -29,9 +29,9 @@ export const encryptMessage = makeAsyncResultFunc(
 
     // viewMessage
     const viewMessageResult = await userEncryptValue(trace, {
-      schema: viewMessageFieldSchema,
+      schema: viewFieldsOfMessageSchema,
       value: {
-        ...mail,
+        ...mail
         // to: mail.to,
         // cc: mail.cc,
         // bcc: mail.bcc,
@@ -52,10 +52,10 @@ export const encryptMessage = makeAsyncResultFunc(
       return viewMessageResult;
     }
 
-    // rawMessage
+    // raw
     const rawMessageResult = await userEncryptValue(trace, {
       schema: schema.string(),
-      value: mail.rawMessage,
+      value: mail.raw,
       publicKeys
     });
     if (!rawMessageResult.ok) {
@@ -70,7 +70,7 @@ export const encryptMessage = makeAsyncResultFunc(
       // folder: mail.folder,
       listMessage: listMessageResult.value,
       viewMessage: viewMessageResult.value,
-      rawMessage: rawMessageResult.value,
+      raw: rawMessageResult.value
       // hasAttachments: mail.hasAttachments
     });
   }

@@ -15,9 +15,9 @@ export const apiMessage = schema.object({
   // TODO: Place isRead somewhere
 
   // ### Encrypted fields ###
-  listMessage: base64String.schema,
-  viewMessage: base64String.schema,
-  rawMessage: base64String.schema,
+  listFields: base64String.schema,
+  viewFields: base64String.schema,
+  raw: base64String.schema,
 
   // ### Dynamic ###
   // TODO: // listAttachments - to render the list
