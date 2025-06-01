@@ -2,7 +2,7 @@ import { isoDateTimeSchema } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
 import { decryptedListMessageSchema } from './DecryptedListMessage.ts';
-import { mailAddressListSchema, mailAddressSchema, mailPrioritySchema } from './headerTypes.ts';
+import { mailAddressListSchema, mailAddressSchema } from './headerTypes.ts';
 import { mailIdInfo } from './MailId.ts';
 
 export const decryptedViewMessagePartSchema = schema.object({
