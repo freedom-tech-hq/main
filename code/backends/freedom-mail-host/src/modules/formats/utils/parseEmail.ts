@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { makeIsoDateTime } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
-import { type DecryptedMessage, type MailAddress, type MailAddressList, mailIdInfo } from 'freedom-email-sync';
+import { types } from 'freedom-email-api';
 import { type AddressObject, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
@@ -14,17 +14,17 @@ import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
  * @param emailData - Raw email data as a string
  * @returns PR resolving to the parsed email
  */
-export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<DecryptedMessage> => {
+export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<types.DecryptedMessage> => {
   const parsed = await simpleParser(emailData);
 
   const transferredAt = new Date();
   const snippet = parsed.text ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '';
 
   // Convert to DecryptedMessage with all required fields
-  const result: DecryptedMessage = {
+  const result: types.DecryptedMessage = {
     // Open fields
     // TODO: Revise the security. Freezing extra data in IDs potentially disrupts the ability to fix privacy
-    id: mailIdInfo.make(`${makeIsoDateTime(transferredAt)}-${makeUuid()}`),
+    id: types.mailIdInfo.make(`${makeIsoDateTime(transferredAt)}-${makeUuid()}`),
     transferredAt: transferredAt.toISOString(),
 
     // Fields from listFields
@@ -53,15 +53,15 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
   return makeSuccess(result);
 });
 
-function convertAddressObject(to: AddressObject | AddressObject[]): MailAddressList {
-  const result: MailAddressList = [];
+function convertAddressObject(to: AddressObject | AddressObject[]): types.MailAddressList {
+  const result: types.MailAddressList = [];
   for (const object of Array.isArray(to) ? to : [to]) {
     result.push(...convertMailAddress(object.value));
   }
   return result;
 }
 
-function convertFromAddressObject(from: AddressObject): MailAddress {
+function convertFromAddressObject(from: AddressObject): types.MailAddress | undefined {
   // TODO: Revise https://chatgpt.com/c/683c382a-3f98-800d-a72b-329721d33945
   return convertMailAddress(from.value)[0];
 }

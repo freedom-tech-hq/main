@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import type { types } from 'freedom-email-api';
 import type { StoredMail } from 'freedom-email-sync';
 import type Mail from 'nodemailer/lib/mailer';
 
@@ -17,7 +18,7 @@ import { transporter } from '../internal/utils/transporter.ts';
  */
 export const deliverOutboundEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (_trace, mail: StoredMail, envelope?: Mail.Envelope): PR<undefined> => {
+  async (_trace, mail: types.DecryptedMessage, envelope?: Mail.Envelope): PR<undefined> => {
     await transporter.sendMail({
       from: mail.from,
       to: mail.to,

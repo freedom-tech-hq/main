@@ -2,8 +2,8 @@ import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { log } from 'freedom-contexts';
 import { findUserByEmail } from 'freedom-db';
+import type { types } from 'freedom-email-api';
 import { addIncomingEmail } from 'freedom-email-server';
-import type { StoredMail } from 'freedom-email-sync';
 
 import * as config from '../../../config.ts';
 import { resolveMailAlias } from '../../forwarding/exports.ts';
@@ -23,7 +23,7 @@ export const routeMail = makeAsyncResultFunc(
       mode
     }: {
       recipients: Set<string>;
-      mail: StoredMail;
+      mail: types.DecryptedMessage;
       // Different modes assume different policies
       mode:
         | {
@@ -96,7 +96,7 @@ export const routeMail = makeAsyncResultFunc(
 
       // Post to SMTP upstream
       await deliverOutboundEmail(trace, mail, {
-        from: mail.from,
+        from: mail.from, // TODO: Put the user's email
         to: externalRecipients.join(',')
       });
     }
@@ -112,6 +112,7 @@ export const routeMail = makeAsyncResultFunc(
         log().error?.('routeEmailMessage is internally inconsistent');
       } else {
         // Add headers and post to SMTP upstream
+        // TODO: Do not parse if we only forward it
         await deliverForwardedEmail(trace, {
           rawMail: mode.rawMail,
           envelope: {

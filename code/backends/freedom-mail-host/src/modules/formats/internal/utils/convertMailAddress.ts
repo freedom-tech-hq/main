@@ -1,8 +1,8 @@
-import type { MailAddress, MailAddressList } from 'freedom-email-sync';
+import type { types } from 'freedom-email-api';
 import type { EmailAddress } from 'mailparser';
 
-export function convertMailAddress(list: EmailAddress[]): MailAddressList {
-  const result: MailAddressList = [];
+export function convertMailAddress(list: EmailAddress[]): types.MailAddressList {
+  const result: types.MailAddressList = [];
 
   for (const addr of list) {
     if (addr.address !== undefined) {
@@ -14,7 +14,7 @@ export function convertMailAddress(list: EmailAddress[]): MailAddressList {
 
     // address and group are mutually exclusive. Typing of 'mailparser' is imperfect TODO: log contradictions
     if (addr.group !== undefined) {
-      const addresses: MailAddress[] = [];
+      const addresses: types.MailAddress[] = [];
 
       for (const item of addr.group) {
         if (item.address !== undefined) {
