@@ -3,6 +3,7 @@ export * from './ApiThread.ts';
 export * from './ApiViewMessage.ts';
 export * from './AttachmentInfo.ts';
 export * from './DecryptedListMessage.ts';
+export * from './DecryptedMessage.ts';
 export * from './DecryptedThread.ts';
 export * from './DecryptedViewMessage.ts';
 export * from './EmailUserId.ts';

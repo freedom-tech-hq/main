@@ -5,10 +5,14 @@ export const mailAddressSchema = schema.object({
   address: schema.string()
 });
 
+export type MailAddress = typeof mailAddressSchema.valueType;
+
 export const mailAddressGroupSchema = schema.object({
-  name: schema.string(),
+  groupName: schema.string(),
   addresses: schema.array({ items: mailAddressSchema })
 });
+
+export type MailAddressGroup = typeof mailAddressGroupSchema.valueType;
 
 export const mailAddressListSchema = schema.array({
   items: schema.oneOf(mailAddressSchema, mailAddressGroupSchema)

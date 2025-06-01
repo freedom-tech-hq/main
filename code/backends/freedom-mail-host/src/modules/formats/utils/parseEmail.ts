@@ -1,7 +1,9 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type StoredMail } from 'freedom-email-sync';
-import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser';
+import { type DecryptedMessage, type MailAddressList } from 'freedom-email-sync';
+import { type AddressObject, simpleParser } from 'mailparser';
+
+import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
 
 /**
  * Parse an email string into StoredMail
@@ -10,11 +12,11 @@ import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser'
  * @param emailData - Raw email data as a string
  * @returns PR resolving to the parsed email
  */
-export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<StoredMail> => {
+export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<DecryptedMessage> => {
   const parsed = await simpleParser(emailData);
 
   // Convert to StoredMail
-  const storedMail: StoredMail = {
+  const result: DecryptedMessage = {
     from: parsed.from?.text ?? '',
     to: parsed.to !== undefined ? convertAddressObject(parsed.to) : [],
     subject: parsed.subject ?? '',
@@ -23,34 +25,20 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
   };
 
   if (parsed.cc !== undefined) {
-    storedMail.cc = convertAddressObject(parsed.cc);
+    result.cc = convertAddressObject(parsed.cc);
   }
 
   if (parsed.bcc !== undefined) {
-    storedMail.bcc = convertAddressObject(parsed.bcc);
+    result.bcc = convertAddressObject(parsed.bcc);
   }
 
-  return makeSuccess(storedMail);
+  return makeSuccess(result);
 });
 
-function convertAddressObject(to: AddressObject | AddressObject[]): string[] {
-  const result: string[] = [];
+function convertAddressObject(to: AddressObject | AddressObject[]): MailAddressList {
+  const result: MailAddressList = [];
   for (const object of Array.isArray(to) ? to : [to]) {
-    result.push(...convertAddresses(object.value));
-  }
-  return result;
-}
-
-function convertAddresses(list: EmailAddress[]): string[] {
-  const result: string[] = [];
-  for (const addr of list) {
-    if (addr.address !== undefined) {
-      result.push(addr.address); // TODO: Add name
-    }
-
-    if (addr.group !== undefined) {
-      result.push(...convertAddresses(addr.group));
-    }
+    result.push(...convertMailAddress(object.value));
   }
   return result;
 }
