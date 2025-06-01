@@ -1,9 +1,8 @@
 import { authHeadersSchema, makeFailureWithCodeSchemas } from 'freedom-basic-data';
+import { apiViewMessageSchema } from 'freedom-email-sync';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
-
-import { viewMessageSchema } from '../../types/mail/ViewMessage.ts';
 
 export const GET = makeHttpApi({
   method: 'GET',
@@ -19,7 +18,7 @@ export const GET = makeHttpApi({
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
-      body: viewMessageSchema
+      body: apiViewMessageSchema
     },
     failureResponse: makeFailureWithCodeSchemas('not-found')
   }

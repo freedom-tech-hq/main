@@ -3,7 +3,7 @@ import { schema } from 'yaschema';
 
 // Should match DbThread and the shared part of DecryptedThread.
 // Cannot include here TODO: revise code structure
-export const threadSchema = schema.object({
+export const apiThreadSchema = schema.object({
   // Open fields
   id: schema.string(),
   // assumed // userId,
@@ -21,4 +21,4 @@ export const threadSchema = schema.object({
   hasAttachments: schema.boolean()
 });
 
-export type Thread = typeof threadSchema.valueType;
+export type ApiThread = typeof apiThreadSchema.valueType;

@@ -14,4 +14,6 @@ export const mailAddressListSchema = schema.array({
   items: schema.oneOf(mailAddressSchema, mailAddressGroupSchema)
 });
 
+export type MailAddressList = typeof mailAddressListSchema.valueType;
+
 export const mailPrioritySchema = schema.string('normal', 'low', 'high');

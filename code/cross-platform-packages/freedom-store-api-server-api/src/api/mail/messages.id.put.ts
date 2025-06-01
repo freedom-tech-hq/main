@@ -3,8 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
 
-import { viewMessageSchema } from '../../types/mail/ViewMessage.ts';
-
 export const PUT = makeHttpApi({
   method: 'PUT',
   routeType: 'rest',
@@ -32,7 +30,7 @@ export const PUT = makeHttpApi({
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
-      body: viewMessageSchema
+      body: schema.object({})
     },
     failureResponse: makeFailureWithCodeSchemas('not-found')
   }

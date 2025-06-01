@@ -1,3 +1,6 @@
+export * from './ApiListMessage.ts';
+export * from './ApiThread.ts';
+export * from './ApiViewMessage.ts';
 export * from './AttachmentInfo.ts';
 export * from './DecryptedListMessage.ts';
 export * from './DecryptedThread.ts';

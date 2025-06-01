@@ -1,10 +1,9 @@
 import { authHeadersSchema, makeFailureWithCodeSchemas } from 'freedom-basic-data';
+import { apiListMessageSchema } from 'freedom-email-sync';
 import { makePaginatedSchema, paginationOptionsSchema } from 'freedom-paginated-data';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
-
-import { listMessageSchema } from '../../types/mail/ListMessage.ts';
 
 export const GET = makeHttpApi({
   method: 'GET',
@@ -23,7 +22,7 @@ export const GET = makeHttpApi({
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
-      body: makePaginatedSchema(listMessageSchema)
+      body: makePaginatedSchema(apiListMessageSchema)
     },
     failureResponse: makeFailureWithCodeSchemas()
   }
