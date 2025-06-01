@@ -2,11 +2,11 @@ import { describe, it } from 'node:test';
 
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
-import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 
 const roleSchema = schema.string();

@@ -1,4 +1,5 @@
 import { makeTrace, makeUuid } from 'freedom-contexts';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, type SaltsById, storageRootIdInfo } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
@@ -7,7 +8,6 @@ import { DefaultSyncableStore } from '../types/DefaultSyncableStore.ts';
 import { generateProvenanceForNewSyncableStore } from '../utils/generateProvenanceForNewSyncableStore.ts';
 import { initializeRoot } from '../utils/initializeRoot.ts';
 import { getPrivateKeysFixture } from './getPrivateKeysFixture.ts';
-import { makeUserKeysForTesting } from './makeUserKeysForTesting.ts';
 
 export async function createStoreTestStack({
   extraSaltsById = {}

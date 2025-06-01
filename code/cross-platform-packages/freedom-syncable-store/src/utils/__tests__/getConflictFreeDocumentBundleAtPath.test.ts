@@ -8,13 +8,13 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import type { ConflictFreeDocumentEvaluator } from 'freedom-syncable-store-types';
 import { expectEventually, expectOk, sleep } from 'freedom-testing-tools';
 
-import { makeUserKeysForTesting } from '../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createConflictFreeDocumentBundleAtPath } from '../create/createConflictFreeDocumentBundleAtPath.ts';
 import { generateProvenanceForNewSyncableStore } from '../generateProvenanceForNewSyncableStore.ts';

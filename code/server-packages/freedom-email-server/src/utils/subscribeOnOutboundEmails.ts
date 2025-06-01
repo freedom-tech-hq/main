@@ -1,7 +1,7 @@
 import { bestEffort, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import type { Trace } from 'freedom-contexts';
-import type { User } from 'freedom-db';
+import type { DbUser } from 'freedom-db';
 import { getAllUsers, isMailSent, markMailSent } from 'freedom-db';
 import { listOutboundMailIds, type MailId } from 'freedom-email-sync';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
@@ -24,7 +24,7 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
     let isActive = true;
 
     // Helper function to fetch the latest outbound emails for a specific user
-    async function pollOutboundEmailsForUser(user: User, syncableStore: MutableSyncableStore): Promise<void> {
+    async function pollOutboundEmailsForUser(user: DbUser, syncableStore: MutableSyncableStore): Promise<void> {
       if (!isActive) {
         return;
       }

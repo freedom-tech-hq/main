@@ -6,6 +6,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
@@ -14,7 +15,6 @@ import { expectIncludes, expectNotOk, expectOk } from 'freedom-testing-tools';
 
 import type { HotSwappableUserKeys } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
 import { makeHotSwappableUserKeysForTesting } from '../../../tests/makeHotSwappableUserKeysForTesting.ts';
-import { makeUserKeysForTesting } from '../../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../../types/DefaultSyncableStore.ts';
 import { createBinaryFileAtPath } from '../../../utils/create/createBinaryFileAtPath.ts';
 import { createBundleAtPath } from '../../../utils/create/createBundleAtPath.ts';

@@ -4,8 +4,9 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
-import type { UserKeys } from 'freedom-crypto-service';
-import { makeUserKeys } from 'freedom-crypto-service';
+
+import type { UserKeys } from '../types/UserKeys.ts';
+import { makeUserKeys } from '../utils/makeUserKeys.ts';
 
 export const makeUserKeysForTesting = ({ privateKeys }: { privateKeys: PrivateCombinationCryptoKeySet }): UserKeys =>
   makeUserKeys({

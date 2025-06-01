@@ -7,6 +7,7 @@
     "freedom-async": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-email-api": "0.0.0",
     "freedom-email-server": "0.0.0",
     "freedom-local-sync": "0.0.0"
   },

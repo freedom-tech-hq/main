@@ -1,6 +1,7 @@
 import type { Trace } from 'freedom-contexts';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import type { StorageRootId, SyncableProvenance } from 'freedom-sync-types';
 import type { SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
 import { expectOk } from 'freedom-testing-tools';
@@ -9,7 +10,6 @@ import { generateProvenanceForNewSyncableStore } from '../exports.ts';
 import { ROOT_FOLDER_ID } from '../internal/consts/special-ids.ts';
 import { getPrivateKeysFixture } from './getPrivateKeysFixture.ts';
 import { type HotSwappableUserKeys, makeHotSwappableUserKeysForTesting } from './makeHotSwappableUserKeysForTesting.ts';
-import { makeUserKeysForTesting } from './makeUserKeysForTesting.ts';
 
 export interface StoreTestParameters {
   privateKeys: PrivateCombinationCryptoKeySet;

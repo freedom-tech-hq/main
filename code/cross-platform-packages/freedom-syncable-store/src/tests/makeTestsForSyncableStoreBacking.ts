@@ -6,6 +6,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { DEFAULT_SALT_ID, encName, type StorageRootId, storageRootIdInfo, syncableItemTypes, uuidId } from 'freedom-sync-types';
 import type { SyncableStoreBacking, SyncableStoreBackingItemMetadata } from 'freedom-syncable-store-backing-types';
@@ -27,7 +28,6 @@ import {
 } from '../exports.ts';
 import type { HotSwappableUserKeys } from './makeHotSwappableUserKeysForTesting.ts';
 import { makeStoreParametersForTesting } from './makeStoreParametersForTesting.ts';
-import { makeUserKeysForTesting } from './makeUserKeysForTesting.ts';
 
 export const makeTestsForSyncableStoreBacking = (
   typeName: string,

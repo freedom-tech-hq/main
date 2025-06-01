@@ -4,10 +4,10 @@ import { makeSuccess } from 'freedom-async';
 import { base64String, timeIdInfo } from 'freedom-basic-data';
 import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk } from 'freedom-testing-tools';
 
-import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 import { generateSignedAddAccessChange } from '../generateSignedAddAccessChange.ts';

@@ -3,15 +3,17 @@ import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { log } from 'freedom-contexts';
 import { findUserByEmail } from 'freedom-db';
 import { addIncomingEmail } from 'freedom-email-server';
-import type { StoredMail } from 'freedom-email-sync';
 
 import * as config from '../../../config.ts';
+import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
 import { resolveMailAlias } from '../../forwarding/exports.ts';
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 import { deliverForwardedEmail } from '../../smtp-upstream/utils/deliverForwardedEmail.ts';
 
 /**
  * Routes an email message to internal and external recipients
+ * TODO: Revise inputs (do not need parsed mail when only forwarding)
+ * TODO: Move to a different module, not 'syncable-store'
  */
 export const routeMail = makeAsyncResultFunc(
   [import.meta.filename],
@@ -23,7 +25,7 @@ export const routeMail = makeAsyncResultFunc(
       mode
     }: {
       recipients: Set<string>;
-      mail: StoredMail;
+      mail: ParsedMail;
       // Different modes assume different policies
       mode:
         | {
@@ -32,6 +34,7 @@ export const routeMail = makeAsyncResultFunc(
           }
         | {
             type: 'outbound';
+            userEmail: string; // Validated, from the DB
           };
     }
   ): PR<undefined> => {
@@ -87,18 +90,24 @@ export const routeMail = makeAsyncResultFunc(
     for (const recipient of internalRecipients) {
       DEV: debugTopic('SMTP', (log) => log(trace, `Processing internal recipient: ${recipient}`));
 
-      await addIncomingEmail(trace, recipient, mail);
+      await addIncomingEmail(trace, recipient, mail, mode.type === 'inbound' ? mode.rawMail : null);
     }
 
     // External recipients
     if (externalRecipients.length > 0) {
-      DEV: debugTopic('SMTP', (log) => log(trace, `Processing ${externalRecipients.length} external recipients`));
+      if (mode.type === 'inbound') {
+        // Should not happen
+        log().error?.('routeEmailMessage is internally inconsistent');
+      } else {
+        DEV: debugTopic('SMTP', (log) => log(trace, `Processing ${externalRecipients.length} external recipients`));
 
-      // Post to SMTP upstream
-      await deliverOutboundEmail(trace, mail, {
-        from: mail.from,
-        to: externalRecipients.join(',')
-      });
+        // Post to SMTP upstream
+        // TODO: Validate the 'from' field to match the user. Bounce on violation
+        await deliverOutboundEmail(trace, mail, {
+          from: mode.userEmail,
+          to: externalRecipients.join(',')
+        });
+      }
     }
 
     // External forwarding recipients
@@ -112,10 +121,11 @@ export const routeMail = makeAsyncResultFunc(
         log().error?.('routeEmailMessage is internally inconsistent');
       } else {
         // Add headers and post to SMTP upstream
+        // TODO: Do not parse if we only forward it
         await deliverForwardedEmail(trace, {
           rawMail: mode.rawMail,
           envelope: {
-            from: mail.from,
+            from: ourEmailAlias, // Note, this is envelope, not the 'From' header
             to: recipients.join(',')
           },
           forwardingParams: {

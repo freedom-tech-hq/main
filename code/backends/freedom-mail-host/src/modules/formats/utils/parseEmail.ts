@@ -1,56 +1,63 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type StoredMail } from 'freedom-email-sync';
-import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser';
+import { type IsoDateTime } from 'freedom-basic-data';
+import type { types } from 'freedom-email-api';
+import { type AddressObject, simpleParser } from 'mailparser';
+
+import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
+import type { ParsedMail } from '../types/ParsedMail.ts';
 
 /**
- * Parse an email string into StoredMail
+ * Parse an email string into our ParsedMail
  *
  * @param _trace - Trace for async operations
  * @param emailData - Raw email data as a string
  * @returns PR resolving to the parsed email
  */
-export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<StoredMail> => {
+export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<ParsedMail> => {
   const parsed = await simpleParser(emailData);
 
-  // Convert to StoredMail
-  const storedMail: StoredMail = {
-    from: parsed.from?.text ?? '',
-    to: parsed.to !== undefined ? convertAddressObject(parsed.to) : [],
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- `html` is `string | false`
+  const body = (parsed.html || parsed.text) ?? '';
+
+  // TODO: Replace snippet extraction
+  const snippet = parsed.text !== undefined ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '';
+
+  // Map to our type
+  const result: ParsedMail = {
+    // Open fields - none so far
+
+    // Fields from listFields
     subject: parsed.subject ?? '',
-    body: parsed.text ?? '',
-    timeMSec: Date.now() // Not parsed.date
+    from: parsed.from !== undefined ? convertAddressObject(parsed.from) : [],
+    priority: parsed.priority,
+    snippet,
+
+    // Fields from decryptedViewMessagePartSchema
+    to: parsed.to !== undefined ? convertAddressObject(parsed.to) : [],
+    cc: parsed.cc !== undefined ? convertAddressObject(parsed.cc) : [],
+    bcc: parsed.bcc !== undefined ? convertAddressObject(parsed.bcc) : [],
+    replyTo: parsed.replyTo !== undefined ? convertAddressObject(parsed.replyTo) : undefined,
+    isBodyHtml: parsed.html === body,
+    body,
+
+    // Optional fields
+    messageId: parsed.messageId,
+    inReplyTo: parsed.inReplyTo,
+    references: parsed.references !== undefined ? (Array.isArray(parsed.references) ? parsed.references : [parsed.references]) : undefined,
+    date: parsed.date !== undefined ? (parsed.date.toISOString() as IsoDateTime) : undefined,
+
+    // Raw message
+    raw: emailData
   };
 
-  if (parsed.cc !== undefined) {
-    storedMail.cc = convertAddressObject(parsed.cc);
-  }
-
-  if (parsed.bcc !== undefined) {
-    storedMail.bcc = convertAddressObject(parsed.bcc);
-  }
-
-  return makeSuccess(storedMail);
+  return makeSuccess(result);
 });
 
-function convertAddressObject(to: AddressObject | AddressObject[]): string[] {
-  const result: string[] = [];
+function convertAddressObject(to: AddressObject | AddressObject[]): types.MailAddressList {
+  const result: types.MailAddressList = [];
   for (const object of Array.isArray(to) ? to : [to]) {
-    result.push(...convertAddresses(object.value));
-  }
-  return result;
-}
-
-function convertAddresses(list: EmailAddress[]): string[] {
-  const result: string[] = [];
-  for (const addr of list) {
-    if (addr.address !== undefined) {
-      result.push(addr.address); // TODO: Add name
-    }
-
-    if (addr.group !== undefined) {
-      result.push(...convertAddresses(addr.group));
-    }
+    result.push(...convertMailAddress(object.value));
   }
   return result;
 }

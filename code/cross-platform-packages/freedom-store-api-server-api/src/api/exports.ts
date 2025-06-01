@@ -6,3 +6,4 @@ export * as push from './push.ts';
 export * as register from './register.ts';
 export * as retrieveCredentials from './retrieve-credentials.ts';
 export * as storeCredentials from './store-credentials.ts';
+export { api as mail } from 'freedom-email-api';

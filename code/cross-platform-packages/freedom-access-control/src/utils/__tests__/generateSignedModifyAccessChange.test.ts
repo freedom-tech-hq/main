@@ -9,10 +9,10 @@ import { makeTrace } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { deserialize } from 'freedom-serialization';
 import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
-import { makeUserKeysForTesting } from '../../__test_dependency__/makeUserKeysForTesting.ts';
 import { TestAccessControlDocument, testStoreRoleSchema } from '../../__test_dependency__/TestAccessControlDocument.ts';
 import { generateInitialAccess } from '../generateInitialAccess.ts';
 import { generateSignedAddAccessChange } from '../generateSignedAddAccessChange.ts';

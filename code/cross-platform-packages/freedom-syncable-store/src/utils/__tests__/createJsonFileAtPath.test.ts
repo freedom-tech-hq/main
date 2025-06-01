@@ -6,13 +6,13 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, encName, storageRootIdInfo, uuidId } from 'freedom-sync-types';
 import { expectOk } from 'freedom-testing-tools';
 import { schema } from 'yaschema';
 
-import { makeUserKeysForTesting } from '../../tests/makeUserKeysForTesting.ts';
 import { DefaultSyncableStore } from '../../types/DefaultSyncableStore.ts';
 import { createFolderAtPath } from '../create/createFolderAtPath.ts';
 import { createJsonFileAtPath } from '../create/createJsonFileAtPath.ts';

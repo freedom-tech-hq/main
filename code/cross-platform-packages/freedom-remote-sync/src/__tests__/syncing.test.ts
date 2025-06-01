@@ -9,6 +9,7 @@ import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { CombinationCryptoKeySet, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
 import { makeUserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import type { SyncableProvenance } from 'freedom-sync-types';
@@ -21,7 +22,6 @@ import {
   generateProvenanceForNewSyncableStore,
   initializeRoot
 } from 'freedom-syncable-store';
-import { makeUserKeysForTesting } from 'freedom-syncable-store/tests';
 import type { ExpectEventuallyOptions } from 'freedom-testing-tools';
 import { expectDeepStrictEqual, expectEventually, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 import { disableLam } from 'freedom-trace-logging-and-metrics';

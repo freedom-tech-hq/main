@@ -8,6 +8,7 @@ import { makeTrace, makeUuid } from 'freedom-contexts';
 import { generateCryptoCombinationKeySet } from 'freedom-crypto';
 import type { PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { makeUserKeysForTesting } from 'freedom-crypto-service/tests';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { InMemorySyncableStoreBacking } from 'freedom-in-memory-syncable-store-backing';
 import { DEFAULT_SALT_ID, plainId, storageRootIdInfo, SyncablePathPattern } from 'freedom-sync-types';
@@ -20,7 +21,6 @@ import {
   getMetadataAtPath,
   initializeRoot
 } from 'freedom-syncable-store';
-import { makeUserKeysForTesting } from 'freedom-syncable-store/tests';
 import { ACCESS_CONTROL_BUNDLE_ID } from 'freedom-syncable-store-types';
 import { expectDeepStrictEqual, expectOk, expectStrictEqual } from 'freedom-testing-tools';
 
