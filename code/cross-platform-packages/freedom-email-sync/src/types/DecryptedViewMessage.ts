@@ -12,7 +12,6 @@ export const decryptedViewMessagePartSchema = schema.object({
   cc: mailAddressListSchema,
   bcc: mailAddressListSchema.optional(), // Only exist in the outbound emails
   replyTo: mailAddressSchema.optional(),
-  priority: mailPrioritySchema.optional(),
   // seemingly included in the mailAddress // onBehalf: schema.string().allowEmptyString().optional(), // Assuming string, can be refined if needed
 
   // Only two modes: html and plain text
@@ -34,7 +33,7 @@ export const decryptedViewMessagePartSchema = schema.object({
   date: isoDateTimeSchema.optional()
 });
 
-export const decryptedViewMessageSchema = schema.oneOf3(
+export const decryptedViewMessageSchema = schema.allOf3(
   schema.object({
     // ### Open fields ###
     id: mailIdInfo.schema,
