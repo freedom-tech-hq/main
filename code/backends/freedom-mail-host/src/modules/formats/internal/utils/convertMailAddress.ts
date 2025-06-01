@@ -12,7 +12,7 @@ export function convertMailAddress(list: EmailAddress[]): MailAddressList {
       });
     }
 
-    // address and group are mutually exclusive. Typing of 'mailparser' is imperfect
+    // address and group are mutually exclusive. Typing of 'mailparser' is imperfect TODO: log contradictions
     if (addr.group !== undefined) {
       const addresses: MailAddress[] = [];
 
