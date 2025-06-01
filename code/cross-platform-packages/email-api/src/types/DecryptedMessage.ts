@@ -12,6 +12,7 @@ export const decryptedMessageSchema = schema.object({
   userId: emailUserIdInfo.schema,
   transferredAt: isoDateTimeSchema, // TODO: Rename to lastUpdatedAt
   folder: messageFolderSchema,
+  // TODO: Place isRead somewhere
 
   // ### Decoded listMessage ###
   subject: schema.string(),
@@ -33,7 +34,6 @@ export const decryptedMessageSchema = schema.object({
   isBodyHtml: schema.boolean(),
   body: schema.string().allowEmptyString(),
 
-  // ### Still viewMessage, Not probably used, but we may want to render them at some point ###
   // If we forbid empty string for these, we are at risk of getting runtime exceptions in the receiving code
   // because it is close to impossible to recall this limitation when saving a message parsed by 3rd-party libraries
   messageId: schema.string().allowEmptyString().optional(),
@@ -55,7 +55,7 @@ export const decryptedMessageSchema = schema.object({
 
 export type DecryptedMessage = typeof decryptedMessageSchema.valueType;
 
-export const decryptedListMessageFieldSchema = schema.pick(decryptedMessageSchema, [
+export const listMessageFieldSchema = schema.pick(decryptedMessageSchema, [
   // prettier-fix
   'subject',
   'from',
@@ -63,19 +63,20 @@ export const decryptedListMessageFieldSchema = schema.pick(decryptedMessageSchem
   'snippet'
 ]);
 
-export const decryptedListMessageSchema = schema.pick(decryptedMessageSchema, [
-  // ### Open fields ###
-  'id',
-  // assumed // userId,
-  'transferredAt',
-  // assumed // folder,
+export const viewMessageFieldSchema = schema.pick(decryptedMessageSchema, [
+  'to',
+  'cc',
+  'bcc',
+  'replyTo',
+  'isBodyHtml',
+  'body',
 
-  // ### Decoded listMessage ###
-  'subject',
-  'from',
-  'priority',
-  'snippet',
-
-  // ### Dynamic ###
-  'hasAttachments'
+  // Not probably used, but we may want to render them at some point
+  'messageId',
+  'inReplyTo',
+  'references',
+  'date'
 ]);
+
+// MVP version: raw email with headers as in SMTP
+export const rawMessageFieldSchema = schema.string();
