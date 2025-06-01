@@ -3,13 +3,13 @@ import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { schema } from 'yaschema';
 
-import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/AllFieldsOfMessage.ts';
-import type { ApiMessageToSave } from '../types/ApiMessageToSave.ts';
-import type { DecryptedMessageToSave } from '../types/DecryptedMessageToSave.ts';
+import type { ApiInputMessage } from '../types/ApiInputMessage.ts';
+import type { DecryptedInputMessage } from '../types/DecryptedInputMessage.ts';
+import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/MailMessage.ts';
 
 export const encryptMessageToSave = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessageToSave): PR<ApiMessageToSave> => {
+  async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedInputMessage): PR<ApiInputMessage> => {
     // listFields
     const listFieldsResult = await userEncryptValue(trace, {
       schema: listFieldsOfMessageSchema,
@@ -62,7 +62,7 @@ export const encryptMessageToSave = makeAsyncResultFunc(
       return rawMessageResult;
     }
 
-    return makeSuccess<ApiMessageToSave>({
+    return makeSuccess<ApiInputMessage>({
       id: mail.id,
       // server-controlled:
       // 'userId'

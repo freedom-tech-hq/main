@@ -7,7 +7,7 @@ import { clientApi } from 'freedom-email-api';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, recipientEmail: string, mail: types.DecryptedMessageToSave): PR<undefined> => {
+  async (trace, recipientEmail: string, mail: types.DecryptedInputMessage): PR<undefined> => {
     const transferredAt = new Date();
     const folder: DbMessage['folder'] = 'inbox';
 

@@ -1,11 +1,11 @@
-import type { AllFieldsOfMessage } from './AllFieldsOfMessage.ts';
+import type { ApiMessage } from './ApiMessage.ts';
 
-export type DecryptedMessageToSave = Omit<
-  AllFieldsOfMessage,
-  // Exclude controlled fields
+export type ApiInputMessage = Omit<
+  ApiMessage,
+  // Exclude server-controlled fields
   // | 'id' - frontend can control its ids as we are going to local-first, no?
-  | 'userId' // validated
-  | 'transferredAt' // auto
+  | 'userId'
+  | 'transferredAt'
   | 'folder' // always 'drafts' for user and 'inbox' for MailAgent
   // Exclude all dynamic fields
   | 'hasAttachments'

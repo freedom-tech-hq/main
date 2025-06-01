@@ -1,6 +1,6 @@
 import { pick } from 'lodash-es';
 
-import type { AllFieldsOfMessage } from '../types/AllFieldsOfMessage.ts';
+import type { MailMessage } from '../types/MailMessage.ts';
 
 const openFields = [
   // prettier-fix
@@ -9,9 +9,9 @@ const openFields = [
   'transferredAt',
   'folder',
   'hasAttachments'
-] as const satisfies (keyof AllFieldsOfMessage)[];
+] as const satisfies (keyof MailMessage)[];
 
-type OpenFields = Pick<AllFieldsOfMessage, (typeof openFields)[number]>;
+type OpenFields = Pick<MailMessage, (typeof openFields)[number]>;
 
 export function getMessageOpenFields(message: OpenFields): OpenFields {
   return pick(message, openFields);

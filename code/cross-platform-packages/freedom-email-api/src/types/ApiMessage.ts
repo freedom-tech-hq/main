@@ -5,7 +5,7 @@ import { emailUserIdInfo } from './EmailUserId.ts';
 import { mailIdInfo } from './MailId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
-// Should match DbMessage and the shared part of AllFieldsOfMessage.
+// Should match DbMessage and the shared part of MailMessage.
 export const apiMessage = schema.object({
   // ### Open fields ###
   id: mailIdInfo.schema,

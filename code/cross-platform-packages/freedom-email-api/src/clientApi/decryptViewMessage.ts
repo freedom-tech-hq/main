@@ -2,9 +2,9 @@ import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
 import type { UserKeys } from 'freedom-crypto-service';
 import { userDecryptValue } from 'freedom-crypto-service';
 
-import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/AllFieldsOfMessage.ts';
 import type { ApiViewMessage } from '../types/ApiViewMessage.ts';
 import type { DecryptedViewMessage } from '../types/DecryptedViewMessage.ts';
+import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/MailMessage.ts';
 
 export const decryptViewMessage = makeAsyncResultFunc(
   [import.meta.filename],

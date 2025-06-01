@@ -1,7 +1,7 @@
 import type { types } from 'freedom-email-api';
 
 export type ParsedMail = Omit<
-  types.AllFieldsOfMessage,
+  types.MailMessage,
   // Drop our internal fields
   | 'id'
   | 'userId'
