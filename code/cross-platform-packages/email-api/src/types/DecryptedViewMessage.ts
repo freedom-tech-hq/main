@@ -14,19 +14,17 @@ export type DecryptedViewMessage = Pick<DecryptedMessage,
   | 'snippet'
 
   // Decrypted viewMessage, see viewMessageFieldSchema
-  'to',
-  'cc',
-  'bcc',
-  'replyTo',
-  'isBodyHtml',
-  'body',
-
-  // Not probably used, but we may want to render them at some point
-  'messageId',
-  'inReplyTo',
-  'references',
-  'date'
+  | 'to'
+  | 'cc'
+  | 'bcc'
+  | 'replyTo'
+  | 'isBodyHtml'
+  | 'body'
+  | 'messageId'
+  | 'inReplyTo'
+  | 'references'
+  | 'date'
 
   // Dynamic
-  | 'hasAttachments'
+  // TODO: | 'listAttachments'
 >

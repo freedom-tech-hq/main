@@ -49,7 +49,8 @@ export const decryptedMessageSchema = schema.object({
   rawMessage: schema.string(),
 
   // ### Dynamic ###
-  // TODO // attachments: schema.array(decryptedAttachmentSchema)
+  // TODO: // listAttachments - to render the list
+  // TODO // attachments - full data, to input them?
   hasAttachments: schema.boolean()
 });
 
