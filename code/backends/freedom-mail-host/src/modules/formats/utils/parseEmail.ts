@@ -4,7 +4,7 @@ import { makeIsoDateTime } from 'freedom-basic-data';
 import { type IsoDateTime } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
 import { types } from 'freedom-email-api';
-import { type AddressObject, simpleParser } from 'mailparser';
+import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
 
@@ -65,7 +65,18 @@ function convertAddressObject(to: AddressObject | AddressObject[]): types.MailAd
   return result;
 }
 
-function convertSingleAddressObject(from: AddressObject): types.MailAddress | undefined {
+function convertSingleAddressObject(item: AddressObject): types.MailAddress | undefined {
   // TODO: Revise https://chatgpt.com/c/683c382a-3f98-800d-a72b-329721d33945
-  return convertMailAddress(from.value)[0];
+
+  // Note: `mailparser` typing is too generic here
+  const expectedItem: EmailAddress | undefined = item.value[0];
+
+  if (expectedItem?.address !== undefined) {
+    return {
+      name: expectedItem.name,
+      address: expectedItem.address
+    };
+  }
+
+  return undefined;
 }
