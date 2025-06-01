@@ -21,8 +21,8 @@ export const addIncomingEmail = makeAsyncResultFunc(
       return generalizeFailureResult(trace, user, 'not-found');
     }
 
-    // listMessage
-    const listMessageResult = await userEncryptValue(trace, {
+    // listFields
+    const listFieldsResult = await userEncryptValue(trace, {
       schema: decryptedListMessagePartSchema,
       value: {
         subject: mail.subject,
@@ -32,12 +32,12 @@ export const addIncomingEmail = makeAsyncResultFunc(
       },
       publicKeys: user.value.publicKeys
     });
-    if (!listMessageResult.ok) {
-      return listMessageResult;
+    if (!listFieldsResult.ok) {
+      return listFieldsResult;
     }
 
-    // viewMessage
-    const viewMessageResult = await userEncryptValue(trace, {
+    // viewFields
+    const viewFieldsResult = await userEncryptValue(trace, {
       schema: decryptedViewMessagePartSchema,
       value: {
         from: {
@@ -51,8 +51,8 @@ export const addIncomingEmail = makeAsyncResultFunc(
       },
       publicKeys: user.value.publicKeys
     });
-    if (!viewMessageResult.ok) {
-      return viewMessageResult;
+    if (!viewFieldsResult.ok) {
+      return viewFieldsResult;
     }
 
     // raw
@@ -66,7 +66,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
     }
 
     const sql = `
-      INSERT INTO "messages" ("id", "userId", "transferredAt", "folder", "listMessage", "viewMessage", "raw")
+      INSERT INTO "messages" ("id", "userId", "transferredAt", "folder", "listFields", "viewFields", "raw")
       VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
 
@@ -75,8 +75,8 @@ export const addIncomingEmail = makeAsyncResultFunc(
       user.value.userId,
       transferredAt,
       folder,
-      listMessageResult.value,
-      viewMessageResult.value,
+      listFieldsResult.value,
+      viewFieldsResult.value,
       rawMessageResult.value
     ];
 

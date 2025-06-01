@@ -8,13 +8,13 @@ export type DecryptedViewMessage = Pick<
   | 'transferredAt'
   // assumed // folder,
 
-  // Decrypted listMessage, see listMessageFieldSchema
+  // Decrypted listFields, see listFieldsFieldSchema
   | 'subject'
   | 'from'
   | 'priority'
   | 'snippet'
 
-  // Decrypted viewMessage, see viewMessageFieldSchema
+  // Decrypted viewFields, see viewFieldsFieldSchema
   | 'to'
   | 'cc'
   | 'bcc'

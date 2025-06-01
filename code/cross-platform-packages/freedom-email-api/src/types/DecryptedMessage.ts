@@ -14,13 +14,13 @@ export const decryptedMessageSchema = schema.object({
   folder: messageFolderSchema,
   // TODO: Place isRead somewhere
 
-  // ### Decoded listMessage ###
+  // ### Decoded listFields ###
   subject: schema.string(),
   from: mailAddressSchema.optional(), // Might be absent for incoming messages. TODO: check can it be plural
   priority: mailPrioritySchema.optional(),
   snippet: schema.string(),
 
-  // ### Decoded viewMessage ###
+  // ### Decoded viewFields ###
   to: mailAddressListSchema,
   cc: mailAddressListSchema,
   bcc: mailAddressListSchema.optional(), // Only exist in the outbound emails
@@ -43,7 +43,7 @@ export const decryptedMessageSchema = schema.object({
   // This header is inserted by the sending client, so it is not reliable, use lastUpdatedAt instead
   // or `mail.date ?? mail.lastUpdatedAt`
   date: isoDateTimeSchema.optional(),
-  // ### End of Decoded viewMessage ###
+  // ### End of Decoded viewFields ###
 
   // ### Decoded raw ###
   raw: schema.string(),

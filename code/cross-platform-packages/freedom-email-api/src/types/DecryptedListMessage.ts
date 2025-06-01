@@ -8,7 +8,7 @@ export type DecryptedListMessage = Pick<
   | 'transferredAt'
   // assumed // folder,
 
-  // Decrypted listMessage, see listMessageFieldSchema
+  // Decrypted listFields, see listFieldsFieldSchema
   | 'subject'
   | 'from'
   | 'priority'

@@ -20,8 +20,8 @@ export const dbMessageSchema = schema.object({
   threadId: schema.string().allowNull(),
 
   // ### Encrypted fields ###
-  listMessage: base64String.schema,
-  viewMessage: base64String.schema,
+  listFields: base64String.schema,
+  viewFields: base64String.schema,
   raw: base64String.schema
 
   // Note: on the first migration, add a formatVersion field here

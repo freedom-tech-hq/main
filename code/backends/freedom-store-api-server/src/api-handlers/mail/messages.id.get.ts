@@ -33,12 +33,12 @@ export default makeHttpApiHandler(
     }
 
     const sql = `
-      SELECT "id", "userId", "transferredAt", "listMessage", "viewMessage"
+      SELECT "id", "userId", "transferredAt", "listFields", "viewFields"
       FROM "messages"
       WHERE "id" = $1 AND "userId" = $2
     `;
 
-    const result = await dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listMessage' | 'viewMessage'>>(sql, [
+    const result = await dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listFields' | 'viewFields'>>(sql, [
       messageId,
       currentUserId
     ]);
@@ -57,8 +57,8 @@ export default makeHttpApiHandler(
     const responseBody: types.mail.ViewMessage = {
       id: dbMsg.id,
       transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
-      listMessage: dbMsg.listMessage,
-      viewMessage: dbMsg.viewMessage
+      listFields: dbMsg.listFields,
+      viewFields: dbMsg.viewFields
     };
 
     return makeSuccess({ body: responseBody });

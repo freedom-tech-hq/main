@@ -43,7 +43,7 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
     return encryptedResult;
   }
 
-  console.log('Generated listMessage:', encryptedResult.value);
+  console.log('Generated listFields:', encryptedResult.value);
 
   // Test scenario
   console.log('Starting testNewApi task...');

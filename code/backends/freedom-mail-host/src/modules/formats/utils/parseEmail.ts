@@ -27,7 +27,7 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
     id: mailIdInfo.make(`${makeIsoDateTime(transferredAt)}-${makeUuid()}`),
     transferredAt: transferredAt.toISOString(),
 
-    // Fields from listMessage
+    // Fields from listFields
     subject: parsed.subject,
     from: parsed.from !== undefined ? convertFromAddressObject(parsed.from) : undefined,
     priority: parsed.priority,

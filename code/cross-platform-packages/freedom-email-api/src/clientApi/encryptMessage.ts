@@ -10,8 +10,8 @@ import { getMessageOpenFields } from './getMessageOpenFields.ts';
 export const encryptMessage = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessage): PR<ApiMessage> => {
-    // listMessage
-    const listMessageResult = await userEncryptValue(trace, {
+    // listFields
+    const listFieldsResult = await userEncryptValue(trace, {
       schema: listFieldsOfMessageSchema,
       value: {
         // TODO: Consider passing the whole object, the schema will pick the relevant fields
@@ -23,12 +23,12 @@ export const encryptMessage = makeAsyncResultFunc(
       },
       publicKeys
     });
-    if (!listMessageResult.ok) {
-      return listMessageResult;
+    if (!listFieldsResult.ok) {
+      return listFieldsResult;
     }
 
-    // viewMessage
-    const viewMessageResult = await userEncryptValue(trace, {
+    // viewFields
+    const viewFieldsResult = await userEncryptValue(trace, {
       schema: viewFieldsOfMessageSchema,
       value: {
         ...mail
@@ -48,8 +48,8 @@ export const encryptMessage = makeAsyncResultFunc(
       },
       publicKeys
     });
-    if (!viewMessageResult.ok) {
-      return viewMessageResult;
+    if (!viewFieldsResult.ok) {
+      return viewFieldsResult;
     }
 
     // raw
@@ -68,8 +68,8 @@ export const encryptMessage = makeAsyncResultFunc(
       // userId: mail.userId,
       // transferredAt: mail.transferredAt,
       // folder: mail.folder,
-      listMessage: listMessageResult.value,
-      viewMessage: viewMessageResult.value,
+      listFields: listFieldsResult.value,
+      viewFields: viewFieldsResult.value,
       raw: rawMessageResult.value
       // hasAttachments: mail.hasAttachments
     });

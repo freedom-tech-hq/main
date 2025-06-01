@@ -8,12 +8,12 @@ export const decryptThread = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, userKeys: UserKeys, thread: types.mail.Thread): PR<DecryptedThread> => {
     // Split
-    const { listMessage, ...openFields } = thread;
+    const { listFields, ...openFields } = thread;
 
     // Decrypt
     const decryptedPart = await userDecryptValue(trace, {
       schema: decryptedThreadPartSchema,
-      encryptedValue: listMessage,
+      encryptedValue: listFields,
       userKeys
     });
     if (!decryptedPart.ok) {

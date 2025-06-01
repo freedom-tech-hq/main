@@ -8,7 +8,7 @@ export interface RawMessage {
   userId: EmailUserId;
   transferredAt: IsoDateTime;
   folder: MessageFolder;
-  listMessage: Buffer;
-  viewMessage: Buffer;
+  listFields: Buffer;
+  viewFields: Buffer;
   raw: Buffer;
 }

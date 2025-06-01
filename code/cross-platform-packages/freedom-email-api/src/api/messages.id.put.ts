@@ -22,8 +22,8 @@ export const PUT = makeHttpApi({
         // constant // folder,
 
         // Encrypted fields
-        listMessage: base64String.schema,
-        viewMessage: base64String.schema
+        listFields: base64String.schema,
+        viewFields: base64String.schema
 
         // TODO: attachments
       })

@@ -78,7 +78,7 @@ export default makeHttpApiHandler(
     const params: unknown[] = [currentUserId, currentFolder];
     let cursorClause = '';
     let threadClause = '';
-    
+
     // Add threadId filter if provided
     if (threadId !== undefined) {
       params.push(threadId);
@@ -93,7 +93,7 @@ export default makeHttpApiHandler(
     // Fetch one extra item to determine if there's a next page
     params.push(PAGE_SIZE + 1);
     const messagesQuery = `
-      SELECT "id", "userId", "transferredAt", "listMessage"
+      SELECT "id", "userId", "transferredAt", "listFields"
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2
       ${threadClause}
@@ -108,13 +108,13 @@ export default makeHttpApiHandler(
       WHERE "userId" = $1 AND "folder" = $2
       ${threadClause}
     `;
-    
+
     // Adjust countQuery params to include threadId if needed
     const countParams = threadId !== undefined ? [currentUserId, currentFolder, threadId] : [currentUserId, currentFolder];
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([
-      dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listMessage'>>(messagesQuery, params),
+      dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listFields'>>(messagesQuery, params),
       dbQuery<{ total_count: number }>(countQuery, countParams)
     ]);
 
@@ -129,7 +129,7 @@ export default makeHttpApiHandler(
       (dbMsg): types.mail.ListMessage => ({
         id: dbMsg.id,
         transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
-        listMessage: dbMsg.listMessage,
+        listFields: dbMsg.listFields,
         // TODO: Determine `hasAttachments` from DbMessage content or schema if needed.
         hasAttachments: false
       })

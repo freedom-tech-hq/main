@@ -16,8 +16,8 @@ export const POST = makeHttpApi({
       }),
       body: schema.object({
         // Same as in PUT
-        listMessage: base64String.schema,
-        viewMessage: base64String.schema,
+        listFields: base64String.schema,
+        viewFields: base64String.schema,
         raw: base64String.schema,
 
         // TODO: attachments

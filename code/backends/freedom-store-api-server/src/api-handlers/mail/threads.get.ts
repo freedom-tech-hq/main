@@ -1,12 +1,12 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import { dbQuery } from 'freedom-db';
 import type { MessageFolder } from 'freedom-db';
-import { emailUserIdInfo } from 'freedom-email-sync';
+import { dbQuery } from 'freedom-db';
 import type { EmailUserId } from 'freedom-email-sync';
-import { pageTokenInfo } from 'freedom-paginated-data';
+import { emailUserIdInfo } from 'freedom-email-sync';
 import type { PageToken } from 'freedom-paginated-data';
+import { pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import type { types } from 'freedom-store-api-server-api';
 import { api } from 'freedom-store-api-server-api';
@@ -87,7 +87,7 @@ export default makeHttpApiHandler(
         "threadId" as "id", 
         MAX("transferredAt") as "transferredAt", 
         COUNT(*) as "messageCount",
-        FIRST_VALUE("listMessage") OVER (PARTITION BY "threadId" ORDER BY "transferredAt" DESC) as "listMessage",
+        FIRST_VALUE("listFields") OVER (PARTITION BY "threadId" ORDER BY "transferredAt" DESC) as "listFields",
         BOOL_OR("hasAttachments") as "hasAttachments"
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2 AND "threadId" IS NOT NULL
@@ -107,9 +107,9 @@ export default makeHttpApiHandler(
     const [threadsResult, countResult] = await Promise.all([
       dbQuery<{
         id: string;
-        transferredAt: IsoDateTime; 
+        transferredAt: IsoDateTime;
         messageCount: number;
-        listMessage: string;
+        listFields: string;
         hasAttachments: boolean;
       }>(threadsQuery, params),
       dbQuery<{ total_count: number }>(countQuery, [currentUserId, currentFolder])
@@ -127,7 +127,7 @@ export default makeHttpApiHandler(
         id: dbThread.id,
         messageCount: dbThread.messageCount,
         transferredAt: dbThread.transferredAt,
-        listMessage: dbThread.listMessage,
+        listFields: dbThread.listFields,
         hasAttachments: dbThread.hasAttachments
       })
     );

@@ -4,8 +4,8 @@ CREATE TABLE "messages" (
   "userId" TEXT NOT NULL REFERENCES "users" ("userId") ON DELETE CASCADE,
   "transferredAt" TIMESTAMPTZ NOT NULL,
   "folder" TEXT NOT NULL CHECK ("folder" IN ('inbox', 'outbox', 'sent', 'drafts')),
-  "listMessage" TEXT NOT NULL,
-  "viewMessage" TEXT NOT NULL,
+  "listFields" TEXT NOT NULL,
+  "viewFields" TEXT NOT NULL,
   "raw" TEXT NOT NULL
 );
 
