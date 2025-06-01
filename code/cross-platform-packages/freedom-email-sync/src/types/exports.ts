@@ -1,4 +1,5 @@
 export * from './ApiListMessage.ts';
+export * from './ApiMessage.ts';
 export * from './ApiThread.ts';
 export * from './ApiViewMessage.ts';
 export * from './AttachmentInfo.ts';

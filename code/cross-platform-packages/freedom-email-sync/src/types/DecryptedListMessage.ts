@@ -7,7 +7,7 @@ import { mailIdInfo } from './MailId.ts';
 // ### Decrypted listMessage API field ###
 export const decryptedListMessagePartSchema = schema.object({
   subject: schema.string(),
-  from: mailAddressSchema,
+  from: mailAddressSchema.optional(), // Might be absent for incoming messages. TODO: check can it be plural
   priority: mailPrioritySchema.optional(),
   snippet: schema.string()
 });

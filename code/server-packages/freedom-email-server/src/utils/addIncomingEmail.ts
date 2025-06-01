@@ -5,12 +5,12 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { type DbMessage, dbQuery, findUserByEmail } from 'freedom-db';
-import { type StoredMail, storedMailSchema } from 'freedom-email-sync';
+import { type DecryptedMessage, storedMailSchema } from 'freedom-email-sync';
 import { decryptedListMessagePartSchema, decryptedViewMessagePartSchema } from 'freedom-email-sync';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, recipientEmail: string, mail: StoredMail): PR<undefined> => {
+  async (trace, recipientEmail: string, mail: DecryptedMessage): PR<undefined> => {
     const messageId = randomUUID();
     const transferredAt = new Date(mail.timeMSec);
     const folder: DbMessage['folder'] = 'inbox';
@@ -26,6 +26,8 @@ export const addIncomingEmail = makeAsyncResultFunc(
       schema: decryptedListMessagePartSchema,
       value: {
         subject: mail.subject,
+        from: mail.from,
+        priority: 'normal',
         snippet: mail.body // TODO: Don't forget to trim
       },
       publicKeys: user.value.publicKeys
@@ -38,9 +40,12 @@ export const addIncomingEmail = makeAsyncResultFunc(
     const viewMessageResult = await userEncryptValue(trace, {
       schema: decryptedViewMessagePartSchema,
       value: {
-        from: mail.from,
-        to: mail.to.join(', '),
-        cc: mail.cc?.join(', ') ?? '',
+        from: {
+          address: mail.from,
+          name: mail.fromName
+        },
+        to: mail.to.map((address) => ({ address })),
+        cc: (mail.cc || []).map((address) => ({ address })),
         // onBehalf: '',
         body: mail.body
       },

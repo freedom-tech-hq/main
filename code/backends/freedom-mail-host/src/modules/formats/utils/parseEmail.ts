@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { makeIsoDateTime } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
-import { type DecryptedMessage, type MailAddressList, mailIdInfo } from 'freedom-email-sync';
+import { type DecryptedMessage, type MailAddress, type MailAddressList, mailIdInfo } from 'freedom-email-sync';
 import { type AddressObject, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
@@ -18,6 +18,7 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
   const parsed = await simpleParser(emailData);
 
   const transferredAt = new Date();
+  const snippet = parsed.text ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '';
 
   // Convert to DecryptedMessage with all required fields
   const result: DecryptedMessage = {
@@ -28,11 +29,9 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
 
     // Fields from listMessage
     subject: parsed.subject,
-    from: parsed.from ? convertMailAddress(parsed.from.value)[0] : { name: '', address: '' },
-    to: parsed.to ? convertAddressObject(parsed.to) : [],
-    priority: 'normal', // Default priority if not specified
-    snippet: parsed.text ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '',
-    hasAttachments: !!(parsed.attachments && parsed.attachments.length > 0),
+    from: parsed.from !== undefined ? convertFromAddressObject(parsed.from) : undefined,
+    priority: parsed.priority,
+    snippet,
 
     // Fields from decryptedViewMessagePartSchema
     cc: parsed.cc ? convertAddressObject(parsed.cc) : [],
@@ -60,4 +59,9 @@ function convertAddressObject(to: AddressObject | AddressObject[]): MailAddressL
     result.push(...convertMailAddress(object.value));
   }
   return result;
+}
+
+function convertFromAddressObject(from: AddressObject): MailAddress {
+  // TODO: Revise https://chatgpt.com/c/683c382a-3f98-800d-a72b-329721d33945
+  return convertMailAddress(from.value)[0];
 }
