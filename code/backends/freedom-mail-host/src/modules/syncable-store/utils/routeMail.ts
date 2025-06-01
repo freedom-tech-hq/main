@@ -2,7 +2,6 @@ import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { log } from 'freedom-contexts';
 import { findUserByEmail } from 'freedom-db';
-import type { types } from 'freedom-email-api';
 import { addIncomingEmail } from 'freedom-email-server';
 
 import * as config from '../../../config.ts';
@@ -33,6 +32,7 @@ export const routeMail = makeAsyncResultFunc(
           }
         | {
             type: 'outbound';
+            userEmail: string; // Validated, from the DB
           };
     }
   ): PR<undefined> => {
@@ -93,13 +93,18 @@ export const routeMail = makeAsyncResultFunc(
 
     // External recipients
     if (externalRecipients.length > 0) {
-      DEV: debugTopic('SMTP', (log) => log(trace, `Processing ${externalRecipients.length} external recipients`));
+      if (mode.type === 'inbound') {
+        // Should not happen
+        log().error?.('routeEmailMessage is internally inconsistent');
+      } else {
+        DEV: debugTopic('SMTP', (log) => log(trace, `Processing ${externalRecipients.length} external recipients`));
 
-      // Post to SMTP upstream
-      await deliverOutboundEmail(trace, mail, {
-        from: mail.from, // TODO: Put the user's email
-        to: externalRecipients.join(',')
-      });
+        // Post to SMTP upstream
+        await deliverOutboundEmail(trace, mail, {
+          from: mode.userEmail,
+          to: externalRecipients.join(',')
+        });
+      }
     }
 
     // External forwarding recipients
@@ -117,7 +122,7 @@ export const routeMail = makeAsyncResultFunc(
         await deliverForwardedEmail(trace, {
           rawMail: mode.rawMail,
           envelope: {
-            from: mail.from,
+            from: ourEmailAlias, // Note, this is envelope, not the 'From' header
             to: recipients.join(',')
           },
           forwardingParams: {

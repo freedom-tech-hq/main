@@ -1,9 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { makeIsoDateTime } from 'freedom-basic-data';
 import { type IsoDateTime } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
-import { types } from 'freedom-email-api';
+import type { types } from 'freedom-email-api';
 import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
@@ -19,16 +17,12 @@ import type { ParsedMail } from '../types/ParsedMail.ts';
 export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<ParsedMail> => {
   const parsed = await simpleParser(emailData);
 
-  const transferredAt = new Date();
   // TODO: Replace snippet extraction
   const snippet = parsed.text !== undefined ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '';
 
   // Map to our type
   const result: ParsedMail = {
-    // Open fields
-    // TODO: Revise the security. Freezing extra data in IDs potentially disrupts the ability to fix privacy
-    id: types.mailIdInfo.make(`${makeIsoDateTime(transferredAt)}-${makeUuid()}`),
-    transferredAt: transferredAt.toISOString() as IsoDateTime,
+    // Open fields - none so far
 
     // Fields from listFields
     subject: parsed.subject ?? '',
