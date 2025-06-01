@@ -1,6 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type DecryptedMessage, type MailAddressList } from 'freedom-email-sync';
+import { makeIsoDateTime } from 'freedom-basic-data';
+import { makeUuid } from 'freedom-contexts';
+import { type DecryptedMessage, type MailAddressList, mailIdInfo } from 'freedom-email-sync';
 import { type AddressObject, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
@@ -15,22 +17,39 @@ import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
 export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_trace, emailData: string): PR<DecryptedMessage> => {
   const parsed = await simpleParser(emailData);
 
-  // Convert to StoredMail
+  const transferredAt = new Date();
+
+  // Convert to DecryptedMessage with all required fields
   const result: DecryptedMessage = {
-    from: parsed.from?.text ?? '',
-    to: parsed.to !== undefined ? convertAddressObject(parsed.to) : [],
-    subject: parsed.subject ?? '',
-    body: parsed.text ?? '',
-    timeMSec: Date.now() // Not parsed.date
+    // Open fields
+    // TODO: Revise the security. Freezing extra data in IDs potentially disrupts the ability to fix privacy
+    id: mailIdInfo.make(`${makeIsoDateTime(transferredAt)}-${makeUuid()}`),
+    transferredAt: transferredAt.toISOString(),
+
+    // Fields from listMessage
+    subject: parsed.subject,
+    from: parsed.from ? convertMailAddress(parsed.from.value)[0] : { name: '', address: '' },
+    to: parsed.to ? convertAddressObject(parsed.to) : [],
+    priority: 'normal', // Default priority if not specified
+    snippet: parsed.text ? parsed.text.substring(0, 100).replace(/\s+/g, ' ').trim() : '',
+    hasAttachments: !!(parsed.attachments && parsed.attachments.length > 0),
+
+    // Fields from decryptedViewMessagePartSchema
+    cc: parsed.cc ? convertAddressObject(parsed.cc) : [],
+    bcc: parsed.bcc ? convertAddressObject(parsed.bcc) : [],
+    replyTo: parsed.replyTo ? convertMailAddress(parsed.replyTo.value)[0] : undefined,
+    isBodyHtml: !!parsed.html,
+    body: parsed.html ?? parsed.text ?? '',
+
+    // Raw message (required by DecryptedMessage)
+    rawMessage: emailData,
+
+    // Optional fields
+    messageId: parsed.messageId,
+    inReplyTo: parsed.inReplyTo,
+    references: parsed.references ? (Array.isArray(parsed.references) ? parsed.references : [parsed.references]) : undefined,
+    date: parsed.date ? parsed.date.toISOString() : undefined
   };
-
-  if (parsed.cc !== undefined) {
-    result.cc = convertAddressObject(parsed.cc);
-  }
-
-  if (parsed.bcc !== undefined) {
-    result.bcc = convertAddressObject(parsed.bcc);
-  }
 
   return makeSuccess(result);
 });
