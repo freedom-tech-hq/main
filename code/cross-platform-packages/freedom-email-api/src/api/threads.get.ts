@@ -4,6 +4,8 @@ import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
 
+import { apiThreadSchema } from '../types/ApiThread.ts';
+
 export const GET = makeHttpApi({
   method: 'GET',
   routeType: 'rest',
@@ -16,7 +18,7 @@ export const GET = makeHttpApi({
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),
-      body: makePaginatedSchema(schema.object({})) // apiThreadSchema?
+      body: makePaginatedSchema(apiThreadSchema)
     },
     failureResponse: makeFailureWithCodeSchemas()
   }
