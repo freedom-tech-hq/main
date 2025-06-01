@@ -1,7 +1,7 @@
 import { makeFailure, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
-import { userDecryptValue, userEncryptValue } from 'freedom-crypto-service';
+import { userEncryptValue } from 'freedom-crypto-service';
 import { type DecryptedListMessage, decryptedListMessagePartSchema } from 'freedom-email-sync';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
@@ -9,6 +9,7 @@ import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { makeUserKeysFromEmailCredential } from '../../internal/utils/makeUserKeysFromEmailCredential.ts';
+import { decryptListMessage } from './decryptListMessage.ts';
 
 /**
  * Test task that calls the mail messages API endpoint and logs the results
@@ -33,6 +34,7 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
     schema: decryptedListMessagePartSchema,
     value: {
       subject: 'Test subject',
+      from: { address: 'someone@me.com' },
       snippet: 'Test body'
     },
     publicKeys
@@ -65,24 +67,13 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
   // Decrypt messages
   const result: DecryptedListMessage[] = [];
   for (const message of apiResult.value.body.items) {
-    // Split
-    const { listMessage, ...openFields } = message;
-
-    // Decrypt
-    const decryptedPart = await userDecryptValue(trace, {
-      schema: decryptedListMessagePartSchema,
-      encryptedValue: listMessage,
-      userKeys
-    });
-    if (!decryptedPart.ok) {
-      return decryptedPart;
+    const decryptedMessageResult = await decryptListMessage(trace, userKeys, message);
+    if (!decryptedMessageResult.ok) {
+      console.log('Error decrypting message', message.id, decryptedMessageResult.value);
+      continue;
     }
 
-    // Reconstruct
-    result.push({
-      ...openFields,
-      ...decryptedPart.value
-    });
+    result.push(decryptedMessageResult.value);
   }
 
   console.log('Successfully fetched messages:', result);
