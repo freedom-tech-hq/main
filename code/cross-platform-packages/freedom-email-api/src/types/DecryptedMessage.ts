@@ -15,7 +15,7 @@ export const decryptedMessageSchema = schema.object({
   // TODO: Place isRead somewhere
 
   // ### Decoded listFields ###
-  subject: schema.string(),
+  subject: schema.string(), // If absent, setting to empty
   from: mailAddressSchema.optional(), // Might be absent for incoming messages. TODO: check can it be plural
   priority: mailPrioritySchema.optional(),
   snippet: schema.string(),
