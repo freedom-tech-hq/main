@@ -1,27 +1,11 @@
 import { isoDateTimeSchema } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
+import { decryptedListMessageSchema } from './DecryptedListMessage.ts';
 import { mailAddressListSchema, mailAddressSchema, mailPrioritySchema } from './headerTypes.ts';
 import { mailIdInfo } from './MailId.ts';
 
 export const decryptedViewMessagePartSchema = schema.object({
-  from: schema.string(),
-  to: schema.string().allowEmptyString(), // TODO: Make typing
-  cc: schema.string().allowEmptyString(),
-  onBehalf: schema.string().allowEmptyString().optional(), // Assuming string, can be refined if needed
-  body: schema.string().allowEmptyString()
-});
-
-export const decryptedViewMessageSchema = schema.object({
-  // ### Open fields ###
-  id: mailIdInfo.schema,
-  // assumed // userId,
-  transferredAt: isoDateTimeSchema, // TODO: Rename to lastUpdatedAt
-  // assumed // folder,
-
-  // ### Decoded listMessage ###
-  subject: schema.string().allowEmptyString(),
-
   // ### Decoded viewMessage ###
   from: mailAddressSchema,
   to: mailAddressListSchema,
@@ -48,9 +32,21 @@ export const decryptedViewMessageSchema = schema.object({
   // This header is inserted by the sending client, so it is not reliable, use lastUpdatedAt instead
   // or `mail.date ?? mail.lastUpdatedAt`
   date: isoDateTimeSchema.optional()
-
-  // ### Dynamic ###
-  // TODO // attachments: schema.array(decryptedAttachmentSchema)
 });
+
+export const decryptedViewMessageSchema = schema.oneOf3(
+  schema.object({
+    // ### Open fields ###
+    id: mailIdInfo.schema,
+    // assumed // userId,
+    transferredAt: isoDateTimeSchema // TODO: Rename to lastUpdatedAt
+    // assumed // folder,
+
+    // ### Dynamic ###
+    // TODO // attachments: schema.array(decryptedAttachmentSchema)
+  }),
+  decryptedListMessageSchema,
+  decryptedViewMessagePartSchema
+);
 
 export type DecryptedViewMessage = typeof decryptedViewMessageSchema.valueType;
