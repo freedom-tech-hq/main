@@ -1,11 +1,12 @@
 import type { DecryptedMessage } from './DecryptedMessage.ts';
 
 // Output-only type, no need for schema
-export type DecryptedViewMessage = Pick<DecryptedMessage,
+export type DecryptedViewMessage = Pick<
+  DecryptedMessage,
   | 'id'
-    // assumed // userId,
+  // assumed // userId,
   | 'transferredAt'
-    // assumed // folder,
+  // assumed // folder,
 
   // Decrypted listMessage, see listMessageFieldSchema
   | 'subject'
@@ -27,4 +28,4 @@ export type DecryptedViewMessage = Pick<DecryptedMessage,
 
   // Dynamic
   // TODO: | 'listAttachments'
->
+>;

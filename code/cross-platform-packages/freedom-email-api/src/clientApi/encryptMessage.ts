@@ -4,21 +4,22 @@ import { userEncryptValue } from 'freedom-crypto-service';
 import { schema } from 'yaschema';
 
 import type { ApiMessage } from '../types/ApiMessage.ts';
-import { decryptedListMessagePartSchema } from '../types/DecryptedListMessage.ts';
-import type { DecryptedMessage } from '../types/DecryptedMessage.ts';
-import { decryptedViewMessagePartSchema } from '../types/DecryptedViewMessage.ts';
+import { type DecryptedMessage, listMessageFieldSchema, viewMessageFieldSchema } from '../types/DecryptedMessage.ts';
+import { getMessageOpenFields } from './getMessageOpenFields.ts';
 
 export const encryptMessage = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, publicKeys: CombinationCryptoKeySet, mail: DecryptedMessage): PR<ApiMessage> => {
     // listMessage
     const listMessageResult = await userEncryptValue(trace, {
-      schema: decryptedListMessagePartSchema,
+      schema: listMessageFieldSchema,
       value: {
-        subject: mail.subject,
-        from: mail.from,
-        priority: mail.priority,
-        snippet: mail.snippet
+        // TODO: Consider passing the whole object, the schema will pick the relevant fields
+        ...mail,
+        // subject: mail.subject,
+        // from: mail.from,
+        // priority: mail.priority,
+        // snippet: mail.snippet
       },
       publicKeys
     });
@@ -28,22 +29,22 @@ export const encryptMessage = makeAsyncResultFunc(
 
     // viewMessage
     const viewMessageResult = await userEncryptValue(trace, {
-      schema: decryptedViewMessagePartSchema,
+      schema: viewMessageFieldSchema,
       value: {
-        from: mail.from,
-        to: mail.to,
-        cc: mail.cc,
-        bcc: mail.bcc,
-        replyTo: mail.replyTo,
-
-        isBodyHtml: mail.isBodyHtml,
-        body: mail.body,
-
-        messageId: mail.messageId,
-        inReplyTo: mail.inReplyTo,
-        references: mail.references,
-
-        date: mail.date
+        ...mail,
+        // to: mail.to,
+        // cc: mail.cc,
+        // bcc: mail.bcc,
+        // replyTo: mail.replyTo,
+        //
+        // isBodyHtml: mail.isBodyHtml,
+        // body: mail.body,
+        //
+        // messageId: mail.messageId,
+        // inReplyTo: mail.inReplyTo,
+        // references: mail.references,
+        //
+        // date: mail.date
       },
       publicKeys
     });
@@ -62,12 +63,15 @@ export const encryptMessage = makeAsyncResultFunc(
     }
 
     return makeSuccess<ApiMessage>({
-      id: mail.id,
-      transferredAt: mail.transferredAt,
-      folder: mail.folder,
+      ...getMessageOpenFields(mail),
+      // id: mail.id,
+      // userId: mail.userId,
+      // transferredAt: mail.transferredAt,
+      // folder: mail.folder,
       listMessage: listMessageResult.value,
       viewMessage: viewMessageResult.value,
-      rawMessage: rawMessageResult.value
+      rawMessage: rawMessageResult.value,
+      // hasAttachments: mail.hasAttachments
     });
   }
 );
