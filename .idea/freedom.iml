@@ -22,6 +22,7 @@
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-data-source-types/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-device-notification-types/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-do-soon/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-email-api/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-email-sync/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-email-user/lib" />
       <excludeFolder url="file://$MODULE_DIR$/code/cross-platform-packages/freedom-fetching/lib" />
