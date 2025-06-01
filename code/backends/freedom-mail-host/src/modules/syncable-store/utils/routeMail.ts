@@ -1,7 +1,9 @@
 import type { PR } from 'freedom-async';
 import { debugTopic, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { log } from 'freedom-contexts';
+import { makeIsoDateTime } from 'freedom-basic-data';
+import { log, makeUuid } from 'freedom-contexts';
 import { findUserByEmail } from 'freedom-db';
+import { types } from 'freedom-email-api';
 import { addIncomingEmail } from 'freedom-email-server';
 
 import * as config from '../../../config.ts';
@@ -88,7 +90,12 @@ export const routeMail = makeAsyncResultFunc(
     for (const recipient of internalRecipients) {
       DEV: debugTopic('SMTP', (log) => log(trace, `Processing internal recipient: ${recipient}`));
 
-      await addIncomingEmail(trace, recipient, mail);
+      await addIncomingEmail(trace, recipient, {
+        ...mail,
+        // TODO: Extract a function
+        // TODO: Remove time from the id. transferredAt is server-controlled
+        id: types.mailIdInfo.make(`${makeIsoDateTime(new Date())}-${makeUuid()}`)
+      });
     }
 
     // External recipients
