@@ -6,7 +6,7 @@ import { mailAddressListSchema, mailAddressSchema, mailPrioritySchema } from './
 import { mailIdInfo } from './MailId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
-export const decryptedMessageSchema = schema.object({
+export const allFieldsOfMessageSchema = schema.object({
   // ### Open fields ###
   id: mailIdInfo.schema,
   userId: emailUserIdInfo.schema,
@@ -54,9 +54,18 @@ export const decryptedMessageSchema = schema.object({
   hasAttachments: schema.boolean()
 });
 
-export type DecryptedMessage = typeof decryptedMessageSchema.valueType;
+export type AllFieldsOfMessage = typeof allFieldsOfMessageSchema.valueType;
 
-export const listFieldsOfMessageSchema = schema.pick(decryptedMessageSchema, [
+export const openFieldsOfMessageSchema = schema.pick(allFieldsOfMessageSchema, [
+  // prettier-fix
+  'id',
+  'userId',
+  'transferredAt',
+  'folder'
+  // 'isRead'?
+]);
+
+export const listFieldsOfMessageSchema = schema.pick(allFieldsOfMessageSchema, [
   // prettier-fix
   'subject',
   'from',
@@ -64,7 +73,7 @@ export const listFieldsOfMessageSchema = schema.pick(decryptedMessageSchema, [
   'snippet'
 ]);
 
-export const viewFieldsOfMessageSchema = schema.pick(decryptedMessageSchema, [
+export const viewFieldsOfMessageSchema = schema.pick(allFieldsOfMessageSchema, [
   'to',
   'cc',
   'bcc',

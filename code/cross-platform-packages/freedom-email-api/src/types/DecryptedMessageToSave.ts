@@ -1,7 +1,7 @@
-import type { DecryptedMessage } from './DecryptedMessage.ts';
+import type { AllFieldsOfMessage } from './AllFieldsOfMessage.ts';
 
 export type DecryptedMessageToSave = Omit<
-  DecryptedMessage,
+  AllFieldsOfMessage,
   // Exclude controlled fields
   // | 'id' - frontend can control its ids as we are going to local-first, no?
   | 'userId' // validated

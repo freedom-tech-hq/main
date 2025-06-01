@@ -1,8 +1,8 @@
-import type { DecryptedMessage } from './DecryptedMessage.ts';
+import type { AllFieldsOfMessage } from './AllFieldsOfMessage.ts';
 
 // Output-only type, no need for schema
 export type DecryptedListMessage = Pick<
-  DecryptedMessage,
+  AllFieldsOfMessage,
   | 'id'
   // assumed // userId,
   | 'transferredAt'

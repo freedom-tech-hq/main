@@ -1,6 +1,6 @@
 import { schema } from 'yaschema';
 
-// This is legacy version of DecryptedMessage TODO: remove
+// This is legacy version of freedom-email-api.AllFieldsOfMessage TODO: remove
 export const storedMailSchema = schema.object({
   from: schema.string(),
   to: schema.array({ items: schema.string() }),

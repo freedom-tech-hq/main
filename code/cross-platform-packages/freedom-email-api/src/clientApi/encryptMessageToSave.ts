@@ -3,8 +3,8 @@ import type { CombinationCryptoKeySet } from 'freedom-crypto-data';
 import { userEncryptValue } from 'freedom-crypto-service';
 import { schema } from 'yaschema';
 
+import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/AllFieldsOfMessage.ts';
 import type { ApiMessageToSave } from '../types/ApiMessageToSave.ts';
-import { listFieldsOfMessageSchema, viewFieldsOfMessageSchema } from '../types/DecryptedMessage.ts';
 import type { DecryptedMessageToSave } from '../types/DecryptedMessageToSave.ts';
 
 export const encryptMessageToSave = makeAsyncResultFunc(
