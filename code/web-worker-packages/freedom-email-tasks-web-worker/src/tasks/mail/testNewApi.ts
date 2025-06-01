@@ -2,14 +2,13 @@ import { makeFailure, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { InternalStateError } from 'freedom-common-errors';
 import { userEncryptValue } from 'freedom-crypto-service';
-import { type DecryptedListMessage, decryptedListMessagePartSchema } from 'freedom-email-sync';
+import { clientApi, types } from 'freedom-email-api';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { makeUserKeysFromEmailCredential } from '../../internal/utils/makeUserKeysFromEmailCredential.ts';
-import { decryptListMessage } from './decryptListMessage.ts';
 
 /**
  * Test task that calls the mail messages API endpoint and logs the results
@@ -31,7 +30,7 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
 
   // Generate test data
   const encryptedResult = await userEncryptValue(trace, {
-    schema: decryptedListMessagePartSchema,
+    schema: types.listFieldsOfMessageSchema,
     value: {
       subject: 'Test subject',
       from: { address: 'someone@me.com' },
@@ -65,9 +64,9 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
   }
 
   // Decrypt messages
-  const result: DecryptedListMessage[] = [];
+  const result: types.DecryptedListMessage[] = [];
   for (const message of apiResult.value.body.items) {
-    const decryptedMessageResult = await decryptListMessage(trace, userKeys, message);
+    const decryptedMessageResult = await clientApi.decryptListMessage(trace, userKeys, message);
     if (!decryptedMessageResult.ok) {
       console.log('Error decrypting message', message.id, decryptedMessageResult.value);
       continue;
