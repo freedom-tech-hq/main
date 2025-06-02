@@ -6,6 +6,16 @@ import { mailAddressListSchema, mailAddressSchema, mailPrioritySchema } from './
 import { mailIdInfo } from './MailId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
+/*
+  RFC standards are complex: https://serverfault.com/questions/755654/which-rfcs-should-be-cited-as-internet-standards
+  Short take: rely on those with status Proposed Standard or Internet Standard.
+  The statement not to take 'Proposed Standard' seriously is obsolete.
+ */
+
+// MVP version: raw email with headers as in SMTP
+// Make it empty for drafts and outbound emails
+export const rawMessageFieldSchema = schema.string().allowEmptyString();
+
 export const mailMessageSchema = schema.object({
   // ### Open fields ###
   id: mailIdInfo.schema,
@@ -16,7 +26,8 @@ export const mailMessageSchema = schema.object({
 
   // ### Decoded listFields ###
   subject: schema.string(), // If absent, setting to empty
-  from: mailAddressSchema.optional(), // Might be absent for incoming messages. TODO: check can it be plural
+  from: mailAddressListSchema, // Can be plural, and even with empty groups: RFC 6854
+  sender: mailAddressSchema.optional(), // Should be singular. Renders as 'From: <Sender> on behalf of <From>'.
   priority: mailPrioritySchema.optional(),
   snippet: schema.string(),
 
@@ -24,7 +35,7 @@ export const mailMessageSchema = schema.object({
   to: mailAddressListSchema,
   cc: mailAddressListSchema,
   bcc: mailAddressListSchema.optional(), // Only exist in the outbound emails
-  replyTo: mailAddressSchema.optional(),
+  replyTo: mailAddressListSchema.optional(),
   // seemingly included in the mailAddress // onBehalf: schema.string().allowEmptyString().optional(), // Assuming string, can be refined if needed
 
   // Only two modes: html and plain text
@@ -46,7 +57,7 @@ export const mailMessageSchema = schema.object({
   // ### End of Decoded viewFields ###
 
   // ### Decoded raw ###
-  raw: schema.string(),
+  raw: rawMessageFieldSchema,
 
   // ### Dynamic ###
   // TODO: // listAttachments - to render the list
@@ -69,6 +80,7 @@ export const listFieldsOfMessageSchema = schema.pick(mailMessageSchema, [
   // prettier-fix
   'subject',
   'from',
+  'sender',
   'priority',
   'snippet'
 ]);
@@ -87,6 +99,3 @@ export const viewFieldsOfMessageSchema = schema.pick(mailMessageSchema, [
   'references',
   'date'
 ]);
-
-// MVP version: raw email with headers as in SMTP
-export const rawMessageFieldSchema = schema.string();

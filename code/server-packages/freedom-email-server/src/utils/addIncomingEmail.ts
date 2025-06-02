@@ -11,6 +11,9 @@ export const addIncomingEmail = makeAsyncResultFunc(
     const transferredAt = new Date();
     const folder: DbMessage['folder'] = 'inbox';
 
+    // TODO: Add envelope.from as 'Return-Path' header.
+    //  See discussion at https://stackoverflow.com/questions/4367358/whats-the-difference-between-sender-from-and-return-path#comment48064981_25873119
+
     // Load user keys
     const user = await findUserByEmail(trace, recipientEmail);
     if (!user.ok) {

@@ -11,6 +11,7 @@ export type DecryptedListMessage = Pick<
   // Decrypted listFields, see listFieldsFieldSchema
   | 'subject'
   | 'from'
+  | 'sender'
   | 'priority'
   | 'snippet'
 

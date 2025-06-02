@@ -1,5 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import type { types } from 'freedom-email-api';
 import type Mail from 'nodemailer/lib/mailer';
 
 import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
@@ -19,14 +20,85 @@ export const deliverOutboundEmail = makeAsyncResultFunc(
   [import.meta.filename],
   async (_trace, mail: ParsedMail, envelope: Mail.Envelope): PR<undefined> => {
     await transporter.sendMail({
-      from: mail.from,
-      to: mail.to,
-      cc: mail.cc,
-      bcc: mail.bcc,
+      // listFields
       subject: mail.subject,
-      text: mail.body,
-      envelope
+      from: getAddressFromList(mail.from),
+      sender: mail.sender !== undefined ? convertAddress(mail.sender) : undefined,
+      priority: mail.priority,
+
+      // viewFields
+      to: convertAddressList(mail.to),
+      cc: convertAddressList(mail.cc),
+      bcc: convertAddressList(mail.bcc),
+      replyTo: convertAddressList(mail.replyTo),
+
+      text: mail.isBodyHtml ? undefined : mail.body,
+      html: mail.isBodyHtml ? mail.body : undefined,
+
+      messageId: mail.messageId,
+      inReplyTo: mail.inReplyTo,
+      references: mail.references,
+
+      date: mail.date,
+
+      // Other
+      // TODO: consider 'raw' instead of all those
+
+      // TODO: attachments
+
+      envelope,
+
+      // Extras to consider
+      // encoding - transfer encoding
+      // textEncoding: TextEncoding
+      // attachDataUrls
+
+      // nodemailer mode
+      disableUrlAccess: true,
+      disableFileAccess: true
     });
     return makeSuccess(undefined);
   }
 );
+
+function convertAddress(address: types.MailAddress): Mail.Address | string {
+  if (address.name === undefined) {
+    return address.address;
+  }
+  return {
+    name: address.name,
+    address: address.address
+  };
+}
+
+function getAddressFromList(list: types.MailAddressList): Mail.Address | string | undefined {
+  // TODO: Render the headers manually. nodemailer is limited
+
+  // Get first address
+  for (const address of list) {
+    if ('address' in address) {
+      return convertAddress(address);
+    }
+  }
+
+  return undefined;
+}
+
+function convertAddressList(list: types.MailAddressList | undefined): (string | Mail.Address)[] | undefined {
+  // TODO: Render the headers manually. nodemailer is limited
+
+  const result: (string | Mail.Address)[] = [];
+
+  // Get first address
+  for (const item of list ?? []) {
+    if ('groupName' in item) {
+      for (const address of item.addresses) {
+        result.push(convertAddress(address));
+      }
+    } else {
+      result.push(convertAddress(item));
+    }
+  }
+
+  return result.length > 0 ? result : undefined;
+}

@@ -9,6 +9,7 @@ export type MailAddress = typeof mailAddressSchema.valueType;
 
 export const mailAddressGroupSchema = schema.object({
   groupName: schema.string(),
+  // According to the standard, can be empty
   addresses: schema.array({ items: mailAddressSchema })
 });
 
