@@ -4,7 +4,6 @@ import { buildMode, log, makeTrace, setLogger, wrapLogger } from 'freedom-contex
 
 import { initApp } from './initApp.ts';
 import { startSmtpServer } from './modules/smtp-server/utils/startSmtpServer.ts';
-import { startSubscriptions } from './modules/syncable-store/utils/startSubscriptions.ts';
 
 let expectedBuildMode = 'PROD' as 'DEV' | 'PROD';
 DEV: expectedBuildMode = 'DEV';
@@ -21,9 +20,6 @@ const main = makeAsyncResultFunc(
 
     // Start SMTP server for receiving emails directly
     await uncheckedResult(startSmtpServer(trace));
-
-    // Start subscriptions for processing outbound emails
-    await uncheckedResult(startSubscriptions(trace));
 
     return makeSuccess(undefined);
   },

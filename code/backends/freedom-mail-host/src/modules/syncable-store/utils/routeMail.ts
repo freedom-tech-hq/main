@@ -14,6 +14,8 @@ import { deliverForwardedEmail } from '../../smtp-upstream/utils/deliverForwarde
 
 /**
  * Routes an email message to internal and external recipients
+ * TODO: Revise inputs (do not need parsed mail when only forwarding)
+ * TODO: Move to a different module, not 'syncable-store'
  */
 export const routeMail = makeAsyncResultFunc(
   [import.meta.filename],

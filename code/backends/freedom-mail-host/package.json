@@ -9,7 +9,6 @@
     "freedom-email-api": "0.0.0",
     "freedom-email-server": "0.0.0",
     "freedom-email-sync": "0.0.0",
-    "freedom-syncable-store-server": "0.0.0",
     "luxon": "3.6.1",
     "mailparser": "3.7.2",
     "nodemailer": "6.10.1",
