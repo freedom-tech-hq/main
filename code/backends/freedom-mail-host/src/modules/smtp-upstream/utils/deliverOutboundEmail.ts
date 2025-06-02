@@ -42,7 +42,7 @@ export const deliverOutboundEmail = makeAsyncResultFunc(
       date: mail.date,
 
       // Other
-      // TODO: consider 'raw' instead of all those
+      // Note: mail.raw is empty for outbound emails. Could be set for forwarded emails, but deserves separate implementation
 
       // TODO: attachments
 
