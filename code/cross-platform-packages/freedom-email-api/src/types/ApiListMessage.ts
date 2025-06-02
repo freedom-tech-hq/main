@@ -1,8 +1,8 @@
 import { schema } from 'yaschema';
 
-import { apiMessage } from './ApiMessage.ts';
+import { apiMessageSchema } from './ApiMessage.ts';
 
-export const apiListMessageSchema = schema.pick(apiMessage, [
+export const apiListMessageSchema = schema.pick(apiMessageSchema, [
   'id',
   // assumed // userId,
   'transferredAt',

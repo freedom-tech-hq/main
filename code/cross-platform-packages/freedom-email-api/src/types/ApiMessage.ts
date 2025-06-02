@@ -6,7 +6,7 @@ import { mailIdInfo } from './MailId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
 // Should match DbMessage and the shared part of MailMessage.
-export const apiMessage = schema.object({
+export const apiMessageSchema = schema.object({
   // ### Open fields ###
   id: mailIdInfo.schema,
   userId: emailUserIdInfo.schema,
@@ -25,4 +25,4 @@ export const apiMessage = schema.object({
   hasAttachments: schema.boolean()
 });
 
-export type ApiMessage = typeof apiMessage.valueType;
+export type ApiMessage = typeof apiMessageSchema.valueType;
