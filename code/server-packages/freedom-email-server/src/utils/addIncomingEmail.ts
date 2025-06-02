@@ -20,7 +20,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
       return generalizeFailureResult(trace, user, 'not-found');
     }
 
-    const apiMessageResult = await clientApi.encryptMessageToSave(trace, user.value.publicKeys, mail);
+    const apiMessageResult = await clientApi.encryptInputMessage(trace, user.value.publicKeys, mail);
     if (!apiMessageResult.ok) {
       return apiMessageResult;
     }
