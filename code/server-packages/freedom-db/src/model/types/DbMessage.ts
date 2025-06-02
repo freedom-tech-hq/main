@@ -2,12 +2,6 @@ import { types } from 'freedom-email-api';
 import { schema } from 'yaschema';
 
 /**
- * Type representing valid message folders
- */
-export const messageFolders = ['inbox', 'outbox', 'sent', 'drafts'] as const;
-export type MessageFolder = (typeof messageFolders)[number];
-
-/**
  * Schema for server-side message storage
  */
 export const dbMessageSchema = schema.omit(types.apiMessageSchema, [
@@ -15,4 +9,9 @@ export const dbMessageSchema = schema.omit(types.apiMessageSchema, [
   'hasAttachments'
 ]);
 
-export type DbMessage = typeof dbMessageSchema.valueType;
+export type DbMessageIn = typeof dbMessageSchema.valueType;
+
+export type DbMessageOut = Omit<DbMessageIn, 'transferredAt'> & {
+  // I suppose an ORM should fix this divergence
+  transferredAt: Date;
+};

@@ -1,7 +1,7 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError, NotFoundError } from 'freedom-common-errors';
-import { type DbMessage, dbQuery } from 'freedom-db';
+import { type DbMessageOut, dbQuery } from 'freedom-db';
 import { api, type types } from 'freedom-email-api';
 import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
@@ -38,7 +38,7 @@ export default makeHttpApiHandler(
       WHERE "id" = $1 AND "userId" = $2
     `;
 
-    const result = await dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listFields' | 'viewFields'>>(sql, [
+    const result = await dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'transferredAt' | 'listFields' | 'viewFields'>>(sql, [
       messageId,
       currentUserId
     ]);

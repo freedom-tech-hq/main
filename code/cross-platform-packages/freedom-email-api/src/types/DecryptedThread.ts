@@ -10,5 +10,5 @@ export interface DecryptedThread {
 
   // ### Dynamic ###
   messageCount: number;
-  lastUnreadMessage: DecryptedListMessage;
+  lastMessage: DecryptedListMessage;
 }

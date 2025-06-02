@@ -1,8 +1,7 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import type { MessageFolder } from 'freedom-db';
-import { dbQuery } from 'freedom-db';
+import { type DbMessageOut, dbQuery } from 'freedom-db';
 import { api, type types } from 'freedom-email-api';
 import type { EmailUserId } from 'freedom-email-sync';
 import { emailUserIdInfo } from 'freedom-email-sync';
@@ -33,6 +32,10 @@ function decodePageToken(pageToken: PageToken | undefined): DbQueryCursor | unde
     const rawTokenData = pageTokenInfo.removePrefix(pageToken);
     const decodedString = Buffer.from(rawTokenData, 'base64').toString('utf-8');
     const tokenPayload = JSON.parse(decodedString) as PageTokenPayload;
+    // TOOO: Schema validation
+    // if (!tokenPayload.id || !tokenPayload.transferredAt) {
+    //   return undefined;
+    // }
     return tokenPayload;
   } catch {
     return undefined;
@@ -65,8 +68,9 @@ export default makeHttpApiHandler(
       return makeFailure(new InputSchemaValidationError(trace, { message: 'User ID not found in auth context' }));
     }
 
+    // TODO: The API definition (api.mail.messages.GET) should be updated to accept `folder` as a query parameter.
     // For now, hardcoding to 'inbox'
-    const currentFolder: MessageFolder = 'inbox';
+    const currentFolder: types.MessageFolder = 'inbox';
 
     const cursor = decodePageToken(pageToken);
 
@@ -79,55 +83,49 @@ export default makeHttpApiHandler(
       cursorClause = `AND ("transferredAt" < $${params.length - 1} OR ("transferredAt" = $${params.length - 1} AND "id" < $${params.length}))`;
     }
 
+    // Simplifying to one-message = one thread. TODO: implement threads, probably after adding an ORM
     // Fetch one extra item to determine if there's a next page
     params.push(PAGE_SIZE + 1);
-    const threadsQuery = `
-      SELECT 
-        "threadId" as "id", 
-        MAX("transferredAt") as "transferredAt", 
-        COUNT(*) as "messageCount",
-        FIRST_VALUE("listFields") OVER (PARTITION BY "threadId" ORDER BY "transferredAt" DESC) as "listFields",
-        BOOL_OR("hasAttachments") as "hasAttachments"
+    const messagesQuery = `
+      SELECT "id", "userId", "transferredAt", "listFields"
       FROM "messages"
-      WHERE "userId" = $1 AND "folder" = $2 AND "threadId" IS NOT NULL
-      GROUP BY "threadId"
-      ${cursorClause ? `HAVING ${cursorClause.replace(/transferredAt/g, 'MAX("transferredAt")')}` : ''}
-      ORDER BY MAX("transferredAt") DESC, "threadId" DESC
+      WHERE "userId" = $1 AND "folder" = $2
+      ${cursorClause}
+      ORDER BY "transferredAt" DESC, "id" DESC
       LIMIT $${params.length}
     `;
 
     const countQuery = `
-      SELECT COUNT(DISTINCT "threadId") as total_count
+      SELECT COUNT(*) as total_count
       FROM "messages"
-      WHERE "userId" = $1 AND "folder" = $2 AND "threadId" IS NOT NULL
+      WHERE "userId" = $1 AND "folder" = $2
     `;
 
-    // Execute queries
-    const [threadsResult, countResult] = await Promise.all([
-      dbQuery<{
-        id: string;
-        transferredAt: IsoDateTime;
-        messageCount: number;
-        listFields: string;
-        hasAttachments: boolean;
-      }>(threadsQuery, params),
-      dbQuery<{ total_count: number }>(countQuery, [currentUserId, currentFolder])
+    const countParams = [currentUserId, currentFolder];
+
+    // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
+    const [messagesResult, countResult] = await Promise.all([
+      dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'transferredAt' | 'listFields'>>(messagesQuery, params),
+      dbQuery<{ total_count: number }>(countQuery, countParams)
     ]);
 
-    const dbThreads = threadsResult.rows;
+    const dbMessages = messagesResult.rows;
 
     const totalCount = countResult.rows[0]?.total_count ?? 0;
 
-    const hasMoreItems = dbThreads.length > PAGE_SIZE;
-    const itemsForResponse = hasMoreItems ? dbThreads.slice(0, PAGE_SIZE) : dbThreads;
+    const hasMoreItems = dbMessages.length > PAGE_SIZE;
+    const itemsForResponse = hasMoreItems ? dbMessages.slice(0, PAGE_SIZE) : dbMessages;
 
     const responseItems = itemsForResponse.map(
-      (dbThread): types.mail.Thread => ({
-        id: dbThread.id,
-        messageCount: dbThread.messageCount,
-        transferredAt: dbThread.transferredAt,
-        listFields: dbThread.listFields,
-        hasAttachments: dbThread.hasAttachments
+      (dbMsg): types.ApiThread => ({
+        id: dbMsg.id,
+        messageCount: 1,
+        lastMessage: {
+          id: dbMsg.id,
+          transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
+          listFields: dbMsg.listFields,
+          hasAttachments: false
+        }
       })
     );
 
@@ -136,7 +134,7 @@ export default makeHttpApiHandler(
       const lastItemOnPage = responseItems[responseItems.length - 1];
       const nextCursorPayload: PageTokenPayload = {
         id: lastItemOnPage.id,
-        transferredAt: lastItemOnPage.transferredAt
+        transferredAt: lastItemOnPage.lastMessage.transferredAt
       };
       const nextPageTokenString = Buffer.from(JSON.stringify(nextCursorPayload)).toString('base64');
       nextPageToken = pageTokenInfo.make(nextPageTokenString);

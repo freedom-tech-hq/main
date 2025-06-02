@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { type DbMessage, dbQuery, findUserByEmail } from 'freedom-db';
+import { dbQuery, findUserByEmail } from 'freedom-db';
 import type { types } from 'freedom-email-api';
 import { clientApi } from 'freedom-email-api';
 
@@ -9,7 +9,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, recipientEmail: string, mail: types.DecryptedInputMessage): PR<undefined> => {
     const transferredAt = new Date();
-    const folder: DbMessage['folder'] = 'inbox';
+    const folder: types.MessageFolder = 'inbox';
 
     // TODO: Add envelope.from as 'Return-Path' header.
     //  See discussion at https://stackoverflow.com/questions/4367358/whats-the-difference-between-sender-from-and-return-path#comment48064981_25873119

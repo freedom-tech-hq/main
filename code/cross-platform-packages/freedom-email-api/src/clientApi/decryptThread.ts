@@ -9,9 +9,9 @@ export const decryptThread = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, userKeys: UserKeys, thread: ApiThread): PR<DecryptedThread> => {
     // Split
-    const { lastUnreadMessage, ...openFields } = thread;
+    const { lastMessage, ...openFields } = thread;
 
-    const messageResult = await decryptListMessage(trace, userKeys, lastUnreadMessage);
+    const messageResult = await decryptListMessage(trace, userKeys, lastMessage);
     if (!messageResult.ok) {
       return messageResult;
     }
@@ -19,7 +19,7 @@ export const decryptThread = makeAsyncResultFunc(
     // Reconstruct
     return makeSuccess<DecryptedThread>({
       ...openFields,
-      lastUnreadMessage: messageResult.value
+      lastMessage: messageResult.value
     });
   }
 );

@@ -1,7 +1,7 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { type IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db';
+import { type DbMessageOut, dbQuery } from 'freedom-db';
 import { api, type types } from 'freedom-email-api';
 import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
 import { type PageToken, pageTokenInfo } from 'freedom-paginated-data';
@@ -58,10 +58,8 @@ export default makeHttpApiHandler(
         headers,
         query: { pageToken, threadId }
       }
-      // auth // Assuming auth.userId is available from the handler context
     }
   ) => {
-    // TODO: Get userId from actual auth context
     const currentUserId = getUserIdFromAuthorizationHeader(headers);
     if (currentUserId === undefined) {
       return makeFailure(new InputSchemaValidationError(trace, { message: 'User ID not found in auth context' }));
@@ -69,7 +67,7 @@ export default makeHttpApiHandler(
 
     // TODO: The API definition (api.mail.messages.GET) should be updated to accept `folder` as a query parameter.
     // For now, hardcoding to 'inbox'.
-    const currentFolder: MessageFolder = 'inbox';
+    const currentFolder: types.MessageFolder = 'inbox';
 
     const cursor = decodePageToken(pageToken);
 
@@ -113,7 +111,7 @@ export default makeHttpApiHandler(
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([
-      dbQuery<Pick<DbMessage, 'id' | 'userId' | 'transferredAt' | 'listFields'>>(messagesQuery, params),
+      dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'transferredAt' | 'listFields'>>(messagesQuery, params),
       dbQuery<{ total_count: number }>(countQuery, countParams)
     ]);
 

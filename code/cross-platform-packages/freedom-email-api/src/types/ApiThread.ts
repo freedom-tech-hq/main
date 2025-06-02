@@ -16,7 +16,7 @@ export const apiThreadSchema = schema.object({
   messageCount: schema.number(),
 
   // Dynamic, of the last (unread?) message
-  lastUnreadMessage: apiListMessageSchema
+  lastMessage: apiListMessageSchema
 });
 
 export type ApiThread = typeof apiThreadSchema.valueType;
