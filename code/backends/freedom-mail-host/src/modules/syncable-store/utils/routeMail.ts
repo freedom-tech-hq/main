@@ -107,6 +107,7 @@ export const routeMail = makeAsyncResultFunc(
         DEV: debugTopic('SMTP', (log) => log(trace, `Processing ${externalRecipients.length} external recipients`));
 
         // Post to SMTP upstream
+        // TODO: Validate the 'from' field to match the user. Bounce on violation
         await deliverOutboundEmail(trace, mail, {
           from: mode.userEmail,
           to: externalRecipients.join(',')

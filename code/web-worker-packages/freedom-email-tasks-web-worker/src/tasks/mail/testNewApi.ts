@@ -33,7 +33,7 @@ export const testNewApi = makeAsyncResultFunc([import.meta.filename], async (tra
     schema: types.listFieldsOfMessageSchema,
     value: {
       subject: 'Test subject',
-      from: { address: 'someone@me.com' },
+      from: [{ address: 'someone@me.com' }],
       snippet: 'Test body'
     },
     publicKeys
