@@ -2,9 +2,9 @@ import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError, NotFoundError } from 'freedom-common-errors';
 import { type DbMessage, dbQuery } from 'freedom-db';
+import { api, type types } from 'freedom-email-api';
 import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
-import { api, type types } from 'freedom-store-api-server-api';
 
 // Helper to get userId (consistent with messages.get.ts) TODO: Extract shared
 function getUserIdFromAuthorizationHeader(headers: Record<string, string> | undefined): EmailUserId | undefined {
@@ -17,7 +17,7 @@ function getUserIdFromAuthorizationHeader(headers: Record<string, string> | unde
 
 export default makeHttpApiHandler(
   [import.meta.filename],
-  { api: api.mail.messagesId.GET },
+  { api: api.messagesId.GET },
   async (
     trace,
     {
@@ -54,7 +54,7 @@ export default makeHttpApiHandler(
 
     const dbMsg = result.rows[0];
 
-    const responseBody: types.mail.ViewMessage = {
+    const responseBody: types.ApiViewMessage = {
       id: dbMsg.id,
       transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
       listFields: dbMsg.listFields,

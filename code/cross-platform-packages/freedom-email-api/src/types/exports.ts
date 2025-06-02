@@ -1,6 +1,7 @@
 export * from './ApiInputMessage.ts';
 export * from './ApiListMessage.ts';
 export * from './ApiMessage.ts';
+export * from './ApiViewMessage.ts';
 export * from './DecryptedInputMessage.ts';
 export * from './DecryptedListMessage.ts';
 export * from './DecryptedThread.ts';

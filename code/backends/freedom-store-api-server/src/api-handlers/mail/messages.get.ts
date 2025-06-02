@@ -1,12 +1,11 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import { type IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db'; // Removed FindManyMessagesCursor, findManyMessages
+import { type DbMessage, dbQuery, type MessageFolder } from 'freedom-db';
+import { api, type types } from 'freedom-email-api';
 import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
 import { type PageToken, pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
-import type { types } from 'freedom-store-api-server-api';
-import { api } from 'freedom-store-api-server-api';
 
 // Constants
 const PAGE_SIZE = 10;
@@ -51,7 +50,7 @@ function getUserIdFromAuthorizationHeader(headers: Record<string, string> | unde
 
 export default makeHttpApiHandler(
   [import.meta.filename],
-  { api: api.mail.messages.GET },
+  { api: api.messages.GET },
   async (
     trace,
     {
@@ -126,7 +125,7 @@ export default makeHttpApiHandler(
     const itemsForResponse = hasMoreItems ? dbMessages.slice(0, PAGE_SIZE) : dbMessages;
 
     const responseItems = itemsForResponse.map(
-      (dbMsg): types.mail.ListMessage => ({
+      (dbMsg): types.ApiListMessage => ({
         id: dbMsg.id,
         transferredAt: dbMsg.transferredAt.toISOString() as IsoDateTime,
         listFields: dbMsg.listFields,

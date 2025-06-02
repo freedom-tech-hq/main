@@ -3,13 +3,12 @@ import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import type { MessageFolder } from 'freedom-db';
 import { dbQuery } from 'freedom-db';
+import { api, type types } from 'freedom-email-api';
 import type { EmailUserId } from 'freedom-email-sync';
 import { emailUserIdInfo } from 'freedom-email-sync';
 import type { PageToken } from 'freedom-paginated-data';
 import { pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
-import type { types } from 'freedom-store-api-server-api';
-import { api } from 'freedom-store-api-server-api';
 
 // Constants
 const PAGE_SIZE = 10;
@@ -50,7 +49,7 @@ function getUserIdFromAuthorizationHeader(headers: Record<string, string> | unde
 
 export default makeHttpApiHandler(
   [import.meta.filename],
-  { api: api.mail.threads.GET },
+  { api: api.threads.GET },
   async (
     trace,
     {
