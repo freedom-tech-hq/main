@@ -2,7 +2,7 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { type IsoDateTime } from 'freedom-basic-data';
 import type { types } from 'freedom-email-api';
-import { type AddressObject, type EmailAddress, simpleParser } from 'mailparser';
+import { type AddressObject, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
 import type { ParsedMail } from '../types/ParsedMail.ts';
@@ -26,7 +26,7 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
 
     // Fields from listFields
     subject: parsed.subject ?? '',
-    from: parsed.from !== undefined ? convertSingleAddressObject(parsed.from) : undefined,
+    from: parsed.from !== undefined ? convertAddressObject(parsed.from) : [],
     priority: parsed.priority,
     snippet,
 
@@ -34,7 +34,7 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
     to: parsed.to !== undefined ? convertAddressObject(parsed.to) : [],
     cc: parsed.cc !== undefined ? convertAddressObject(parsed.cc) : [],
     bcc: parsed.bcc !== undefined ? convertAddressObject(parsed.bcc) : [],
-    replyTo: parsed.replyTo !== undefined ? convertSingleAddressObject(parsed.replyTo) : undefined,
+    replyTo: parsed.replyTo !== undefined ? convertAddressObject(parsed.replyTo) : undefined,
     isBodyHtml: parsed.html !== false,
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- `html` is `string | false`
     body: (parsed.html || parsed.text) ?? '',
@@ -58,20 +58,4 @@ function convertAddressObject(to: AddressObject | AddressObject[]): types.MailAd
     result.push(...convertMailAddress(object.value));
   }
   return result;
-}
-
-function convertSingleAddressObject(item: AddressObject): types.MailAddress | undefined {
-  // TODO: Revise https://chatgpt.com/c/683c382a-3f98-800d-a72b-329721d33945
-
-  // Note: `mailparser` typing is too generic here
-  const expectedItem: EmailAddress | undefined = item.value[0];
-
-  if (expectedItem?.address !== undefined) {
-    return {
-      name: expectedItem.name,
-      address: expectedItem.address
-    };
-  }
-
-  return undefined;
 }
