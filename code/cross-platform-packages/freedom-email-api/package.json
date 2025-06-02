@@ -7,6 +7,7 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
     "freedom-dev-logging-support": "0.0.0",
+    "freedom-email-sync": "0.0.0",
     "freedom-locking-types": "0.0.0",
     "freedom-notification-types": "0.0.0",
     "freedom-sync-types": "0.0.0",

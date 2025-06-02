@@ -100,7 +100,7 @@ export default makeHttpApiHandler(
     `;
 
     const countQuery = `
-      SELECT COUNT(*) as total_count
+      SELECT COUNT(*)::int as total_count
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2
       ${threadClause}
