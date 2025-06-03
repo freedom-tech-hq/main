@@ -12,7 +12,7 @@ export type ControlledTextFieldProps = Omit<
   'disabled' | 'error' | 'helperText' | 'labelPosition' | 'onChange' | 'value'
 > & {
   value: Binding<string>;
-  labelPosition?: 'default' | 'outside';
+  labelPosition?: 'default' | 'above' | 'before';
   disabled?: TypeOrBindingType<boolean | undefined>;
   error?: TypeOrBindingType<boolean | undefined>;
   helperText?: TypeOrBindingType<ReactNode | undefined>;
@@ -57,16 +57,28 @@ export const ControlledTextField = ({
             )}
           </BindingsConsumer>
         );
-      case 'outside':
+      case 'above':
+      case 'before':
         return (
-          <Stack>
-            <InputLabel shrink={false} htmlFor={'password'} className="outside medium" error={resolvedError} disabled={resolvedDisabled}>
+          <Stack
+            direction={labelPosition === 'above' ? 'column' : 'row'}
+            alignItems={labelPosition === 'before' ? 'baseline' : undefined}
+            columnGap={1}
+          >
+            <InputLabel
+              shrink={false}
+              htmlFor={'password'}
+              className={`medium ${labelPosition}`}
+              error={resolvedError}
+              disabled={resolvedDisabled}
+            >
               {label}
             </InputLabel>
             <BindingsConsumer bindings={value} limitType="none">
               {(value) => (
                 <TextField
                   {...fwd}
+                  className={`flex-auto ${fwd.className ?? ''}`}
                   value={value}
                   disabled={resolvedDisabled}
                   error={resolvedError}
@@ -103,13 +115,24 @@ export const ControlledTextFieldPlaceholder = ({
           className={`ControlledTextFieldPlaceholder ${fwd.className ?? ''}`}
         />
       );
-    case 'outside':
+    case 'above':
+    case 'before':
       return (
-        <Stack>
-          <InputLabel shrink={false} htmlFor={'password'} className="outside medium">
+        <Stack
+          direction={labelPosition === 'above' ? 'column' : 'row'}
+          alignItems={labelPosition === 'before' ? 'baseline' : undefined}
+          columnGap={1}
+        >
+          <InputLabel shrink={false} htmlFor={'password'} className={`medium ${labelPosition}`}>
             <TxtPlaceholder>Label</TxtPlaceholder>
           </InputLabel>
-          <TextField helperText=" " {...fwd} value="" disabled className={`ControlledTextFieldPlaceholder ${fwd.className ?? ''}`} />
+          <TextField
+            helperText=" "
+            {...fwd}
+            value=""
+            disabled
+            className={`flex-auto ControlledTextFieldPlaceholder ${fwd.className ?? ''}`}
+          />
         </Stack>
       );
   }

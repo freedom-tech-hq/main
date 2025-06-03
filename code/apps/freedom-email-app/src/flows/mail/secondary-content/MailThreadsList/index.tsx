@@ -84,7 +84,7 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
   });
 
   useBindingEffect(selectedThreadId, (selectedThreadId) => {
-    if (selectedThreadId === undefined || selectedThreadId === 'initial') {
+    if (selectedThreadId === undefined || selectedThreadId === 'initial' || selectedThreadId === 'new-mail') {
       return;
     }
 

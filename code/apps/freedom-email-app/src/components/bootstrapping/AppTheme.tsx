@@ -285,10 +285,18 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiInputLabel: {
           styleOverrides: {
             root: {
-              '&.outside': {
+              position: 'relative',
+
+              '&.above': {
                 fontSize: inputLabelFontSize,
                 lineHeight: inputLabelLineHeight,
                 marginBottom: sp(1)
+              },
+              '&.before': {
+                fontSize: inputLabelFontSize,
+                lineHeight: inputLabelLineHeight,
+                transform: 'none',
+                marginRight: sp(1)
               }
             }
           }

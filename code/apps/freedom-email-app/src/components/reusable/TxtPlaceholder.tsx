@@ -14,12 +14,12 @@ export const TxtPlaceholder = ({ children, ...props }: TxtPlaceholderProps & { c
       {parts?.map((part, index) => (
         <Fragment key={index}>
           {index > 0 ? <span className="space"> </span> : null}
-          <div className="inline-block">
+          <span className="inline-block">
             <span className="relative">
               <span className="indicator" />
               {part}
             </span>
-          </div>
+          </span>
         </Fragment>
       )) ?? (
         <>

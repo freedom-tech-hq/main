@@ -29,7 +29,7 @@ export const PasswordField = (props: PasswordFieldProps) => {
       margin="dense"
       id="password"
       name="password"
-      labelPosition="outside"
+      labelPosition="above"
       fullWidth
       variant="outlined"
       {...props}

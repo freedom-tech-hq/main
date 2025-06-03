@@ -3,11 +3,10 @@ import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { log, makeUuid } from 'freedom-contexts';
-import type { DataSource } from 'freedom-data-source';
 import { ArrayDataSource } from 'freedom-data-source';
 import { mailIdInfo } from 'freedom-email-sync';
 import type { GetMailForThreadPacket } from 'freedom-email-tasks-web-worker';
-import type { MailLikeId } from 'freedom-email-user';
+import type { Mail } from 'freedom-email-user';
 import { mailDraftIdInfo } from 'freedom-email-user';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
@@ -16,18 +15,48 @@ import { useBindingEffect } from 'react-bindings';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import type { MailListDataSourceItem } from './MailListDataSourceItem.ts';
+import type { MailListKey } from './MailListKey.ts';
 
-export const useMailListDataSource = (): DataSource<MailListDataSourceItem, MailLikeId> => {
+export interface MailListDataSource extends ArrayDataSource<MailListDataSourceItem, MailListKey> {
+  hasCollapsedItems: () => boolean;
+  expandCollapsedItems: () => void;
+  getMostRecentMail: () => Mail | undefined;
+}
+
+export const useMailListDataSource = (): MailListDataSource => {
   const selectedThreadId = useSelectedMailThreadId();
   const tasks = useTasks();
 
   const items = useRef<MailListDataSourceItem[]>([]);
+  const collapsedItems = useRef<MailListDataSourceItem[]>([]);
 
   const dataSource = useMemo(() => {
     const out = new ArrayDataSource(items.current, {
       getKeyForItemAtIndex: (index) => items.current[index].id
-    });
+    }) as MailListDataSource;
     out.setIsLoading('end');
+
+    out.hasCollapsedItems = () => collapsedItems.current.length > 0;
+
+    out.expandCollapsedItems = () => {
+      if (collapsedItems.current.length === 0) {
+        return; // Nothing to do
+      }
+
+      const indexOfCollapsedItem = items.current.findIndex((item) => item.type === 'collapsed');
+      if (indexOfCollapsedItem < 0) {
+        return; // Not ready
+      }
+
+      const newIndices = collapsedItems.current.map((_item, index) => index + indexOfCollapsedItem);
+      items.current.splice(indexOfCollapsedItem, 1, ...collapsedItems.current);
+      collapsedItems.current.length = 0;
+      dataSource.itemsRemoved({ indices: [indexOfCollapsedItem] });
+      dataSource.itemsAdded({ indices: newIndices });
+    };
+
+    out.getMostRecentMail = () => items.current.findLast((item) => item.type === 'mail')?.mail;
+
     return out;
   }, []);
 
@@ -48,6 +77,7 @@ export const useMailListDataSource = (): DataSource<MailListDataSourceItem, Mail
 
       const myMountId = mountId.current;
       const isConnected = proxy(() => mountId.current === myMountId && selectedThreadIdBinding.get() === selectedThreadId);
+      let isFirstMailAddedAfterClear = true;
       const onData = proxy((packet: Result<GetMailForThreadPacket>) => {
         if (!isConnected()) {
           return;
@@ -71,7 +101,18 @@ export const useMailListDataSource = (): DataSource<MailListDataSourceItem, Mail
               }
             }
 
-            dataSource.itemsAdded({ indices: addedIndices });
+            if (isFirstMailAddedAfterClear && addedIndices.length > 2) {
+              collapsedItems.current = items.current.splice(1, items.current.length - 2, {
+                type: 'collapsed',
+                id: 'collapsed',
+                count: items.current.length - 2
+              });
+              dataSource.itemsAdded({ indices: [0, 1, 2] });
+            } else {
+              dataSource.itemsAdded({ indices: addedIndices });
+            }
+
+            isFirstMailAddedAfterClear = false;
 
             break;
           }
@@ -84,7 +125,7 @@ export const useMailListDataSource = (): DataSource<MailListDataSourceItem, Mail
           return;
         }
 
-        if (selectedThreadId !== undefined && selectedThreadId !== 'initial') {
+        if (selectedThreadId !== undefined && selectedThreadId !== 'initial' && selectedThreadId !== 'new-mail') {
           dataSource.setIsLoading('end');
 
           let didClearOldData = false;
@@ -96,6 +137,8 @@ export const useMailListDataSource = (): DataSource<MailListDataSourceItem, Mail
 
             items.current.length = 0;
             dataSource.itemsCleared();
+
+            isFirstMailAddedAfterClear = true;
           };
 
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);

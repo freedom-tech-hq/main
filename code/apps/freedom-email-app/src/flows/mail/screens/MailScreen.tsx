@@ -3,8 +3,8 @@ import React from 'react';
 import { BC } from 'react-bindings';
 
 import { useSizeClass } from '../../../hooks/useSizeClass.ts';
+import { MailDetailPanel } from '../primary-content/MailDetailPanel.tsx';
 import { MailSidebars } from '../primary-content/MailSidebars.tsx';
-import { SelectedMailViewerPanel } from '../primary-content/SelectedMailViewerPanel.tsx';
 
 export const MailScreen = () => {
   const sizeClass = useSizeClass();
@@ -20,7 +20,7 @@ export const MailScreen = () => {
         return (
           <Stack direction="row" alignItems="stretch" className="w-full h-dvh">
             <MailSidebars />
-            <SelectedMailViewerPanel />
+            <MailDetailPanel />
           </Stack>
         );
 

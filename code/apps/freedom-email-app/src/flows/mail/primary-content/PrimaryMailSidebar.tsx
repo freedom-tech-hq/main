@@ -9,7 +9,7 @@ import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { $appName } from '../../../consts/common-strings.ts';
 import { primarySidebarWidthPx } from '../../../consts/sizes.ts';
-import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
+import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import { CompanyLogoIcon } from '../../../icons/CompanyLogoIcon.ts';
 import { NewEmailIcon } from '../../../icons/NewEmailIcon.ts';
 import { MailCollectionsList } from '../secondary-content/MailCollectionsList/index.tsx';
@@ -19,13 +19,12 @@ const ns = 'ui';
 const $newEmail = LOCALIZE('New Email')({ ns });
 
 export const PrimaryMailSidebar = () => {
-  const { presentErrorMessage } = useMessagePresenter();
+  const selectedThread = useSelectedMailThreadId();
   const t = useT();
   const uuid = useMemo(() => makeUuid(), []);
 
   const onNewMailClick = useCallbackRef(() => {
-    // TODO: implement
-    presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
+    selectedThread.set('new-mail');
   });
 
   return (
@@ -57,7 +56,7 @@ export const PrimaryMailSidebar = () => {
         </Box>
       </Stack>
 
-      <Box className="absolute blurred-overlay-bg bottom-0 left-0 right-0 z-2">
+      <Box className="absolute default-bg bottom-0 left-0 right-0 z-2">
         <ActiveAccountButton />
       </Box>
     </Stack>

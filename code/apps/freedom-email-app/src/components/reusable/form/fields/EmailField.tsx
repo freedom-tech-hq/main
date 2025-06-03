@@ -20,7 +20,7 @@ export const EmailField = (props: EmailFieldProps) => {
       margin="dense"
       id="username"
       name="username"
-      labelPosition="outside"
+      labelPosition="above"
       fullWidth
       variant="outlined"
       {...props}

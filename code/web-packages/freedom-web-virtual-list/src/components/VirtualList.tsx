@@ -3,7 +3,7 @@ import { objectEntries, objectKeys, objectValues } from 'freedom-cast';
 import { makeUuid } from 'freedom-contexts';
 import type { DataSource, IsDataSourceLoading } from 'freedom-data-source';
 import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from 'freedom-web-animation';
-import { ResizingObservingDiv } from 'freedom-web-resize-observer';
+import { ResizeObservingDiv } from 'freedom-web-resize-observer';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
 import React, { useEffect, useMemo, useRef } from 'react';
@@ -95,21 +95,21 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const clearTimeMSec = useMemo<{ current: number | undefined }>(() => ({ current: undefined }), [dataSource]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const pendingStatesByKey = useMemo<Partial<Record<KeyT, ItemState>>>(() => ({}), [dataSource]);
-  const timeMSecByKeyByItemState = useMemo<Record<ItemState, Partial<Record<KeyT, number>>>>(
-    () => ({ add: {}, move: {}, remove: {} }),
+  const pendingStatesByKey = useMemo<Map<KeyT, ItemState>>(() => new Map(), [dataSource]);
+  const timeMSecByKeyByItemState = useMemo<Record<ItemState, Map<KeyT, number>>>(
+    () => ({ add: new Map(), move: new Map(), remove: new Map() }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dataSource]
   );
 
   const addStateForKey = useCallbackRef((key: KeyT, state: ItemState) => {
-    pendingStatesByKey[key] = state;
+    pendingStatesByKey.set(key, state);
 
     for (const possibleState of itemStates) {
-      delete timeMSecByKeyByItemState[possibleState][key];
+      timeMSecByKeyByItemState[possibleState].delete(key);
     }
 
-    delete removingItems[key];
+    removingItems.delete(key);
   });
 
   /** The current size for each item.  Sizes are marked with a boolean indicating whether the size is an estimate or measured size.
@@ -214,7 +214,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     { id: 'visibleRangeIndices', detectInputChanges: false, deps: [dataSource], limitType: 'none' }
   );
 
-  const onPrototypeResize = useCallbackRef((templateId: TemplateIdT, _width: number, height: number) => {
+  const onPrototypeResize = useCallbackRef((_width: number, height: number, templateId: TemplateIdT) => {
     const currentPrototypeSizes = prototypeSizes.get();
     if (currentPrototypeSizes[templateId] === height) {
       return;
@@ -225,7 +225,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     prototypeSizes.set(currentPrototypeSizes);
   });
 
-  const onItemResize = useCallbackRef((itemIndex: number, _width: number, height: number) => {
+  const onItemResize = useCallbackRef((_width: number, height: number, itemIndex: number) => {
     const currentItemSizes = itemSizes.get();
     const currentItemSize = currentItemSizes[itemIndex];
     if (currentItemSize === undefined || height === 0) {
@@ -250,7 +250,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const lastRenderedItemsByItemIndex = useMemo<Map<number, [KeyT, ReactNode, topPx: number]>>(() => new Map(), [dataSource]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const removingItems = useMemo<Partial<Record<KeyT, [ReactNode, topPx: number]>>>(() => ({}), [dataSource]);
+  const removingItems = useMemo<Map<KeyT, [ReactNode, topPx: number]>>(() => new Map(), [dataSource]);
 
   const renderedItems = useDerivedBinding(
     forceRenderCount,
@@ -281,19 +281,14 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       }
 
       const isInitializing = clearTimeMSec.current !== undefined;
-      for (const [key, pendingState] of Object.entries(pendingStatesByKey) as Array<[KeyT, ItemState | undefined]>) {
-        if (pendingState === undefined) {
-          continue;
-        }
-
+      for (const [key, pendingState] of pendingStatesByKey.entries()) {
         if (!isInitializing) {
           hadAnyPendingChanges = true;
 
-          timeMSecByKeyByItemState[pendingState][key] = now + ANIMATION_DURATION_MSEC;
+          timeMSecByKeyByItemState[pendingState].set(key, now + ANIMATION_DURATION_MSEC);
         }
-
-        delete pendingStatesByKey[key];
       }
+      pendingStatesByKey.clear();
 
       // Removing expired temporary state tracking
       if (clearTimeMSec.current !== undefined && now >= clearTimeMSec.current) {
@@ -301,49 +296,52 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       }
       for (const itemState of itemStates) {
         const timeMSecByKey = timeMSecByKeyByItemState[itemState];
-        const keys = objectKeys(timeMSecByKey);
-        for (const key of keys) {
-          if (timeMSecByKey[key] !== undefined && now >= timeMSecByKey[key]) {
-            delete timeMSecByKey[key];
+
+        const keysToDeleteFromTimeMSecByKey: KeyT[] = [];
+        for (const [key, timeMSec] of timeMSecByKey.entries()) {
+          if (now >= timeMSec) {
+            keysToDeleteFromTimeMSecByKey.push(key);
             if (itemState === 'remove') {
-              delete removingItems[key];
+              removingItems.delete(key);
             }
           }
+        }
+
+        for (const key of keysToDeleteFromTimeMSecByKey) {
+          timeMSecByKey.delete(key);
         }
       }
 
       lastRenderedItemsByItemIndex.clear();
-      const tempUsedKeys = new Set<string>();
-      const tempPrimaryKeys = new Set<string>();
+
+      const needsAnimatedTopsForExistingItems =
+        !isInitializing &&
+        (timeMSecByKeyByItemState.add.size > 0 || timeMSecByKeyByItemState.move.size > 0 || timeMSecByKeyByItemState.remove.size > 0);
+
       for (let itemIndex = theVisibleRangeIndices[0]; itemIndex < theVisibleRangeIndices[1]; itemIndex += 1) {
         const key = dataSource.getKeyForItemAtIndex(itemIndex);
-        if (tempUsedKeys.has(key)) {
-          console.log('FOUND primary duplicate', key);
-        }
-        tempUsedKeys.add(key);
-        tempPrimaryKeys.add(key);
         const item = dataSource.getItemAtIndex(itemIndex);
         const templateId = delegate.getTemplateIdForItemAtIndex(itemIndex);
 
         const topPx = offsetsByItemIndex[itemIndex];
-        const isNewItem = !isInitializing && timeMSecByKeyByItemState.add[key] !== undefined;
+        const isNewItem = !isInitializing && timeMSecByKeyByItemState.add.get(key) !== undefined;
         const isExistingItem = !isInitializing && !isNewItem;
-        const isMovingItem = !isInitializing && timeMSecByKeyByItemState.move[key] !== undefined;
+        const isMovingItem = !isInitializing && timeMSecByKeyByItemState.move.get(key) !== undefined;
 
         const hasMeasuredSize = currentItemSizes[itemIndex][0];
         const shouldBeVisible = itemIndex === 0 || hasMeasuredSize || !delegate.itemPrototypes[templateId].isSizeDynamic;
         const renderedItem = delegate.renderItem(key, item, itemIndex);
         const wrappedRenderedItem = (
-          <ResizingObservingDiv
+          <ResizeObservingDiv
             key={key}
             id={`${uuid}-${key}`}
-            className={`VirtualList-item ${isNewItem ? 'fade-in' : ''} ${isExistingItem ? 'animated-top' : ''} ${isMovingItem ? 'moving' : ''}`}
+            className={`VirtualList-item ${isNewItem ? 'fade-in' : ''} ${isExistingItem && needsAnimatedTopsForExistingItems ? 'animated-top' : ''} ${isMovingItem ? 'moving' : ''}`}
             style={{ top: `${topPx}px`, visibility: shouldBeVisible ? 'visible' : 'hidden' }}
             tag={itemIndex}
             onResize={onItemResize}
           >
             {renderedItem}
-          </ResizingObservingDiv>
+          </ResizeObservingDiv>
         );
 
         out.push([key, wrappedRenderedItem]);
@@ -353,20 +351,9 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
       // Adding the items that are being removed
       if (!isInitializing) {
-        for (const [key, value] of objectEntries(removingItems)) {
-          if (value === undefined) {
-            continue;
-          }
-
-          if (tempUsedKeys.has(key)) {
-            console.log('FOUND secondary duplicate', key, Array.from(tempPrimaryKeys).join(', '));
-          }
-          tempUsedKeys.add(key);
-
-          const [renderedItem, topPx] = value;
-
+        for (const [key, [renderedItem, topPx]] of removingItems.entries()) {
           const wrappedRenderedItem = (
-            <ResizingObservingDiv
+            <ResizeObservingDiv
               key={key}
               id={`${uuid}-${key}`}
               className="VirtualList-item fade-out"
@@ -375,7 +362,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
               onResize={noop}
             >
               {renderedItem}
-            </ResizingObservingDiv>
+            </ResizeObservingDiv>
           );
 
           out.push([key, wrappedRenderedItem]);
@@ -533,7 +520,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       if (rendered !== undefined) {
         const [key, renderedItem, topPx] = rendered;
         addStateForKey(key, 'remove');
-        removingItems[key] = [renderedItem, topPx];
+        removingItems.set(key, [renderedItem, topPx]);
       }
 
       currentItemSizes.splice(index, 1);
@@ -558,7 +545,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         const [oldKey, renderedItem, topPx] = rendered;
         if (oldKey !== newKey) {
           addStateForKey(oldKey, 'remove');
-          removingItems[oldKey] = [renderedItem, topPx];
+          removingItems.set(oldKey, [renderedItem, topPx]);
           addStateForKey(newKey, 'add');
         }
       }
@@ -709,7 +696,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   }
 
   const lastContainerSize = useRef<number | undefined>(undefined);
-  const onContainerResize = useCallbackRef((_tag: undefined, width: number, _height: number) => {
+  const onContainerResize = useCallbackRef((width: number, _height: number) => {
     if (lastContainerSize.current === width) {
       return;
     }
@@ -725,7 +712,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     <Stack>
       <GlobalVirtualListStyles />
       <ListHasFocusProvider listHasFocus={hasFocus}>
-        <ResizingObservingDiv
+        <ResizeObservingDiv
           id={uuid}
           className="VirtualList"
           tabIndex={isFocusable ? 0 : undefined}
@@ -739,9 +726,9 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
           {/* Rendering Prototypes to Observe Size Changes */}
           {objectEntries(delegate.itemPrototypes).map(([templateId, { Component }]) => (
             <div key={`prototype-${templateId}`} className="VirtualList-itemPrototype">
-              <ResizingObservingDiv id={`${uuid}-template-${templateId}`} tag={templateId} onResize={onPrototypeResize}>
+              <ResizeObservingDiv id={`${uuid}-template-${templateId}`} tag={templateId} onResize={onPrototypeResize}>
                 <Component />
-              </ResizingObservingDiv>
+              </ResizeObservingDiv>
             </div>
           ))}
           {delegate.renderLoadingIndicator !== undefined
@@ -779,7 +766,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
                 </Collapse>
               ))
             : null}
-        </ResizingObservingDiv>
+        </ResizeObservingDiv>
       </ListHasFocusProvider>
     </Stack>
   );

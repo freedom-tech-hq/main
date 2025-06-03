@@ -1,1 +1,1 @@
-export * from './ResizingObservingDiv.tsx';
+export * from './ResizeObservingDiv.tsx';

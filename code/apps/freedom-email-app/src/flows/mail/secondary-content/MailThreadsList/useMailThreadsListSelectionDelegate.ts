@@ -38,7 +38,7 @@ export const useMailCollectionSelectionDelegate = (
 
             const theSelectedThreadId = selectedThreadId.get();
             let index =
-              theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial'
+              theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial' && theSelectedThreadId !== 'new-mail'
                 ? dataSource.getIndexOfItemWithKey(theSelectedThreadId)
                 : 0;
             if (index < 0) {
