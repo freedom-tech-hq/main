@@ -59,12 +59,16 @@ export const MailListItemHeader = ({ mail, showOptions, onClick }: MailListItemH
 
   const parsedTo = mail.to.map(parseOneAddress);
 
-  const onMoreActionsClick = useCallbackRef(() => {
+  const onMoreActionsClick: React.MouseEventHandler<HTMLElement> = useCallbackRef((event) => {
+    event.stopPropagation();
+
     // TODO: implement
     presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
   });
 
-  const onReplyClick = useCallbackRef(() => {
+  const onReplyClick: React.MouseEventHandler<HTMLElement> = useCallbackRef((event) => {
+    event.stopPropagation();
+
     // TODO: implement
     presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
   });

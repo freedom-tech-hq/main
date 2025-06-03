@@ -33,7 +33,11 @@ export interface MailListItemFormattedEmailAddressesProps {
 export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMembers, mode }: MailListItemFormattedEmailAddressesProps) => {
   const p = useP();
 
-  const toggleShowGroupMembers = useCallbackRef(() => showGroupMembers.set(!showGroupMembers.get()));
+  const toggleShowGroupMembers: React.MouseEventHandler<HTMLElement> = useCallbackRef((event) => {
+    event.stopPropagation();
+
+    showGroupMembers.set(!showGroupMembers.get());
+  });
 
   return makeTagsForParsedEmailAddresses(addresses, {
     group: (group, index) =>
