@@ -22,5 +22,11 @@ cp \
   yarn.lock \
   "$DEPLOY_WORKSPACE_DIR/code/"
 
+# Create RELEASE.txt with git hash and branch
+GIT_HASH=$(git rev-parse HEAD)
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "commit: $GIT_HASH" > "$DEPLOY_WORKSPACE_DIR/code/RELEASE.txt"
+echo "branch: $GIT_BRANCH" >> "$DEPLOY_WORKSPACE_DIR/code/RELEASE.txt"
+
 # Done
 echo "OK: Code to deploy is extracted to $DEPLOY_WORKSPACE_DIR"
