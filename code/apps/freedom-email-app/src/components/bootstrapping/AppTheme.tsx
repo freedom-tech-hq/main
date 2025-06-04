@@ -29,17 +29,27 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     const inputLineHeight = documentStyle.getPropertyValue('--input-line-height');
     const inputLabelFontSize = documentStyle.getPropertyValue('--input-label-font-size');
     const inputLabelLineHeight = documentStyle.getPropertyValue('--input-label-line-height');
+    const smallestFontSize = documentStyle.getPropertyValue('--smallest-font-size');
+    const smallestLineHeight = documentStyle.getPropertyValue('--smallest-line-height');
 
     const defaultTextColor = documentStyle.getPropertyValue('--colors-default-text');
     const secondaryTextColor = documentStyle.getPropertyValue('--colors-secondary-text');
     const disabledTextColor = documentStyle.getPropertyValue('--colors-disabled-text');
 
+    const semiboldFontWeight = documentStyle.getPropertyValue('--font-weight-semibold');
+
     const colorsBackground = documentStyle.getPropertyValue('--colors-background');
     const colorsAccent = documentStyle.getPropertyValue('--colors-accent');
+    const colorsDefaultTextContrast = documentStyle.getPropertyValue('--colors-default-text-contrast');
     const colorsPrimary = documentStyle.getPropertyValue('--colors-primary');
     const colorsPrimaryContrast = documentStyle.getPropertyValue('--colors-primary-contrast');
     const colorsInputBorder = documentStyle.getPropertyValue('--colors-input-border');
     const colorsDivider = documentStyle.getPropertyValue('--colors-divider');
+    const colorsSuccess = documentStyle.getPropertyValue('--colors-success');
+
+    const stdTheme = createTheme({});
+    const sp = (multiple: number) => stdTheme.spacing(multiple);
+    const br = (multiple: number) => `${stdTheme.shape.borderRadius * multiple}px`;
 
     const theme = createTheme({
       breakpoints: { values: { xs: 0, sm: 320, md: 375, lg: 768, xl: 1440 } },
@@ -107,31 +117,96 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
         }
       },
       components: {
+        MuiAvatar: {
+          styleOverrides: {
+            root: {
+              borderRadius: br(3),
+              fontSize: body1FontSize,
+              fontWeight: semiboldFontWeight,
+              lineHeight: '100%',
+
+              '&.AvatarPlaceholder': {
+                backgroundColor: colorsInputBorder
+              },
+              '&.md-avatar': {
+                width: '32px',
+                height: '32px'
+              }
+            }
+          }
+        },
         MuiButton: {
           defaultProps: {
             disableElevation: true
           },
           styleOverrides: {
+            endIcon: {
+              margin: `0 0 0 ${sp(1)}`
+            },
             startIcon: {
-              margin: '0 8px 0 0'
+              margin: `0 ${sp(1)} 0 0`
             },
             root: {
-              borderRadius: '12px',
+              borderRadius: br(3),
               fontSize: buttonFontSize,
               lineHeight: buttonLineHeight,
               fontWeight: buttonFontWeight,
-              padding: '8px 16px',
+              padding: `${sp(1)} ${sp(2)}`,
+              minWidth: '32px',
               textTransform: 'none'
+            }
+          }
+        },
+        MuiCheckbox: {
+          styleOverrides: {
+            root: {
+              borderRadius: br(1),
+              border: `1px solid ${colorsInputBorder}`,
+              width: '16px',
+              height: '16px',
+
+              '&.Mui-checked, &.MuiCheckbox-indeterminate': {
+                borderColor: colorsPrimary,
+                backgroundColor: colorsPrimary
+              }
             }
           }
         },
         MuiChip: {
           styleOverrides: {
             root: {
-              borderRadius: '8px'
+              borderRadius: br(2),
+              height: 'auto',
+
+              '&.mail-collection-list-item-chip-selected': {
+                borderRadius: br(1.5),
+                backgroundColor: defaultTextColor,
+                minWidth: `calc(${smallestLineHeight} + 2px)`,
+                textAlign: 'center',
+
+                '& .MuiChip-label': {
+                  padding: `1px ${sp(0.5)}`,
+                  color: colorsDefaultTextContrast,
+                  fontSize: smallestFontSize,
+                  lineHeight: smallestLineHeight
+                }
+              },
+
+              '&.mail-collection-list-item-chip-not-selected': {
+                borderRadius: br(1.5),
+                backgroundColor: 'transparent',
+                minWidth: `calc(${smallestLineHeight} + 2px)`,
+                textAlign: 'center',
+
+                '& .MuiChip-label': {
+                  padding: `1px ${sp(0.5)}`,
+                  fontSize: smallestFontSize,
+                  lineHeight: smallestLineHeight
+                }
+              }
             },
             label: {
-              padding: '2px 4px',
+              padding: `${sp(0.25)} ${sp(0.5)}`,
               fontSize: inputFontSize,
               lineHeight: inputLineHeight
             }
@@ -144,21 +219,28 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         },
+        MuiFormControlLabel: {
+          styleOverrides: {
+            root: {
+              gap: sp(1)
+            }
+          }
+        },
         MuiFormHelperText: {
           styleOverrides: {
             root: {
               fontSize: inputFontSize,
               lineHeight: inputLineHeight,
               margin: 0,
-              marginTop: '4px'
+              marginTop: sp(0.5)
             }
           }
         },
         MuiInputBase: {
           styleOverrides: {
             root: {
-              borderRadius: '12px',
-              padding: '4px 12px'
+              borderRadius: br(3),
+              padding: `${sp(0.5)} ${sp(1.5)}`
             },
             input: {
               fontSize: inputFontSize,
@@ -172,7 +254,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
               '&.outside': {
                 fontSize: inputLabelFontSize,
                 lineHeight: inputLabelLineHeight,
-                marginBottom: '8px'
+                marginBottom: sp(1)
               }
             }
           }
@@ -182,12 +264,34 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
             disableRipple: true,
             disableTouchRipple: true,
             tabIndex: -1
+          },
+          styleOverrides: {
+            root: {
+              '&.mail-collection-list-item': {
+                borderRadius: br(3),
+                padding: sp(1.5),
+
+                '& .MuiListItemIcon-root': {
+                  minWidth: 0,
+                  marginRight: sp(1)
+                }
+              },
+              '&.mail-thread-list-item': {
+                borderRadius: br(4),
+                padding: `${sp(2)} ${sp(1.5)}`,
+                alignItems: 'flex-start',
+
+                '& .MuiAvatar-root': {
+                  marginRight: sp(1)
+                }
+              }
+            }
           }
         },
         MuiOutlinedInput: {
           styleOverrides: {
             root: {
-              borderRadius: '12px',
+              borderRadius: br(3),
 
               '& fieldset': {
                 borderColor: colorsInputBorder
@@ -198,15 +302,80 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         },
+        MuiSwitch: {
+          styleOverrides: {
+            root: {
+              width: 42,
+              height: 26,
+              padding: 0,
+              '& .MuiSwitch-switchBase': {
+                padding: 0,
+                margin: 2,
+                transitionDuration: '300ms',
+                '&.Mui-checked': {
+                  transform: 'translateX(16px)',
+                  color: '#fff',
+                  '& + .MuiSwitch-track': {
+                    backgroundColor: colorsSuccess,
+                    opacity: 1,
+                    border: 0
+                  },
+                  '&.Mui-disabled + .MuiSwitch-track': {
+                    opacity: 0.5
+                  }
+                },
+                '&.Mui-focusVisible .MuiSwitch-thumb': {
+                  color: '#33cf4d',
+                  border: '6px solid #fff'
+                },
+                '&.Mui-disabled .MuiSwitch-thumb': {
+                  color: colorsAccent
+                },
+                '&.Mui-disabled + .MuiSwitch-track': {
+                  opacity: 0.7
+                }
+              },
+              '& .MuiSwitch-thumb': {
+                boxSizing: 'border-box',
+                width: 22,
+                height: 22
+              },
+              '& .MuiSwitch-track': {
+                borderRadius: 26 / 2,
+                backgroundColor: colorsInputBorder,
+                opacity: 1,
+                transition: 'background-color 500ms ease-in-out'
+              }
+            }
+          }
+        },
         MuiTooltip: {
           styleOverrides: {
             tooltip: {
               color: defaultTextColor,
-              borderRadius: '8px',
-              padding: '6px 12px',
+              borderRadius: br(2),
+              padding: `${sp(0.75)} ${sp(1.5)}`,
               backgroundColor: colorsAccent,
               fontSize: captionFontSize,
               lineHeight: captionLineHeight
+            }
+          }
+        },
+        MuiTypography: {
+          styleOverrides: {
+            root: {
+              '&.TxtPlaceholder': {
+                '& span:not(.space)': {
+                  borderRadius: br(1.5),
+                  backgroundColor: colorsInputBorder,
+                  color: 'transparent'
+                },
+                '&.empty': {
+                  borderRadius: br(1.5),
+                  backgroundColor: colorsInputBorder,
+                  color: 'transparent'
+                }
+              }
             }
           }
         }

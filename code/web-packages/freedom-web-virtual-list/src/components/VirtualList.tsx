@@ -11,7 +11,7 @@ import { BC, useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } f
 import { makeStringSubtypeArray } from 'yaschema';
 
 import { ListHasFocusProvider } from '../context/list-has-focus.tsx';
-import { useVirtualListTheme } from '../context/virtual-list-theme.tsx';
+import { GlobalVirtualListStyles } from '../internal/components/GlobalVirtualListStyles.tsx';
 import { DEFAULT_MIN_OVERSCAN_AMOUNT_PX, DEFAULT_OVERSCAN_NUM_ITEMS } from '../internal/consts/overscan.ts';
 import { doRangesIntersect } from '../internal/utils/doRangesIntersect.ts';
 import type { VirtualListControls } from '../types/VirtualListControls.ts';
@@ -52,7 +52,6 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   isFocusable = true
 }: VirtualListProps<T, KeyT, TemplateIdT>) => {
   const uuid = useMemo(() => makeUuid(), []);
-  const theme = useVirtualListTheme();
 
   const isEmpty = useBinding(() => dataSource.getNumItems() === 0, { id: 'isEmpty', detectChanges: true, deps: [dataSource] });
   const showLoadingIndicator = useBinding(() => dataSource.isLoading(), {
@@ -338,7 +337,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
           <ResizingObservingDiv
             key={key}
             id={`${uuid}-${key}`}
-            className={`VirtualList-${theme.uid}-item ${isNewItem ? 'fade-in' : ''} ${isExistingItem ? 'animated-top' : ''} ${isMovingItem ? 'moving' : ''}`}
+            className={`VirtualList-item ${isNewItem ? 'fade-in' : ''} ${isExistingItem ? 'animated-top' : ''} ${isMovingItem ? 'moving' : ''}`}
             style={{ top: `${topPx}px`, visibility: shouldBeVisible ? 'visible' : 'hidden' }}
             tag={itemIndex}
             onResize={onItemResize}
@@ -370,7 +369,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
             <ResizingObservingDiv
               key={key}
               id={`${uuid}-${key}`}
-              className={`VirtualList-${theme.uid}-item fade-out`}
+              className="VirtualList-item fade-out"
               style={{ top: `${topPx}px` }}
               tag={undefined}
               onResize={noop}
@@ -724,10 +723,11 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
   return (
     <Stack>
+      <GlobalVirtualListStyles />
       <ListHasFocusProvider listHasFocus={hasFocus}>
         <ResizingObservingDiv
           id={uuid}
-          className={`VirtualList-${theme.uid}`}
+          className="VirtualList"
           tabIndex={isFocusable ? 0 : undefined}
           onFocus={isFocusable ? hasFocus.reset : undefined}
           onBlur={isFocusable ? hasFocus.reset : undefined}
@@ -738,7 +738,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
         >
           {/* Rendering Prototypes to Observe Size Changes */}
           {objectEntries(delegate.itemPrototypes).map(([templateId, { Component }]) => (
-            <div key={`prototype-${templateId}`} className={`VirtualList-${theme.uid}-itemPrototype`}>
+            <div key={`prototype-${templateId}`} className="VirtualList-itemPrototype">
               <ResizingObservingDiv id={`${uuid}-template-${templateId}`} tag={templateId} onResize={onPrototypeResize}>
                 <Component />
               </ResizingObservingDiv>
@@ -751,12 +751,8 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
                 </Collapse>
               ))
             : null}
-          <div
-            id={`${uuid}-rendered-items`}
-            className={`VirtualList-${theme.uid}-renderedItems`}
-            style={{ height: `${totalSize.get()}px` }}
-          >
-            <div id={`${uuid}-scroll-position-marker`} className={`VirtualList-${theme.uid}-scrollPositionMarker`} />
+          <div id={`${uuid}-rendered-items`} className="VirtualList-renderedItems" style={{ height: `${totalSize.get()}px` }}>
+            <div id={`${uuid}-scroll-position-marker`} className="VirtualList-scrollPositionMarker" />
             {BC(renderedItems, (renderedItems) => renderedItems)}
           </div>
           {delegate.renderEmptyIndicator !== undefined

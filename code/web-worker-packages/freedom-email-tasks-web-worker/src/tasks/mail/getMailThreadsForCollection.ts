@@ -1,7 +1,8 @@
-import type { PR, Result } from 'freedom-async';
+import type { PR, Result, SuccessResult } from 'freedom-async';
 import { allResultsMapped, bestEffort, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import { ONE_SEC_MSEC } from 'freedom-basic-data';
+import { makeIsoDateTime, ONE_DAY_MSEC, ONE_SEC_MSEC } from 'freedom-basic-data';
 import { autoGeneralizeFailureResults } from 'freedom-common-errors';
+import { makeUuid } from 'freedom-contexts';
 import type { MailId } from 'freedom-email-sync';
 import { listTimeOrganizedMailIds, mailIdInfo } from 'freedom-email-sync';
 import type { CollectionLikeId, ThreadLikeId } from 'freedom-email-user';
@@ -15,6 +16,7 @@ import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import type { GetMailThreadsForCollection_MailAddedPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollection_MailAddedPacket.ts';
 import type { GetMailThreadsForCollectionPacket } from '../../types/mail/getMailThreadsForCollection/GetMailThreadsForCollectionPacket.ts';
+import { isDemoMode } from '../config/demo-mode.ts';
 import { getMailThread } from './getMailThread.ts';
 
 export const getMailThreadsForCollection = makeAsyncResultFunc(
@@ -25,6 +27,10 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     isConnected: () => TypeOrPromisedType<boolean>,
     onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
+    DEV: if (isDemoMode()) {
+      return makeDemoModeResult();
+    }
+
     const credential = useActiveCredential(trace).credential;
     const lockStore = new InMemoryLockStore();
 
@@ -130,3 +136,17 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     );
   }
 );
+
+// Helpers
+
+let makeDemoModeResult: () => SuccessResult<GetMailThreadsForCollection_MailAddedPacket> = () => {
+  throw new Error();
+};
+
+DEV: makeDemoModeResult = () =>
+  makeSuccess({
+    type: 'mail-added',
+    threadIds: Array(1000)
+      .fill(0)
+      .map(() => mailIdInfo.make(`${makeIsoDateTime(new Date(Date.now() - Math.random() * 30 * ONE_DAY_MSEC))}-${makeUuid()}`))
+  });

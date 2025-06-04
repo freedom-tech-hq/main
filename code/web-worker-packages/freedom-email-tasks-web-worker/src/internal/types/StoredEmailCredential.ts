@@ -1,11 +1,11 @@
 import { base64String } from 'freedom-basic-data';
+import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
 import { schema } from 'yaschema';
 
 export const storedEmailCredentialSchema = schema.object({
   /** Encrypted using a master password */
-  encrypted: base64String.schema,
+  encryptedCredential: encryptedEmailCredentialSchema,
   /** The master password encrypted using the biometrics password */
-  pwEncryptedForBiometrics: base64String.schema.optional(),
-  description: schema.string()
+  pwEncryptedForBiometrics: base64String.schema.optional()
 });
 export type StoredEmailCredential = typeof storedEmailCredentialSchema.valueType;

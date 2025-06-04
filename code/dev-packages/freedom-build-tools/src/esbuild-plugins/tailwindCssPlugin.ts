@@ -15,7 +15,6 @@ export const tailwindCssPlugin = (): Plugin => {
         }
 
         const tempPath = path.join(os.tmpdir(), `twcss-${Date.now()}.css`);
-        console.log('READING', args.path, 'WRITING', tempPath);
 
         await new Promise<void>((resolve, reject) => {
           execFile('npx', ['@tailwindcss/cli', '-i', args.path, '-o', tempPath], (err, stdout, stderr) => {
@@ -32,7 +31,6 @@ export const tailwindCssPlugin = (): Plugin => {
         });
 
         const contents = await fs.readFile(tempPath, 'utf-8');
-        console.log('LOADED', contents);
 
         return { contents, loader: 'default' };
       });

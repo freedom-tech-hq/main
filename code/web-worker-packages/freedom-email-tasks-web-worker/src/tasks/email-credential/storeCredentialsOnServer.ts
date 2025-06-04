@@ -1,32 +1,36 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type Base64String, base64String } from 'freedom-basic-data';
+import { base64String } from 'freedom-basic-data';
 import { generateSignatureForBuffer } from 'freedom-crypto';
 import type { SigningKeySet } from 'freedom-crypto-data';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-sync';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 // Create API fetch task for storing credentials
-const storeCredentialsOnRemote = makeApiFetchTask([import.meta.filename, 'storeCredentialsOnRemote'], api.storeCredentials.POST);
+const storeCredentialOnRemote = makeApiFetchTask([import.meta.filename, 'storeCredentialOnRemote'], api.storeCredential.POST);
 
 /**
  * Stores encrypted user credentials on the server with a signature for verification
  *
  * @param userId - The email user ID
- * @param encryptedCredentials - The encrypted credentials to store
+ * @param encryptedCredential - The encrypted credential to store
  * @param signingKey - Key used to sign the credentials for verification
  */
 export const storeCredentialsOnServer = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { userId, encryptedCredentials, signingKeys }: { userId: EmailUserId; encryptedCredentials: Base64String; signingKeys: SigningKeySet }
+    {
+      userId,
+      encryptedCredential,
+      signingKeys
+    }: { userId: EmailUserId; encryptedCredential: EncryptedEmailCredential; signingKeys: SigningKeySet }
   ): PR<void, 'not-found' | 'invalid-signature'> => {
     // Generate signature for the encrypted credentials
     const signatureResult = await generateSignatureForBuffer(trace, {
-      value: base64String.toBuffer(encryptedCredentials),
+      value: base64String.toBuffer(encryptedCredential.encrypted),
       signingKeys
     });
 
@@ -35,10 +39,10 @@ export const storeCredentialsOnServer = makeAsyncResultFunc(
     }
 
     // Call the store credentials API
-    const response = await storeCredentialsOnRemote(trace, {
+    const response = await storeCredentialOnRemote(trace, {
       body: {
         userId,
-        encryptedCredentials,
+        encryptedCredential,
         signature: base64String.makeWithBuffer(signatureResult.value)
       },
       context: getDefaultApiRoutingContext()

@@ -17,7 +17,7 @@ export const AccountList = ({ onAccountClick }: AccountListProps) => {
   return (
     <List>
       {WC(locallyStoredEncryptedEmailCredentials, (accounts) =>
-        accounts.map((account) => <AccountListItem key={account.localUuid} account={account} onClick={onAccountClick} />)
+        accounts.map((account) => <AccountListItem key={account.locallyStoredCredentialId} account={account} onClick={onAccountClick} />)
       )}
     </List>
   );

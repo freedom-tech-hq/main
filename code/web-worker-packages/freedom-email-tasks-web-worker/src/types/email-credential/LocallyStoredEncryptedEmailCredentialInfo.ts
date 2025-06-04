@@ -1,7 +1,7 @@
-import type { Uuid } from 'freedom-contexts';
+import type { LocallyStoredCredentialId } from '../id/LocallyStoredCredentialId.ts';
 
 export interface LocallyStoredEncryptedEmailCredentialInfo {
-  localUuid: Uuid;
-  description: string;
+  locallyStoredCredentialId: LocallyStoredCredentialId;
+  email: string;
   hasBiometricEncryption: boolean;
 }

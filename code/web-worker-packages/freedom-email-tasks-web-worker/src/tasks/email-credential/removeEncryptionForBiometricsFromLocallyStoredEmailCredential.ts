@@ -1,28 +1,28 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { Uuid } from 'freedom-contexts';
 
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
+import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
 
 export const removeEncryptionForBiometricsFromLocallyStoredEmailCredential = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     {
-      localCredentialUuid
+      locallyStoredCredentialId
     }: {
-      localCredentialUuid: Uuid;
+      locallyStoredCredentialId: LocallyStoredCredentialId;
     }
   ): PR<undefined, 'not-found'> => {
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
 
-    const encryptedCredential = await emailCredentialStore.object(localCredentialUuid).get(trace);
-    if (!encryptedCredential.ok) {
-      return encryptedCredential;
+    const storedCredential = await emailCredentialStore.object(locallyStoredCredentialId).get(trace);
+    if (!storedCredential.ok) {
+      return storedCredential;
     }
 
-    const storedAccessor = emailCredentialStore.mutableObject(localCredentialUuid);
+    const storedAccessor = emailCredentialStore.mutableObject(locallyStoredCredentialId);
     const stored = await storedAccessor.getMutable(trace);
     if (!stored.ok) {
       return stored;

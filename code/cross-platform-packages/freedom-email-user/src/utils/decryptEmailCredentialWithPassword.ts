@@ -1,7 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type Base64String, base64String } from 'freedom-basic-data';
+import { base64String } from 'freedom-basic-data';
 import { decryptBufferWithPassword } from 'freedom-crypto';
+import type { EncryptedEmailCredential } from 'freedom-email-sync';
 import { deserialize } from 'freedom-serialization';
 import type { JsonValue } from 'yaschema';
 
@@ -11,9 +12,9 @@ export const decryptEmailCredentialWithPassword = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { encryptedEmailCredential, password }: { encryptedEmailCredential: Base64String; password: string }
+    { encryptedCredential, password }: { encryptedCredential: EncryptedEmailCredential; password: string }
   ): PR<EmailCredential> => {
-    const encryptedValue = base64String.toBuffer(encryptedEmailCredential);
+    const encryptedValue = base64String.toBuffer(encryptedCredential.encrypted);
 
     const decryptedBuffer = await decryptBufferWithPassword(trace, { encryptedValue, password });
     if (!decryptedBuffer.ok) {

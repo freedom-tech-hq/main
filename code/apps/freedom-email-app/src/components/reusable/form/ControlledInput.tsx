@@ -3,7 +3,7 @@ import { Input } from '@mui/material';
 import type { Binding } from 'react-bindings';
 import { BindingsConsumer, useCallbackRef } from 'react-bindings';
 
-export type ControlledInputProps = InputProps & {
+export type ControlledInputProps = Omit<InputProps, 'onChange' | 'value'> & {
   value: Binding<string>;
 };
 

@@ -1,4 +1,4 @@
-import { Stack, Typography, useTheme } from '@mui/material';
+import { Stack, useTheme } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 

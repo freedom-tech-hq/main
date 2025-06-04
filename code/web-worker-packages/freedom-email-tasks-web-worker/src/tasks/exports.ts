@@ -3,7 +3,8 @@ import '../internal/polyfills.ts';
 import { expose } from 'comlink';
 import { makeTrace } from 'freedom-contexts';
 
-import type { setConfig } from './config/setConfig.ts';
+import type { setConfig } from './config/config.ts';
+import type { setDemoMode } from './config/demo-mode.ts';
 import type { devFwdEnv } from './dev/devFwdEnv.ts';
 import type { logUserFsLs } from './dev/logUserFsLs.ts';
 import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './email-credential/activateUserWithLocallyStoredEncryptedEmailCredential.ts';
@@ -36,7 +37,9 @@ class TasksImpl {
   // Config
 
   public readonly setConfig = async (...args: ParametersExceptFirst<typeof setConfig>) =>
-    await (await import('./config/setConfig.ts')).setConfig(this.#trace, ...args);
+    await (await import('./config/config.ts')).setConfig(this.#trace, ...args);
+  public readonly setDemoMode = async (...args: ParametersExceptFirst<typeof setDemoMode>) =>
+    await (await import('./config/demo-mode.ts')).setDemoMode(this.#trace, ...args);
 
   // Dev
 
