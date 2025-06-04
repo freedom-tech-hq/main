@@ -156,7 +156,7 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
       }
 
       activeAccountInfo.set({ email: created.value.encryptedEmailCredential.email });
-      history.push('/mail');
+      history.replace('/mail');
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }

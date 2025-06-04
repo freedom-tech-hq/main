@@ -80,7 +80,7 @@ export const ImportCredentialPanel = ({ account, onBackClick }: ImportCredential
       }
 
       activeAccountInfo.set({ email: account.email });
-      history.push('/mail');
+      history.replace('/mail');
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }

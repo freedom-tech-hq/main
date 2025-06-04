@@ -9,6 +9,7 @@ import type { devFwdEnv } from './dev/devFwdEnv.ts';
 import type { logUserFsLs } from './dev/logUserFsLs.ts';
 import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './email-credential/activateUserWithLocallyStoredEncryptedEmailCredential.ts';
 import type { addEncryptionForBiometricsToLocallyStoredEmailCredential } from './email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts';
+import type { deactivateUser } from './email-credential/deactivateUser.ts';
 import type { getLocallyStoredEncryptedEmailCredential } from './email-credential/getLocallyStoredEncryptedEmailCredential.ts';
 import type { importEmailCredential } from './email-credential/importEmailCredential.ts';
 import type { importEmailCredentialFromRemote } from './email-credential/importEmailCredentialFromRemote.ts';
@@ -64,6 +65,9 @@ class TasksImpl {
     await (
       await import('./email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts')
     ).addEncryptionForBiometricsToLocallyStoredEmailCredential(this.#trace, ...args);
+
+  public readonly deactivateUser = async (...args: ParametersExceptFirst<typeof deactivateUser>) =>
+    await (await import('./email-credential/deactivateUser.ts')).deactivateUser(this.#trace, ...args);
 
   public readonly getLocallyStoredEncryptedEmailCredential = async (
     ...args: ParametersExceptFirst<typeof getLocallyStoredEncryptedEmailCredential>

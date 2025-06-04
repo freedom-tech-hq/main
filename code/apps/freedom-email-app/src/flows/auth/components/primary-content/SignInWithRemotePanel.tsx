@@ -103,7 +103,7 @@ export const SignInWithRemotePanel = ({ onBackClick }: SignInWithRemotePanelProp
       }
 
       activeAccountInfo.set({ email });
-      history.push('/mail');
+      history.replace('/mail');
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }
