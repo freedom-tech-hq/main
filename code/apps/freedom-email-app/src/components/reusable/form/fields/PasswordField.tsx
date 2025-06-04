@@ -1,4 +1,5 @@
 import { Button } from '@mui/material';
+import React from 'react';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 
 import { EyeIcon } from '../../../../icons/EyeIcon.ts';
@@ -20,30 +21,26 @@ export const PasswordField = (props: PasswordFieldProps) => {
     </Button>
   );
 
-  return (
-    <>
-      {BC(showPassword, (showPassword) => (
-        <ControlledTextField
-          type={showPassword ? 'text' : 'password'}
-          autoComplete="new-password"
-          required
-          margin="dense"
-          id="password"
-          name="password"
-          labelPosition="outside"
-          fullWidth
-          variant="outlined"
-          {...props}
-          slotProps={{
-            ...props.slotProps,
-            input: {
-              sx: { pr: '6px' },
-              endAdornment: defaultEndAdornment,
-              ...props.slotProps?.input
-            }
-          }}
-        />
-      ))}
-    </>
-  );
+  return BC(showPassword, (showPassword) => (
+    <ControlledTextField
+      type={showPassword ? 'text' : 'password'}
+      autoComplete="new-password"
+      required
+      margin="dense"
+      id="password"
+      name="password"
+      labelPosition="outside"
+      fullWidth
+      variant="outlined"
+      {...props}
+      slotProps={{
+        ...props.slotProps,
+        input: {
+          sx: { pr: '6px' },
+          endAdornment: defaultEndAdornment,
+          ...props.slotProps?.input
+        }
+      }}
+    />
+  ));
 };

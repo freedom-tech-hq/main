@@ -1,6 +1,7 @@
 import type { FilledTextFieldProps, OutlinedTextFieldProps, StandardTextFieldProps } from '@mui/material';
 import { InputLabel, Stack, TextField } from '@mui/material';
 import type { ReactNode } from 'react';
+import React from 'react';
 import type { Binding, TypeOrBindingType } from 'react-bindings';
 import { BC, BindingsConsumer, ifBinding, resolveTypeOrBindingType, useCallbackRef } from 'react-bindings';
 
@@ -32,58 +33,48 @@ export const ControlledTextField = ({
     labelPosition = 'default';
   }
 
-  return (
-    <>
-      {BC({ disabled: ifBinding(disabled), error: ifBinding(error), helperText: ifBinding(helperText) }, () => {
-        const resolvedDisabled = resolveTypeOrBindingType(disabled) ?? false;
-        const resolvedError = resolveTypeOrBindingType(error) ?? false;
-        const resolvedHelperText = resolveTypeOrBindingType(helperText) ?? ' ';
+  return BC({ disabled: ifBinding(disabled), error: ifBinding(error), helperText: ifBinding(helperText) }, () => {
+    const resolvedDisabled = resolveTypeOrBindingType(disabled) ?? false;
+    const resolvedError = resolveTypeOrBindingType(error) ?? false;
+    const resolvedHelperText = resolveTypeOrBindingType(helperText) ?? ' ';
 
-        switch (labelPosition) {
-          case 'default':
-            return (
-              <BindingsConsumer bindings={value} limitType="none">
-                {(value) => (
-                  <TextField
-                    {...fwd}
-                    label={label}
-                    value={value}
-                    disabled={resolvedDisabled}
-                    error={resolvedError}
-                    helperText={resolvedHelperText}
-                    onChange={onChange}
-                  />
-                )}
-              </BindingsConsumer>
-            );
-          case 'outside':
-            return (
-              <Stack>
-                <InputLabel
-                  shrink={false}
-                  htmlFor={'password'}
-                  className="outside medium"
-                  error={resolvedError}
+    switch (labelPosition) {
+      case 'default':
+        return (
+          <BindingsConsumer bindings={value} limitType="none">
+            {(value) => (
+              <TextField
+                {...fwd}
+                label={label}
+                value={value}
+                disabled={resolvedDisabled}
+                error={resolvedError}
+                helperText={resolvedHelperText}
+                onChange={onChange}
+              />
+            )}
+          </BindingsConsumer>
+        );
+      case 'outside':
+        return (
+          <Stack>
+            <InputLabel shrink={false} htmlFor={'password'} className="outside medium" error={resolvedError} disabled={resolvedDisabled}>
+              {label}
+            </InputLabel>
+            <BindingsConsumer bindings={value} limitType="none">
+              {(value) => (
+                <TextField
+                  {...fwd}
+                  value={value}
                   disabled={resolvedDisabled}
-                >
-                  {label}
-                </InputLabel>
-                <BindingsConsumer bindings={value} limitType="none">
-                  {(value) => (
-                    <TextField
-                      {...fwd}
-                      value={value}
-                      disabled={resolvedDisabled}
-                      error={resolvedError}
-                      helperText={resolvedHelperText}
-                      onChange={onChange}
-                    />
-                  )}
-                </BindingsConsumer>
-              </Stack>
-            );
-        }
-      })}
-    </>
-  );
+                  error={resolvedError}
+                  helperText={resolvedHelperText}
+                  onChange={onChange}
+                />
+              )}
+            </BindingsConsumer>
+          </Stack>
+        );
+    }
+  });
 };

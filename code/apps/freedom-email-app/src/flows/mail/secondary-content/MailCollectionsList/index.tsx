@@ -1,7 +1,7 @@
 import type { CollectionLikeId } from 'freedom-email-user';
 import type { VirtualListControls } from 'freedom-web-virtual-list';
 import { VirtualList } from 'freedom-web-virtual-list';
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
@@ -16,7 +16,7 @@ export interface MailCollectionsListProps {
 }
 
 export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArrowRight }: MailCollectionsListProps) => {
-  const mailCollectionsDataSource = useMailCollectionsListDataSource();
+  const dataSource = useMailCollectionsListDataSource();
   const selectedCollectionId = useSelectedMailCollectionId();
 
   const listControls = useRef<VirtualListControls<CollectionLikeId>>({});
@@ -26,9 +26,9 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
       return;
     }
 
-    const numItems = mailCollectionsDataSource.getNumItems();
+    const numItems = dataSource.getNumItems();
     for (let itemIndex = 0; itemIndex < numItems; itemIndex += 1) {
-      const item = mailCollectionsDataSource.getItemAtIndex(itemIndex);
+      const item = dataSource.getItemAtIndex(itemIndex);
       if (item.type === 'collection') {
         return selectedCollectionId.set(item.id);
       }
@@ -38,7 +38,7 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
   useMemo(selectFirstCollectionIfNothingIsSelected, [selectFirstCollectionIfNothingIsSelected]);
 
   useEffect(() =>
-    mailCollectionsDataSource.addListener('loadingStateChanged', () => {
+    dataSource.addListener('loadingStateChanged', () => {
       // TODO: TEMP
       selectFirstCollectionIfNothingIsSelected();
     })
@@ -63,7 +63,7 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
     listControls.current.scrollToItemWithKey?.(selectedCollectionId);
   });
 
-  const mailCollectionsDelegate = useMailCollectionsListDelegate(mailCollectionsDataSource, {
+  const delegate = useMailCollectionsListDelegate(dataSource, {
     onCollectionClicked,
     onArrowLeft,
     onArrowRight
@@ -74,12 +74,5 @@ export const MailCollectionsList = ({ scrollParent, controls, onArrowLeft, onArr
     controls.hasFocus = () => listControls.current.hasFocus?.() ?? false;
   }
 
-  return (
-    <VirtualList
-      scrollParent={scrollParent}
-      dataSource={mailCollectionsDataSource}
-      delegate={mailCollectionsDelegate}
-      controls={listControls.current}
-    />
-  );
+  return <VirtualList scrollParent={scrollParent} dataSource={dataSource} delegate={delegate} controls={listControls.current} />;
 };

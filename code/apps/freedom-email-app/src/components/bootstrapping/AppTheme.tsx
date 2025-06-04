@@ -1,11 +1,11 @@
 import type { Theme } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 export type AppTheme = Theme;
 
-export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
+export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
   const theme = useMemo(() => {
     const documentStyle = window.getComputedStyle(document.body);
 
@@ -39,10 +39,11 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     const semiboldFontWeight = documentStyle.getPropertyValue('--font-weight-semibold');
 
     const colorsBackground = documentStyle.getPropertyValue('--colors-background');
-    const colorsAccent = documentStyle.getPropertyValue('--colors-accent');
     const colorsDefaultTextContrast = documentStyle.getPropertyValue('--colors-default-text-contrast');
     const colorsPrimary = documentStyle.getPropertyValue('--colors-primary');
     const colorsPrimaryContrast = documentStyle.getPropertyValue('--colors-primary-contrast');
+    const colorsSecondary = documentStyle.getPropertyValue('--colors-secondary');
+    const colorsSecondaryContrast = documentStyle.getPropertyValue('--colors-secondary-contrast');
     const colorsInputBorder = documentStyle.getPropertyValue('--colors-input-border');
     const colorsDivider = documentStyle.getPropertyValue('--colors-divider');
     const colorsSuccess = documentStyle.getPropertyValue('--colors-success');
@@ -109,6 +110,10 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
         primary: {
           main: colorsPrimary,
           contrastText: colorsPrimaryContrast
+        },
+        secondary: {
+          main: colorsSecondary,
+          contrastText: colorsSecondaryContrast
         },
         text: {
           primary: defaultTextColor,
@@ -203,7 +208,25 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
                   fontSize: smallestFontSize,
                   lineHeight: smallestLineHeight
                 }
+              },
+
+              '&.AttachmentCountChip': {
+                padding: '6px 10px',
+                borderRadius: '15px',
+                backgroundColor: colorsBackground,
+
+                '& .MuiChip-icon': {
+                  marginRight: sp(1)
+                },
+
+                '& .MuiChip-label': {
+                  fontSize: captionFontSize,
+                  lineHeight: '100%'
+                }
               }
+            },
+            icon: {
+              margin: `0 ${sp(0.5)} 0 0`
             },
             label: {
               padding: `${sp(0.25)} ${sp(0.5)}`,
@@ -336,7 +359,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
                   border: '6px solid #fff'
                 },
                 '&.Mui-disabled .MuiSwitch-thumb': {
-                  color: colorsAccent
+                  color: colorsSecondary
                 },
                 '&.Mui-disabled + .MuiSwitch-track': {
                   opacity: 0.7
@@ -362,7 +385,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
               color: defaultTextColor,
               borderRadius: br(2),
               padding: `${sp(0.75)} ${sp(1.5)}`,
-              backgroundColor: colorsAccent,
+              backgroundColor: colorsSecondary,
               fontSize: captionFontSize,
               lineHeight: captionLineHeight
             }
@@ -372,14 +395,22 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
           styleOverrides: {
             root: {
               '&.TxtPlaceholder': {
-                '& span:not(.space)': {
+                position: 'relative',
+
+                '& .indicator': {
                   borderRadius: br(1.5),
                   backgroundColor: colorsInputBorder,
+                  display: 'block',
+                  position: 'absolute',
+                  top: 2,
+                  right: 0,
+                  bottom: 2,
+                  left: 0
+                },
+                '& span:not(.indicator, .space)': {
                   color: 'transparent'
                 },
                 '&.empty': {
-                  borderRadius: br(1.5),
-                  backgroundColor: colorsInputBorder,
                   color: 'transparent'
                 }
               }

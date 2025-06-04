@@ -1,6 +1,7 @@
 import { keyframes } from '@emotion/react';
 import { GlobalStyles } from '@mui/material';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
+import React from 'react';
 
 export const GlobalVirtualListStyles = () => (
   <GlobalStyles

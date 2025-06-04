@@ -1,4 +1,5 @@
 import { HistoryProvider, useCreateBrowserHistory } from 'freedom-web-navigation';
+import React from 'react';
 
 import { TasksProvider } from '../../contexts/tasks.tsx';
 import { TransientContentProvider } from '../../contexts/transient-content.tsx';

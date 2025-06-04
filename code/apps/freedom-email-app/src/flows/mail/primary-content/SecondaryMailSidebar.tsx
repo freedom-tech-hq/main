@@ -5,10 +5,10 @@ import { mailCollectionTypes } from 'freedom-email-user';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
 import { useP, useT } from 'freedom-react-localization';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { BC, useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
-import { Txt } from '../../../components/reusable/aliases/Txt.tsx';
+import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { ControlledCheckbox } from '../../../components/reusable/form/ControlledCheckbox.tsx';
 import { ControlledSwitch } from '../../../components/reusable/form/ControlledSwitch.tsx';
@@ -30,7 +30,6 @@ const $emails = PLURALIZE({
   other: LOCALIZE`${'count'} emails`({ ns })
 });
 
-// TODO: implement
 export const SecondaryMailSidebar = () => {
   const p = useP();
   const t = useT();

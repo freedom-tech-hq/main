@@ -1,5 +1,6 @@
 import { ListItem, ListItemAvatar, ListItemButton, ListItemText } from '@mui/material';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
+import React from 'react';
 import { useCallbackRef } from 'react-bindings';
 
 import { BreakableEmailAddressTxt } from '../../../../components/reusable/BreakableEmailAddressTxt.tsx';

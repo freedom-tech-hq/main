@@ -2,10 +2,11 @@ import { Button, Stack, Tooltip, useTheme } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import type { ReactNode } from 'react';
+import React from 'react';
 import { BC, useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
+import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../../consts/timing.ts';

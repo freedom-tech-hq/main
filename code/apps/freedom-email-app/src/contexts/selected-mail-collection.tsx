@@ -1,6 +1,6 @@
 import type { CollectionLikeId } from 'freedom-email-user';
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
@@ -15,7 +15,7 @@ export interface SelectedMailCollectionIdProviderProps {
 export const SelectedMailCollectionIdProvider = ({
   children,
   selectedMailCollectionId
-}: SelectedMailCollectionIdProviderProps & { children: ReactNode }) => (
+}: SelectedMailCollectionIdProviderProps & { children?: ReactNode }) => (
   <SelectedMailCollectionIdContext value={selectedMailCollectionId}>{children}</SelectedMailCollectionIdContext>
 );
 

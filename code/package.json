@@ -51,10 +51,6 @@
   },
   "version": "0.0.0",
   "workspaces": {
-    "nohoist": [
-      "**/@types/react",
-      "**/@types/react-dom"
-    ],
     "packages": [
       "apps/*",
       "dev-packages/*",

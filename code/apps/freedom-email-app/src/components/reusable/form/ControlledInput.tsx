@@ -1,5 +1,6 @@
 import type { InputProps } from '@mui/material';
 import { Input } from '@mui/material';
+import React from 'react';
 import type { Binding } from 'react-bindings';
 import { BindingsConsumer, useCallbackRef } from 'react-bindings';
 

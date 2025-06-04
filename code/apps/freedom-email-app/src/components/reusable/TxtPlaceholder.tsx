@@ -1,9 +1,10 @@
-import type { TypographyProps } from '@mui/material';
+import React from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
-import { Txt } from './aliases/Txt.tsx';
+import type { TxtProps } from './aliases/Txt.ts';
+import { Txt } from './aliases/Txt.ts';
 
-export type TxtPlaceholderProps = TypographyProps;
+export type TxtPlaceholderProps = TxtProps;
 
 export const TxtPlaceholder = ({ children, ...props }: TxtPlaceholderProps & { children?: string }) => {
   const parts = children?.split(/\s+/);
@@ -13,9 +14,17 @@ export const TxtPlaceholder = ({ children, ...props }: TxtPlaceholderProps & { c
       {parts?.map((part, index) => (
         <Fragment key={index}>
           {index > 0 ? <span className="space"> </span> : null}
-          <span>{part}</span>
+          <span>
+            <span className="indicator" />
+            {part}
+          </span>
         </Fragment>
-      )) ?? <>&nbsp;</>}
+      )) ?? (
+        <>
+          <span className="indicator" />
+          &nbsp;
+        </>
+      )}
     </Txt>
   );
 };

@@ -1,6 +1,6 @@
 import type { ThreadLikeId } from 'freedom-email-user';
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
@@ -15,7 +15,7 @@ export interface SelectedMailThreadProviderProps {
 export const SelectedMailThreadProvider = ({
   children,
   selectedMailThreadId
-}: SelectedMailThreadProviderProps & { children: ReactNode }) => (
+}: SelectedMailThreadProviderProps & { children?: ReactNode }) => (
   <SelectedMailThreadContext value={selectedMailThreadId}>{children}</SelectedMailThreadContext>
 );
 

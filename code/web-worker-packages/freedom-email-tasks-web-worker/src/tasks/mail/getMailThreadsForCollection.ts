@@ -1,5 +1,5 @@
 import type { PR, Result, SuccessResult } from 'freedom-async';
-import { allResultsMapped, bestEffort, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import { allResultsMapped, bestEffort, makeAsyncResultFunc, makeSuccess, sleep, uncheckedResult } from 'freedom-async';
 import { makeIsoDateTime, ONE_DAY_MSEC, ONE_SEC_MSEC } from 'freedom-basic-data';
 import { autoGeneralizeFailureResults } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
@@ -28,7 +28,7 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
     onData: (value: Result<GetMailThreadsForCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailThreadsForCollection_MailAddedPacket> => {
     DEV: if (isDemoMode()) {
-      return makeDemoModeResult();
+      return await makeDemoModeResult();
     }
 
     const credential = useActiveCredential(trace).credential;
@@ -139,14 +139,17 @@ export const getMailThreadsForCollection = makeAsyncResultFunc(
 
 // Helpers
 
-let makeDemoModeResult: () => SuccessResult<GetMailThreadsForCollection_MailAddedPacket> = () => {
+let makeDemoModeResult: () => Promise<SuccessResult<GetMailThreadsForCollection_MailAddedPacket>> = () => {
   throw new Error();
 };
 
-DEV: makeDemoModeResult = () =>
-  makeSuccess({
+DEV: makeDemoModeResult = async () => {
+  await sleep(Math.random() * ONE_SEC_MSEC);
+
+  return makeSuccess({
     type: 'mail-added',
     threadIds: Array(1000)
       .fill(0)
       .map(() => mailIdInfo.make(`${makeIsoDateTime(new Date(Date.now() - Math.random() * 30 * ONE_DAY_MSEC))}-${makeUuid()}`))
   });
+};

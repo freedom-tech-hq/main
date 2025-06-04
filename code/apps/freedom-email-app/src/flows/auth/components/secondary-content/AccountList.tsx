@@ -1,5 +1,6 @@
 import { List } from '@mui/material';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
+import React from 'react';
 import { WC } from 'react-waitables';
 
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';

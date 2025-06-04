@@ -1,7 +1,7 @@
 import type { CollectionLikeId, ThreadLikeId } from 'freedom-email-user';
 import type { VirtualListControls } from 'freedom-web-virtual-list';
 import { VirtualList } from 'freedom-web-virtual-list';
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { ifBinding, resolveTypeOrBindingType, type TypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { SelectedMailCollectionIdProvider } from '../../../../contexts/selected-mail-collection.tsx';
@@ -44,7 +44,7 @@ export const MailThreadsList = ({ collectionId, ...fwd }: MailThreadsListProps) 
 // Helpers
 
 const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowRight }: Omit<MailThreadsListProps, 'collectionId'>) => {
-  const mailDataSource = useMailCollectionDataSource();
+  const dataSource = useMailCollectionDataSource();
   const selectedThreadId = useSelectedMailThreadId();
 
   const listControls = useRef<VirtualListControls<ThreadLikeId>>({});
@@ -54,9 +54,9 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
       return;
     }
 
-    const numItems = mailDataSource.getNumItems();
+    const numItems = dataSource.getNumItems();
     for (let itemIndex = 0; itemIndex < numItems; itemIndex += 1) {
-      const item = mailDataSource.getItemAtIndex(itemIndex);
+      const item = dataSource.getItemAtIndex(itemIndex);
       if (item.type === 'mail-thread') {
         return selectedThreadId.set(item.id);
       }
@@ -66,7 +66,7 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
   useMemo(selectFirstMailIfNothingIsSelected, [selectFirstMailIfNothingIsSelected]);
 
   useEffect(() =>
-    mailDataSource.addListener('loadingStateChanged', () => {
+    dataSource.addListener('loadingStateChanged', () => {
       // TODO: TEMP
       selectFirstMailIfNothingIsSelected();
     })
@@ -91,12 +91,12 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
     listControls.current.scrollToItemWithKey?.(selectedThreadId);
   });
 
-  const mailDelegate = useMailCollectionDelegate(mailDataSource, { onThreadClicked, onArrowLeft, onArrowRight });
+  const delegate = useMailCollectionDelegate(dataSource, { onThreadClicked, onArrowLeft, onArrowRight });
 
   if (controls !== undefined) {
     controls.focus = () => listControls.current.focus?.();
     controls.hasFocus = () => listControls.current.hasFocus?.() ?? false;
   }
 
-  return <VirtualList scrollParent={scrollParent} dataSource={mailDataSource} delegate={mailDelegate} controls={listControls.current} />;
+  return <VirtualList scrollParent={scrollParent} dataSource={dataSource} delegate={delegate} controls={listControls.current} />;
 };

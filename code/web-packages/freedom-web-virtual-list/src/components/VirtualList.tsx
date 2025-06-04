@@ -6,7 +6,7 @@ import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from 'freedom-web-animation'
 import { ResizingObservingDiv } from 'freedom-web-resize-observer';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { BC, useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { makeStringSubtypeArray } from 'yaschema';
 

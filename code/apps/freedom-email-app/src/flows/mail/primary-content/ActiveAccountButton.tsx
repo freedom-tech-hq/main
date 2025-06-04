@@ -1,4 +1,5 @@
 import { Button } from '@mui/material';
+import React from 'react';
 import { BC } from 'react-bindings';
 
 import { AvatarPlaceholder } from '../../../components/reusable/AvatarPlaceholder.tsx';
@@ -15,26 +16,22 @@ export interface ActiveAccountButtonProps {
 export const ActiveAccountButton = ({ onClick }: ActiveAccountButtonProps) => {
   const activeAccountInfo = useActiveAccountInfo();
 
-  return (
-    <>
-      {BC(activeAccountInfo, (activeAccountInfo) =>
-        activeAccountInfo !== undefined ? (
-          <Button
-            className="default-text"
-            startIcon={<StringAvatar value={activeAccountInfo.email} />}
-            endIcon={<CollapseExpandIcon className="sm-icon" />}
-            onClick={onClick}
-          >
-            <BreakableEmailAddressTxt variant="caption" className="text-left">
-              {activeAccountInfo.email}
-            </BreakableEmailAddressTxt>
-          </Button>
-        ) : (
-          <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />}>
-            <TxtPlaceholder className="w-full" />
-          </Button>
-        )
-      )}
-    </>
+  return BC(activeAccountInfo, (activeAccountInfo) =>
+    activeAccountInfo !== undefined ? (
+      <Button
+        className="default-text"
+        startIcon={<StringAvatar value={activeAccountInfo.email} />}
+        endIcon={<CollapseExpandIcon className="sm-icon" />}
+        onClick={onClick}
+      >
+        <BreakableEmailAddressTxt breakAnywhere={true} variant="caption" className="text-left">
+          {activeAccountInfo.email}
+        </BreakableEmailAddressTxt>
+      </Button>
+    ) : (
+      <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />}>
+        <TxtPlaceholder className="w-full" />
+      </Button>
+    )
   );
 };

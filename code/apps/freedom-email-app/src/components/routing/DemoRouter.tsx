@@ -1,5 +1,5 @@
 import { IF } from 'freedom-logical-web-components';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
 import { useActiveAccountInfo } from '../../contexts/active-account-info.tsx';

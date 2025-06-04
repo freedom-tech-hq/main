@@ -16,7 +16,7 @@ export const useTaskWaitable = <SuccessT, ErrorCodeT extends string = never, Ext
 
   return useWaitableFunction<SuccessT, TraceableError<ErrorCodeT>, ExtraFieldsT>(async () => await call(tasks!), {
     ...options,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     deps: [tasks, ...(options.deps ?? [])],
     lockedUntil: [...(normalizeAsOptionalArray(options.lockedUntil) ?? []), areTasksReady]
   });

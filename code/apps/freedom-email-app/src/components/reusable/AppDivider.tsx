@@ -1,6 +1,7 @@
 import { Stack } from '@mui/material';
+import React from 'react';
 
-import { Txt } from './aliases/Txt.tsx';
+import { Txt } from './aliases/Txt.ts';
 
 export interface AppDividerProps {
   label?: string;

@@ -1,8 +1,9 @@
 import { Stack } from '@mui/material';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import React from 'react';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.tsx';
+import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { $appName } from '../../../../consts/common-strings.ts';
 import { CompanyLogoIcon } from '../../../../icons/CompanyLogoIcon.ts';
 import Vector1 from './assets/Vector1.svg';
