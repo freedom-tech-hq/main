@@ -10,13 +10,13 @@
     "freedom-email-server": "0.0.0",
     "freedom-email-sync": "0.0.0",
     "luxon": "3.6.1",
-    "mailparser": "3.7.2",
-    "nodemailer": "6.10.1",
-    "smtp-server": "3.13.6"
+    "mailparser": "3.7.3",
+    "nodemailer": "7.0.3",
+    "smtp-server": "3.13.7"
   },
   "devDependencies": {
-    "@types/mailparser": "3.4.5",
-    "@types/node": "22.15.3",
+    "@types/mailparser": "3.4.6",
+    "@types/node": "22.15.21",
     "@types/nodemailer": "6.4.17",
     "@types/smtp-server": "3.5.10",
     "expect": "29.7.0",

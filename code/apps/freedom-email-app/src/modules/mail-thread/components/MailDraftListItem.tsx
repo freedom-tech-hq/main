@@ -4,7 +4,7 @@ import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useBinding } from 'react-bindings';
 
-import { ControlledTextField } from '../../../components/form/ControlledTextField.tsx';
+import { ControlledTextField } from '../../../components/reusable/form/ControlledTextField.tsx';
 import { makeStringAvatarProps } from '../../../utils/makeStringAvatarProps.ts';
 import type { MailDataSourceDraftItem } from '../types/MailDataSourceItem.ts';
 import { MailActionsMenu } from './MailActionsMenu.tsx';

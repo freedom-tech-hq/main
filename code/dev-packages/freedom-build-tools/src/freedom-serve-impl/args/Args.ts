@@ -4,6 +4,8 @@ export interface ServeArgs {
   /** @defaultValue Established from includes list from tsconfig file */
   entryPoints?: Array<string | number>;
 
+  tailwindCssEntryPoints?: Array<string | number>;
+
   /** @defaultValue `web` */
   platform?: 'any' | 'web' | 'node';
 

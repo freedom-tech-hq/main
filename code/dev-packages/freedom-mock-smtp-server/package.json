@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "smtp-server": "3.13.6"
+    "smtp-server": "3.13.7"
   },
   "type": "module",
   "name": "freedom-mock-smtp-server",

@@ -3,7 +3,7 @@ import { Stack } from '@mui/material';
 import { VirtualList } from 'freedom-web-virtual-list';
 import { BC } from 'react-bindings';
 
-import { AuxSearchField } from '../../../components/AuxSearchField.tsx';
+import { AuxSearchField } from '../../../components/deprecated/AuxSearchField.tsx';
 import { useIsDataSourceLoadingBinding } from '../../../hooks/useIsDataSourceLoadingBinding.ts';
 import { useMailThreadDataSource } from '../hooks/useMailThreadDataSource.ts';
 import { useMailThreadDelegate } from '../hooks/useMailThreadDelegate.tsx';

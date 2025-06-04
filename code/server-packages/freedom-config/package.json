@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@dotenvx/dotenvx": "1.41.0",
+    "@dotenvx/dotenvx": "1.44.1",
     "dotenv": "16.5.0",
     "env-var": "7.5.0",
     "freedom-contexts": "0.0.0",
