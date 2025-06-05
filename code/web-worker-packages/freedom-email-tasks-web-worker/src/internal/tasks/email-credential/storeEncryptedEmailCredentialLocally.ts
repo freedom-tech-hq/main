@@ -1,26 +1,29 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import type { Base64String, Uuid } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
+import type { EncryptedEmailCredential } from 'freedom-email-sync';
 
+import { type LocallyStoredCredentialId, locallyStoredCredentialIdInfo } from '../../../types/id/LocallyStoredCredentialId.ts';
 import { getEmailCredentialObjectStore } from '../../utils/getEmailCredentialObjectStore.ts';
 
 export const storeEncryptedEmailCredentialLocally = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
-    { description, encryptedEmailCredential }: { description: string; encryptedEmailCredential: Base64String }
-  ): PR<{ locallyStoredCredentialUuid: Uuid }> => {
+    { encryptedEmailCredential }: { encryptedEmailCredential: EncryptedEmailCredential }
+  ): PR<{ locallyStoredCredentialId: LocallyStoredCredentialId }> => {
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
 
-    const uuid = makeUuid();
+    const locallyStoredCredentialId = locallyStoredCredentialIdInfo.make(makeUuid());
 
-    const stored = await emailCredentialStore.mutableObject(uuid).create(trace, { encrypted: encryptedEmailCredential, description });
+    const stored = await emailCredentialStore
+      .mutableObject(locallyStoredCredentialId)
+      .create(trace, { encryptedCredential: encryptedEmailCredential });
     if (!stored.ok) {
       return generalizeFailureResult(trace, stored, 'conflict');
     }
 
-    return makeSuccess({ locallyStoredCredentialUuid: uuid });
+    return makeSuccess({ locallyStoredCredentialId });
   }
 );

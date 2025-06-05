@@ -1,13 +1,21 @@
-import type { PR } from 'freedom-async';
-import { allResultsMapped, makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
+import type { PR, SuccessResult } from 'freedom-async';
+import { allResultsMapped, makeAsyncResultFunc, makeSuccess, sleep, uncheckedResult } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { generalizeFailureResult } from 'freedom-common-errors';
 
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from '../../types/email-credential/LocallyStoredEncryptedEmailCredentialInfo.ts';
+import { locallyStoredCredentialIdInfo } from '../../types/id/LocallyStoredCredentialId.ts';
+import { getConfig } from '../config/config.ts';
+import { isDemoMode } from '../config/demo-mode.ts';
 
 export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace): PR<LocallyStoredEncryptedEmailCredentialInfo[]> => {
+    DEV: if (isDemoMode()) {
+      return await makeDemoModeResult();
+    }
+
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
 
     const keys = await emailCredentialStore.keys.asc().keys(trace);
@@ -22,10 +30,28 @@ export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
       }
 
       return makeSuccess({
-        localUuid: key,
-        description: storedCredential.value.description,
+        locallyStoredCredentialId: key,
+        email: storedCredential.value.encryptedCredential.email,
         hasBiometricEncryption: storedCredential.value.pwEncryptedForBiometrics !== undefined
       });
     });
   }
 );
+
+// Helpers
+
+let makeDemoModeResult: () => Promise<SuccessResult<LocallyStoredEncryptedEmailCredentialInfo[]>> = () => {
+  throw new Error();
+};
+
+DEV: makeDemoModeResult = async () => {
+  await sleep(Math.random() * ONE_SEC_MSEC);
+
+  return makeSuccess([
+    {
+      email: `demo@${getConfig().defaultEmailDomain}`,
+      hasBiometricEncryption: false,
+      locallyStoredCredentialId: locallyStoredCredentialIdInfo.make('demo')
+    } satisfies LocallyStoredEncryptedEmailCredentialInfo
+  ]);
+};

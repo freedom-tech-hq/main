@@ -3,7 +3,7 @@ export default () => {
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script src="index${(process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `-${process.env.FREEDOM_BUILD_UUID}` : ''}.mjs" type="module" async defer></script>
+    <script src="/index${(process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `-${process.env.FREEDOM_BUILD_UUID}` : ''}.mjs" type="module" async defer></script>
     <meta charset="utf-8" />
   </head>
   <body>

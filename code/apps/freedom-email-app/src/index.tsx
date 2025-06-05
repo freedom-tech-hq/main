@@ -3,9 +3,10 @@ import './utils/fwd-env.ts';
 
 import { buildMode } from 'freedom-contexts';
 import { init } from 'freedom-react-localization';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import { WebApp } from './components/WebApp.tsx';
+import { WebApp } from './components/bootstrapping/WebApp.tsx';
 
 const startWebApp = async (rootElem: HTMLElement | null) => {
   await init({ defaultLanguage: 'en', supportedLanguages: ['en'] });

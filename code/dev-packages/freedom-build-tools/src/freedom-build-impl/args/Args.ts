@@ -5,6 +5,7 @@ export interface BuildArgs {
   bundle?: boolean;
   /** @defaultValue Established from includes list from tsconfig file */
   entryPoints?: Array<string | number>;
+  tailwindCssEntryPoints?: Array<string | number>;
   /** @defaultValue `false` */
   splitting?: boolean;
   /** @defaultValue `any` */

@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+@layer theme {
+  :root {
+
+    --colors-default-text: #18181A;
+    --default-font-family: var(--typography-font-family-font-sans, Urbanist);
+    --default-font-style: normal;
+    --default-font-weight: normal;
+
+    --colors-secondary-text: #3F3F46;
+    --colors-disabled-text: #71717A;
+
+    --colors-background: #fff;
+    --colors-muted: #F5F5F5;
+    --colors-default-text-contrast: #FAFAF9;
+    --colors-primary: #FFB43C;
+    --colors-primary-contrast: #171717;
+    --colors-secondary: #F4F4F5;
+    --colors-secondary-contrast: #18181B;
+    --colors-input-border: #E4E4E7;
+    --colors-divider: #E4E4E7;
+    --colors-error: #DC2626;
+    --colors-success: #16A34A;
+
+    --font-weight-regular: 500;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+
+    /* H1 */
+    --h1-font-size: 30px;
+    --h1-line-height: 36px;
+
+    /* H2 */
+    --h2-font-size: 24px;
+    --h2-line-height: 32px;
+
+    /* H3 */
+    --h3-font-size: 20px;
+    --h3-line-height: 28px;
+
+    /* Body1 */
+    --body1-font-size: 16px;
+    --body1-line-height: 24px;
+
+    /* Body2 */
+    --body2-font-size: 14px;
+    --body2-line-height: 20px;
+
+    /* Caption */
+    --caption-font-size: 12px;
+    --caption-line-height: 16px;
+
+    /* Button */
+    --button-font-size: 14px;
+    --button-line-height: 20px;
+    --button-font-weight: --font-weight-medium;
+
+    /* Input */
+    --input-font-size: 14px;
+    --input-line-height: 20px;
+
+    /* Input Label */
+    --input-label-font-size: 14px;
+    --input-label-line-height: 14px;
+
+    /* Smallest Text */
+    --smallest-font-size: 10px;
+    --smallest-line-height: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --colors-background: #000;
+      --colors-secondary: #27272A;
+      --colors-secondary-contrast: #FAFAFA;
+      --colors-muted: #171717;
+      --colors-default-text: #F4F4F5;
+      --colors-default-text-contrast: #1C1917;
+      --colors-secondary-text: #FAFAFA;
+      --colors-disabled-text: #A1A1AA;
+      --colors-input-border: #27272A;
+      --colors-divider: #27272A;
+    }
+  }
+}
+
+body {
+  background-color: var(--colors-background);
+}
+
+hr {
+  background-color: var(--colors-divider);
+  border: none;
+  height: 1px;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, svg {
+  color: var(--colors-default-text);
+}
+
+h1, h2, h3, h4, h5, h6, p, span, svg, .MuiButton-text {
+  &.default-text {
+    color: var(--colors-default-text);
+  }
+  &.secondary-text {
+    color: var(--colors-secondary-text);
+  }
+  &.disabled-text {
+    color: var(--colors-disabled-text);
+  }
+  &.primary-contrast {
+    color: var(--colors-primary-contrast);
+  }
+  &.regular {
+    font-weight: var(--font-weight-regular);
+  }
+  &.medium {
+    font-weight: var(--font-weight-medium);
+  }
+  &.semibold {
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.default-bg {
+  background-color: var(--colors-background);
+}
+.primary-color-bg {
+  background-color: var(--colors-primary);
+}
+.secondary-color-bg {
+  background-color: var(--colors-secondary);
+}
+.muted-color-bg {
+  background-color: var(--colors-muted);
+}
+.input-border-color-bg {
+  background-color: var(--colors-input-border);
+}
+
+svg {
+  &.sm-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  &.md-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  &.lg-icon {
+    width: 40px;
+    height: 40px;
+  }
+}

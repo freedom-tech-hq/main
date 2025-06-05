@@ -3,13 +3,14 @@ import { stdin as input, stdout as output } from 'node:process';
 import readline from 'node:readline/promises';
 
 import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR, uncheckedResult } from 'freedom-async';
-import { type Base64String } from 'freedom-basic-data';
 import { NotFoundError } from 'freedom-common-errors';
 import { buildMode, makeTrace } from 'freedom-contexts';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
+import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
 // import { getMailAgentUserKeys } from 'freedom-db';
 import { decryptEmailCredentialWithPassword } from 'freedom-email-user';
+import { parse } from 'freedom-serialization';
 import { storageRootIdInfo } from 'freedom-sync-types';
 import { prettyStoreLs } from 'freedom-syncable-store/tests';
 import { getServerSyncableStore } from 'freedom-syncable-store-server';
@@ -62,10 +63,13 @@ const main = makeAsyncResultFunc(
 
     // Instantiate store
     if (credInput !== '') {
-      const credsResult = await decryptEmailCredentialWithPassword(trace, {
-        encryptedEmailCredential: credInput as Base64String,
-        password
-      });
+      const encryptedCredentials = await parse(trace, credInput, encryptedEmailCredentialSchema);
+      if (!encryptedCredentials.ok) {
+        console.error('Failed to parse credential:', encryptedCredentials.value);
+        process.exit(1);
+      }
+
+      const credsResult = await decryptEmailCredentialWithPassword(trace, { encryptedCredential: encryptedCredentials.value, password });
       if (!credsResult.ok) {
         console.error('Failed to decrypt credential:', credsResult.value);
         process.exit(1);

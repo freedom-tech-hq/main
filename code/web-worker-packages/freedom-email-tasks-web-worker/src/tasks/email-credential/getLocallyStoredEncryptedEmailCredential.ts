@@ -1,20 +1,20 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import type { Base64String } from 'freedom-basic-data';
-import type { Uuid } from 'freedom-contexts';
+import type { EncryptedEmailCredential } from 'freedom-email-sync';
 
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
+import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
 
 export const getLocallyStoredEncryptedEmailCredential = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, localUuid: Uuid): PR<Base64String, 'not-found'> => {
+  async (trace, locallyStoredCredentialId: LocallyStoredCredentialId): PR<EncryptedEmailCredential, 'not-found'> => {
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
 
-    const encryptedCredential = await emailCredentialStore.object(localUuid).get(trace);
-    if (!encryptedCredential.ok) {
-      return encryptedCredential;
+    const storedCredential = await emailCredentialStore.object(locallyStoredCredentialId).get(trace);
+    if (!storedCredential.ok) {
+      return storedCredential;
     }
 
-    return makeSuccess(encryptedCredential.value.encrypted);
+    return makeSuccess(storedCredential.value.encryptedCredential);
   }
 );

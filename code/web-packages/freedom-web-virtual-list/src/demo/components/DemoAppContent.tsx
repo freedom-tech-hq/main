@@ -2,7 +2,7 @@ import { Button, CircularProgress, ListItem, ListItemText, Stack } from '@mui/ma
 import { makeUuid } from 'freedom-contexts';
 import { ArrayDataSource } from 'freedom-data-source';
 import { generatePseudoWord } from 'pseudo-words';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { BC, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 import { SortedArray } from 'yasorted-array';
 

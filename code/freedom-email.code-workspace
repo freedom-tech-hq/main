@@ -232,7 +232,30 @@
             "path": "web-worker-packages/freedom-email-tasks-web-worker"
         }
     ],
-    "settings": {},
+    "settings": {
+        "editor.minimap.maxColumn": 140,
+        "prettier.printWidth": 140,
+        "eslint.useFlatConfig": true,
+        "nodejs-testing.concurrency": 1,
+        "nodejs-testing.extensions": [
+            {
+                "extensions": ["ts"],
+                "parameters": ["--experimental-test-module-mocks"]
+            }
+        ],
+        "nodejs-testing.env": {
+            "NODE_OPTIONS": "--experimental-transform-types --disable-warning=ExperimentalWarning"
+        },
+        "tailwindCSS.experimental.classRegex": [["className\\s*:\\s*['\"]([^'\"]*)['\"]"]],
+        "typescript.preferences.autoImportFileExcludePatterns": [
+            "**/cli.ts",
+            "**/exports.ts",
+            "**/combined-cli.ts",
+            "**/cli",
+            "**/exports",
+            "**/combined-cli"
+        ]
+    },
     "tasks": {
         "version": "2.0.0",
         "tasks": [

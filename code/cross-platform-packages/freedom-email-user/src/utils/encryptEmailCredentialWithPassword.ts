@@ -1,7 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { type Base64String, base64String } from 'freedom-basic-data';
+import { base64String } from 'freedom-basic-data';
 import { encryptBufferWithPassword } from 'freedom-crypto';
+import type { EncryptedEmailCredential } from 'freedom-email-sync';
 import { serialize } from 'freedom-serialization';
 
 import type { EmailCredential } from '../types/EmailCredential.ts';
@@ -9,7 +10,10 @@ import { emailCredentialSchema } from '../types/EmailCredential.ts';
 
 export const encryptEmailCredentialWithPassword = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { credential, password }: { credential: EmailCredential; password: string }): PR<Base64String> => {
+  async (
+    trace,
+    { email, credential, password }: { email: string; credential: EmailCredential; password: string }
+  ): PR<EncryptedEmailCredential> => {
     const serializedPackage = await serialize(trace, credential, emailCredentialSchema);
     if (!serializedPackage.ok) {
       return serializedPackage;
@@ -21,6 +25,9 @@ export const encryptEmailCredentialWithPassword = makeAsyncResultFunc(
       return encryptedBuffer;
     }
 
-    return makeSuccess(base64String.makeWithBuffer(encryptedBuffer.value));
+    return makeSuccess({
+      email,
+      encrypted: base64String.makeWithBuffer(encryptedBuffer.value)
+    });
   }
 );

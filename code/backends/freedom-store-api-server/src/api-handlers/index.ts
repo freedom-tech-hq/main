@@ -7,8 +7,8 @@ import publicKeys from './publicKeys.ts';
 import pull from './pull.ts';
 import push from './push.ts';
 import register from './register.ts';
-import retrieveCredentials from './retrieve-credentials.ts';
-import storeCredentials from './store-credentials.ts';
+import retrieveCredential from './retrieve-credential.ts';
+import storeCredential from './store-credential.ts';
 
 export default makeRegisterAllWithExpress(
   ...mail,
@@ -18,6 +18,6 @@ export default makeRegisterAllWithExpress(
   publicKeys,
   push,
   register,
-  retrieveCredentials,
-  storeCredentials
+  retrieveCredential,
+  storeCredential
 );

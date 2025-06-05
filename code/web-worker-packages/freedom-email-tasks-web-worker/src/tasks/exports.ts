@@ -3,16 +3,20 @@ import '../internal/polyfills.ts';
 import { expose } from 'comlink';
 import { makeTrace } from 'freedom-contexts';
 
-import type { setConfig } from './config/setConfig.ts';
+import type { setConfig } from './config/config.ts';
+import type { setDemoMode } from './config/demo-mode.ts';
 import type { devFwdEnv } from './dev/devFwdEnv.ts';
 import type { logUserFsLs } from './dev/logUserFsLs.ts';
 import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './email-credential/activateUserWithLocallyStoredEncryptedEmailCredential.ts';
 import type { addEncryptionForBiometricsToLocallyStoredEmailCredential } from './email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts';
+import type { deactivateUser } from './email-credential/deactivateUser.ts';
 import type { getLocallyStoredEncryptedEmailCredential } from './email-credential/getLocallyStoredEncryptedEmailCredential.ts';
+import type { getLocallyStoredEncryptedEmailCredentialInfoByEmail } from './email-credential/getLocallyStoredEncryptedEmailCredentialInfoByEmail.ts';
 import type { importEmailCredential } from './email-credential/importEmailCredential.ts';
 import type { importEmailCredentialFromRemote } from './email-credential/importEmailCredentialFromRemote.ts';
 import type { listLocallyStoredEncryptedEmailCredentials } from './email-credential/listLocallyStoredEncryptedEmailCredentials.ts';
 import type { removeEncryptionForBiometricsFromLocallyStoredEmailCredential } from './email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts';
+import type { removeLocallyStoredEncryptedEmailCredential } from './email-credential/removeLocallyStoredEncryptedEmailCredential.ts';
 import type { storeCredentialsOnServer } from './email-credential/storeCredentialsOnServer.ts';
 import type { createMailDraft } from './mail/createMailDraft.ts';
 import type { getMailCollections } from './mail/getMailCollections.ts';
@@ -35,7 +39,9 @@ class TasksImpl {
   // Config
 
   public readonly setConfig = async (...args: ParametersExceptFirst<typeof setConfig>) =>
-    await (await import('./config/setConfig.ts')).setConfig(this.#trace, ...args);
+    await (await import('./config/config.ts')).setConfig(this.#trace, ...args);
+  public readonly setDemoMode = async (...args: ParametersExceptFirst<typeof setDemoMode>) =>
+    await (await import('./config/demo-mode.ts')).setDemoMode(this.#trace, ...args);
 
   // Dev
 
@@ -61,12 +67,22 @@ class TasksImpl {
       await import('./email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts')
     ).addEncryptionForBiometricsToLocallyStoredEmailCredential(this.#trace, ...args);
 
+  public readonly deactivateUser = async (...args: ParametersExceptFirst<typeof deactivateUser>) =>
+    await (await import('./email-credential/deactivateUser.ts')).deactivateUser(this.#trace, ...args);
+
   public readonly getLocallyStoredEncryptedEmailCredential = async (
     ...args: ParametersExceptFirst<typeof getLocallyStoredEncryptedEmailCredential>
   ) =>
     await (
       await import('./email-credential/getLocallyStoredEncryptedEmailCredential.ts')
     ).getLocallyStoredEncryptedEmailCredential(this.#trace, ...args);
+
+  public readonly getLocallyStoredEncryptedEmailCredentialInfoByEmail = async (
+    ...args: ParametersExceptFirst<typeof getLocallyStoredEncryptedEmailCredentialInfoByEmail>
+  ) =>
+    await (
+      await import('./email-credential/getLocallyStoredEncryptedEmailCredentialInfoByEmail.ts')
+    ).getLocallyStoredEncryptedEmailCredentialInfoByEmail(this.#trace, ...args);
 
   public readonly importEmailCredential = async (...args: ParametersExceptFirst<typeof importEmailCredential>) =>
     await (await import('./email-credential/importEmailCredential.ts')).importEmailCredential(this.#trace, ...args);
@@ -87,6 +103,13 @@ class TasksImpl {
     await (
       await import('./email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts')
     ).removeEncryptionForBiometricsFromLocallyStoredEmailCredential(this.#trace, ...args);
+
+  public readonly removeLocallyStoredEncryptedEmailCredential = async (
+    ...args: ParametersExceptFirst<typeof removeLocallyStoredEncryptedEmailCredential>
+  ) =>
+    await (
+      await import('./email-credential/removeLocallyStoredEncryptedEmailCredential.ts')
+    ).removeLocallyStoredEncryptedEmailCredential(this.#trace, ...args);
 
   public readonly storeCredentialsOnServer = async (...args: ParametersExceptFirst<typeof storeCredentialsOnServer>) =>
     await (await import('./email-credential/storeCredentialsOnServer.ts')).storeCredentialsOnServer(this.#trace, ...args);

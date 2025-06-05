@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
@@ -9,7 +9,7 @@ export interface SideMenuWidthProviderProps {
   sideMenuWidth: Binding<number>;
 }
 
-export const SideMenuWidthProvider = ({ children, sideMenuWidth }: SideMenuWidthProviderProps & { children: ReactNode }) => (
+export const SideMenuWidthProvider = ({ children, sideMenuWidth }: SideMenuWidthProviderProps & { children?: ReactNode }) => (
   <SideMenuWidthContext value={sideMenuWidth}>{children}</SideMenuWidthContext>
 );
 

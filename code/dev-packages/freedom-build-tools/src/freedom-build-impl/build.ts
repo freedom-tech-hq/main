@@ -1,8 +1,10 @@
 import esbuild from 'esbuild';
+import inlineImage from 'esbuild-plugin-inline-image';
 import esbuildPluginTsc from 'esbuild-plugin-tsc';
 
 import { FORWARDED_ENV } from '../consts/forwarded-env.ts';
 import { makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin } from '../esbuild-plugins/freedomBuildAndFixImportAndExportFileExtensionsPlugin.ts';
+import { tailwindCssPlugin } from '../esbuild-plugins/tailwindCssPlugin.ts';
 import { findTsFiles } from '../utils/findTsFiles.ts';
 import { readPackageJson } from '../utils/readPackageJson.ts';
 import { readTsConfig } from '../utils/readTsConfig.ts';
@@ -32,7 +34,10 @@ export const build = async (args: BuildArgs) => {
     }
 
     await esbuild.build({
-      entryPoints: args.entryPoints?.map(String) ?? (await getDefaultEntryPoints()),
+      entryPoints: [
+        ...(args.entryPoints?.map(String) ?? (await getDefaultEntryPoints())),
+        ...(args.tailwindCssEntryPoints?.map(String) ?? [])
+      ],
       outdir: outDir,
       define: FORWARDED_ENV(),
       dropLabels,
@@ -48,8 +53,10 @@ export const build = async (args: BuildArgs) => {
       },
       entryNames: (process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `[name]-${process.env.FREEDOM_BUILD_UUID}` : undefined,
       plugins: [
+        inlineImage({ limit: 0 }),
         esbuildPluginTsc({ force: true, tsconfigPath: args.tsconfig }),
-        makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin({ packageName, bundle: args.bundle ?? false })
+        makeFreedomBuildAndFixImportAndExportFileExtensionsPlugin({ packageName, bundle: args.bundle ?? false }),
+        tailwindCssPlugin()
       ]
     });
   } catch (e) {

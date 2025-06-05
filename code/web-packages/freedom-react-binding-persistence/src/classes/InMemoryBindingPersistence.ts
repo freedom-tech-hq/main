@@ -28,6 +28,12 @@ export class InMemoryBindingPersistence implements BindingPersistenceStorage {
     };
   };
 
+  public readonly clear = () => {
+    for (const key of Array.from(this.storage_.keys())) {
+      this.remove(key);
+    }
+  };
+
   public readonly get = (key: string): JsonValue | undefined => {
     const stored = this.storage_.get(key);
     if (stored === undefined) {

@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@emotion/react": "11.14.0",
-    "@mui/material": "7.0.2",
+    "@mui/material": "7.1.0",
     "freedom-cast": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-data-source": "0.0.0",
@@ -16,8 +16,8 @@
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",
-    "@types/react": "19.1.2",
-    "@types/react-dom": "19.1.2",
+    "@types/react": "19.1.5",
+    "@types/react-dom": "19.1.5",
     "freedom-build-tools": "0.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",

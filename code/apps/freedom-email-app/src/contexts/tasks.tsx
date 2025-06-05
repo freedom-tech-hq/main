@@ -2,17 +2,18 @@ import type { TraceableError } from 'freedom-async';
 import { makeSuccess } from 'freedom-async';
 import { devGetAllEnvOverrides, log } from 'freedom-contexts';
 import type { Tasks } from 'freedom-email-tasks-web-worker';
+import { once } from 'lodash-es';
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useWaitableFunction, WaitablesConsumer } from 'react-waitables';
 
 import { getAppEnvironment } from '../consts/appEnvironments.ts';
-import { getTasks } from '../modules/task-support/utils/getTasks.ts';
 import { getTaskWorkerConfig } from '../task-worker-configs/configs.ts';
+import { getRemoteConstructor } from '../utils/getRemoteConstructor.ts';
 
 const TasksContext = createContext<Tasks | undefined>(undefined);
 
-export const TasksProvider = ({ children }: { children: ReactNode }) => {
+export const TasksProvider = ({ children }: { children?: ReactNode }) => {
   const tasks = useWaitableFunction<Tasks, TraceableError>(
     async () => {
       const appEnv = getAppEnvironment();
@@ -41,3 +42,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useTasks = () => useContext(TasksContext);
+
+// Helpers
+
+const getTasks = once(async (): Promise<Tasks> => {
+  const Tasks = getRemoteConstructor<Tasks>(
+    `/tasks${(process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `-${process.env.FREEDOM_BUILD_UUID}` : ''}.mjs`
+  );
+  return await new Tasks();
+});

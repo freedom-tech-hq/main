@@ -1,5 +1,6 @@
-import type { PR, Result } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
+import type { PR, Result, SuccessResult } from 'freedom-async';
+import { makeAsyncResultFunc, makeSuccess, sleep } from 'freedom-async';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import type { MailCollection, MailCollectionGroup } from 'freedom-email-user';
 import { mailCollectionGroupIdInfo } from 'freedom-email-user';
 import type { TypeOrPromisedType } from 'yaschema';
@@ -7,6 +8,7 @@ import type { TypeOrPromisedType } from 'yaschema';
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import type { GetMailCollection_GroupsAddedPacket } from '../../types/mail/getMailCollection/GetMailCollection_GroupsAddedPacket.ts';
 import type { GetMailCollectionPacket } from '../../types/mail/getMailCollection/GetMailCollectionPacket.ts';
+import { isDemoMode } from '../config/demo-mode.ts';
 
 export const getMailCollections = makeAsyncResultFunc(
   [import.meta.filename],
@@ -15,6 +17,10 @@ export const getMailCollections = makeAsyncResultFunc(
     _isConnected: () => TypeOrPromisedType<boolean>,
     _onData: (value: Result<GetMailCollectionPacket>) => TypeOrPromisedType<void>
   ): PR<GetMailCollection_GroupsAddedPacket> => {
+    DEV: if (isDemoMode()) {
+      return await makeDemoModeResult();
+    }
+
     const credential = useActiveCredential(trace).credential;
 
     if (credential === undefined) {
@@ -65,3 +71,26 @@ export const getMailCollections = makeAsyncResultFunc(
     return makeSuccess({ type: 'groups-added' as const, groups });
   }
 );
+
+// Helpers
+
+let makeDemoModeResult: () => Promise<SuccessResult<GetMailCollection_GroupsAddedPacket>> = () => {
+  throw new Error();
+};
+
+DEV: makeDemoModeResult = async () => {
+  await sleep(Math.random() * ONE_SEC_MSEC);
+
+  const collections: MailCollection[] = [
+    { collectionType: 'inbox', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined },
+    { collectionType: 'sent', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined },
+    { collectionType: 'archive', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined },
+    { collectionType: 'spam', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined },
+    { collectionType: 'trash', title: '', unreadCount: Math.floor(Math.random() * 10), customId: undefined }
+  ];
+
+  const groups: MailCollectionGroup[] = [];
+  groups.push({ id: mailCollectionGroupIdInfo.make(), collections });
+
+  return makeSuccess({ type: 'groups-added', groups });
+};
