@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { types } from 'freedom-email-api';
+import type { MailAddress, MailAddressList } from 'freedom-email-api';
 import type Mail from 'nodemailer/lib/mailer';
 
 import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
@@ -63,7 +63,7 @@ export const deliverOutboundEmail = makeAsyncResultFunc(
   }
 );
 
-function convertAddress(address: types.MailAddress): Mail.Address | string {
+function convertAddress(address: MailAddress): Mail.Address | string {
   if (address.name === undefined) {
     return address.address;
   }
@@ -73,7 +73,7 @@ function convertAddress(address: types.MailAddress): Mail.Address | string {
   };
 }
 
-function getAddressFromList(list: types.MailAddressList): Mail.Address | string | undefined {
+function getAddressFromList(list: MailAddressList): Mail.Address | string | undefined {
   // Get first address
   for (const address of list) {
     if ('address' in address) {
@@ -84,7 +84,7 @@ function getAddressFromList(list: types.MailAddressList): Mail.Address | string 
   return undefined;
 }
 
-function convertAddressList(list: types.MailAddressList | undefined): (string | Mail.Address)[] | undefined {
+function convertAddressList(list: MailAddressList | undefined): (string | Mail.Address)[] | undefined {
   const result: (string | Mail.Address)[] = [];
 
   // Get first address

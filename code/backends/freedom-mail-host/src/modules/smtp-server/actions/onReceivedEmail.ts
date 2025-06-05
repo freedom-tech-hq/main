@@ -4,7 +4,7 @@ import { log } from 'freedom-contexts';
 import type { SMTPServerEnvelope } from 'smtp-server';
 
 import { parseEmail } from '../../formats/utils/parseEmail.ts';
-import { routeMail } from '../../syncable-store/utils/routeMail.ts';
+import { routeMail } from '../../storage/utils/routeMail.ts';
 import type { SmtpServerParams } from '../internal/utils/defineSmtpServer.ts';
 
 /**

@@ -8,7 +8,6 @@
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-email-api": "0.0.0",
-    "freedom-email-server": "0.0.0",
     "freedom-local-sync": "0.0.0"
   },
   "devDependencies": {
@@ -46,7 +45,6 @@
     "start:https": "FREEDOM_BUILD_MODE=DEV yarn build && FREEDOM_BUILD_MODE=DEV node ./lib/main.mjs",
     "start:https:debug": "FREEDOM_BUILD_MODE=DEV FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOG_FUNCS=${FREEDOM_LOG_FUNCS:-} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} yarn start:https",
     "start:prod": "node ./lib/main.mjs",
-    "cli:inspect-store:debug": "FREEDOM_BUILD_MODE=DEV yarn build && FREEDOM_BUILD_MODE=DEV node ./lib/cli-inspect-store.mjs",
     "test": "yarn test:unit-tests",
     "test:debug": "FREEDOM_VERBOSE_LOGGING=${FREEDOM_VERBOSE_LOGGING:-true} FREEDOM_LOGGING_MODE_DEFAULT=${FREEDOM_LOGGING_MODE_DEFAULT:-flat} FREEDOM_MAX_CONCURRENCY_DEFAULT=${FREEDOM_MAX_CONCURRENCY_DEFAULT:-1} yarn test",
     "test:perf": "FREEDOM_PROFILE=${FREEDOM_PROFILE:-all} yarn test:debug",

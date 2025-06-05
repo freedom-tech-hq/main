@@ -1,5 +1,5 @@
 import { base64String } from 'freedom-basic-data';
-import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
+import { encryptedEmailCredentialSchema } from 'freedom-email-api';
 import { schema } from 'yaschema';
 
 export const storedEmailCredentialSchema = schema.object({

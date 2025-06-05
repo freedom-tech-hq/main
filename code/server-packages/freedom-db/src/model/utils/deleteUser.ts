@@ -1,5 +1,5 @@
 import { makeAsyncResultFunc, makeSuccess, type PR } from 'freedom-async';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId } from 'freedom-email-api';
 
 import { dbQuery } from '../../db/postgresClient.ts';
 

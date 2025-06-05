@@ -1,5 +1,5 @@
 import { Stack } from '@mui/material';
-import type { ThreadLikeId } from 'freedom-email-user';
+import type { MailThreadLikeId } from 'freedom-email-api';
 import { useHistory } from 'freedom-web-navigation';
 import React, { useEffect } from 'react';
 import { BC, useBindingEffect } from 'react-bindings';
@@ -14,7 +14,7 @@ import { MailSidebars } from '../primary-content/MailSidebars.tsx';
 
 export interface MailScreenProps {
   mode?: MailScreenMode;
-  threadId?: ThreadLikeId;
+  threadId?: MailThreadLikeId;
 }
 
 export const MailScreen = ({ mode, threadId }: MailScreenProps) => {

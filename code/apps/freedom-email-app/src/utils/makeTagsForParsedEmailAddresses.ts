@@ -1,22 +1,21 @@
-import type { ParsedGroup, ParsedMailbox } from 'email-addresses';
+import type { MailAddress, MailAddressGroup, MailAddressList } from 'freedom-email-api';
+import { isMailAddressGroup } from 'freedom-email-api';
 import { type ReactNode } from 'react';
 
 export const makeTagsForParsedEmailAddresses = (
-  parsed: Array<ParsedMailbox | ParsedGroup>,
+  addressList: MailAddressList,
   {
     single,
     group
   }: {
-    single: (parsed: ParsedMailbox, index: number) => ReactNode;
-    group: (parsed: ParsedGroup, index: number) => ReactNode;
+    single: (parsed: MailAddress, index: number) => ReactNode;
+    group: (parsed: MailAddressGroup, index: number) => ReactNode;
   }
 ): ReactNode[] =>
-  parsed.map((parsed, index) => {
-    switch (parsed.type) {
-      case 'group':
-        return group(parsed, index);
-
-      case 'mailbox':
-        return single(parsed, index);
+  addressList.map((entry, index) => {
+    if (isMailAddressGroup(entry)) {
+      return group(entry, index);
+    } else {
+      return single(entry, index);
     }
   });

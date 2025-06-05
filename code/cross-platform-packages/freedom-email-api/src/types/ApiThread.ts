@@ -1,12 +1,13 @@
 import { schema } from 'yaschema';
 
 import { apiListMessageSchema } from './ApiListMessage.ts';
+import { mailThreadLikeIdSchema } from './MailThreadLikeId.ts';
 
 // Should match DbThread and the shared part of DecryptedThread.
 // Cannot include here TODO: revise code structure
 export const apiThreadSchema = schema.object({
   // Open fields
-  id: schema.string(),
+  id: mailThreadLikeIdSchema,
   // assumed // userId,
 
   // Encrypted fields

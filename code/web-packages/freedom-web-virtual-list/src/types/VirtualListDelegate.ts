@@ -4,6 +4,13 @@ import type { VirtualListKeyboardDelegate } from './VirtualListKeyboardDelegate.
 
 export type VirtualListPrototypeComponentType = ComponentType;
 
+export interface VirtualListItemPrototype {
+  defaultEstimatedSizePx: number;
+  /** If `true`, the size of the element is typically unknown ahead of time / different per item */
+  isSizeDynamic: boolean;
+  Component: VirtualListPrototypeComponentType;
+}
+
 export interface VirtualListDelegate<T, KeyT extends string, TemplateIdT extends string> extends VirtualListKeyboardDelegate {
   readonly getEstimatedSizeAtIndex?: (index: number) => number;
   readonly getTemplateIdForItemAtIndex: (index: number) => TemplateIdT;
@@ -12,13 +19,5 @@ export interface VirtualListDelegate<T, KeyT extends string, TemplateIdT extends
   readonly renderLoadingIndicator?: () => ReactNode;
   readonly loadingIndicatorTransitionDurationMSec?: number;
 
-  readonly itemPrototypes: Record<
-    TemplateIdT,
-    {
-      defaultEstimatedSizePx: number;
-      /** If `true`, the size of the element is typically unknown ahead of time / different per item */
-      isSizeDynamic: boolean;
-      Component: VirtualListPrototypeComponentType;
-    }
-  >;
+  readonly itemPrototypes: Record<TemplateIdT, VirtualListItemPrototype>;
 }

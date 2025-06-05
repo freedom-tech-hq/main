@@ -1,4 +1,4 @@
-import { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
+import { type EmailUserId, emailUserIdInfo } from 'freedom-email-api';
 
 export function getUserIdFromAuthorizationHeader(headers: Record<string, string> | undefined): EmailUserId | undefined {
   const authorizationHeader = headers?.authorization;

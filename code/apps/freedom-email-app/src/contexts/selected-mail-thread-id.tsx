@@ -1,15 +1,15 @@
-import type { ThreadLikeId } from 'freedom-email-user';
+import type { MailThreadLikeId } from 'freedom-email-api';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext } from 'react';
 import type { Binding } from 'react-bindings';
 import { makeBinding } from 'react-bindings';
 
-const SelectedMailThreadIdContext = createContext<Binding<ThreadLikeId | 'initial' | undefined>>(
-  makeBinding<ThreadLikeId | 'initial' | undefined>(() => 'initial', { id: 'selectedMailThreadId', detectChanges: true })
+const SelectedMailThreadIdContext = createContext<Binding<MailThreadLikeId | 'initial' | undefined>>(
+  makeBinding<MailThreadLikeId | 'initial' | undefined>(() => 'initial', { id: 'selectedMailThreadId', detectChanges: true })
 );
 
 export interface SelectedMailThreadIdProviderProps {
-  selectedMailThreadId: Binding<ThreadLikeId | 'initial' | undefined>;
+  selectedMailThreadId: Binding<MailThreadLikeId | 'initial' | undefined>;
 }
 
 export const SelectedMailThreadIdProvider = ({

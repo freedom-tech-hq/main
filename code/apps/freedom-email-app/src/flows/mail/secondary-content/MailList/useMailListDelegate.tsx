@@ -1,8 +1,8 @@
 import { ListItem, ListItemText } from '@mui/material';
-import type { MailId } from 'freedom-email-sync';
-import { mailIdInfo } from 'freedom-email-sync';
-import type { Mail } from 'freedom-email-user';
-import type { VirtualListDelegate } from 'freedom-web-virtual-list';
+import { makeIsoDateTime } from 'freedom-basic-data';
+import { makeUuid } from 'freedom-contexts';
+import { mailIdInfo } from 'freedom-email-api';
+import type { VirtualListDelegate, VirtualListItemPrototype } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
 
@@ -22,6 +22,7 @@ export const useMailListDelegate = (dataSource: MailListDataSource) =>
         const numItems = dataSource.getNumItems();
 
         switch (item.type) {
+          // TODO: probably need a flag in DecryptedViewMessage to indicate if the message is a draft or not
           case 'mail': {
             const collapsedByDefault = (dataSource.hasCollapsedItems() || numItems > 1) && index < numItems - 1;
             return (
@@ -33,10 +34,6 @@ export const useMailListDelegate = (dataSource: MailListDataSource) =>
               />
             );
           }
-          case 'draft':
-            // TODO: support
-            return <></>;
-          // return <MailDraftListItem {...item} isFirst={index === 0} tag={item.id} />;
           case 'collapsed':
             return <CollapsedMailListItem count={item.count} onClick={dataSource.expandCollapsedItems} />;
         }
@@ -52,45 +49,18 @@ export const useMailListDelegate = (dataSource: MailListDataSource) =>
     [dataSource]
   );
 
-const prototypeMail: Mail & { id: MailId } = {
-  id: mailIdInfo.make(),
-  from: 'hello@freedomtechhq.com',
-  to: ['hello@freedomtechhq.com'],
-  subject: 'Prototype',
-  body: 'Prototype',
-  timeMSec: Date.now(),
-  isUnread: true,
-  attachments: []
-};
-// const prototypeDraft: Mail & { id: MailDraftId } = {
-//   id: mailDraftIdInfo.make(),
-//   from: 'hello@freedomtechhq.com',
-//   to: ['hello@freedomtechhq.com'],
-//   subject: 'Prototype',
-//   body: 'Prototype',
-//   timeMSec: Date.now(),
-//   isUnread: true
-// };
-const itemPrototypes = {
+const itemPrototypes: Record<MailListTemplateId, VirtualListItemPrototype> = {
   mail: {
     defaultEstimatedSizePx: 594,
     isSizeDynamic: true,
     Component: () => (
       <MailListItem
-        id={prototypeMail.id}
-        mail={prototypeMail}
+        id={mailIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`)}
         collapsedByDefault={false}
         showDividerIfCollapsed={true}
         showOptionsPerMessage={false}
       />
     )
-  },
-  draft: {
-    defaultEstimatedSizePx: 594,
-    isSizeDynamic: true,
-    // TODO: support
-    Component: () => <></>
-    // Component: () => <MailDraftListItem id={prototypeDraft.id} isFirst={true} mail={prototypeDraft} tag={undefined} />
   },
   collapsed: {
     defaultEstimatedSizePx: 70,

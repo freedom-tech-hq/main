@@ -1,31 +1,33 @@
 import { ListItem, ListItemText } from '@mui/material';
 import type { DataSource } from 'freedom-data-source';
-import type { ThreadLikeId } from 'freedom-email-user';
-import { mailThreadIdInfo } from 'freedom-email-user';
+import type { MailThreadLikeId } from 'freedom-email-api';
+import { mailThreadIdInfo } from 'freedom-email-api';
 import type { VirtualListDelegate } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
 
 import { MailThreadListItem, MailThreadListItemPlaceholder } from './MailThreadListItem.tsx';
+import type { MailThreadsListKey } from './MailThreadsListKey.ts';
+import type { MailThreadsListTemplateId } from './MailThreadsListTemplateId.ts';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 import { useMailCollectionSelectionDelegate } from './useMailThreadsListSelectionDelegate.ts';
 
 export const useMailCollectionDelegate = (
-  dataSource: DataSource<MailThreadsListThreadDataSourceItem, ThreadLikeId>,
+  dataSource: DataSource<MailThreadsListThreadDataSourceItem, MailThreadsListKey>,
   {
     onThreadClicked,
     onArrowLeft,
     onArrowRight
   }: {
-    onThreadClicked: (threadLikeId: ThreadLikeId) => void;
+    onThreadClicked: (threadLikeId: MailThreadLikeId) => void;
     onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
-): VirtualListDelegate<MailThreadsListThreadDataSourceItem, ThreadLikeId, 'mail-thread'> => {
+): VirtualListDelegate<MailThreadsListThreadDataSourceItem, MailThreadsListKey, MailThreadsListTemplateId> => {
   const selectionDelegate = useMailCollectionSelectionDelegate(dataSource, { onArrowLeft, onArrowRight });
 
   return useMemo(
-    (): VirtualListDelegate<MailThreadsListThreadDataSourceItem, ThreadLikeId, 'mail-thread'> => ({
+    (): VirtualListDelegate<MailThreadsListThreadDataSourceItem, MailThreadsListKey, MailThreadsListTemplateId> => ({
       itemPrototypes,
       getTemplateIdForItemAtIndex: (index) => dataSource.getItemAtIndex(index).type,
       renderItem: (_key, item, _index) => {

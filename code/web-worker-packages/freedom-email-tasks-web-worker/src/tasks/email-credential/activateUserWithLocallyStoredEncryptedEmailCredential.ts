@@ -3,11 +3,10 @@ import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from '
 import { base64String } from 'freedom-basic-data';
 import { NotFoundError } from 'freedom-common-errors';
 import { decryptBufferWithPassword } from 'freedom-crypto';
-import type { EmailUserId } from 'freedom-email-sync';
-import { decryptEmailCredentialWithPassword } from 'freedom-email-user';
+import type { EmailUserId } from 'freedom-email-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
+import { decryptEmailCredentialWithPassword } from '../../internal/utils/decryptEmailCredentialWithPassword.ts';
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 import type { LocallyStoredEncryptedEmailCredentialPasswordType } from '../../types/email-credential/LocallyStoredEncryptedEmailCredentialPasswordType.ts';
 import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
@@ -66,11 +65,6 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
     });
     if (!decryptedCredential.ok) {
       return decryptedCredential;
-    }
-
-    const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, decryptedCredential.value);
-    if (!syncableStoreResult.ok) {
-      return syncableStoreResult;
     }
 
     activeCredential.credential = decryptedCredential.value;

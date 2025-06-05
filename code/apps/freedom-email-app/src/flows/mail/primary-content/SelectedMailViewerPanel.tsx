@@ -1,6 +1,6 @@
 import { Button, Stack } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
-import type { Mail } from 'freedom-email-user';
+import type { MailId } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
@@ -50,7 +50,7 @@ export const SelectedMailViewerPanel = () => {
 
   const mailListControls = useRef<MailListControls>({});
 
-  const composition = useBinding<{ mode: ReferencedMailCompositionMode; referencedMail: Mail } | undefined>(() => undefined, {
+  const composition = useBinding<{ mode: ReferencedMailCompositionMode; referencedMailId: MailId } | undefined>(() => undefined, {
     id: 'composition'
   });
   const isInCompositionMode = useDerivedBinding(composition, (mode) => mode !== undefined, { id: 'isInCompositionMode' });
@@ -66,12 +66,12 @@ export const SelectedMailViewerPanel = () => {
   });
 
   const onForwardClick = useCallbackRef(() => {
-    const referencedMail = mailListControls.current.getMostRecentMail?.();
-    if (referencedMail === undefined) {
+    const referencedMailId = mailListControls.current.getMostRecentMailId?.();
+    if (referencedMailId === undefined) {
       return; // Not ready
     }
 
-    composition.set({ mode: 'forward', referencedMail });
+    composition.set({ mode: 'forward', referencedMailId });
     scrollToComposeMailInput();
   });
 
@@ -86,22 +86,22 @@ export const SelectedMailViewerPanel = () => {
   });
 
   const onReplyClick = useCallbackRef(() => {
-    const referencedMail = mailListControls.current.getMostRecentMail?.();
-    if (referencedMail === undefined) {
+    const referencedMailId = mailListControls.current.getMostRecentMailId?.();
+    if (referencedMailId === undefined) {
       return; // Not ready
     }
 
-    composition.set({ mode: 'reply', referencedMail });
+    composition.set({ mode: 'reply', referencedMailId });
     scrollToComposeMailInput();
   });
 
   const onReplyAllClick = useCallbackRef(() => {
-    const referencedMail = mailListControls.current.getMostRecentMail?.();
-    if (referencedMail === undefined) {
+    const referencedMailId = mailListControls.current.getMostRecentMailId?.();
+    if (referencedMailId === undefined) {
       return; // Not ready
     }
 
-    composition.set({ mode: 'reply-all', referencedMail });
+    composition.set({ mode: 'reply-all', referencedMailId });
     scrollToComposeMailInput();
   });
 
@@ -199,7 +199,7 @@ export const SelectedMailViewerPanel = () => {
                         {BC(composition, (composition) => (
                           <ComposeMailInput
                             mode={composition?.mode}
-                            referencedMail={composition?.referencedMail}
+                            referencedMailId={composition?.referencedMailId}
                             onDiscardClick={clearCompositionMode}
                           />
                         ))}

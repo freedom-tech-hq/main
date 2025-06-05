@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 
 import { expect } from 'expect';
 import { makeTrace } from 'freedom-contexts';
-import type { StoredMail } from 'freedom-email-sync';
+import type { StoredMail } from 'freedom-email-api';
 import { getJsonFixture, getStringFixture } from 'freedom-testing-tools';
 
 import { parseEmail } from '../parseEmail.ts';

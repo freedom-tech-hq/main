@@ -1,2 +1,4 @@
-// TODO: Consider moving here
-export { type EmailUserId, emailUserIdInfo } from 'freedom-email-sync';
+import { makeIdInfo } from 'freedom-basic-data';
+
+export const emailUserIdInfo = makeIdInfo('EMAILUSER_');
+export type EmailUserId = typeof emailUserIdInfo.schema.valueType;

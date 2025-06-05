@@ -58,12 +58,6 @@
             "path": "cross-platform-packages/freedom-email-api"
         },
         {
-            "path": "cross-platform-packages/freedom-email-sync"
-        },
-        {
-            "path": "cross-platform-packages/freedom-email-user"
-        },
-        {
             "path": "cross-platform-packages/freedom-fetching"
         },
         {
@@ -161,9 +155,6 @@
         },
         {
             "path": "server-packages/freedom-db"
-        },
-        {
-            "path": "server-packages/freedom-email-server"
         },
         {
             "path": "server-packages/freedom-file-lock-store"

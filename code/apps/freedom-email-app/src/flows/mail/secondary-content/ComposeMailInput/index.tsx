@@ -1,6 +1,6 @@
 import { Stack, useTheme } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
-import type { Mail } from 'freedom-email-user';
+import type { MailId } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { ResizeObservingDiv } from 'freedom-web-resize-observer';
@@ -24,11 +24,11 @@ const $subject = LOCALIZE('Subject')({ ns });
 
 export interface ComposeMailInputProps {
   mode?: ReferencedMailCompositionMode;
-  referencedMail?: Mail;
+  referencedMailId?: MailId;
   onDiscardClick: () => void;
 }
 
-export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: ComposeMailInputProps) => {
+export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: ComposeMailInputProps) => {
   const { presentErrorMessage } = useMessagePresenter();
   const uuid = useMemo(() => makeUuid(), []);
   const scrollParentVisibleHeightPx = useScrollParentVisibleHeightPx();
@@ -45,7 +45,7 @@ export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: Compo
 
   const textStyle = useBinding<MailTextStyle>(() => 'normal', { id: 'textStyle', detectChanges: true });
 
-  const bodyTopToolbarHeightPx = useBinding<number>(() => (referencedMail !== undefined ? 56 : 0), {
+  const bodyTopToolbarHeightPx = useBinding<number>(() => (referencedMailId !== undefined ? 56 : 0), {
     id: 'bodyToolbarHeightPx',
     detectChanges: true
   });
@@ -75,7 +75,7 @@ export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: Compo
 
       const muiInputElem = textAreaElem.parentElement!;
       muiInputElem.style.minHeight =
-        referencedMail === undefined
+        referencedMailId === undefined
           ? `calc(60px + ${bodyTopToolbarHeightPx}px + ${bodyBottomToolbarHeightPx}px + 2px)`
           : `calc(${scrollParentVisibleHeightPx}px - ${theme.spacing(3)})`;
     },
@@ -139,7 +139,7 @@ export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: Compo
 
   return (
     <Stack className="flex-auto" gap={2}>
-      {IF(referencedMail === undefined, () => (
+      {IF(referencedMailId === undefined, () => (
         <>
           <ComposeMailToField value={to} showCc={showCc} showBcc={showBcc} />
 
@@ -177,14 +177,14 @@ export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: Compo
             },
             startAdornment: (
               <>
-                {referencedMail !== undefined ? (
+                {referencedMailId !== undefined ? (
                   <ResizeObservingDiv
                     id={`${uuid}-body-top-toolbar`}
                     tag={0}
                     onResize={onBodyTopToolbarResize}
                     className="absolute top-0 left-0 right-0"
                   >
-                    <ComposeMailTopToolbar defaultMode={mode ?? 'reply'} referencedMail={referencedMail} />
+                    <ComposeMailTopToolbar defaultMode={mode ?? 'reply'} referencedMailId={referencedMailId} />
                   </ResizeObservingDiv>
                 ) : null}
 
@@ -196,7 +196,7 @@ export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: Compo
                 >
                   <ComposeMailBottomToolbar
                     textStyle={textStyle}
-                    showDiscardButton={referencedMail !== undefined}
+                    showDiscardButton={referencedMailId !== undefined}
                     onAttachFilesClick={onAttachFilesClick}
                     onBoldClick={onBoldClick}
                     onItalicClick={onItalicClick}

@@ -5,20 +5,20 @@ import type { Uuid } from 'freedom-contexts';
 import { makeUuid } from 'freedom-contexts';
 import type { DataSource } from 'freedom-data-source';
 import { ArrayDataSource } from 'freedom-data-source';
-import { mailIdInfo } from 'freedom-email-sync';
-import type { GetMailThreadsForCollectionPacket } from 'freedom-email-tasks-web-worker';
-import type { ThreadLikeId } from 'freedom-email-user';
+import { mailIdInfo } from 'freedom-email-api';
+import type { GetMailThreadIdsForMessageFolderPacket } from 'freedom-email-tasks-web-worker/lib/tasks/mail/getMailThreadIdsForMessageFolder';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 import { SortedArray } from 'yasorted-array';
 
-import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection-id.tsx';
+import { useSelectedMessageFolder } from '../../../../contexts/selected-message-folder.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
+import type { MailThreadsListKey } from './MailThreadsListKey.ts';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 
-export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadDataSourceItem, ThreadLikeId> => {
-  const selectedCollectionId = useSelectedMailCollectionId();
+export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadDataSourceItem, MailThreadsListKey> => {
+  const selectedMessageFolder = useSelectedMessageFolder();
   const tasks = useTasks();
 
   const items = useMemo(
@@ -43,15 +43,15 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
   }, [tasks]);
 
   useBindingEffect(
-    selectedCollectionId,
-    (selectedCollectionId, selectedCollectionBinding) => {
+    selectedMessageFolder,
+    (selectedMessageFolder, selectedCollectionBinding) => {
       if (tasks === undefined) {
         return;
       }
 
       const myMountId = mountId.current;
-      const isConnected = proxy(() => mountId.current === myMountId && selectedCollectionBinding.get() === selectedCollectionId);
-      const onData = proxy((packet: Result<GetMailThreadsForCollectionPacket>) => {
+      const isConnected = proxy(() => mountId.current === myMountId && selectedCollectionBinding.get() === selectedMessageFolder);
+      const onData = proxy((packet: Result<GetMailThreadIdsForMessageFolderPacket>) => {
         if (!isConnected()) {
           return;
         }
@@ -62,9 +62,9 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
         }
 
         switch (packet.value.type) {
-          case 'mail-added': {
+          case 'threads-added': {
             const indices = items.addMultiple(
-              ...packet.value.threadIds.map(
+              ...packet.value.addedThreadIds.map(
                 (threadId): MailThreadsListThreadDataSourceItem => ({
                   type: 'mail-thread',
                   id: threadId,
@@ -76,7 +76,7 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
 
             break;
           }
-          case 'mail-removed':
+          case 'threads-removed':
             break; // TODO: handle
         }
       });
@@ -85,7 +85,7 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
           return;
         }
 
-        if (selectedCollectionId !== undefined && selectedCollectionId !== 'initial') {
+        if (selectedMessageFolder !== undefined) {
           dataSource.setIsLoading('end');
 
           let didClearOldData = false;
@@ -101,7 +101,7 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
 
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
-            const data = await tasks.getMailThreadsForCollection(selectedCollectionId, isConnected, onData);
+            const data = await tasks.getMailThreadIdsForMessageFolder(selectedMessageFolder, isConnected, onData);
             clearOldData();
             onData(data);
           } finally {

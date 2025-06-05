@@ -1,5 +1,5 @@
-import type { Mail } from 'freedom-email-user';
+import type { MailId } from 'freedom-email-api';
 
 export interface MailListControls {
-  getMostRecentMail?: () => Mail | undefined;
+  getMostRecentMailId?: () => MailId | undefined;
 }

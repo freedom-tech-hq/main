@@ -1,8 +1,8 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import type { MailId, StoredMail } from 'freedom-email-sync';
-import { getMailPaths, mailIdInfo, storedMailSchema } from 'freedom-email-sync';
+import type { MailId, StoredMail } from 'freedom-email-api';
+import { getMailPaths, mailIdInfo, storedMailSchema } from 'freedom-email-api';
 import { encName } from 'freedom-sync-types';
 import { createJsonFileAtPath, getOrCreateBundlesAtPaths } from 'freedom-syncable-store';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';

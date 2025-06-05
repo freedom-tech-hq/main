@@ -1,2 +1,4 @@
-// TODO: Consider moving here
-export { type MailId, mailIdInfo } from 'freedom-email-sync';
+import { makePrefixedTimeIdInfo } from 'freedom-basic-data';
+
+export const mailIdInfo = makePrefixedTimeIdInfo('MAIL_');
+export type MailId = typeof mailIdInfo.schema.valueType;

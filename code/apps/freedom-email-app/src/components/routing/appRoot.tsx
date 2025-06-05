@@ -1,30 +1,13 @@
-import type { ThreadLikeId } from 'freedom-email-user';
-import { nonAnchoredThreadLikeIdRegex } from 'freedom-email-user';
+import type { MailThreadLikeId } from 'freedom-email-api';
+import { nonAnchoredMailThreadLikeIdRegex } from 'freedom-email-api';
 import { nest } from 'freedom-nest';
-import type { ReactNode } from 'react';
 import React from 'react';
 
 import { AuthScreen } from '../../flows/auth/components/screens/AuthScreen.tsx';
 import { MailScreen } from '../../flows/mail/screens/MailScreen.tsx';
 import { DeactivateUser } from './DeactivateUser.tsx';
 import { GoHome } from './GoHome.tsx';
-
-export type AnySegmentValue = string | [string, RegExp];
-
-export interface RouteSegmentInfo<SegmentT extends string | [string, RegExp]> {
-  segment: SegmentT;
-  auth: 'none' | 'optional' | 'required';
-  render: (args: { pathParts: string[]; segments: Array<RouteSegmentInfo<AnySegmentValue>> }) => ReactNode;
-  renderIfAuthIncorrect?: (args: { pathParts: string[]; segments: Array<RouteSegmentInfo<AnySegmentValue>> }) => ReactNode;
-}
-
-export const ROUTE_SEGMENT = <SegmentT extends string | [string, RegExp]>(
-  segment: SegmentT,
-  args: Omit<RouteSegmentInfo<SegmentT>, 'segment'>
-): RouteSegmentInfo<SegmentT> => ({
-  ...args,
-  segment
-});
+import { ROUTE_SEGMENT } from './RouteSegmentInfo.tsx';
 
 const segmentInfo = nest(
   ROUTE_SEGMENT('', { auth: 'none', render: () => <AuthScreen />, renderIfAuthIncorrect: () => <DeactivateUser /> }),
@@ -62,9 +45,9 @@ const segmentInfo = nest(
           render: () => <MailScreen mode="compose" />,
           renderIfAuthIncorrect: () => <GoHome />
         }),
-        thread: ROUTE_SEGMENT(['thread', nonAnchoredThreadLikeIdRegex], {
+        thread: ROUTE_SEGMENT(['thread', nonAnchoredMailThreadLikeIdRegex], {
           auth: 'required',
-          render: ({ pathParts }) => <MailScreen mode="view-thread" threadId={pathParts[pathParts.length - 1] as ThreadLikeId} />,
+          render: ({ pathParts }) => <MailScreen mode="view-thread" threadId={pathParts[pathParts.length - 1] as MailThreadLikeId} />,
           renderIfAuthIncorrect: () => <GoHome />
         })
       }
@@ -87,7 +70,7 @@ const makePath = (rootPrefix: string) =>
         (level) => `${parent}/${level.value.segment}`,
         (parent, level) => ({
           compose: `${parent}/${level.compose.segment}`,
-          thread: (threadId: ThreadLikeId) => `${parent}/${level.thread.segment[0]}/${threadId}`
+          thread: (threadId: MailThreadLikeId) => `${parent}/${level.thread.segment[0]}/${threadId}`
         })
       )
     })

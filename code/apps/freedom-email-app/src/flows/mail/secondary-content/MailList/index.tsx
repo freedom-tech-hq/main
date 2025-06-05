@@ -33,7 +33,7 @@ const InternalMailList = ({ scrollParent, controls }: MailListProps) => {
   useBindingEffect(selectedThreadId, () => mailListItemTransientStatesBindingPersistence.clear());
 
   if (controls !== undefined) {
-    controls.getMostRecentMail = dataSource.getMostRecentMail;
+    controls.getMostRecentMailId = dataSource.getMostRecentMailId;
   }
 
   return <VirtualList scrollParent={scrollParent} dataSource={dataSource} delegate={delegate} />;

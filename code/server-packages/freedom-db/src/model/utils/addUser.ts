@@ -20,10 +20,10 @@ export const addUser = makeAsyncResultFunc([import.meta.filename, 'addUser'], as
   try {
     await dbQuery(
       `
-        INSERT INTO users (email, "userId", "publicKeys", "defaultSalt", "encryptedCredentials")
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO users (email, "userId", "publicKeys", "encryptedCredentials")
+        VALUES ($1, $2, $3, $4)
       `,
-      [rawUser.email, rawUser.userId, rawUser.publicKeys, rawUser.defaultSalt, rawUser.encryptedCredentials ?? null]
+      [rawUser.email, rawUser.userId, rawUser.publicKeys, rawUser.encryptedCredentials ?? null]
     );
     return makeSuccess(user);
   } catch (error: unknown) {

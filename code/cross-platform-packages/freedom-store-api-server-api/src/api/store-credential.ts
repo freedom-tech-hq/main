@@ -1,5 +1,5 @@
 import { base64String, makeFailureWithCodeSchemas } from 'freedom-basic-data';
-import { emailUserIdInfo, encryptedEmailCredentialSchema } from 'freedom-email-sync';
+import { emailUserIdInfo, encryptedEmailCredentialSchema } from 'freedom-email-api';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';

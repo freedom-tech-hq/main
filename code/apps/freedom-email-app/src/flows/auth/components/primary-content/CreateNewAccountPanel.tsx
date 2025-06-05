@@ -56,10 +56,12 @@ export const CreateNewAccountPanel = () => {
   const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
   const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
 
+  const isReadyToCheckName = useDerivedBinding(emailUsername, (username) => username.length > 0, { id: 'isReadyToCheckName' });
   const checkedEmailAvailability = useTaskWaitable((tasks) => tasks.checkEmailAvailability({ emailUsername: emailUsername.get() }), {
     id: 'isEmailAddressAvailable',
     hardResetBindings: [emailUsername],
-    limitMSec: INPUT_DEBOUNCE_TIME_MSEC
+    limitMSec: INPUT_DEBOUNCE_TIME_MSEC,
+    lockedUntil: isReadyToCheckName
   });
 
   const emailHelperText = useDerivedWaitable(
@@ -194,6 +196,7 @@ export const CreateNewAccountPanel = () => {
                 label={$chooseEmail(t)}
                 error={emailError.value}
                 helperText={emailHelperText.value}
+                slotProps={{ formHelperText: { component: 'div' } }}
               />
               <PasswordField
                 value={password}

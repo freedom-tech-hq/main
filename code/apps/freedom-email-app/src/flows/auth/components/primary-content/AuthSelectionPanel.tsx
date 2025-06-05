@@ -1,6 +1,6 @@
 import { Button, Collapse, Stack, useTheme } from '@mui/material';
 import { log, makeTrace, makeUuid } from 'freedom-contexts';
-import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
+import { encryptedEmailCredentialSchema } from 'freedom-email-api';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
