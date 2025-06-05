@@ -1,6 +1,6 @@
 import type { TypographyVariant } from '@mui/material';
 import { Chip, Stack } from '@mui/material';
-import type { ParsedGroup, ParsedMailbox } from 'email-addresses';
+import type { MailAddressList } from 'freedom-email-api';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useP } from 'freedom-react-localization';
@@ -25,7 +25,7 @@ const $groupMembers = PLURALIZE({
 });
 
 export interface MailListItemFormattedEmailAddressesProps {
-  addresses: Array<ParsedMailbox | ParsedGroup>;
+  addresses: MailAddressList;
   showGroupMembers: Binding<boolean>;
   mode: 'from' | 'to';
 }
@@ -52,10 +52,10 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
           <Txt
             variant={nameVariantByMode[mode]}
             color={nameColorByMode[mode]}
-            title={group.name}
+            title={group.groupName}
             className={`semibold ${showGroupMembers ? '' : 'overflow-hidden whitespace-nowrap text-ellipsis'}`}
           >
-            {group.name}
+            {group.groupName}
           </Txt>
           {IF(
             showGroupMembers,

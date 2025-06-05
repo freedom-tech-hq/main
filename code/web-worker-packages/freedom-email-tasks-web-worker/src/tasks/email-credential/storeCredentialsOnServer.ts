@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { base64String } from 'freedom-basic-data';
 import { generateSignatureForBuffer } from 'freedom-crypto';
 import type { SigningKeySet } from 'freedom-crypto-data';
-import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-sync';
+import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-api';
 import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';

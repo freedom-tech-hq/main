@@ -1,6 +1,6 @@
 import { makeFailureWithCodeSchemas } from 'freedom-basic-data';
 import { combinationCryptoKeySetSchema } from 'freedom-crypto-data';
-import { saltsByIdSchema, storageRootIdInfo, syncableItemMetadataSchema } from 'freedom-sync-types';
+import { storageRootIdInfo } from 'freedom-sync-types';
 import { StatusCodes } from 'http-status-codes';
 import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
@@ -17,9 +17,7 @@ export const POST = makeHttpApi({
       body: schema.object({
         name: emailNameSchema,
         storageRootId: storageRootIdInfo.schema,
-        metadata: schema.omit(syncableItemMetadataSchema, ['name']),
-        creatorPublicKeys: combinationCryptoKeySetSchema,
-        saltsById: saltsByIdSchema
+        creatorPublicKeys: combinationCryptoKeySetSchema
       })
     },
     successResponse: {

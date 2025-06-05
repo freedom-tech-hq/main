@@ -8,14 +8,13 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-db": "0.0.0",
     "freedom-email-api": "0.0.0",
-    "freedom-email-server": "0.0.0",
-    "freedom-email-sync": "0.0.0",
     "luxon": "3.6.1",
     "mailparser": "3.7.3",
     "nodemailer": "7.0.3",
     "smtp-server": "3.13.7"
   },
   "devDependencies": {
+    "@types/luxon": "3.6.2",
     "@types/mailparser": "3.4.6",
     "@types/node": "22.15.21",
     "@types/nodemailer": "6.4.17",

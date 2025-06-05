@@ -1,7 +1,7 @@
-import type { ThreadLikeId } from 'freedom-email-user';
+import type { MailThreadLikeId } from 'freedom-email-api';
 
 export interface MailThreadsListThreadDataSourceItem {
   type: 'mail-thread';
-  id: ThreadLikeId;
+  id: MailThreadLikeId;
   timeMSec: number;
 }

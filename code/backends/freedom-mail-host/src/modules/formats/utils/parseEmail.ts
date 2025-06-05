@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { type IsoDateTime } from 'freedom-basic-data';
-import type { types } from 'freedom-email-api';
+import type { MailAddressList } from 'freedom-email-api';
 import { type AddressObject, simpleParser } from 'mailparser';
 
 import { convertMailAddress } from '../internal/utils/convertMailAddress.ts';
@@ -54,8 +54,8 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
   return makeSuccess(result);
 });
 
-function convertAddressObject(to: AddressObject | AddressObject[]): types.MailAddressList {
-  const result: types.MailAddressList = [];
+function convertAddressObject(to: AddressObject | AddressObject[]): MailAddressList {
+  const result: MailAddressList = [];
   for (const object of Array.isArray(to) ? to : [to]) {
     result.push(...convertMailAddress(object.value));
   }

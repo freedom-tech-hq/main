@@ -1,6 +1,6 @@
 import type { Trace } from 'freedom-contexts';
 import { createTraceContext, useTraceContext } from 'freedom-contexts';
-import type { EmailCredential } from 'freedom-email-user';
+import type { EmailCredential } from 'freedom-email-api';
 
 const ActiveCredentialContext = createTraceContext<{ credential?: EmailCredential }>(() => ({}));
 

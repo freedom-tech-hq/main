@@ -6,9 +6,9 @@ import React from 'react';
 import { BC } from 'react-bindings';
 
 import { useActiveAccountInfo } from '../../contexts/active-account-info.tsx';
-import type { RouteSegmentInfo } from './appRoot.tsx';
 import { appRoot } from './appRoot.tsx';
 import { EnableDemoMode } from './EnableDemoMode.tsx';
+import type { RouteSegmentInfo } from './RouteSegmentInfo.tsx';
 
 export const AppRouter = () => {
   const history = useHistory();

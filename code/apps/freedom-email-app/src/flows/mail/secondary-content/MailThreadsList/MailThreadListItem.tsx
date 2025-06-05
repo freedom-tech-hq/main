@@ -1,5 +1,4 @@
 import { ListItemAvatar, ListItemButton, Stack } from '@mui/material';
-import { parseFrom } from 'email-addresses';
 import React from 'react';
 import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { useDerivedWaitable, WC } from 'react-waitables';
@@ -9,10 +8,10 @@ import { AvatarPlaceholder } from '../../../../components/reusable/AvatarPlaceho
 import { ControlledCheckbox, ControlledCheckboxPlaceholder } from '../../../../components/reusable/form/ControlledCheckbox.tsx';
 import { StringAvatar } from '../../../../components/reusable/StringAvatar.tsx';
 import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { UnreadIndicator } from '../../../../components/reusable/UnreadIndicator.tsx';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { formatTimeIfSameDateOrFormatDate } from '../../../../utils/formatTimeIfSameDateOrFormatDate.ts';
+import { getStringAvatarValueFromMailAddressList } from '../../../../utils/getStringAvatarValueFromMailAddressList.ts';
 import { makeTagsForParsedEmailAddresses } from '../../../../utils/makeTagsForParsedEmailAddresses.ts';
 import { AttachmentCountChip, AttachmentCountChipPlaceholder } from './AttachmentCountChip.tsx';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
@@ -38,21 +37,20 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
   });
   const isChecked = useBinding(() => false, { id: 'isChecked', detectChanges: true });
 
-  const parsedFrom = useDerivedWaitable(thread, (thread) => parseFrom(thread.from) ?? [], { id: 'parsedFrom' });
   const fromTags = useDerivedWaitable(
-    parsedFrom,
-    (parsedFrom) =>
-      makeTagsForParsedEmailAddresses(parsedFrom, {
-        group: (parsed, index) => (
+    thread,
+    (thread) =>
+      makeTagsForParsedEmailAddresses(thread.lastMessage.from, {
+        group: (group, index) => (
           <Txt variant="inherit" component="span" key={index}>
-            {parsed.name}
-            {index < parsedFrom.length - 1 ? <span>, </span> : null}
+            {group.groupName}
+            {index < thread.lastMessage.from.length - 1 ? <span>, </span> : null}
           </Txt>
         ),
-        single: (parsed, index) => (
+        single: (single, index) => (
           <Txt variant="inherit" component="span" key={index}>
-            {parsed.name ?? parsed.address}
-            {index < parsedFrom.length - 1 ? <span>, </span> : null}
+            {single.name ?? single.address}
+            {index < thread.lastMessage.from.length - 1 ? <span>, </span> : null}
           </Txt>
         )
       }),
@@ -66,13 +64,14 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
         <ListItemAvatar>
           <Stack direction="row" alignItems="center" gap={1}>
             <ControlledCheckbox checked={isChecked} />
-            <StringAvatar className="md-avatar" value={thread.from} />
+            <StringAvatar className="md-avatar" value={getStringAvatarValueFromMailAddressList(thread.lastMessage.from)} />
           </Stack>
         </ListItemAvatar>
         <Stack alignItems="stretch" className="flex-auto overflow-hidden">
           <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1} className="overflow-hidden">
             <Stack direction="row" alignItems="center" gap={1} className="flex-auto overflow-hidden">
-              {thread.numUnread > 0 ? <UnreadIndicator /> : null}
+              {/* TODO: support unread count */}
+              {/* {thread.numUnread > 0 ? <UnreadIndicator /> : null} */}
               <Txt variant="body1" className="medium flex-auto whitespace-nowrap overflow-hidden text-ellipsis">
                 {fromTags}
               </Txt>
@@ -83,15 +82,19 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
           </Stack>
           <Stack>
             <Txt variant="body2" className="overflow-hidden" sx={{ height: '60px' }}>
-              {thread.subject}
+              {thread.lastMessage.subject}
               {' – '}
               <Txt variant="inherit" component="span" color="textDisabled">
-                {thread.body}
+                {thread.lastMessage.snippet}
               </Txt>
             </Txt>
           </Stack>
-          <Stack direction="row" alignItems="center" sx={{ mt: 1, visibility: thread.numAttachments > 0 ? undefined : 'hidden' }}>
-            <AttachmentCountChip count={thread.numAttachments} />
+          {/* TODO: support attachments */}
+          <Stack direction="row" alignItems="center" sx={{ mt: 1, visibility: 'hidden' }}>
+            <AttachmentCountChip
+              count={0}
+              // count={thread.numAttachments}
+            />
           </Stack>
         </Stack>
       </ListItemButton>

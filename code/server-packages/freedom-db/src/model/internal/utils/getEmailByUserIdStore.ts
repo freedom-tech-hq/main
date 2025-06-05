@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId } from 'freedom-email-api';
 import { JsonFileObjectStore } from 'freedom-json-file-object-store';
 import { type MutableObjectStore } from 'freedom-object-store-types';
 import { once } from 'lodash-es';

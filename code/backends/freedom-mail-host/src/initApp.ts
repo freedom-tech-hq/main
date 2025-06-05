@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { initConfig as dbInitConfig } from 'freedom-db';
-import { initConfig as emailServerInitConfig } from 'freedom-email-server';
 
 import * as rawConfig from './config.ts';
 
@@ -21,7 +20,6 @@ export const initApp = makeAsyncResultFunc([import.meta.filename], async (_trace
 
   // Modules
   dbInitConfig(config);
-  emailServerInitConfig(config);
 
   return makeSuccess(undefined);
 });

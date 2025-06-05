@@ -1,6 +1,5 @@
 import { Button, Stack } from '@mui/material';
-import { parseFrom, parseOneAddress } from 'email-addresses';
-import type { Mail } from 'freedom-email-user';
+import type { DecryptedViewMessage } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useBindingPersistence } from 'freedom-react-binding-persistence';
@@ -17,6 +16,7 @@ import { MoreActionsIcon } from '../../../../icons/MoreActionsIcon.ts';
 import { ReplyIcon } from '../../../../icons/ReplyIcon.ts';
 import { formatDate } from '../../../../utils/formatDate.ts';
 import { formatTime } from '../../../../utils/formatTime.ts';
+import { getStringAvatarValueFromMailAddressList } from '../../../../utils/getStringAvatarValueFromMailAddressList.ts';
 import { useMailListItemTransientStatesBindingPersistence } from './mail-list-item-transient-states-binding-persistence.tsx';
 import {
   MailListItemFormattedEmailAddresses,
@@ -30,7 +30,7 @@ const $reply = LOCALIZE('Reply')({ ns });
 const $to = LOCALIZE('to')({ ns });
 
 export interface MailListItemHeaderProps {
-  mail: Mail;
+  mail: DecryptedViewMessage;
   showOptions: boolean;
   onClick: () => void;
 }
@@ -50,15 +50,6 @@ export const MailListItemHeader = ({ mail, showOptions, onClick }: MailListItemH
     { storage: mailListItemTransientStatesBindingPersistence, isValid: () => true, key: `${mail.id}-showToGroupMembers` }
   );
 
-  const parsedFrom = parseFrom(mail.from) ?? [];
-  const firstFrom = parsedFrom[0];
-  const firstFromAddress =
-    firstFrom?.type === 'group'
-      ? `${firstFrom.name}: ${firstFrom.addresses[0]?.name ?? ''} <${firstFrom.addresses[0]?.address ?? ''}>`
-      : `${firstFrom?.name ?? ''} <${firstFrom?.address ?? ''}>`;
-
-  const parsedTo = mail.to.map(parseOneAddress);
-
   const onMoreActionsClick: React.MouseEventHandler<HTMLElement> = useCallbackRef((event) => {
     event.stopPropagation();
 
@@ -76,12 +67,12 @@ export const MailListItemHeader = ({ mail, showOptions, onClick }: MailListItemH
   return (
     <Stack direction="row" gap={1} className="flex-auto overflow-hidden cursor-pointer" onClick={onClick}>
       <Stack direction="row" gap={1.5} className="flex-auto overflow-hidden">
-        <StringAvatar value={firstFromAddress} />
+        <StringAvatar value={getStringAvatarValueFromMailAddressList(mail.from)} />
         <Stack className="flex-auto overflow-hidden">
           <Stack direction="row" justifyContent="space-between" className="flex-auto overflow-hidden">
-            <MailListItemFormattedEmailAddresses addresses={parsedFrom} showGroupMembers={showFromGroupMembers} mode="from" />
+            <MailListItemFormattedEmailAddresses addresses={mail.from} showGroupMembers={showFromGroupMembers} mode="from" />
             <Stack direction="row" alignItems="center" gap={2}>
-              <MailListItemTimeLabel timeMSec={mail.timeMSec} />
+              {mail.date !== undefined ? <MailListItemTimeLabel timeMSec={new Date(mail.date).getTime()} /> : null}
               {IF(showOptions, () => (
                 <Stack direction="row" alignItems="center">
                   <Button sx={{ p: 1 }} title={$reply(t)} onClick={onReplyClick}>
@@ -101,11 +92,7 @@ export const MailListItemHeader = ({ mail, showOptions, onClick }: MailListItemH
               {$to(t)}
             </Txt>
             <Stack className="flex-auto overflow-hidden">
-              <MailListItemFormattedEmailAddresses
-                addresses={parsedTo.filter((address) => address !== null)}
-                showGroupMembers={showToGroupMembers}
-                mode="to"
-              />
+              <MailListItemFormattedEmailAddresses addresses={mail.to} showGroupMembers={showToGroupMembers} mode="to" />
             </Stack>
           </Stack>
         </Stack>

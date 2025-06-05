@@ -1,5 +1,5 @@
 import { Stack } from '@mui/material';
-import type { Mail } from 'freedom-email-user';
+import type { MailId } from 'freedom-email-api';
 import { IF } from 'freedom-logical-web-components';
 import React, { useRef } from 'react';
 import { useBinding, useBindingEffect } from 'react-bindings';
@@ -12,10 +12,12 @@ import { ReferencedMailCompositionModePopupButton } from '../ReferencedMailCompo
 
 export interface ComposeMailTopToolbarProps {
   defaultMode: ReferencedMailCompositionMode;
-  referencedMail: Mail;
+  referencedMailId: MailId;
 }
 
-export const ComposeMailTopToolbar = ({ defaultMode, referencedMail }: ComposeMailTopToolbarProps) => {
+export const ComposeMailTopToolbar = ({ defaultMode }: ComposeMailTopToolbarProps) => {
+  // TODO: populate the hidden inReplyTo field as well
+
   const to = useBinding(
     () => {
       switch (defaultMode) {
@@ -23,7 +25,8 @@ export const ComposeMailTopToolbar = ({ defaultMode, referencedMail }: ComposeMa
           return '';
         case 'reply':
         case 'reply-all':
-          return referencedMail.from;
+          // TODO: get the referenced mail and populate the relevate fields
+          return '';
       }
     },
     { id: 'to', detectChanges: true }

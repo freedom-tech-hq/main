@@ -1,3 +1,3 @@
-import type { MailLikeId } from 'freedom-email-user';
+import type { MailId } from 'freedom-email-api';
 
-export type MailListKey = MailLikeId | 'collapsed';
+export type MailListKey = MailId | 'collapsed';

@@ -1,49 +1,45 @@
 import { Stack } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
-import { ELSE, IF } from 'freedom-logical-web-components';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import React, { useMemo } from 'react';
 import { useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
 import { secondarySidebarWidthPx } from '../../../consts/sizes.ts';
-import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection-id.tsx';
-import { MailCollectionHeader, MailCollectionHeaderPlaceholder } from '../secondary-content/MailCollectionHeader.tsx';
+import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { MailThreadsList } from '../secondary-content/MailThreadsList/index.tsx';
+import { MessageFolderHeader } from '../secondary-content/MessageFolderHeader.tsx';
 
 export const SecondaryMailSidebar = () => {
   const uuid = useMemo(() => makeUuid(), []);
 
-  const selectedCollectionId = useSelectedMailCollectionId();
-  const isInitialCollectionId = useDerivedBinding(selectedCollectionId, (id) => id === 'initial', { id: 'isInitialCollectionId' });
-  const hasSelectedCollectionId = useDerivedBinding(selectedCollectionId, (id) => id !== undefined, {
-    id: 'hasSelectedCollectionId'
-  });
+  const selectedMessageFolder = useSelectedMessageFolder();
+  const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (id) => id !== undefined, { id: 'hasSelectedCollectionId' });
 
-  const lastDefinedCollectionId = useBinding(() => selectedCollectionId.get(), {
-    id: 'lastDefinedCollectionId',
+  const lastDefinedSelectedMessageFolder = useBinding(() => selectedMessageFolder.get(), {
+    id: 'lastDefinedSelectedMessageFolder',
     detectChanges: true
   });
 
   useBindingEffect(
-    selectedCollectionId,
+    selectedMessageFolder,
     () => {
-      const resolvedCollectionId = selectedCollectionId.get();
-      if (resolvedCollectionId !== undefined) {
-        lastDefinedCollectionId.set(resolvedCollectionId);
+      const folder = selectedMessageFolder.get();
+      if (folder !== undefined) {
+        lastDefinedSelectedMessageFolder.set(folder);
       }
     },
     { triggerOnMount: true, limitType: 'none' }
   );
 
   useBindingEffect(
-    hasSelectedCollectionId,
+    hasSelectedMessageFolder,
     () => {
       const elem = document.getElementById(uuid);
       if (elem === null) {
         return; // Not ready
       }
 
-      elem.style.marginLeft = hasSelectedCollectionId.get() ? '0px' : `-${secondarySidebarWidthPx}px`;
+      elem.style.marginLeft = hasSelectedMessageFolder.get() ? '0px' : `-${secondarySidebarWidthPx}px`;
     },
     { triggerOnMount: true }
   );
@@ -54,7 +50,7 @@ export const SecondaryMailSidebar = () => {
       alignItems="stretch"
       className="relative overflow-hidden"
       sx={{
-        marginLeft: hasSelectedCollectionId.get() ? '0px' : `-${secondarySidebarWidthPx}px`,
+        marginLeft: hasSelectedMessageFolder.get() ? '0px' : `-${secondarySidebarWidthPx}px`,
         transition: `margin-left ${ANIMATION_DURATION_MSEC}ms ease-in-out`
       }}
     >
@@ -65,18 +61,12 @@ export const SecondaryMailSidebar = () => {
         sx={{ width: `${secondarySidebarWidthPx}px`, px: 2 }}
       >
         <Stack alignItems="stretch" className="sticky top-0 default-bg z-5">
-          {IF(
-            isInitialCollectionId,
-            () => (
-              <MailCollectionHeaderPlaceholder />
-            ),
-            ELSE(() => <MailCollectionHeader />)
-          )}
+          <MessageFolderHeader />
         </Stack>
 
         {/* TODO: handle onArrowLeft/right */}
         <Stack alignItems="stretch" sx={{ px: 1.5 }}>
-          <MailThreadsList collectionId={lastDefinedCollectionId} scrollParent={`${uuid}-scrollable`} />
+          <MailThreadsList folder={lastDefinedSelectedMessageFolder} scrollParent={`${uuid}-scrollable`} />
         </Stack>
       </Stack>
     </Stack>

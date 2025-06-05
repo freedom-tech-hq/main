@@ -193,33 +193,6 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               borderRadius: br(2),
               height: 'auto',
 
-              '&.mail-collection-list-item-chip-selected': {
-                borderRadius: br(1.5),
-                backgroundColor: defaultTextColor,
-                minWidth: `calc(${smallestLineHeight} + 2px)`,
-                textAlign: 'center',
-
-                '& .MuiChip-label': {
-                  padding: `1px ${sp(0.5)}`,
-                  color: colorsDefaultTextContrast,
-                  fontSize: smallestFontSize,
-                  lineHeight: smallestLineHeight
-                }
-              },
-
-              '&.mail-collection-list-item-chip-not-selected': {
-                borderRadius: br(1.5),
-                backgroundColor: 'transparent',
-                minWidth: `calc(${smallestLineHeight} + 2px)`,
-                textAlign: 'center',
-
-                '& .MuiChip-label': {
-                  padding: `1px ${sp(0.5)}`,
-                  fontSize: smallestFontSize,
-                  lineHeight: smallestLineHeight
-                }
-              },
-
               '&.AttachmentCountChip': {
                 padding: '6px 10px',
                 borderRadius: '15px',
@@ -316,13 +289,40 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           },
           styleOverrides: {
             root: {
-              '&.mail-collection-list-item': {
+              '&.MessageFoldersListItem': {
                 borderRadius: br(3),
                 padding: sp(1.5),
 
                 '& .MuiListItemIcon-root': {
                   minWidth: 'auto',
                   marginRight: sp(1)
+                },
+
+                '& .MuiChip-root.selected': {
+                  borderRadius: br(1.5),
+                  backgroundColor: defaultTextColor,
+                  minWidth: `calc(${smallestLineHeight} + 2px)`,
+                  textAlign: 'center',
+
+                  '& .MuiChip-label': {
+                    padding: `1px ${sp(0.5)}`,
+                    color: colorsDefaultTextContrast,
+                    fontSize: smallestFontSize,
+                    lineHeight: smallestLineHeight
+                  }
+                },
+
+                '& .MuiChip-root:not(.selected)': {
+                  borderRadius: br(1.5),
+                  backgroundColor: 'transparent',
+                  minWidth: `calc(${smallestLineHeight} + 2px)`,
+                  textAlign: 'center',
+
+                  '& .MuiChip-label': {
+                    padding: `1px ${sp(0.5)}`,
+                    fontSize: smallestFontSize,
+                    lineHeight: smallestLineHeight
+                  }
                 }
               },
               '&.mail-thread-list-item': {

@@ -1,7 +1,7 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import { generalizeFailureResult } from 'freedom-common-errors';
-import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
+import { encryptedEmailCredentialSchema } from 'freedom-email-api';
 import type { LocallyStoredCredentialId, Tasks } from 'freedom-email-tasks-web-worker';
 import { stringify } from 'freedom-serialization';
 

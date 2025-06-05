@@ -13,7 +13,7 @@ import { $appName } from '../../../consts/common-strings.ts';
 import { primarySidebarWidthPx } from '../../../consts/sizes.ts';
 import { CompanyLogoIcon } from '../../../icons/CompanyLogoIcon.ts';
 import { NewEmailIcon } from '../../../icons/NewEmailIcon.ts';
-import { MailCollectionsList } from '../secondary-content/MailCollectionsList/index.tsx';
+import { MessageFoldersList } from '../secondary-content/MessageFoldersList/index.tsx';
 import { ActiveAccountButton } from './ActiveAccountButton.tsx';
 
 const ns = 'ui';
@@ -48,7 +48,7 @@ export const PrimaryMailSidebar = () => {
 
         <Stack alignItems="stretch" sx={{ mx: 1.5, my: 1 }}>
           {/* TODO: handle onArrowLeft/right */}
-          <MailCollectionsList scrollParent={`${uuid}-scrollable`} />
+          <MessageFoldersList scrollParent={`${uuid}-scrollable`} />
         </Stack>
 
         {/* Rendering a second copy of the active account button to make sure the scroller has enough space allocated */}

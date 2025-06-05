@@ -4,10 +4,8 @@ import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { log, makeUuid } from 'freedom-contexts';
 import { ArrayDataSource } from 'freedom-data-source';
-import { mailIdInfo } from 'freedom-email-sync';
-import type { GetMailForThreadPacket } from 'freedom-email-tasks-web-worker';
-import type { Mail } from 'freedom-email-user';
-import { mailDraftIdInfo } from 'freedom-email-user';
+import { type MailId } from 'freedom-email-api';
+import type { GetMailIdsForThreadPacket } from 'freedom-email-tasks-web-worker/lib/tasks/mail/getMailIdsForThread';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
@@ -20,7 +18,7 @@ import type { MailListKey } from './MailListKey.ts';
 export interface MailListDataSource extends ArrayDataSource<MailListDataSourceItem, MailListKey> {
   hasCollapsedItems: () => boolean;
   expandCollapsedItems: () => void;
-  getMostRecentMail: () => Mail | undefined;
+  getMostRecentMailId: () => MailId | undefined;
 }
 
 export const useMailListDataSource = (): MailListDataSource => {
@@ -55,7 +53,7 @@ export const useMailListDataSource = (): MailListDataSource => {
       dataSource.itemsAdded({ indices: newIndices });
     };
 
-    out.getMostRecentMail = () => items.current.findLast((item) => item.type === 'mail')?.mail;
+    out.getMostRecentMailId = () => items.current.findLast((item) => item.type === 'mail')?.id;
 
     return out;
   }, []);
@@ -78,7 +76,7 @@ export const useMailListDataSource = (): MailListDataSource => {
       const myMountId = mountId.current;
       const isConnected = proxy(() => mountId.current === myMountId && selectedThreadIdBinding.get() === selectedThreadId);
       let isFirstMailAddedAfterClear = true;
-      const onData = proxy((packet: Result<GetMailForThreadPacket>) => {
+      const onData = proxy((packet: Result<GetMailIdsForThreadPacket>) => {
         if (!isConnected()) {
           return;
         }
@@ -91,14 +89,9 @@ export const useMailListDataSource = (): MailListDataSource => {
         switch (packet.value.type) {
           case 'mail-added': {
             const addedIndices: number[] = [];
-            for (const newMail of packet.value.mail) {
-              if (mailIdInfo.is(newMail.id)) {
-                addedIndices.push(items.current.length);
-                items.current.push({ type: 'mail', id: newMail.id, mail: newMail });
-              } else if (mailDraftIdInfo.is(newMail.id)) {
-                addedIndices.push(items.current.length);
-                items.current.push({ type: 'draft', id: newMail.id, mail: newMail });
-              }
+            for (const newMailId of packet.value.addedMailIds) {
+              addedIndices.push(items.current.length);
+              items.current.push({ type: 'mail', id: newMailId });
             }
 
             if (isFirstMailAddedAfterClear && addedIndices.length > 2) {
@@ -143,7 +136,7 @@ export const useMailListDataSource = (): MailListDataSource => {
 
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
-            const data = await tasks.getMailForThread(selectedThreadId, isConnected, onData);
+            const data = await tasks.getMailIdsForThread(selectedThreadId, isConnected, onData);
             if (!data.ok) {
               log().error?.('Failed to load email', data);
             }
@@ -160,7 +153,7 @@ export const useMailListDataSource = (): MailListDataSource => {
         }
       });
     },
-    { triggerOnMount: true, deps: [dataSource, tasks] }
+    { triggerOnMount: 'first', deps: [dataSource, tasks] }
   );
 
   return dataSource;

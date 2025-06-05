@@ -1,20 +1,13 @@
 import type { PR } from 'freedom-async';
 import { bestEffort, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { Uuid } from 'freedom-basic-data';
-import { generalizeFailureResult } from 'freedom-common-errors';
-import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-sync';
-import {
-  createEmailCredential,
-  createInitialSyncableStoreStructureForUser,
-  createWelcomeContentForUser,
-  encryptEmailCredentialWithPassword
-} from 'freedom-email-user';
-import { initializeRoot } from 'freedom-syncable-store';
+import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email-credential/storeEncryptedEmailCredentialLocally.ts';
-import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import { reserveEmail } from '../../internal/tasks/user/reserveEmail.ts';
+import { createEmailCredential } from '../../internal/utils/createEmailCredential.ts';
+import { encryptEmailCredentialWithPassword } from '../../internal/utils/encryptEmailCredentialWithPassword.ts';
 import { getConfig } from '../config/config.ts';
 import { storeCredentialsOnServer } from '../email-credential/storeCredentialsOnServer.ts';
 
@@ -23,8 +16,6 @@ import { storeCredentialsOnServer } from '../email-credential/storeCredentialsOn
  * - Reserves email address on remote
  * - Stores encrypted email credential locally
  * - Optionally stores encrypted email credential on remote
- * - Creates basic user folder structure
- * - Creates welcome content
  *
  * @returns the user ID and encrypted email credential info
  */
@@ -52,19 +43,6 @@ export const createUser = makeAsyncResultFunc(
     const credential = await createEmailCredential(trace);
     if (!credential.ok) {
       return credential;
-    }
-
-    const userId = credential.value.userId;
-
-    const syncableStoreResult = await getOrCreateEmailSyncableStore(trace, credential.value);
-    if (!syncableStoreResult.ok) {
-      return syncableStoreResult;
-    }
-    const userFs = syncableStoreResult.value;
-
-    const initializedStore = await initializeRoot(trace, userFs);
-    if (!initializedStore.ok) {
-      return generalizeFailureResult(trace, initializedStore, ['conflict', 'not-found']);
     }
 
     // --- Reserving email address on remote ---
@@ -101,23 +79,11 @@ export const createUser = makeAsyncResultFunc(
       await bestEffort(
         trace,
         storeCredentialsOnServer(trace, {
-          userId,
+          userId: credential.value.userId,
           encryptedCredential: encryptedCredential.value,
           signingKeys: credential.value.privateKeys
         })
       );
-    }
-
-    // --- Initializing user folder structure ---
-
-    const createdStructure = await createInitialSyncableStoreStructureForUser(trace, userFs);
-    if (!createdStructure.ok) {
-      return createdStructure;
-    }
-
-    const welcomeContentAdded = await createWelcomeContentForUser(trace, userFs);
-    if (!welcomeContentAdded.ok) {
-      return welcomeContentAdded;
     }
 
     // --- Setting the new credential as the active credential ---
@@ -125,7 +91,7 @@ export const createUser = makeAsyncResultFunc(
     activeCredential.credential = credential.value;
 
     return makeSuccess({
-      userId,
+      userId: credential.value.userId,
       encryptedEmailCredential: encryptedCredential.value,
       locallyStoredCredentialId
     });

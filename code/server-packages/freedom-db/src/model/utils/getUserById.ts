@@ -1,6 +1,6 @@
 import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
-import type { EmailUserId } from 'freedom-email-sync';
+import type { EmailUserId } from 'freedom-email-api';
 
 import { dbQuery } from '../../db/postgresClient.ts';
 import { getUserFromRawUser, type RawUser } from '../internal/types/RawUser.ts';

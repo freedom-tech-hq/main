@@ -1,25 +1,37 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
-import { InternalStateError } from 'freedom-common-errors';
-import type { MailId, StoredMail } from 'freedom-email-sync';
-import { addMailToOutbox } from 'freedom-email-user';
+import { GeneralError, makeAsyncResultFunc, makeFailure } from 'freedom-async';
+import { UnauthorizedError } from 'freedom-common-errors';
+import type { ApiInputMessage, MailId } from 'freedom-email-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 
-export const sendMail = makeAsyncResultFunc([import.meta.filename], async (trace, mail: StoredMail): PR<{ mailId: MailId }> => {
-  const credential = useActiveCredential(trace).credential;
+// const saveDraftToRemote = makeApiFetchTask([import.meta.filename, 'saveDraftToRemote'], api.message.draft.POST);
+// const sendDraftWithRemote = makeApiFetchTask([import.meta.filename, 'sendDraftWithRemote'], api.message.draft.id.send.POST);
+
+export const sendMail = makeAsyncResultFunc([import.meta.filename], async (trace, _mail: ApiInputMessage): PR<{ mailId: MailId }> => {
+  const credential = useActiveCredential(trace);
 
   if (credential === undefined) {
-    return makeFailure(new InternalStateError(trace, { message: 'No active user' }));
+    return makeFailure(new UnauthorizedError(trace, { message: 'No active user' }));
   }
 
-  const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
+  return makeFailure(new GeneralError(trace, new Error('not implemented yet')));
+  // // TODO: separate saving drafts from sending mail
 
-  const added = await addMailToOutbox(trace, syncableStore, mail);
-  if (!added.ok) {
-    return added;
-  }
+  // const savedDraft = await saveDraftToRemote(trace, { headers: {}, body: {}, context: getDefaultApiRoutingContext() });
+  // if (!savedDraft.ok) {
+  //   return savedDraft;
+  // }
 
-  return makeSuccess(added.value);
+  // const agentMessage = await encryptMailForServer(trace, mail, credential);
+  // if (!agentMessage.ok) {
+  //   return agentMessage;
+  // }
+
+  // const sentDraft = await sendDraftWithRemote(trace, {
+  //   headers: {},
+  //   params: { mailId: savedDraft.value.body.id },
+  //   body: { agentMessage: agentMessage.value },
+  //   context: getDefaultApiRoutingContext()
+  // });
 });

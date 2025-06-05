@@ -10,8 +10,6 @@
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
     "freedom-do-soon": "0.0.0",
-    "freedom-email-sync": "0.0.0",
-    "freedom-email-user": "0.0.0",
     "freedom-store-api-server-api": "0.0.0",
     "freedom-fetching": "0.0.0",
     "freedom-indexeddb-object-store": "0.0.0",

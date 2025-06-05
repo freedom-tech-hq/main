@@ -1,5 +1,5 @@
 import { Button, Stack } from '@mui/material';
-import type { MailAttachmentInfo } from 'freedom-email-sync';
+import type { MailAttachmentInfo } from 'freedom-email-api';
 import React from 'react';
 import { useCallbackRef } from 'react-bindings';
 

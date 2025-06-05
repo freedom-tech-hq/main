@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async';
-import type { EncryptedEmailCredential } from 'freedom-email-sync';
+import type { EncryptedEmailCredential } from 'freedom-email-api';
 
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';

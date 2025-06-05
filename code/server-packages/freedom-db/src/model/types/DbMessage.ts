@@ -1,10 +1,10 @@
-import { types } from 'freedom-email-api';
+import { apiMessageSchema } from 'freedom-email-api';
 import { schema } from 'yaschema';
 
 /**
  * Schema for server-side message storage
  */
-export const dbMessageSchema = schema.omit(types.apiMessageSchema, [
+export const dbMessageSchema = schema.omit(apiMessageSchema, [
   // Dynamic
   'hasAttachments'
 ]);

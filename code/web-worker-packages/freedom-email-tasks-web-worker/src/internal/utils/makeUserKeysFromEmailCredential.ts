@@ -4,7 +4,7 @@ import { InternalStateError } from 'freedom-common-errors';
 import type { CryptoKeySetId, PrivateCombinationCryptoKeySet } from 'freedom-crypto-data';
 import type { UserKeys } from 'freedom-crypto-service';
 import { makeUserKeys } from 'freedom-crypto-service';
-import type { EmailCredential } from 'freedom-email-user';
+import type { EmailCredential } from 'freedom-email-api';
 
 export const makeUserKeysFromEmailCredential = (credential: EmailCredential): UserKeys =>
   makeUserKeys({

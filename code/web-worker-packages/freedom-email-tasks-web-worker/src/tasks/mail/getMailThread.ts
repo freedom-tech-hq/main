@@ -1,20 +1,19 @@
 import type { PR, SuccessResult } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess, sleep, uncheckedResult } from 'freedom-async';
-import { ONE_DAY_MSEC, ONE_SEC_MSEC } from 'freedom-basic-data';
-import { NotFoundError, UnauthorizedError } from 'freedom-common-errors';
-import { mailIdInfo } from 'freedom-email-sync';
-import type { MailThread, ThreadLikeId } from 'freedom-email-user';
-import { getMailById } from 'freedom-email-user';
+import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
+import { makeIsoDateTime, ONE_DAY_MSEC, ONE_SEC_MSEC } from 'freedom-basic-data';
+import { UnauthorizedError } from 'freedom-common-errors';
+import { makeUuid } from 'freedom-contexts';
+import type { DecryptedThread, MailThreadLikeId } from 'freedom-email-api';
+import { mailIdInfo } from 'freedom-email-api';
 import { generatePseudoWord } from 'pseudo-words';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
-import { getOrCreateEmailSyncableStore } from '../../internal/tasks/user/getOrCreateEmailSyncableStore.ts';
 import { getConfig } from '../config/config.ts';
 import { isDemoMode } from '../config/demo-mode.ts';
 
 export const getMailThread = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, threadId: ThreadLikeId): PR<MailThread, 'not-found'> => {
+  async (trace, threadId: MailThreadLikeId): PR<DecryptedThread, 'not-found'> => {
     DEV: if (isDemoMode()) {
       return await makeDemoModeResult({ threadId });
     }
@@ -25,55 +24,39 @@ export const getMailThread = makeAsyncResultFunc(
       return makeFailure(new UnauthorizedError(trace, { message: 'No active user' }));
     }
 
-    const syncableStore = await uncheckedResult(getOrCreateEmailSyncableStore(trace, credential));
+    // TODO: implement this method
 
-    if (mailIdInfo.is(threadId)) {
-      const storedMail = await getMailById(trace, syncableStore, threadId);
-      if (!storedMail.ok) {
-        return storedMail;
-      }
-
-      return makeSuccess({
-        id: threadId,
-        from: storedMail.value.from,
-        to: storedMail.value.to,
-        subject: storedMail.value.subject,
-        body: storedMail.value.body,
-        timeMSec: storedMail.value.timeMSec,
-        numMessages: 1,
-        numUnread: 1,
-        numAttachments: storedMail.value.attachments.length
-      });
-    }
-
-    return makeFailure(new NotFoundError(trace, { message: `No thread-like item found with ID ${threadId}`, errorCode: 'not-found' }));
+    // return makeFailure(new NotFoundError(trace, { message: `No thread-like item found with ID ${threadId}`, errorCode: 'not-found' }));
+    return makeFailure(new GeneralError(trace, new Error('not implemented yet')));
   }
 );
 
 // Helpers
 
-let makeDemoModeResult: (args: { threadId: ThreadLikeId }) => Promise<SuccessResult<MailThread>> = () => {
+let makeDemoModeResult: (args: { threadId: MailThreadLikeId }) => Promise<SuccessResult<DecryptedThread>> = () => {
   throw new Error();
 };
 
-DEV: makeDemoModeResult = async ({ threadId }: { threadId: ThreadLikeId }) => {
+DEV: makeDemoModeResult = async ({ threadId }) => {
   await sleep(Math.random() * ONE_SEC_MSEC);
 
   return makeSuccess({
     id: threadId,
-    from: `Demo User <demo@${getConfig().defaultEmailDomain}>`,
-    to: [`Demo User <demo@${getConfig().defaultEmailDomain}>`],
-    subject: Array(Math.floor(Math.random() * 5 + 1))
-      .fill(0)
-      .map(() => generatePseudoWord())
-      .join(' '),
-    body: Array(Math.floor(Math.random() * 200 + 10))
-      .fill(0)
-      .map(() => generatePseudoWord())
-      .join(' '),
-    timeMSec: Date.now() - Math.random() * 30 * ONE_DAY_MSEC,
-    numMessages: Math.floor(Math.random() * 10 + 1),
-    numUnread: Math.floor(Math.random() * 2),
-    numAttachments: Math.floor(Math.random() * 4)
+    messageCount: Math.floor(Math.random() * 10 + 1),
+    lastMessage: {
+      id: mailIdInfo.make(`${makeIsoDateTime(new Date(Date.now() - Math.random() * 30 * ONE_DAY_MSEC))}-${makeUuid()}`),
+      hasAttachments: Math.random() < 0.5,
+      updatedAt: makeIsoDateTime(),
+      from: [{ name: 'Demo User', address: `demo@${getConfig().defaultEmailDomain}` }],
+      subject: Array(Math.floor(Math.random() * 5 + 1))
+        .fill(0)
+        .map(() => generatePseudoWord())
+        .join(' '),
+      snippet: Array(Math.floor(Math.random() * 200 + 10))
+        .fill(0)
+        .map(() => generatePseudoWord())
+        .join(' ')
+        .substring(0, 200)
+    }
   });
 };

@@ -1,53 +1,54 @@
-import type { CollectionLikeId, ThreadLikeId } from 'freedom-email-user';
+import type { MailThreadLikeId, MessageFolder } from 'freedom-email-api';
 import type { VirtualListControls } from 'freedom-web-virtual-list';
 import { VirtualList } from 'freedom-web-virtual-list';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { ifBinding, resolveTypeOrBindingType, type TypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
+import type { TypeOrBindingType } from 'react-bindings';
+import { ifBinding, resolveTypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
-import { SelectedMailCollectionIdProvider } from '../../../../contexts/selected-mail-collection-id.tsx';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
+import { SelectedMessageFolderProvider } from '../../../../contexts/selected-message-folder.tsx';
 import { useMailCollectionDataSource } from './useMailThreadsListDataSource.ts';
 import { useMailCollectionDelegate } from './useMailThreadsListDelegate.tsx';
 
 export interface MailThreadsListProps {
-  collectionId: TypeOrBindingType<CollectionLikeId | 'initial' | undefined>;
+  folder: TypeOrBindingType<MessageFolder | undefined>;
   scrollParent: HTMLElement | string | Window;
-  controls?: VirtualListControls<CollectionLikeId>;
+  controls?: VirtualListControls<MessageFolder>;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
 }
 
-export const MailThreadsList = ({ collectionId, ...fwd }: MailThreadsListProps) => {
-  const lastDefinedCollectionId = useBinding(() => resolveTypeOrBindingType(collectionId), {
-    id: 'lastDefinedCollectionId',
+export const MailThreadsList = ({ folder, ...fwd }: MailThreadsListProps) => {
+  const lastDefinedSelectedMessageFolder = useBinding(() => resolveTypeOrBindingType(folder), {
+    id: 'lastDefinedSelectedMessageFolder',
     detectChanges: true
   });
 
   useBindingEffect(
-    ifBinding(collectionId),
+    ifBinding(folder),
     () => {
-      const resolvedCollectionId = resolveTypeOrBindingType(collectionId);
-      if (resolvedCollectionId !== undefined) {
-        lastDefinedCollectionId.set(resolvedCollectionId);
+      const resolvedFolder = resolveTypeOrBindingType(folder);
+      if (resolvedFolder !== undefined) {
+        lastDefinedSelectedMessageFolder.set(resolvedFolder);
       }
     },
     { triggerOnMount: true, limitType: 'none' }
   );
 
   return (
-    <SelectedMailCollectionIdProvider selectedMailCollectionId={lastDefinedCollectionId}>
+    <SelectedMessageFolderProvider selectedMessageFolder={lastDefinedSelectedMessageFolder}>
       <InternalMailThreadsList {...fwd} />
-    </SelectedMailCollectionIdProvider>
+    </SelectedMessageFolderProvider>
   );
 };
 
 // Helpers
 
-const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowRight }: Omit<MailThreadsListProps, 'collectionId'>) => {
+const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowRight }: Omit<MailThreadsListProps, 'folder'>) => {
   const dataSource = useMailCollectionDataSource();
   const selectedThreadId = useSelectedMailThreadId();
 
-  const listControls = useRef<VirtualListControls<ThreadLikeId>>({});
+  const listControls = useRef<VirtualListControls<MailThreadLikeId>>({});
 
   const selectFirstMailIfNothingIsSelected = useCallbackRef(() => {
     const theSelectedThreadId = selectedThreadId.get();
@@ -72,7 +73,7 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
     })
   );
 
-  const onThreadClicked = useCallbackRef((threadLikeId: ThreadLikeId) => {
+  const onThreadClicked = useCallbackRef((threadLikeId: MailThreadLikeId) => {
     if (selectedThreadId.get() === threadLikeId) {
       // If this item was already selected and the thread list had focus, deselect the item
       if (listControls.current.hasFocus?.() ?? false) {

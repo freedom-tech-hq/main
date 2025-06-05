@@ -2,8 +2,10 @@ import { isoDateTimeSchema } from 'freedom-basic-data';
 import { schema } from 'yaschema';
 
 import { emailUserIdInfo } from './EmailUserId.ts';
-import { mailAddressListSchema, mailAddressSchema, mailPrioritySchema } from './headerTypes.ts';
+import { mailAddressSchema } from './MailAddress.ts';
+import { mailAddressListSchema } from './MailAddressList.ts';
 import { mailIdInfo } from './MailId.ts';
+import { mailPrioritySchema } from './MailPriority.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
 /*

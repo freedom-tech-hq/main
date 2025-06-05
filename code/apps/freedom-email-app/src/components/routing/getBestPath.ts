@@ -1,7 +1,8 @@
 import { objectKeys } from 'freedom-cast';
 import type { Nested } from 'freedom-nest';
 
-import { type AnySegmentValue, appRoot, type RouteSegmentInfo } from './appRoot.tsx';
+import { appRoot } from './appRoot.tsx';
+import { type AnySegmentValue, type RouteSegmentInfo } from './RouteSegmentInfo.tsx';
 
 type NestedAppPathSegmentInfos = Nested<RouteSegmentInfo<AnySegmentValue>, { [key: string]: SimpleOrNestedAppPathSegmentInfos }>;
 type SimpleOrNestedAppPathSegmentInfos = RouteSegmentInfo<AnySegmentValue> | NestedAppPathSegmentInfos;

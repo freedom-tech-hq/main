@@ -1,6 +1,6 @@
 import { makeAsyncResultFunc, makeFailure, makeSuccess, type PR } from 'freedom-async';
 import { NotFoundError } from 'freedom-common-errors';
-import { type EmailUserId, type EncryptedEmailCredential, encryptedEmailCredentialSchema } from 'freedom-email-sync';
+import { type EmailUserId, type EncryptedEmailCredential, encryptedEmailCredentialSchema } from 'freedom-email-api';
 import { stringify } from 'freedom-serialization';
 
 import { dbQuery } from '../../db/postgresClient.ts';
