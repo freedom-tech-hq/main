@@ -6,13 +6,11 @@
     "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
-    "freedom-dev-logging-support": "0.0.0",
     "freedom-email-sync": "0.0.0",
-    "freedom-locking-types": "0.0.0",
-    "freedom-notification-types": "0.0.0",
-    "freedom-sync-types": "0.0.0",
-    "freedom-trusted-time-source": "0.0.0",
-    "yaschema": "5.2.1"
+    "freedom-paginated-data": "0.0.0",
+    "http-status-codes": "2.3.0",
+    "yaschema": "5.2.1",
+    "yaschema-api": "5.0.4"
   },
   "devDependencies": {
     "freedom-build-tools": "0.0.0",

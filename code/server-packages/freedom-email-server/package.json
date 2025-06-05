@@ -1,9 +1,11 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-crypto": "0.0.0",
     "freedom-crypto-data": "0.0.0",
     "freedom-crypto-service": "0.0.0",
     "freedom-db": "0.0.0",

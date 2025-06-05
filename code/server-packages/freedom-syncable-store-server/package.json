@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
@@ -11,6 +12,7 @@
     "freedom-redlock-store": "0.0.0",
     "freedom-sync-types": "0.0.0",
     "freedom-syncable-store": "0.0.0",
+    "freedom-syncable-store-backing-types": "0.0.0",
     "freedom-syncable-store-types": "0.0.0"
   },
   "devDependencies": {

@@ -1,14 +1,18 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
+    "freedom-basic-data": "0.0.0",
     "freedom-cast": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
     "freedom-crypto": "0.0.0",
-    "freedom-crypto-data": "0.0.0"
+    "freedom-crypto-data": "0.0.0",
+    "yaschema": "5.2.1"
   },
   "devDependencies": {
+    "expect": "29.7.0",
     "freedom-build-tools": "0.0.0",
+    "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
   },
   "exports": {

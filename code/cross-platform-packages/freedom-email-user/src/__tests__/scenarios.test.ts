@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { afterEach, describe, test } from 'node:test';
 
+import type { StoredMail } from 'freedom-email-sync';
 import { addMail, getOutboundMailById, listOutboundMailIds, moveOutboundMailToStorage } from 'freedom-email-sync';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 import { createBundleAtPath, createFolderAtPath } from 'freedom-syncable-store';
@@ -14,13 +15,13 @@ describe('Inbound email routes', () => {
   // Note: always from external address
 
   // Data sample
-  const parsedIncomingEmail = {
-    rcpt: 'user@example.com',
+  const parsedIncomingEmail: StoredMail = {
     from: 'from@external-server.com',
     to: ['user@example.com', 'user2@example.com'],
     subject: 'The subject',
     body: 'The body',
-    timeMSec: 1234567890
+    timeMSec: 1234567890,
+    attachments: []
   };
 
   test('Full inbound', async () => {

@@ -1,8 +1,6 @@
 {
   "dependencies": {
     "freedom-async": "0.0.0",
-    "freedom-basic-data": "0.0.0",
-    "freedom-cast": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-config": "0.0.0",
     "freedom-contexts": "0.0.0",
@@ -11,7 +9,7 @@
     "freedom-email-sync": "0.0.0",
     "freedom-json-file-object-store": "0.0.0",
     "freedom-object-store-types": "0.0.0",
-    "freedom-trace-logging-and-metrics": "0.0.0",
+    "freedom-serialization": "0.0.0",
     "lodash-es": "4.17.21",
     "pg": "8.15.6",
     "pg-native": "3.4.5",
@@ -21,6 +19,8 @@
     "@types/lodash-es": "4.17.12",
     "@types/pg": "8.15.1",
     "freedom-build-tools": "0.0.0",
+    "freedom-in-memory-cache": "0.0.0",
+    "freedom-testing-tools": "0.0.0",
     "typescript": "5.8.3"
   },
   "type": "module",

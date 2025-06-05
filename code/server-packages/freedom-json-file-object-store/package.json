@@ -4,6 +4,7 @@
     "freedom-cast": "0.0.0",
     "freedom-common-errors": "0.0.0",
     "freedom-contexts": "0.0.0",
+    "freedom-indexing-types": "0.0.0",
     "freedom-object-store-types": "0.0.0",
     "freedom-serialization": "0.0.0",
     "freedom-task-queue": "0.0.0",

@@ -55,7 +55,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T03:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T03:00:00.000Z').getTime(),
+        attachments: []
       })
     );
 
@@ -93,7 +94,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T03:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T03:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -103,7 +105,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T03:01:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T03:01:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -113,7 +116,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T02:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T02:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -123,7 +127,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-01T00:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-01T00:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -133,7 +138,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-02-01T00:00:00.000Z').getTime()
+        timeMSec: new Date('2025-02-01T00:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -143,7 +149,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2024-01-01T00:00:00.000Z').getTime()
+        timeMSec: new Date('2024-01-01T00:00:00.000Z').getTime(),
+        attachments: []
       })
     );
 
@@ -196,7 +203,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T03:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T03:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -206,7 +214,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T03:01:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T03:01:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -216,7 +225,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-02T02:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-02T02:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -226,7 +236,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-01-01T00:00:00.000Z').getTime()
+        timeMSec: new Date('2025-01-01T00:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -236,7 +247,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2025-02-01T00:00:00.000Z').getTime()
+        timeMSec: new Date('2025-02-01T00:00:00.000Z').getTime(),
+        attachments: []
       })
     );
     expectOk(
@@ -246,7 +258,8 @@ describe('traverseTimeOrganizedMailStorageFromTheBottomUp', () => {
         to: ['test@freedomtechhq.com'],
         subject: 'Welcome to Freedom!',
         body: 'This is a test email',
-        timeMSec: new Date('2024-01-01T00:00:00.000Z').getTime()
+        timeMSec: new Date('2024-01-01T00:00:00.000Z').getTime(),
+        attachments: []
       })
     );
 
