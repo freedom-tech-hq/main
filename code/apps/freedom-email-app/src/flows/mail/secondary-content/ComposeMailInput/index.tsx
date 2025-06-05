@@ -49,14 +49,14 @@ export const ComposeMailInput = ({ mode, referencedMail, onDiscardClick }: Compo
     id: 'bodyToolbarHeightPx',
     detectChanges: true
   });
-  const onBodyTopToolbarResize = useCallbackRef((_width: number | undefined, height: number | undefined) => {
+  const onBodyTopToolbarResize = useCallbackRef((_width: number, height: number) => {
     if (height !== undefined) {
       bodyTopToolbarHeightPx.set(height);
     }
   });
 
   const bodyBottomToolbarHeightPx = useBinding(() => 60, { id: 'bodyToolbarHeightPx', detectChanges: true });
-  const onBodyBottomToolbarResize = useCallbackRef((_width: number | undefined, height: number | undefined) => {
+  const onBodyBottomToolbarResize = useCallbackRef((_width: number, height: number) => {
     if (height !== undefined) {
       bodyBottomToolbarHeightPx.set(height);
     }

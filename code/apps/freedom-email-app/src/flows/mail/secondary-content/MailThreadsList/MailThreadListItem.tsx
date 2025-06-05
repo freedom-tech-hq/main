@@ -10,7 +10,7 @@ import { ControlledCheckbox, ControlledCheckboxPlaceholder } from '../../../../c
 import { StringAvatar } from '../../../../components/reusable/StringAvatar.tsx';
 import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
 import { UnreadIndicator } from '../../../../components/reusable/UnreadIndicator.tsx';
-import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread.tsx';
+import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { formatTimeIfSameDateOrFormatDate } from '../../../../utils/formatTimeIfSameDateOrFormatDate.ts';
 import { makeTagsForParsedEmailAddresses } from '../../../../utils/makeTagsForParsedEmailAddresses.ts';

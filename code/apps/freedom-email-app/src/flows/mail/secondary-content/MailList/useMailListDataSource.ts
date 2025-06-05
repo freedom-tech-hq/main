@@ -12,7 +12,7 @@ import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 
-import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread.tsx';
+import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import type { MailListDataSourceItem } from './MailListDataSourceItem.ts';
 import type { MailListKey } from './MailListKey.ts';
@@ -125,7 +125,7 @@ export const useMailListDataSource = (): MailListDataSource => {
           return;
         }
 
-        if (selectedThreadId !== undefined && selectedThreadId !== 'initial' && selectedThreadId !== 'new-mail') {
+        if (selectedThreadId !== undefined && selectedThreadId !== 'initial') {
           dataSource.setIsLoading('end');
 
           let didClearOldData = false;

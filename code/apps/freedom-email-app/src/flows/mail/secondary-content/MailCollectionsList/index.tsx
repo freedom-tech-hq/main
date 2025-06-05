@@ -4,7 +4,7 @@ import { VirtualList } from 'freedom-web-virtual-list';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect, useCallbackRef } from 'react-bindings';
 
-import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
+import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection-id.tsx';
 import { useMailCollectionsListDataSource } from './useMailCollectionsListDataSource.ts';
 import { useMailCollectionsListDelegate } from './useMailCollectionsListDelegate.tsx';
 

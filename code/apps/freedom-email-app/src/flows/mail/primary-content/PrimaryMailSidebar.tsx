@@ -2,14 +2,15 @@ import { Box, Button, Stack } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
+import { useHistory } from 'freedom-web-navigation';
 import React, { useMemo } from 'react';
 import { useCallbackRef } from 'react-bindings';
 
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
+import { appRoot } from '../../../components/routing/appRoot.tsx';
 import { $appName } from '../../../consts/common-strings.ts';
 import { primarySidebarWidthPx } from '../../../consts/sizes.ts';
-import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
 import { CompanyLogoIcon } from '../../../icons/CompanyLogoIcon.ts';
 import { NewEmailIcon } from '../../../icons/NewEmailIcon.ts';
 import { MailCollectionsList } from '../secondary-content/MailCollectionsList/index.tsx';
@@ -19,12 +20,12 @@ const ns = 'ui';
 const $newEmail = LOCALIZE('New Email')({ ns });
 
 export const PrimaryMailSidebar = () => {
-  const selectedThread = useSelectedMailThreadId();
+  const history = useHistory();
   const t = useT();
   const uuid = useMemo(() => makeUuid(), []);
 
   const onNewMailClick = useCallbackRef(() => {
-    selectedThread.set('new-mail');
+    history.replace(appRoot.path.mail.compose);
   });
 
   return (

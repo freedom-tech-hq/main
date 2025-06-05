@@ -11,6 +11,7 @@ import { useDerivedWaitable } from 'react-waitables';
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
+import { appRoot } from '../../../../components/routing/appRoot.tsx';
 import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../../consts/timing.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
@@ -37,11 +38,7 @@ const $passwordTooltip = LOCALIZE(
   "Your password is used to access your account settings and mail.  It is only used locally on your device and is never sent to our servers.  If forgotten, it cannot be recovered – you'll need to create a new account."
 )({ ns });
 
-export interface CreateNewAccountPanelProps {
-  onBackClick: () => void;
-}
-
-export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProps) => {
+export const CreateNewAccountPanel = () => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
   const { presentErrorMessage } = useMessagePresenter();
@@ -113,6 +110,10 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
     { id: 'isFormReady', limitType: 'none' }
   );
 
+  const onBackClick = useCallbackRef(() => {
+    history.replace(appRoot.path.value);
+  });
+
   const submit = useCallbackRef(async () => {
     if (tasks === undefined || !(isFormReady.value.get() ?? false)) {
       return;
@@ -156,7 +157,7 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
       }
 
       activeAccountInfo.set({ email: created.value.encryptedEmailCredential.email });
-      history.replace('/mail');
+      history.replace(appRoot.path.mail.value);
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }
@@ -176,7 +177,7 @@ export const CreateNewAccountPanel = ({ onBackClick }: CreateNewAccountPanelProp
             alignItems="center"
             justifyContent="center"
             gap={isMdOrLarger ? 3 : 2}
-            sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}
+            sx={{ width: '100%', maxWidth: `${theme.breakpoints.values.md}px` }}
           >
             <Stack alignItems="center" justifyContent="center">
               <Txt variant="h2" className="semibold" textAlign="center">

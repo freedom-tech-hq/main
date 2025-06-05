@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
 import { SortedArray } from 'yasorted-array';
 
-import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
+import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection-id.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 
@@ -115,7 +115,7 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
         }
       });
     },
-    { triggerOnMount: true, deps: [dataSource, tasks] }
+    { triggerOnMount: 'first', deps: [dataSource, tasks] }
   );
 
   return dataSource;

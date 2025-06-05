@@ -11,6 +11,7 @@ import type { activateUserWithLocallyStoredEncryptedEmailCredential } from './em
 import type { addEncryptionForBiometricsToLocallyStoredEmailCredential } from './email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts';
 import type { deactivateUser } from './email-credential/deactivateUser.ts';
 import type { getLocallyStoredEncryptedEmailCredential } from './email-credential/getLocallyStoredEncryptedEmailCredential.ts';
+import type { getLocallyStoredEncryptedEmailCredentialInfoByEmail } from './email-credential/getLocallyStoredEncryptedEmailCredentialInfoByEmail.ts';
 import type { importEmailCredential } from './email-credential/importEmailCredential.ts';
 import type { importEmailCredentialFromRemote } from './email-credential/importEmailCredentialFromRemote.ts';
 import type { listLocallyStoredEncryptedEmailCredentials } from './email-credential/listLocallyStoredEncryptedEmailCredentials.ts';
@@ -75,6 +76,13 @@ class TasksImpl {
     await (
       await import('./email-credential/getLocallyStoredEncryptedEmailCredential.ts')
     ).getLocallyStoredEncryptedEmailCredential(this.#trace, ...args);
+
+  public readonly getLocallyStoredEncryptedEmailCredentialInfoByEmail = async (
+    ...args: ParametersExceptFirst<typeof getLocallyStoredEncryptedEmailCredentialInfoByEmail>
+  ) =>
+    await (
+      await import('./email-credential/getLocallyStoredEncryptedEmailCredentialInfoByEmail.ts')
+    ).getLocallyStoredEncryptedEmailCredentialInfoByEmail(this.#trace, ...args);
 
   public readonly importEmailCredential = async (...args: ParametersExceptFirst<typeof importEmailCredential>) =>
     await (await import('./email-credential/importEmailCredential.ts')).importEmailCredential(this.#trace, ...args);

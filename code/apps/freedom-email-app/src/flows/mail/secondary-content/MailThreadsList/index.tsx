@@ -4,8 +4,8 @@ import { VirtualList } from 'freedom-web-virtual-list';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ifBinding, resolveTypeOrBindingType, type TypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
-import { SelectedMailCollectionIdProvider } from '../../../../contexts/selected-mail-collection.tsx';
-import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread.tsx';
+import { SelectedMailCollectionIdProvider } from '../../../../contexts/selected-mail-collection-id.tsx';
+import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { useMailCollectionDataSource } from './useMailThreadsListDataSource.ts';
 import { useMailCollectionDelegate } from './useMailThreadsListDelegate.tsx';
 
@@ -84,7 +84,7 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
   });
 
   useBindingEffect(selectedThreadId, (selectedThreadId) => {
-    if (selectedThreadId === undefined || selectedThreadId === 'initial' || selectedThreadId === 'new-mail') {
+    if (selectedThreadId === undefined || selectedThreadId === 'initial') {
       return;
     }
 

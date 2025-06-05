@@ -2,7 +2,7 @@ import { VirtualList } from 'freedom-web-virtual-list';
 import React from 'react';
 import { useBindingEffect } from 'react-bindings';
 
-import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread.tsx';
+import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import {
   MailListItemTransientStatesBindingPersistenceProvider,
   useMailListItemTransientStatesBindingPersistence

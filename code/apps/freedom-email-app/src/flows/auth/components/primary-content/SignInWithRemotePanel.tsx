@@ -10,6 +10,7 @@ import { useDerivedWaitable } from 'react-waitables';
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
+import { appRoot } from '../../../../components/routing/appRoot.tsx';
 import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
@@ -25,11 +26,7 @@ const $signInToAccount = LOCALIZE('Sign in to Account')({ ns });
 const $signIn = LOCALIZE('Sign In')({ ns });
 const $enterPassword = LOCALIZE('Enter your password')({ ns });
 
-export interface SignInWithRemotePanelProps {
-  onBackClick: () => void;
-}
-
-export const SignInWithRemotePanel = ({ onBackClick }: SignInWithRemotePanelProps) => {
+export const SignInWithRemotePanel = () => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
   const { presentErrorMessage } = useMessagePresenter();
@@ -52,6 +49,10 @@ export const SignInWithRemotePanel = ({ onBackClick }: SignInWithRemotePanelProp
     ({ isBusy, emailUsername, password }) => !isBusy && emailUsername.length > 0 && password.length > 0,
     { id: 'isFormReady', limitType: 'none' }
   );
+
+  const onBackClick = useCallbackRef(() => {
+    history.replace(appRoot.path.value);
+  });
 
   const submit = useCallbackRef(async () => {
     if (tasks === undefined || !(isFormReady.value.get() ?? false)) {
@@ -103,7 +104,7 @@ export const SignInWithRemotePanel = ({ onBackClick }: SignInWithRemotePanelProp
       }
 
       activeAccountInfo.set({ email });
-      history.replace('/mail');
+      history.replace(appRoot.path.mail.value);
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }
@@ -123,7 +124,7 @@ export const SignInWithRemotePanel = ({ onBackClick }: SignInWithRemotePanelProp
             alignItems="center"
             justifyContent="center"
             gap={isMdOrLarger ? 3 : 2}
-            sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}
+            sx={{ width: '100%', maxWidth: `${theme.breakpoints.values.md}px` }}
           >
             <Stack alignItems="center" justifyContent="center">
               <Txt variant="h2" className="semibold" textAlign="center">

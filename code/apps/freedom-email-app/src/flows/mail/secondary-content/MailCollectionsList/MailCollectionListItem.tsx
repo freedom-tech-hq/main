@@ -9,7 +9,7 @@ import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
 import { IconPlaceholder } from '../../../../components/reusable/IconPlaceholder.tsx';
 import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
+import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection-id.tsx';
 import { ArchiveIcon } from '../../../../icons/ArchiveIcon.ts';
 import { InboxIcon } from '../../../../icons/InboxIcon.ts';
 import { SentIcon } from '../../../../icons/SentIcon.ts';

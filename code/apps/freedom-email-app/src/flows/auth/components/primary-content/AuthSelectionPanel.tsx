@@ -1,15 +1,20 @@
 import { Button, Collapse, Stack, useTheme } from '@mui/material';
+import { log, makeTrace, makeUuid } from 'freedom-contexts';
+import { encryptedEmailCredentialSchema } from 'freedom-email-sync';
 import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
+import { parse } from 'freedom-serialization';
 import { SLOW_ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
+import { useHistory } from 'freedom-web-navigation';
 import React from 'react';
-import { BC } from 'react-bindings';
+import { BC, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { AppDivider } from '../../../../components/reusable/AppDivider.tsx';
+import { appRoot } from '../../../../components/routing/appRoot.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
@@ -27,24 +32,14 @@ const $signInToAccount = LOCALIZE('Sign in to Account')({ ns });
 const $signInToAnotherAccount = LOCALIZE('Sign in to Another Account')({ ns });
 const $welcome = LOCALIZE('Welcome to Freedom Mail!')({ ns });
 
-export interface AuthSelectionPanelProps {
-  onAccountClick: (account: LocallyStoredEncryptedEmailCredentialInfo) => void;
-  onCreateNewAccountClick: () => void;
-  onImportCredentialClick: () => void;
-  onSignInWithRemoteClick: () => void;
-}
-
-export const AuthSelectionPanel = ({
-  onAccountClick,
-  onCreateNewAccountClick,
-  onImportCredentialClick,
-  onSignInWithRemoteClick
-}: AuthSelectionPanelProps) => {
+export const AuthSelectionPanel = () => {
+  const history = useHistory();
   const t = useT();
   const tasks = useTasks();
   const theme = useTheme();
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
+  const uuid = React.useMemo(() => makeUuid(), []);
 
   const locallyStoredEncryptedEmailCredentials = useTaskWaitable((tasks) => tasks.listLocallyStoredEncryptedEmailCredentials(), {
     id: 'locallyStoredEncryptedEmailCredentials'
@@ -53,8 +48,95 @@ export const AuthSelectionPanel = ({
     id: 'hasAtLeastOneAccount'
   });
 
+  const onAccountClick = useCallbackRef((account: LocallyStoredEncryptedEmailCredentialInfo) => {
+    history.replace(appRoot.path.signIn(account.email));
+  });
+
+  const onCreateNewAccountClick = useCallbackRef(() => {
+    history.replace(appRoot.path.newAccount);
+  });
+
+  const onImportCredentialClick = useCallbackRef(() => {
+    const elem = document.getElementById(`${uuid}-credential-file-input`);
+    if (elem === null) {
+      return;
+    }
+
+    elem.click();
+  });
+
+  const onSignInWithRemoteClick = useCallbackRef(() => {
+    history.replace(appRoot.path.addAccount);
+  });
+
+  const onCredentialFileChange = useCallbackRef(() => {
+    if (tasks === undefined) {
+      return; // Not ready
+    }
+
+    const elem = document.getElementById(`${uuid}-credential-file-input`);
+    if (elem === null) {
+      return; // Not ready
+    }
+
+    const input = elem as HTMLInputElement;
+    if (input.files === null || input.files.length === 0) {
+      return; // Nothing selected
+    }
+
+    const firstFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const jsonString = e.target?.result;
+      if (typeof jsonString !== 'string') {
+        return;
+      }
+
+      const encryptedCredential = await parse(
+        makeTrace(import.meta.filename, 'onCredentialFileChange'),
+        jsonString,
+        encryptedEmailCredentialSchema
+      );
+      if (!encryptedCredential.ok) {
+        log().error?.('Failed to parse email credential file', encryptedCredential.value);
+        return;
+      }
+
+      const imported = await tasks.importEmailCredential({ encryptedCredential: encryptedCredential.value });
+      if (!imported.ok) {
+        log().error?.('Failed to import email credential', imported.value);
+        return;
+      }
+
+      const locallyStoredEncryptedEmailCredentials = await tasks.listLocallyStoredEncryptedEmailCredentials();
+      if (!locallyStoredEncryptedEmailCredentials.ok) {
+        log().error?.('Failed to read local email credential', locallyStoredEncryptedEmailCredentials.value);
+        return;
+      }
+
+      const importedAccount = locallyStoredEncryptedEmailCredentials.value.find(
+        (cred) => cred.locallyStoredCredentialId === imported.value.locallyStoredCredentialId
+      );
+      if (importedAccount === undefined) {
+        log().error?.('Failed to import email credential');
+        return;
+      }
+
+      history.replace(appRoot.path.importCredential(importedAccount.email));
+    };
+    reader.readAsText(firstFile);
+  });
+
   return BC({ isMdOrLarger, isLgOrLarger }, ({ isMdOrLarger, isLgOrLarger }) => (
     <Stack alignItems="center" justifyContent="center" sx={{ px: isLgOrLarger ? 3 : 2, py: 5 }}>
+      <input
+        id={`${uuid}-credential-file-input`}
+        type="file"
+        accept=".credential"
+        onChange={onCredentialFileChange}
+        style={{ display: 'none' }}
+      />
+
       <Stack
         alignItems="center"
         justifyContent="center"

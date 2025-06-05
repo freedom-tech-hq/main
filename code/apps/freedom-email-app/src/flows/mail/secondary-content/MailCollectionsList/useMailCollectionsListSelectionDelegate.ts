@@ -3,7 +3,7 @@ import type { CollectionLikeId } from 'freedom-email-user';
 import type { VirtualListKeyboardDelegate } from 'freedom-web-virtual-list';
 import { useMemo } from 'react';
 
-import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection.tsx';
+import { useSelectedMailCollectionId } from '../../../../contexts/selected-mail-collection-id.tsx';
 import type { MailCollectionsListCollectionDataSourceItem } from './MailCollectionsListCollectionDataSourceItem.ts';
 
 export const useMailCollectionsListSelectionDelegate = (

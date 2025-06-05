@@ -3,7 +3,7 @@ import type { ThreadLikeId } from 'freedom-email-user';
 import type { VirtualListKeyboardDelegate } from 'freedom-web-virtual-list';
 import { useMemo } from 'react';
 
-import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread.tsx';
+import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 
 export const useMailCollectionSelectionDelegate = (
@@ -38,7 +38,7 @@ export const useMailCollectionSelectionDelegate = (
 
             const theSelectedThreadId = selectedThreadId.get();
             let index =
-              theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial' && theSelectedThreadId !== 'new-mail'
+              theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial'
                 ? dataSource.getIndexOfItemWithKey(theSelectedThreadId)
                 : 0;
             if (index < 0) {

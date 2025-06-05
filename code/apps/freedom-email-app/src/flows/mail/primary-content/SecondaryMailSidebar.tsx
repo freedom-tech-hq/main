@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import { useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
 import { secondarySidebarWidthPx } from '../../../consts/sizes.ts';
-import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
+import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection-id.tsx';
 import { MailCollectionHeader, MailCollectionHeaderPlaceholder } from '../secondary-content/MailCollectionHeader.tsx';
 import { MailThreadsList } from '../secondary-content/MailThreadsList/index.tsx';
 

@@ -14,7 +14,7 @@ import { OnFirstMount } from '../../../components/reusable/OnFirstMount.tsx';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../consts/timing.ts';
 import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { ScrollParentVisibleHeightPxProvider } from '../../../contexts/scroll-parent-visible-height-px.tsx';
-import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread.tsx';
+import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread-id.tsx';
 import { ArchiveIcon } from '../../../icons/ArchiveIcon.ts';
 import { ForwardIcon } from '../../../icons/ForwardIcon.ts';
 import { MarkUnreadIcon } from '../../../icons/MarkUnreadIcon.ts';

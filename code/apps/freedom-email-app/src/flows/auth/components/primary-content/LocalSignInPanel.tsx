@@ -1,6 +1,5 @@
 import { Button, Stack, useTheme } from '@mui/material';
 import { log, makeTrace } from 'freedom-contexts';
-import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useHistory } from 'freedom-web-navigation';
@@ -10,11 +9,13 @@ import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
+import { appRoot } from '../../../../components/routing/appRoot.tsx';
 import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
+import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
 import { AccountListItem } from '../secondary-content/AccountListItem.tsx';
 
@@ -25,11 +26,10 @@ const $signIn = LOCALIZE('Sign In')({ ns });
 const $welcomeBack = LOCALIZE('Welcome back,')({ ns });
 
 export interface LocalSignInPanelProps {
-  account: LocallyStoredEncryptedEmailCredentialInfo;
-  onBackClick: () => void;
+  email: string;
 }
 
-export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps) => {
+export const LocalSignInPanel = ({ email }: LocalSignInPanelProps) => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
   const { presentErrorMessage } = useMessagePresenter();
@@ -40,26 +40,48 @@ export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
+  const locallyStoredEncryptedEmailCredentialInfo = useTaskWaitable(
+    (tasks) => tasks.getLocallyStoredEncryptedEmailCredentialInfoByEmail(email),
+    {
+      id: 'locallyStoredEncryptedEmailCredentialInfo',
+      onFailure: (error) => {
+        if (error.errorCode === 'not-found') {
+          history.replace(appRoot.path.value);
+        }
+      }
+    }
+  );
+
   const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
 
   const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
   const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
 
   // TODO: use real form validation
-  const isFormReady = useDerivedWaitable({ isBusy, password }, ({ isBusy, password }) => !isBusy && password.length > 0, {
-    id: 'isFormReady',
-    limitType: 'none'
+  const isFormReady = useDerivedWaitable(
+    { locallyStoredEncryptedEmailCredentialId: locallyStoredEncryptedEmailCredentialInfo, isBusy, password },
+    ({ isBusy, password }) => !isBusy && password.length > 0,
+    {
+      id: 'isFormReady',
+      limitType: 'none'
+    }
+  );
+
+  const onBackClick = useCallbackRef(() => {
+    history.replace(appRoot.path.value);
   });
 
   const submit = useCallbackRef(async () => {
-    if (tasks === undefined || !(isFormReady.value.get() ?? false)) {
+    const theLocallyStoredEncryptedEmailCredentialInfo = locallyStoredEncryptedEmailCredentialInfo.value.get();
+
+    if (tasks === undefined || !(isFormReady.value.get() ?? false) || theLocallyStoredEncryptedEmailCredentialInfo === undefined) {
       return;
     }
 
     isBusyCount.set(isBusyCount.get() + 1);
     try {
       const activated = await tasks.activateUserWithLocallyStoredEncryptedEmailCredentials({
-        locallyStoredCredentialId: account.locallyStoredCredentialId,
+        locallyStoredCredentialId: theLocallyStoredEncryptedEmailCredentialInfo.locallyStoredCredentialId,
         password: password.get(),
         passwordType: 'master'
       });
@@ -80,8 +102,8 @@ export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps
         }
       }
 
-      activeAccountInfo.set({ email: account.email });
-      history.replace('/mail');
+      activeAccountInfo.set({ email });
+      history.replace(appRoot.path.mail.value);
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }
@@ -101,13 +123,13 @@ export const LocalSignInPanel = ({ account, onBackClick }: LocalSignInPanelProps
             alignItems="center"
             justifyContent="center"
             gap={isMdOrLarger ? 3 : 2}
-            sx={{ maxWidth: `${theme.breakpoints.values.md}px` }}
+            sx={{ width: '100%', maxWidth: `${theme.breakpoints.values.md}px` }}
           >
             <Stack alignItems="center" justifyContent="center" gap={1}>
               <Txt variant="h2" className="semibold" textAlign="center">
                 {$welcomeBack(t)}
               </Txt>
-              <AccountListItem account={account} />
+              <AccountListItem email={email} />
             </Stack>
 
             <Stack alignSelf="stretch" alignItems="stretch" sx={{ mt: 2 }}>

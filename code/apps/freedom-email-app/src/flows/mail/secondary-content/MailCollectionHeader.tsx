@@ -14,7 +14,7 @@ import { ControlledTextField, ControlledTextFieldPlaceholder } from '../../../co
 import { IconPlaceholder } from '../../../components/reusable/IconPlaceholder.tsx';
 import { TxtPlaceholder } from '../../../components/reusable/TxtPlaceholder.tsx';
 import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
-import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection.tsx';
+import { useSelectedMailCollectionId } from '../../../contexts/selected-mail-collection-id.tsx';
 import { MarkReadIcon } from '../../../icons/MarkReadIcon.ts';
 import { RefreshIcon } from '../../../icons/RefreshIcon.ts';
 import { SearchIcon } from '../../../icons/SearchIcon.ts';
