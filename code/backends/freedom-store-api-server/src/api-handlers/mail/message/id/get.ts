@@ -1,11 +1,9 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
-import type { IsoDateTime } from 'freedom-basic-data';
-import { InputSchemaValidationError, NotFoundError } from 'freedom-common-errors';
-import { type DbMessageOut, dbQuery } from 'freedom-db';
-import type { ApiViewMessage } from 'freedom-email-api';
+import { InputSchemaValidationError } from 'freedom-common-errors';
 import { api } from 'freedom-email-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 
+import { getMessageById } from '../../../../internal/utils/getMessageById.ts';
 import { getUserIdFromAuthorizationHeader } from '../../../../internal/utils/getUserIdFromAuthorizationHeader.ts';
 
 export default makeHttpApiHandler(
@@ -25,35 +23,11 @@ export default makeHttpApiHandler(
       return makeFailure(new InputSchemaValidationError(trace, { message: 'User ID not found in auth context' }));
     }
 
-    const sql = `
-      SELECT "id", "userId", "updatedAt", "listFields", "viewFields"
-      FROM "messages"
-      WHERE "id" = $1 AND "userId" = $2
-    `;
-
-    const result = await dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'updatedAt' | 'listFields' | 'viewFields'>>(sql, [
-      mailId,
-      currentUserId
-    ]);
-
-    if (result.rows.length === 0) {
-      return makeFailure(
-        new NotFoundError(trace, {
-          errorCode: 'not-found',
-          message: `Message with id ${mailId} not found`
-        })
-      );
+    const message = await getMessageById(trace, { mailId, userId: currentUserId });
+    if (!message.ok) {
+      return message;
     }
 
-    const dbMsg = result.rows[0];
-
-    const responseBody: ApiViewMessage = {
-      id: dbMsg.id,
-      updatedAt: dbMsg.updatedAt.toISOString() as IsoDateTime,
-      listFields: dbMsg.listFields,
-      viewFields: dbMsg.viewFields
-    };
-
-    return makeSuccess({ body: responseBody });
+    return makeSuccess({ body: message.value });
   }
 );

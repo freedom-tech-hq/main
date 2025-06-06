@@ -1,6 +1,6 @@
 import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { generalizeFailureResult } from 'freedom-common-errors';
+import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
+import { InternalStateError } from 'freedom-common-errors';
 import { encryptedEmailCredentialSchema } from 'freedom-email-api';
 import type { LocallyStoredCredentialId, Tasks } from 'freedom-email-tasks-web-worker';
 import { stringify } from 'freedom-serialization';
@@ -19,7 +19,13 @@ export const makeBrowserDownloadLocallyStoredEncryptedEmailCredential = makeAsyn
 
     const encryptedCredential = await tasks.getLocallyStoredEncryptedEmailCredential(locallyStoredCredentialId);
     if (!encryptedCredential.ok) {
-      return generalizeFailureResult(trace, encryptedCredential, 'not-found');
+      if (encryptedCredential.value.errorCode === 'not-found') {
+        return makeFailure(
+          new InternalStateError(trace, { cause: new GeneralError(trace, undefined, encryptedCredential.value.errorCode) })
+        );
+      } else {
+        return makeFailure(new GeneralError(trace, undefined, encryptedCredential.value.errorCode));
+      }
     }
 
     const jsonString = await stringify(trace, encryptedCredential.value, encryptedEmailCredentialSchema);

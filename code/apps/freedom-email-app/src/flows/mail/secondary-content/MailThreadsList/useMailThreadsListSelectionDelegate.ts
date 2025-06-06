@@ -6,7 +6,7 @@ import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thre
 import type { MailThreadsListKey } from './MailThreadsListKey.ts';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 
-export const useMailCollectionSelectionDelegate = (
+export const useMailThreadsListSelectionDelegate = (
   dataSource: DataSource<MailThreadsListThreadDataSourceItem, MailThreadsListKey>,
   {
     onArrowLeft,

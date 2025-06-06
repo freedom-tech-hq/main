@@ -2,7 +2,7 @@ import type { MailAddress, MailAddressGroup, MailAddressList } from 'freedom-ema
 import { isMailAddressGroup } from 'freedom-email-api';
 import { type ReactNode } from 'react';
 
-export const makeTagsForParsedEmailAddresses = (
+export const makeTagsFromMailAddressList = (
   addressList: MailAddressList,
   {
     single,

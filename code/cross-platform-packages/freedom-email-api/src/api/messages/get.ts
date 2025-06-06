@@ -15,11 +15,10 @@ export const GET = makeHttpApi({
   schemas: {
     request: {
       headers: authHeadersSchema,
-      query: schema.allOf(
+      query: schema.extendsObject(
         paginationOptionsSchema,
         schema.object({
-          folder: messageFolderSchema,
-          threadId: schema.string().optional()
+          folder: messageFolderSchema
         })
       )
     },

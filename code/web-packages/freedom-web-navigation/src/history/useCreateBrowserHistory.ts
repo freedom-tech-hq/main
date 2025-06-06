@@ -2,6 +2,7 @@ import { debugTopic } from 'freedom-async';
 import { useBindingPersistence } from 'freedom-react-binding-persistence';
 import type { Location, Path } from 'history';
 import { createBrowserHistory } from 'history';
+import { isEqual } from 'lodash-es';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
@@ -89,6 +90,15 @@ export const useCreateBrowserHistory = (): IHistory => {
         updateTop();
       },
       replace: (path, options = {}) => {
+        const currentTop = top.get();
+        if (
+          currentTop.path === path &&
+          (currentTop.hash ?? '') === (options.hash ?? '') &&
+          isEqual(currentTop.search ?? {}, options.search ?? {})
+        ) {
+          return; // Nothing to do
+        }
+
         const theStack = [...stack.get()];
         if (theStack.length === 0) {
           theStack.push({ path, ...options });

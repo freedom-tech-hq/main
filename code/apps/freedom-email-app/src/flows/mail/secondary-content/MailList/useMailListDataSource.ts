@@ -1,11 +1,11 @@
 import { proxy } from 'comlink';
-import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
 import { log, makeUuid } from 'freedom-contexts';
 import { ArrayDataSource } from 'freedom-data-source';
 import { type MailId } from 'freedom-email-api';
-import type { GetMailIdsForThreadPacket } from 'freedom-email-tasks-web-worker/lib/tasks/mail/getMailIdsForThread';
+import type { GetMailIdsForThreadPacket } from 'freedom-email-tasks-web-worker';
+import type { MailMessagesDataSetId } from 'freedom-email-tasks-web-worker/lib/types/mail/MailMessagesDataSetId';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBindingEffect } from 'react-bindings';
@@ -75,23 +75,19 @@ export const useMailListDataSource = (): MailListDataSource => {
 
       const myMountId = mountId.current;
       const isConnected = proxy(() => mountId.current === myMountId && selectedThreadIdBinding.get() === selectedThreadId);
+      let dataSetId: MailMessagesDataSetId;
       let isFirstMailAddedAfterClear = true;
-      const onData = proxy((packet: Result<GetMailIdsForThreadPacket>) => {
+      const onData = proxy((packet: GetMailIdsForThreadPacket) => {
         if (!isConnected()) {
           return;
         }
 
-        if (!packet.ok) {
-          console.error('Something went wrong', packet.value);
-          return;
-        }
-
-        switch (packet.value.type) {
+        switch (packet.type) {
           case 'mail-added': {
             const addedIndices: number[] = [];
-            for (const newMailId of packet.value.addedMailIds) {
+            for (const newMailId of packet.addedMailIds) {
               addedIndices.push(items.current.length);
-              items.current.push({ type: 'mail', id: newMailId });
+              items.current.push({ type: 'mail', id: newMailId, dataSetId });
             }
 
             if (isFirstMailAddedAfterClear && addedIndices.length > 2) {
@@ -137,11 +133,15 @@ export const useMailListDataSource = (): MailListDataSource => {
           setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
           try {
             const data = await tasks.getMailIdsForThread(selectedThreadId, isConnected, onData);
-            if (!data.ok) {
-              log().error?.('Failed to load email', data);
-            }
             clearOldData();
-            onData(data);
+
+            if (!data.ok) {
+              log().error?.(`Failed to load mail IDs for thread with ID: ${selectedThreadId}`, data);
+              return;
+            }
+
+            dataSetId = data.value.dataSetId;
+            onData(data.value);
           } finally {
             if (isConnected()) {
               dataSource.setIsLoading(false);

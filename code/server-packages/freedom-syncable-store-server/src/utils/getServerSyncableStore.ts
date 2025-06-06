@@ -2,8 +2,8 @@ import type { PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
 import type { LockStore } from 'freedom-locking-types';
 import { createRedlockStore } from 'freedom-redlock-store';
+import type { DefaultSyncableStoreConstructorArgs } from 'freedom-syncable-store';
 import { DefaultSyncableStore } from 'freedom-syncable-store';
-import type { DefaultSyncableStoreConstructorArgs } from 'freedom-syncable-store/lib/types/DefaultSyncableStore';
 import type { MutableSyncableStore } from 'freedom-syncable-store-types';
 
 import { getConfig } from '../config.ts';

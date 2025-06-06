@@ -13,7 +13,7 @@ import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { BreakableEmailAddressTxt } from '../../../../components/reusable/BreakableEmailAddressTxt.tsx';
 import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
 import { formatInt } from '../../../../utils/formatInt.ts';
-import { makeTagsForParsedEmailAddresses } from '../../../../utils/makeTagsForParsedEmailAddresses.ts';
+import { makeTagsFromMailAddressList } from '../../../../utils/makeTagsFromMailAddressList.ts';
 
 const enSpace = '\u2002';
 const emSpace = '\u2003';
@@ -39,7 +39,7 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
     showGroupMembers.set(!showGroupMembers.get());
   });
 
-  return makeTagsForParsedEmailAddresses(addresses, {
+  return makeTagsFromMailAddressList(addresses, {
     group: (group, index) =>
       BC(showGroupMembers, (showGroupMembers) => (
         <Stack
@@ -65,7 +65,7 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
                   <Stack direction="row" flexWrap="wrap" className="flex-auto overflow-hidden">
                     {group.addresses.map((member, index) => (
                       <Fragment key={index}>
-                        {member.name !== null ? (
+                        {(member.name?.length ?? 0) > 0 ? (
                           <Txt variant="inherit" color={nameColorByMode[mode]} component="span" className="semibold">
                             {`${member.name}${enSpace}`}
                           </Txt>
@@ -94,7 +94,7 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
       )),
     single: (single, index) => (
       <Stack key={index} direction="row" flexWrap="wrap" alignItems="baseline" columnGap={1.5} className="flex-auto overflow-hidden">
-        {single.name !== null ? (
+        {(single.name?.length ?? 0) > 0 ? (
           <Txt variant={nameVariantByMode[mode]} color={nameColorByMode[mode]} className="semibold" title={single.name}>
             {single.name}
           </Txt>

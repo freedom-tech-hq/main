@@ -1,15 +1,17 @@
-import type { PR } from 'freedom-async';
-import { makeAsyncResultFunc, makeFailure, makeSuccess, uncheckedResult } from 'freedom-async';
-import { base64String } from 'freedom-basic-data';
+import type { PR, SuccessResult } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess, sleep, uncheckedResult } from 'freedom-async';
+import { base64String, ONE_SEC_MSEC } from 'freedom-basic-data';
 import { NotFoundError } from 'freedom-common-errors';
+import { makeUuid } from 'freedom-contexts';
 import { decryptBufferWithPassword } from 'freedom-crypto';
-import type { EmailUserId } from 'freedom-email-api';
+import { type EmailUserId, emailUserIdInfo } from 'freedom-email-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { decryptEmailCredentialWithPassword } from '../../internal/utils/decryptEmailCredentialWithPassword.ts';
 import { getEmailCredentialObjectStore } from '../../internal/utils/getEmailCredentialObjectStore.ts';
 import type { LocallyStoredEncryptedEmailCredentialPasswordType } from '../../types/email-credential/LocallyStoredEncryptedEmailCredentialPasswordType.ts';
 import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
+import { isDemoMode } from '../config/demo-mode.ts';
 
 export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncResultFunc(
   [import.meta.filename],
@@ -25,6 +27,10 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
       passwordType: LocallyStoredEncryptedEmailCredentialPasswordType;
     }
   ): PR<{ userId: EmailUserId }, 'not-found'> => {
+    DEV: if (isDemoMode()) {
+      return await makeDemoModeResult();
+    }
+
     const emailCredentialStore = await uncheckedResult(getEmailCredentialObjectStore(trace));
 
     const activeCredential = useActiveCredential(trace);
@@ -72,3 +78,17 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
     return makeSuccess({ userId: decryptedCredential.value.userId });
   }
 );
+
+// Helpers
+
+let makeDemoModeResult: () => Promise<SuccessResult<{ userId: EmailUserId }>> = () => {
+  throw new Error();
+};
+
+DEV: makeDemoModeResult = async () => {
+  await sleep(Math.random() * ONE_SEC_MSEC);
+
+  return makeSuccess({
+    userId: emailUserIdInfo.make(makeUuid())
+  });
+};

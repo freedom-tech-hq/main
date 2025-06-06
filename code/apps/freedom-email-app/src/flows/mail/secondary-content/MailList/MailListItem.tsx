@@ -1,4 +1,5 @@
 import { Stack } from '@mui/material';
+import type { MailMessagesDataSetId } from 'freedom-email-tasks-web-worker/lib/types/mail/MailMessagesDataSetId';
 import { useBindingPersistence } from 'freedom-react-binding-persistence';
 import React from 'react';
 import type { ReadonlyBinding } from 'react-bindings';
@@ -12,15 +13,16 @@ import { MailListItemDetail, MailListItemDetailPlaceholder } from './MailListIte
 import { MailListItemHeader, MailListItemHeaderPlaceholder } from './MailListItemHeader.tsx';
 
 export interface MailListItemProps extends Omit<MailListDataSourceMailItem, 'type'> {
+  dataSetId: MailMessagesDataSetId;
   collapsedByDefault: boolean;
   showDividerIfCollapsed: boolean;
   showOptionsPerMessage: boolean;
 }
 
-export const MailListItem = ({ id, collapsedByDefault, showDividerIfCollapsed, showOptionsPerMessage }: MailListItemProps) => {
+export const MailListItem = ({ id, dataSetId, collapsedByDefault, showDividerIfCollapsed, showOptionsPerMessage }: MailListItemProps) => {
   const mailListItemTransientStatesBindingPersistence = useMailListItemTransientStatesBindingPersistence();
 
-  const mail = useTaskWaitable((tasks) => tasks.getMail(id), { id: 'mail' });
+  const mail = useTaskWaitable((tasks) => tasks.getMail(dataSetId, id), { id: 'mail' });
 
   const isCollapsed = useBindingPersistence(
     useBinding(() => collapsedByDefault, { id: 'isCollapsed', detectChanges: true }),

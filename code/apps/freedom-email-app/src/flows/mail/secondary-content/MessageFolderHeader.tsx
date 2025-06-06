@@ -2,6 +2,7 @@ import { Button, FormControlLabel, Stack } from '@mui/material';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
 import { useP, useT } from 'freedom-react-localization';
 import React from 'react';
+import type { ReadonlyBinding } from 'react-bindings';
 import { BC, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
@@ -27,7 +28,11 @@ const $emails = PLURALIZE({
   other: LOCALIZE`${'count'} emails`({ ns })
 });
 
-export const MessageFolderHeader = () => {
+export interface MessageFolderHeaderProps {
+  estThreadCount: ReadonlyBinding<number>;
+}
+
+export const MessageFolderHeader = ({ estThreadCount }: MessageFolderHeaderProps) => {
   const { presentErrorMessage } = useMessagePresenter();
   const p = useP();
   const selectedMessageFolder = useSelectedMessageFolder();
@@ -94,8 +99,9 @@ export const MessageFolderHeader = () => {
             </Button>
           </Stack>
 
-          {/* TODO: TEMP value */}
-          <Txt variant="body2">{$emails(1234, p, { count: formatInt(1234) })}</Txt>
+          {BC(estThreadCount, (count) => (
+            <Txt variant="body2">{$emails(count, p, { count: formatInt(count) })}</Txt>
+          ))}
         </Stack>
       </Stack>
     </>

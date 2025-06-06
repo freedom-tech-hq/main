@@ -1,4 +1,3 @@
-import type { TraceableError } from 'freedom-async';
 import { makeSuccess } from 'freedom-async';
 import { devGetAllEnvOverrides, log } from 'freedom-contexts';
 import type { Tasks } from 'freedom-email-tasks-web-worker';
@@ -14,7 +13,7 @@ import { getRemoteConstructor } from '../utils/getRemoteConstructor.ts';
 const TasksContext = createContext<Tasks | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children?: ReactNode }) => {
-  const tasks = useWaitableFunction<Tasks, TraceableError>(
+  const tasks = useWaitableFunction<Tasks, { errorCode: 'generic' }>(
     async () => {
       const appEnv = getAppEnvironment();
       console.log('App environment:', appEnv);
