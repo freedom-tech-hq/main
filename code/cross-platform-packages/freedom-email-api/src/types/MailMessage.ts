@@ -55,7 +55,7 @@ export const mailMessageSchema = schema.object({
   // because it is close to impossible to recall this limitation when saving a message parsed by 3rd-party libraries
   messageId: schema.string().allowEmptyString().optional(),
   inReplyTo: schema.string().allowEmptyString().optional(),
-  references: schema.array(schema.string()).optional(),
+  references: schema.array({ items: schema.string() }).optional(),
 
   // This header is inserted by the sending client, so it is not reliable, use lastUpdatedAt instead
   // or `mail.date ?? mail.lastUpdatedAt`

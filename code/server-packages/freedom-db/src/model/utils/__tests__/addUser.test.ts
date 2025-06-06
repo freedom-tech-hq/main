@@ -36,8 +36,7 @@ describe('addUser', () => {
     const user: DbUser = {
       userId: 'EMAILUSER_the-id',
       email: 'typical@example.com',
-      publicKeys: await getTestKeys(),
-      defaultSalt: 'the-salt'
+      publicKeys: await getTestKeys()
     };
     const trace = makeTrace();
 
@@ -64,14 +63,12 @@ describe('addUser', () => {
     const user1: DbUser = {
       userId: 'EMAILUSER_dup-id',
       email: 'first@example.com',
-      publicKeys: await getTestKeys(),
-      defaultSalt: 'salt-1'
+      publicKeys: await getTestKeys()
     };
     const user2: DbUser = {
       userId: 'EMAILUSER_dup-id',
       email: 'second@example.com',
-      publicKeys: await getTestKeys(),
-      defaultSalt: 'salt-2'
+      publicKeys: await getTestKeys()
     };
     await addUser(trace, user1);
 
@@ -91,14 +88,12 @@ describe('addUser', () => {
     const user1: DbUser = {
       userId: 'EMAILUSER_id1',
       email: 'same@example.com',
-      publicKeys: await getTestKeys(),
-      defaultSalt: 'salt-1'
+      publicKeys: await getTestKeys()
     };
     const user2: DbUser = {
       userId: 'EMAILUSER_id2',
       email: 'same@example.com',
-      publicKeys: await getTestKeys(),
-      defaultSalt: 'salt-2'
+      publicKeys: await getTestKeys()
     };
     await addUser(trace, user1);
 
@@ -119,8 +114,7 @@ describe('addUser', () => {
       userId: 'EMAILUSER_missing',
       email: 'missing@example.com',
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      publicKeys: null as any,
-      defaultSalt: 'the-salt'
+      publicKeys: null as any
     };
 
     // Act

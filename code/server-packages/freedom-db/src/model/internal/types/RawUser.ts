@@ -33,10 +33,23 @@ export async function getRawUserFromUser(trace: Trace, user: DbUser): PR<RawUser
   return makeSuccess(rawUser);
 }
 
-export async function getUserFromRawUser(trace: Trace, rawUser: RawUser): PR<DbUser> {
+export async function getUserFromRawUser(trace: Trace, { encryptedCredentials, ...rawUser }: RawUser): PR<DbUser> {
+  let encryptedCredential: unknown;
+  if (encryptedCredentials !== null) {
+    if (encryptedCredentials.startsWith('B64_')) {
+      encryptedCredential = {
+        email: rawUser.email,
+        encrypted: encryptedCredentials
+      };
+    } else {
+      encryptedCredential = JSON.parse(encryptedCredentials);
+    }
+  }
+
   const deserialization = await dbUserSchema.deserializeAsync({
     ...rawUser,
-    encryptedCredentials: rawUser.encryptedCredentials ?? undefined
+    // Note: the name is singular (new) in DbUser but plural (old) in RawUser
+    encryptedCredential
   });
 
   if (deserialization.error !== undefined) {
