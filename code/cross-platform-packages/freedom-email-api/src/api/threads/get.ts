@@ -5,6 +5,7 @@ import { schema } from 'yaschema';
 import { makeHttpApi } from 'yaschema-api';
 
 import { apiThreadSchema } from '../../types/ApiThread.ts';
+import { messageFolderSchema } from '../../types/MessageFolder.ts';
 
 export const GET = makeHttpApi({
   method: 'GET',
@@ -14,7 +15,12 @@ export const GET = makeHttpApi({
   schemas: {
     request: {
       headers: authHeadersSchema,
-      query: paginationOptionsSchema
+      query: schema.extendsObject(
+        paginationOptionsSchema,
+        schema.object({
+          folder: messageFolderSchema
+        })
+      )
     },
     successResponse: {
       status: schema.number(StatusCodes.OK),

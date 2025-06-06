@@ -1,7 +1,4 @@
 import { ListItem, ListItemText } from '@mui/material';
-import { makeIsoDateTime } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
-import { mailIdInfo } from 'freedom-email-api';
 import type { VirtualListDelegate, VirtualListItemPrototype } from 'freedom-web-virtual-list';
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
@@ -53,14 +50,7 @@ const itemPrototypes: Record<MailListTemplateId, VirtualListItemPrototype> = {
   mail: {
     defaultEstimatedSizePx: 594,
     isSizeDynamic: true,
-    Component: () => (
-      <MailListItem
-        id={mailIdInfo.make(`${makeIsoDateTime()}-${makeUuid()}`)}
-        collapsedByDefault={false}
-        showDividerIfCollapsed={true}
-        showOptionsPerMessage={false}
-      />
-    )
+    Component: () => <MailListItemPlaceholder showDividerIfCollapsed={true} />
   },
   collapsed: {
     defaultEstimatedSizePx: 70,

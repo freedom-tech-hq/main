@@ -14,6 +14,7 @@ export const SecondaryMailSidebar = () => {
 
   const selectedMessageFolder = useSelectedMessageFolder();
   const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (id) => id !== undefined, { id: 'hasSelectedCollectionId' });
+  const estThreadCount = useBinding(() => 0, { id: 'estThreadCount', detectChanges: true });
 
   const lastDefinedSelectedMessageFolder = useBinding(() => selectedMessageFolder.get(), {
     id: 'lastDefinedSelectedMessageFolder',
@@ -61,12 +62,12 @@ export const SecondaryMailSidebar = () => {
         sx={{ width: `${secondarySidebarWidthPx}px`, px: 2 }}
       >
         <Stack alignItems="stretch" className="sticky top-0 default-bg z-5">
-          <MessageFolderHeader />
+          <MessageFolderHeader estThreadCount={estThreadCount} />
         </Stack>
 
         {/* TODO: handle onArrowLeft/right */}
         <Stack alignItems="stretch" sx={{ px: 1.5 }}>
-          <MailThreadsList folder={lastDefinedSelectedMessageFolder} scrollParent={`${uuid}-scrollable`} />
+          <MailThreadsList folder={lastDefinedSelectedMessageFolder} estThreadCount={estThreadCount} scrollParent={`${uuid}-scrollable`} />
         </Stack>
       </Stack>
     </Stack>

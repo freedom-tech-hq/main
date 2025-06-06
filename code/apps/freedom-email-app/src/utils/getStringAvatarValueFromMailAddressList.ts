@@ -10,5 +10,5 @@ export const getStringAvatarValueFromMailAddressList = (value: MailAddressList):
     return firstAddress.groupName;
   }
 
-  return firstAddress.name ?? firstAddress.address;
+  return (firstAddress.name?.length ?? 0) > 0 ? firstAddress.name : firstAddress.address;
 };

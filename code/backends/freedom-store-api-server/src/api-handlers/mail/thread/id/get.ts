@@ -3,15 +3,16 @@ import { type IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { type DbMessageOut, dbQuery } from 'freedom-db';
 import type { ApiViewMessage } from 'freedom-email-api';
-import { api } from 'freedom-email-api';
-import { type PageToken, pageTokenInfo } from 'freedom-paginated-data';
+import { api, mailIdInfo } from 'freedom-email-api';
+import { DEFAULT_PAGE_SIZE, type PageToken, pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 
 import { decodePageToken, type PageTokenPayload } from '../../../../internal/utils/decodePageToken.ts';
+import { getMessageById } from '../../../../internal/utils/getMessageById.ts';
 import { getUserIdFromAuthorizationHeader } from '../../../../internal/utils/getUserIdFromAuthorizationHeader.ts';
 
 // Constants
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -21,7 +22,7 @@ export default makeHttpApiHandler(
     {
       input: {
         headers,
-        params: { threadId },
+        params: { threadLikeId },
         query: { pageToken }
       }
     }
@@ -30,6 +31,23 @@ export default makeHttpApiHandler(
     if (currentUserId === undefined) {
       return makeFailure(new InputSchemaValidationError(trace, { message: 'User ID not found in auth context' }));
     }
+
+    // --- Handling Single Message Case ---
+
+    // A thread here can represent a real thread or a single message.  If it's a single message, using getMessageById instead
+    if (mailIdInfo.is(threadLikeId)) {
+      const mailId = threadLikeId;
+      const message = await getMessageById(trace, { mailId, userId: currentUserId });
+      if (!message.ok) {
+        return message;
+      }
+
+      return makeSuccess({ body: { items: [message.value], estCount: 1 } });
+    }
+
+    // ---
+
+    const threadId = threadLikeId;
 
     const cursor = decodePageToken(pageToken);
 

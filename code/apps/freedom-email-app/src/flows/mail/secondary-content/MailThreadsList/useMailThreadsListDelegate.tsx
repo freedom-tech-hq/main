@@ -1,18 +1,16 @@
 import { ListItem, ListItemText } from '@mui/material';
 import type { DataSource } from 'freedom-data-source';
 import type { MailThreadLikeId } from 'freedom-email-api';
-import { mailThreadIdInfo } from 'freedom-email-api';
-import type { VirtualListDelegate } from 'freedom-web-virtual-list';
-import { noop } from 'lodash-es';
+import type { VirtualListDelegate, VirtualListItemPrototype } from 'freedom-web-virtual-list';
 import React, { useMemo } from 'react';
 
 import { MailThreadListItem, MailThreadListItemPlaceholder } from './MailThreadListItem.tsx';
 import type { MailThreadsListKey } from './MailThreadsListKey.ts';
 import type { MailThreadsListTemplateId } from './MailThreadsListTemplateId.ts';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
-import { useMailCollectionSelectionDelegate } from './useMailThreadsListSelectionDelegate.ts';
+import { useMailThreadsListSelectionDelegate } from './useMailThreadsListSelectionDelegate.ts';
 
-export const useMailCollectionDelegate = (
+export const useMailThreadsListDelegate = (
   dataSource: DataSource<MailThreadsListThreadDataSourceItem, MailThreadsListKey>,
   {
     onThreadClicked,
@@ -24,7 +22,7 @@ export const useMailCollectionDelegate = (
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
 ): VirtualListDelegate<MailThreadsListThreadDataSourceItem, MailThreadsListKey, MailThreadsListTemplateId> => {
-  const selectionDelegate = useMailCollectionSelectionDelegate(dataSource, { onArrowLeft, onArrowRight });
+  const selectionDelegate = useMailThreadsListSelectionDelegate(dataSource, { onArrowLeft, onArrowRight });
 
   return useMemo(
     (): VirtualListDelegate<MailThreadsListThreadDataSourceItem, MailThreadsListKey, MailThreadsListTemplateId> => ({
@@ -41,6 +39,7 @@ export const useMailCollectionDelegate = (
           <ListItemText secondary="No Mail Found" />
         </ListItem>
       ),
+      loadingIndicatorTransitionDurationMSec: 0,
       renderLoadingIndicator: () => (
         <>
           <MailThreadListItemPlaceholder />
@@ -56,10 +55,10 @@ export const useMailCollectionDelegate = (
   );
 };
 
-const itemPrototypes = {
+const itemPrototypes: Record<MailThreadsListTemplateId, VirtualListItemPrototype> = {
   'mail-thread': {
     defaultEstimatedSizePx: 154,
     isSizeDynamic: false,
-    Component: () => <MailThreadListItem id={mailThreadIdInfo.make()} timeMSec={Date.now()} tag={undefined} onClick={noop} />
+    Component: () => <MailThreadListItemPlaceholder />
   }
 };

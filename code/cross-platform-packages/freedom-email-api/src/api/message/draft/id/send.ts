@@ -5,6 +5,7 @@ import { makeHttpApi } from 'yaschema-api';
 
 import { apiInputMessageSchema } from '../../../../types/ApiInputMessage.ts';
 import { mailIdInfo } from '../../../../types/MailId.ts';
+import { mailThreadIdInfo } from '../../../../types/MailThreadId.ts';
 
 export const POST = makeHttpApi({
   method: 'POST',
@@ -25,8 +26,8 @@ export const POST = makeHttpApi({
     successResponse: {
       status: schema.number(StatusCodes.OK),
       body: schema.object({
-        threadId: schema.string(),
-        messageId: schema.string(),
+        threadId: mailThreadIdInfo.schema.optional(),
+        messageId: mailIdInfo.schema,
         date: schema.string() // RFC 3339
       })
     },

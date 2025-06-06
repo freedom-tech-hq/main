@@ -1,13 +1,11 @@
 import { proxy } from 'comlink';
-import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { Uuid } from 'freedom-contexts';
-import { makeUuid } from 'freedom-contexts';
+import { log, makeUuid } from 'freedom-contexts';
 import type { DataSource } from 'freedom-data-source';
 import { ArrayDataSource } from 'freedom-data-source';
-import type { MessageFolderGroup } from 'freedom-email-tasks-web-worker';
-import type { GetMessageFoldersPacket } from 'freedom-email-tasks-web-worker/lib/tasks/mail/getMessageFolders';
+import type { GetMessageFoldersPacket, MessageFolderGroup } from 'freedom-email-tasks-web-worker';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -44,22 +42,17 @@ export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersList
 
     const myMountId = mountId.current;
     const isConnected = proxy(() => mountId.current === myMountId);
-    const onData = proxy((packet: Result<GetMessageFoldersPacket>) => {
+    const onData = proxy((packet: GetMessageFoldersPacket) => {
       if (!isConnected()) {
         return;
       }
 
-      if (!packet.ok) {
-        console.error('Something went wrong', packet.value);
-        return;
-      }
-
-      switch (packet.value.type) {
+      switch (packet.type) {
         case 'groups-added': {
-          groups.current.push(...packet.value.addedGroups);
+          groups.current.push(...packet.addedGroups);
 
           const addedIndices: number[] = [];
-          for (const newGroup of packet.value.addedGroups) {
+          for (const newGroup of packet.addedGroups) {
             for (const newFolderInfo of newGroup.folderInfos) {
               addedIndices.push(items.current.length);
               items.current.push({ ...newFolderInfo, type: 'folder' });
@@ -73,7 +66,7 @@ export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersList
         case 'groups-removed':
           break; // TODO: handle
         case 'folders-added': {
-          for (const [groupId, folderInfos] of objectEntries(packet.value.addedFoldersByGroupId)) {
+          for (const [groupId, folderInfos] of objectEntries(packet.addedFoldersByGroupId)) {
             const groupIndex = groups.current.findIndex((group) => group.id === groupId);
             if (groupIndex === -1) {
               console.error('Group not found', groupId);
@@ -132,7 +125,13 @@ export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersList
       try {
         const data = await tasks.getMessageFolders(isConnected, onData);
         clearOldData();
-        onData(data);
+
+        if (!data.ok) {
+          log().error?.(`Failed to load message folders`, data.value);
+          return;
+        }
+
+        onData(data.value);
       } finally {
         if (isConnected()) {
           dataSource.setIsLoading(false);

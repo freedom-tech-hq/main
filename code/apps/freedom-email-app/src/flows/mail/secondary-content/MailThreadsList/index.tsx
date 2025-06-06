@@ -2,16 +2,17 @@ import type { MailThreadLikeId, MessageFolder } from 'freedom-email-api';
 import type { VirtualListControls } from 'freedom-web-virtual-list';
 import { VirtualList } from 'freedom-web-virtual-list';
 import React, { useEffect, useMemo, useRef } from 'react';
-import type { TypeOrBindingType } from 'react-bindings';
+import type { Binding, TypeOrBindingType } from 'react-bindings';
 import { ifBinding, resolveTypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { SelectedMessageFolderProvider } from '../../../../contexts/selected-message-folder.tsx';
-import { useMailCollectionDataSource } from './useMailThreadsListDataSource.ts';
-import { useMailCollectionDelegate } from './useMailThreadsListDelegate.tsx';
+import { useMailThreadsListDataSource } from './useMailThreadsListDataSource.ts';
+import { useMailThreadsListDelegate } from './useMailThreadsListDelegate.tsx';
 
 export interface MailThreadsListProps {
   folder: TypeOrBindingType<MessageFolder | undefined>;
+  estThreadCount: Binding<number>;
   scrollParent: HTMLElement | string | Window;
   controls?: VirtualListControls<MessageFolder>;
   onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -44,8 +45,14 @@ export const MailThreadsList = ({ folder, ...fwd }: MailThreadsListProps) => {
 
 // Helpers
 
-const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowRight }: Omit<MailThreadsListProps, 'folder'>) => {
-  const dataSource = useMailCollectionDataSource();
+const InternalMailThreadsList = ({
+  estThreadCount,
+  scrollParent,
+  controls,
+  onArrowLeft,
+  onArrowRight
+}: Omit<MailThreadsListProps, 'folder'>) => {
+  const dataSource = useMailThreadsListDataSource({ estThreadCount });
   const selectedThreadId = useSelectedMailThreadId();
 
   const listControls = useRef<VirtualListControls<MailThreadLikeId>>({});
@@ -62,6 +69,10 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
       if (item.type === 'mail-thread') {
         return selectedThreadId.set(item.id);
       }
+    }
+
+    if (!dataSource.isLoading()[0] && theSelectedThreadId === 'initial') {
+      selectedThreadId.set(undefined);
     }
   });
 
@@ -92,7 +103,7 @@ const InternalMailThreadsList = ({ scrollParent, controls, onArrowLeft, onArrowR
     listControls.current.scrollToItemWithKey?.(selectedThreadId);
   });
 
-  const delegate = useMailCollectionDelegate(dataSource, { onThreadClicked, onArrowLeft, onArrowRight });
+  const delegate = useMailThreadsListDelegate(dataSource, { onThreadClicked, onArrowLeft, onArrowRight });
 
   if (controls !== undefined) {
     controls.focus = () => listControls.current.focus?.();

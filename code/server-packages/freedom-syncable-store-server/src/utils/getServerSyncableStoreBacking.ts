@@ -3,7 +3,7 @@ import { makeAsyncResultFunc, makeSuccess, uncheckedResult } from 'freedom-async
 import { FileSystemSyncableStoreBacking } from 'freedom-file-system-syncable-store-backing';
 import { createGoogleStorageSyncableStoreBacking } from 'freedom-google-storage-syncable-store-backing';
 import type { StorageRootId } from 'freedom-sync-types';
-import type { DefaultSyncableStoreConstructorArgs } from 'freedom-syncable-store/lib/types/DefaultSyncableStore';
+import type { DefaultSyncableStoreConstructorArgs } from 'freedom-syncable-store';
 import type { SyncableStoreBacking } from 'freedom-syncable-store-backing-types';
 
 import { getConfig } from '../config.ts';

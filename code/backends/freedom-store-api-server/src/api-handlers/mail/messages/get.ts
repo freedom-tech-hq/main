@@ -4,14 +4,14 @@ import { InputSchemaValidationError } from 'freedom-common-errors';
 import { type DbMessageOut, dbQuery } from 'freedom-db';
 import type { ApiListMessage } from 'freedom-email-api';
 import { api } from 'freedom-email-api';
-import { type PageToken, pageTokenInfo } from 'freedom-paginated-data';
+import { DEFAULT_PAGE_SIZE, type PageToken, pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 
 import { decodePageToken, type PageTokenPayload } from '../../../internal/utils/decodePageToken.ts';
 import { getUserIdFromAuthorizationHeader } from '../../../internal/utils/getUserIdFromAuthorizationHeader.ts';
 
 // Constants
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -21,7 +21,7 @@ export default makeHttpApiHandler(
     {
       input: {
         headers,
-        query: { pageToken, threadId, folder }
+        query: { pageToken, folder }
       }
     }
   ) => {
@@ -35,13 +35,6 @@ export default makeHttpApiHandler(
     // Construct the database query
     const params: unknown[] = [currentUserId, folder];
     let cursorClause = '';
-    let threadClause = '';
-
-    // Add threadId filter if provided
-    if (threadId !== undefined) {
-      params.push(threadId);
-      threadClause = `AND "threadId" = $${params.length}`;
-    }
 
     if (cursor !== undefined) {
       params.push(cursor.updatedAt, cursor.id);
@@ -54,7 +47,6 @@ export default makeHttpApiHandler(
       SELECT "id", "userId", "updatedAt", "listFields"
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2
-      ${threadClause}
       ${cursorClause}
       ORDER BY "updatedAt" DESC, "id" DESC
       LIMIT $${params.length}
@@ -64,11 +56,10 @@ export default makeHttpApiHandler(
       SELECT COUNT(*)::int as total_count
       FROM "messages"
       WHERE "userId" = $1 AND "folder" = $2
-      ${threadClause}
     `;
 
     // Adjust countQuery params to include threadId if needed
-    const countParams = threadId !== undefined ? [currentUserId, folder, threadId] : [currentUserId, folder];
+    const countParams = [currentUserId, folder];
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([

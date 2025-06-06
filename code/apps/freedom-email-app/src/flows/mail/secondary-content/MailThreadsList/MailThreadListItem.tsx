@@ -1,4 +1,5 @@
 import { ListItemAvatar, ListItemButton, Stack } from '@mui/material';
+import type { MailThreadsDataSetId } from 'freedom-email-tasks-web-worker';
 import React from 'react';
 import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { useDerivedWaitable, WC } from 'react-waitables';
@@ -12,19 +13,20 @@ import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thre
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
 import { formatTimeIfSameDateOrFormatDate } from '../../../../utils/formatTimeIfSameDateOrFormatDate.ts';
 import { getStringAvatarValueFromMailAddressList } from '../../../../utils/getStringAvatarValueFromMailAddressList.ts';
-import { makeTagsForParsedEmailAddresses } from '../../../../utils/makeTagsForParsedEmailAddresses.ts';
+import { makeTagsFromMailAddressList } from '../../../../utils/makeTagsFromMailAddressList.ts';
 import { AttachmentCountChip, AttachmentCountChipPlaceholder } from './AttachmentCountChip.tsx';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 
 export interface MailThreadListItemProps<TagT> extends Omit<MailThreadsListThreadDataSourceItem, 'type'> {
+  dataSetId: MailThreadsDataSetId;
   tag: TagT;
   onClick: (tag: TagT) => void;
 }
 
-export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailThreadListItemProps<TagT>) => {
+export const MailThreadListItem = <TagT,>({ id, timeMSec, dataSetId, tag, onClick }: MailThreadListItemProps<TagT>) => {
   const selectedThreadId = useSelectedMailThreadId();
 
-  const thread = useTaskWaitable((tasks) => tasks.getMailThread(id), {
+  const thread = useTaskWaitable((tasks) => tasks.getMailThread(dataSetId, id), {
     id: 'thread',
     deps: [id]
   });
@@ -40,7 +42,7 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
   const fromTags = useDerivedWaitable(
     thread,
     (thread) =>
-      makeTagsForParsedEmailAddresses(thread.lastMessage.from, {
+      makeTagsFromMailAddressList(thread.lastMessage.from, {
         group: (group, index) => (
           <Txt variant="inherit" component="span" key={index}>
             {group.groupName}
@@ -49,7 +51,7 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, tag, onClick }: MailTh
         ),
         single: (single, index) => (
           <Txt variant="inherit" component="span" key={index}>
-            {single.name ?? single.address}
+            {(single.name?.length ?? 0) > 0 ? single.name : single.address}
             {index < thread.lastMessage.from.length - 1 ? <span>, </span> : null}
           </Txt>
         )

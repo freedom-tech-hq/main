@@ -1,14 +1,14 @@
 import { proxy } from 'comlink';
-import type { Result } from 'freedom-async';
 import { inline } from 'freedom-async';
 import type { Uuid } from 'freedom-contexts';
-import { makeUuid } from 'freedom-contexts';
+import { log, makeUuid } from 'freedom-contexts';
 import type { DataSource } from 'freedom-data-source';
 import { ArrayDataSource } from 'freedom-data-source';
 import { mailIdInfo } from 'freedom-email-api';
-import type { GetMailThreadIdsForMessageFolderPacket } from 'freedom-email-tasks-web-worker/lib/tasks/mail/getMailThreadIdsForMessageFolder';
+import type { GetMailThreadIdsForMessageFolderPacket, MailThreadsDataSetId } from 'freedom-email-tasks-web-worker';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
+import type { Binding } from 'react-bindings';
 import { useBindingEffect } from 'react-bindings';
 import { SortedArray } from 'yasorted-array';
 
@@ -17,7 +17,11 @@ import { useTasks } from '../../../../contexts/tasks.tsx';
 import type { MailThreadsListKey } from './MailThreadsListKey.ts';
 import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
 
-export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadDataSourceItem, MailThreadsListKey> => {
+export const useMailThreadsListDataSource = ({
+  estThreadCount
+}: {
+  estThreadCount: Binding<number>;
+}): DataSource<MailThreadsListThreadDataSourceItem, MailThreadsListKey> => {
   const selectedMessageFolder = useSelectedMessageFolder();
   const tasks = useTasks();
 
@@ -51,24 +55,23 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
 
       const myMountId = mountId.current;
       const isConnected = proxy(() => mountId.current === myMountId && selectedCollectionBinding.get() === selectedMessageFolder);
-      const onData = proxy((packet: Result<GetMailThreadIdsForMessageFolderPacket>) => {
+      let dataSetId: MailThreadsDataSetId;
+      const onData = proxy((packet: GetMailThreadIdsForMessageFolderPacket) => {
         if (!isConnected()) {
           return;
         }
 
-        if (!packet.ok) {
-          console.error('Something went wrong', packet.value);
-          return;
-        }
+        estThreadCount.set(packet.estCount);
 
-        switch (packet.value.type) {
+        switch (packet.type) {
           case 'threads-added': {
             const indices = items.addMultiple(
-              ...packet.value.addedThreadIds.map(
+              ...packet.addedThreadIds.map(
                 (threadId): MailThreadsListThreadDataSourceItem => ({
                   type: 'mail-thread',
                   id: threadId,
-                  timeMSec: mailIdInfo.is(threadId) ? mailIdInfo.extractTimeMSec(threadId) : 0
+                  timeMSec: mailIdInfo.is(threadId) ? mailIdInfo.extractTimeMSec(threadId) : 0,
+                  dataSetId
                 })
               )
             );
@@ -103,7 +106,15 @@ export const useMailCollectionDataSource = (): DataSource<MailThreadsListThreadD
           try {
             const data = await tasks.getMailThreadIdsForMessageFolder(selectedMessageFolder, isConnected, onData);
             clearOldData();
-            onData(data);
+
+            if (!data.ok) {
+              // TODO: DataSource should probably handle errors
+              log().error?.(`Failed to load mail thread IDs for folder: ${selectedMessageFolder}`, data.value);
+              return;
+            }
+
+            dataSetId = data.value.dataSetId;
+            onData(data.value);
           } finally {
             if (isConnected()) {
               dataSource.setIsLoading(false);

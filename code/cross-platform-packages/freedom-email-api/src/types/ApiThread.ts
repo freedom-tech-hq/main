@@ -7,6 +7,7 @@ import { mailThreadLikeIdSchema } from './MailThreadLikeId.ts';
 // Cannot include here TODO: revise code structure
 export const apiThreadSchema = schema.object({
   // Open fields
+  /** A thread here can represent a real thread or a single message */
   id: mailThreadLikeIdSchema,
   // assumed // userId,
 

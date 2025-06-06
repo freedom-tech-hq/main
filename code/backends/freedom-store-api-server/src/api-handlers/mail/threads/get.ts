@@ -2,17 +2,17 @@ import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { type DbMessageOut, dbQuery } from 'freedom-db';
-import type { ApiThread, MessageFolder } from 'freedom-email-api';
+import type { ApiThread } from 'freedom-email-api';
 import { api } from 'freedom-email-api';
 import type { PageToken } from 'freedom-paginated-data';
-import { pageTokenInfo } from 'freedom-paginated-data';
+import { DEFAULT_PAGE_SIZE, pageTokenInfo } from 'freedom-paginated-data';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 
 import { decodePageToken, type PageTokenPayload } from '../../../internal/utils/decodePageToken.ts';
 import { getUserIdFromAuthorizationHeader } from '../../../internal/utils/getUserIdFromAuthorizationHeader.ts';
 
 // Constants
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 export default makeHttpApiHandler(
   [import.meta.filename],
@@ -22,7 +22,7 @@ export default makeHttpApiHandler(
     {
       input: {
         headers,
-        query: { pageToken }
+        query: { pageToken, folder }
       }
     }
   ) => {
@@ -32,14 +32,10 @@ export default makeHttpApiHandler(
       return makeFailure(new InputSchemaValidationError(trace, { message: 'User ID not found in auth context' }));
     }
 
-    // TODO: The API definition (api.mail.messages.GET) should be updated to accept `folder` as a query parameter.
-    // For now, hardcoding to 'inbox'
-    const currentFolder: MessageFolder = 'inbox';
-
     const cursor = decodePageToken(pageToken);
 
     // Construct the database query to get threads
-    const params: unknown[] = [currentUserId, currentFolder];
+    const params: unknown[] = [currentUserId, folder];
     let cursorClause = '';
 
     if (cursor !== undefined) {
@@ -65,7 +61,7 @@ export default makeHttpApiHandler(
       WHERE "userId" = $1 AND "folder" = $2
     `;
 
-    const countParams = [currentUserId, currentFolder];
+    const countParams = [currentUserId, folder];
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([

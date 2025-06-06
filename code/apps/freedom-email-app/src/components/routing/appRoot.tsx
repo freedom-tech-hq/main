@@ -55,22 +55,28 @@ const segmentInfo = nest(
   }
 );
 
+const joinPaths = (...paths: string[]) =>
+  paths
+    .filter((segment) => segment.length > 0)
+    .map(encodeURIComponent)
+    .join('/');
+
 const makePath = (rootPrefix: string) =>
   nest(
     [segmentInfo],
-    (level) => `${rootPrefix}${level.value.segment}`,
+    (level) => joinPaths(rootPrefix, level.value.segment),
     (parent, level) => ({
-      signIn: (email: string) => `${parent}/${level.signIn.segment[0]}/${encodeURIComponent(email)}`,
-      addAccount: `${parent}/${level.addAccount.segment}`,
-      newAccount: `${parent}/${level.newAccount.segment}`,
-      importCredential: (email: string) => `${parent}/${level.importCredential.segment[0]}/${encodeURIComponent(email)}`,
+      signIn: (email: string) => joinPaths(parent, level.signIn.segment[0], email),
+      addAccount: joinPaths(parent, level.addAccount.segment),
+      newAccount: joinPaths(parent, level.newAccount.segment),
+      importCredential: (email: string) => joinPaths(parent, level.importCredential.segment[0], email),
 
       mail: nest(
         [level.mail],
-        (level) => `${parent}/${level.value.segment}`,
+        (level) => joinPaths(parent, level.value.segment),
         (parent, level) => ({
-          compose: `${parent}/${level.compose.segment}`,
-          thread: (threadId: MailThreadLikeId) => `${parent}/${level.thread.segment[0]}/${threadId}`
+          compose: joinPaths(parent, level.compose.segment),
+          thread: (threadLikeId: MailThreadLikeId) => joinPaths(parent, level.thread.segment[0], threadLikeId)
         })
       )
     })

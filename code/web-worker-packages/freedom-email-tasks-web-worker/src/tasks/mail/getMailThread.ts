@@ -1,21 +1,24 @@
 import type { PR, SuccessResult } from 'freedom-async';
-import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
+import { makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
 import { makeIsoDateTime, ONE_DAY_MSEC, ONE_SEC_MSEC } from 'freedom-basic-data';
-import { UnauthorizedError } from 'freedom-common-errors';
+import { NotFoundError, UnauthorizedError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import type { DecryptedThread, MailThreadLikeId } from 'freedom-email-api';
-import { mailIdInfo } from 'freedom-email-api';
+import { clientApi, mailIdInfo } from 'freedom-email-api';
 import { generatePseudoWord } from 'pseudo-words';
 
+import { cachedThreadsByDataSetId } from '../../caches/cachedThreadsByDataSetId.ts';
 import { useActiveCredential } from '../../contexts/active-credential.ts';
+import { makeUserKeysFromEmailCredential } from '../../internal/utils/makeUserKeysFromEmailCredential.ts';
+import type { MailThreadsDataSetId } from '../../types/mail/MailThreadsDataSetId.ts';
 import { getConfig } from '../config/config.ts';
 import { isDemoMode } from '../config/demo-mode.ts';
 
 export const getMailThread = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, threadId: MailThreadLikeId): PR<DecryptedThread, 'not-found'> => {
+  async (trace, dataSetId: MailThreadsDataSetId, threadLikeId: MailThreadLikeId): PR<DecryptedThread, 'not-found'> => {
     DEV: if (isDemoMode()) {
-      return await makeDemoModeResult({ threadId });
+      return await makeDemoModeResult({ threadLikeId });
     }
 
     const credential = useActiveCredential(trace).credential;
@@ -24,20 +27,41 @@ export const getMailThread = makeAsyncResultFunc(
       return makeFailure(new UnauthorizedError(trace, { message: 'No active user' }));
     }
 
-    // TODO: implement this method
+    const threadCache = cachedThreadsByDataSetId.get(dataSetId);
+    if (threadCache === undefined) {
+      return makeFailure(new NotFoundError(trace, { message: `Data set with ID: ${dataSetId} was disconnected`, errorCode: 'not-found' }));
+    }
 
-    // return makeFailure(new NotFoundError(trace, { message: `No thread-like item found with ID ${threadId}`, errorCode: 'not-found' }));
-    return makeFailure(new GeneralError(trace, new Error('not implemented yet')));
+    const thread = threadCache.get(threadLikeId);
+    if (thread === undefined) {
+      return makeFailure(
+        new NotFoundError(trace, { message: `No thread-like item found with ID ${threadLikeId}`, errorCode: 'not-found' })
+      );
+    }
+
+    if (!thread.encrypted) {
+      return makeSuccess(thread.value);
+    }
+
+    const userKeys = makeUserKeysFromEmailCredential(credential);
+    const decrypted = await clientApi.decryptThread(trace, userKeys, thread.value);
+    if (!decrypted.ok) {
+      return decrypted;
+    }
+
+    threadCache.set(threadLikeId, { encrypted: false, value: decrypted.value });
+
+    return makeSuccess(decrypted.value);
   }
 );
 
 // Helpers
 
-let makeDemoModeResult: (args: { threadId: MailThreadLikeId }) => Promise<SuccessResult<DecryptedThread>> = () => {
+let makeDemoModeResult: (args: { threadLikeId: MailThreadLikeId }) => Promise<SuccessResult<DecryptedThread>> = () => {
   throw new Error();
 };
 
-DEV: makeDemoModeResult = async ({ threadId }) => {
+DEV: makeDemoModeResult = async ({ threadLikeId: threadId }) => {
   await sleep(Math.random() * ONE_SEC_MSEC);
 
   return makeSuccess({
