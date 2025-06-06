@@ -1,21 +1,65 @@
 {
-  "from": "sender@my-test.com",
-  "to": [
-    "user1@my-test.com",
-    "user2@my-test.com",
-    "user3@my-test.com",
-    "user4@my-test.com",
-    "user5@my-test.com",
-    "user6@my-test.com",
-    "user7@my-test.com"
-  ],
   "subject": "test Thu, 20 Mar 2025 20:28:34 +0100",
-  "body": "This is a synthetic test email\n",
-  "timeMSec": 1745530356478,
+  "from": [
+    {
+      "name": "",
+      "address": "sender@my-test.com"
+    }
+  ],
+  "snippet": "This is a synthetic test email",
+  "to": [
+    {
+      "name": "Some User",
+      "address": "user1@my-test.com"
+    },
+    {
+      "name": "",
+      "address": "user2@my-test.com"
+    },
+    {
+      "groupName": "Dream Team",
+      "addresses": [
+        {
+          "name": "Alex",
+          "address": "user3@my-test.com"
+        },
+        {
+          "name": "",
+          "address": "user4@my-test.com"
+        }
+      ]
+    },
+    {
+      "name": "",
+      "address": "user5@my-test.com"
+    },
+    {
+      "groupName": "Sales",
+      "addresses": [
+        {
+          "name": "",
+          "address": "user6@my-test.com"
+        },
+        {
+          "name": "",
+          "address": "user7@my-test.com"
+        }
+      ]
+    }
+  ],
   "cc": [
-    "user-cc@my-test.com"
+    {
+      "name": "",
+      "address": "user-cc@my-test.com"
+    }
   ],
   "bcc": [
-    "user-bcc@my-test.com"
-  ]
+    {
+      "name": "",
+      "address": "user-bcc@my-test.com"
+    }
+  ],
+  "isBodyHtml": false,
+  "body": "This is a synthetic test email\n",
+  "raw": "From sender@my-test.com Thu Mar 20 19:28:34 2025\nTo: \"Some User\" <user1@my-test.com>, user2@my-test.com, \"Dream Team\": Alex <user3@my-test.com>, user4@my-test.com; user5@my-test.com, Sales: user6@my-test.com, user7@my-test.com;\nCC: user-cc@my-test.com\nBCC: user-bcc@my-test.com\nFrom: sender@my-test.com\nSubject: test Thu, 20 Mar 2025 20:28:34 +0100\n\nThis is a synthetic test email\n"
 }

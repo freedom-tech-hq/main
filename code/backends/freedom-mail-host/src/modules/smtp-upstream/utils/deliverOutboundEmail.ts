@@ -20,7 +20,7 @@ import { transporter } from '../internal/utils/transporter.ts';
 //  add test for rendering
 export const deliverOutboundEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (_trace, mail: ParsedMail, envelope: Mail.Envelope): PR<undefined> => {
+  async (_trace, mail: Omit<ParsedMail, 'raw'>, envelope: Mail.Envelope): PR<undefined> => {
     await transporter.sendMail({
       // listFields
       subject: mail.subject,

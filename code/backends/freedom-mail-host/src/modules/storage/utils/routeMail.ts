@@ -8,7 +8,7 @@ import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
 import { resolveMailAlias } from '../../forwarding/exports.ts';
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 import { deliverForwardedEmail } from '../../smtp-upstream/utils/deliverForwardedEmail.ts';
-import { addIncomingEmail } from './addIncomingEmail.ts';
+import { addIncomingEmail } from '../../storage/utils/addIncomingEmail.ts';
 
 /**
  * Routes an email message to internal and external recipients
@@ -25,7 +25,7 @@ export const routeMail = makeAsyncResultFunc(
       mode
     }: {
       recipients: Set<string>;
-      mail: ParsedMail;
+      mail: Omit<ParsedMail, 'raw'>;
       // Different modes assume different policies
       mode:
         | {

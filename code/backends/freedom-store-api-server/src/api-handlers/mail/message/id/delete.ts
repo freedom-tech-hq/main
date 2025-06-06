@@ -28,6 +28,8 @@ export default makeHttpApiHandler(
       );
     }
 
+    // TODO: Bounce if not a draft
+
     // Construct the delete query
     // This will delete an existing message only if it belongs to the current user
     const deleteQuery = `

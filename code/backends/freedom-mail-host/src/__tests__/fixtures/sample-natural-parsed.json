@@ -1,9 +1,23 @@
 {
-  "from": "sender@my-test.com",
-  "to": [
-    "user1@my-test.com"
-  ],
   "subject": "test Thu, 20 Mar 2025 20:28:34 +0100",
+  "from": [
+    {
+      "name": "",
+      "address": "sender@my-test.com"
+    }
+  ],
+  "snippet": "This is a test email",
+  "to": [
+    {
+      "name": "",
+      "address": "user1@my-test.com"
+    }
+  ],
+  "cc": [],
+  "bcc": [],
+  "isBodyHtml": false,
   "body": "This is a test email\n\n\n\n",
-  "timeMSec": 1745527001171
+  "messageId": "<20250320202834.004250@pavel-mac2.local>",
+  "date": "2025-03-20T19:28:34.000Z",
+  "raw": "From sender@my-test.com Thu Mar 20 19:28:34 2025\nReceived: from [192.168.65.1] (helo=pavel-mac2.local)\n\tby ac3d962d1dfd with esmtp (Exim 4.95)\n\t(envelope-from <sender@my-test.com>)\n\tid 1tvLZC-00001H-60\n\tfor user1@my-test.com;\n\tThu, 20 Mar 2025 19:28:34 +0000\nDate: Thu, 20 Mar 2025 20:28:34 +0100\nTo: user1@my-test.com\nFrom: sender@my-test.com\nSubject: test Thu, 20 Mar 2025 20:28:34 +0100\nMessage-Id: <20250320202834.004250@pavel-mac2.local>\nX-Mailer: swaks v20240103.0 jetmore.org/john/code/swaks/\n\nThis is a test email\n\n\n\n"
 }

@@ -51,6 +51,13 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
     raw: emailData
   };
 
+  // Clean empty
+  for (const [key, value] of Object.entries(result)) {
+    if (value === undefined) {
+      delete (result as Record<string, unknown>)[key];
+    }
+  }
+
   return makeSuccess(result);
 });
 
