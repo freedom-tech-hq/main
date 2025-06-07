@@ -39,6 +39,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
     const semiboldFontWeight = documentStyle.getPropertyValue('--font-weight-semibold');
 
     const colorsBackground = documentStyle.getPropertyValue('--colors-background');
+    const colorsMuted = documentStyle.getPropertyValue('--colors-muted');
     const colorsDefaultTextContrast = documentStyle.getPropertyValue('--colors-default-text-contrast');
     const colorsPrimary = documentStyle.getPropertyValue('--colors-primary');
     const colorsPrimaryContrast = documentStyle.getPropertyValue('--colors-primary-contrast');
@@ -106,7 +107,8 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           disabledBackground: ''
         },
         background: {
-          default: colorsBackground
+          default: colorsBackground,
+          paper: colorsMuted
         },
         divider: colorsDivider,
         primary: {

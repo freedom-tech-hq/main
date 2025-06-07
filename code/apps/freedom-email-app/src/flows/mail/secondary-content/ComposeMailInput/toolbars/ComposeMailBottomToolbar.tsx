@@ -3,7 +3,8 @@ import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
 import React from 'react';
-import type { Binding } from 'react-bindings';
+import { BC, type Binding } from 'react-bindings';
+import type { Waitable } from 'react-waitables';
 
 import { AttachmentIcon } from '../../../../../icons/AttachmentIcon.ts';
 import { BoldIcon } from '../../../../../icons/BoldIcon.ts';
@@ -37,38 +38,42 @@ const $strike = LOCALIZE('Strike')({ ns });
 const $underline = LOCALIZE('Underline')({ ns });
 
 export interface ComposeMailBottomToolbarProps {
+  isFormReady: Waitable<boolean>;
   textStyle: Binding<MailTextStyle>;
   showDiscardButton: boolean;
 
   onAttachFilesClick: () => void;
   onBoldClick: () => void;
-  onItalicClick: () => void;
-  onUnderlineClick: () => void;
-  onStrikeClick: () => void;
-  onLeftAlignClick: () => void;
-  onCenterClick: () => void;
-  onRightAlignClick: () => void;
-  onInsertLinkClick?: () => void;
-  onNumberedListClick?: () => void;
   onBulletedListClick?: () => void;
+  onCenterClick: () => void;
   onDiscardClick?: () => void;
+  onInsertLinkClick?: () => void;
+  onItalicClick: () => void;
+  onLeftAlignClick: () => void;
+  onNumberedListClick?: () => void;
+  onRightAlignClick: () => void;
+  onSendClick?: () => void;
+  onStrikeClick: () => void;
+  onUnderlineClick: () => void;
 }
 
 export const ComposeMailBottomToolbar = ({
+  isFormReady,
   textStyle,
   showDiscardButton,
   onAttachFilesClick,
   onBoldClick,
-  onItalicClick,
-  onUnderlineClick,
-  onStrikeClick,
-  onLeftAlignClick,
-  onCenterClick,
-  onRightAlignClick,
-  onInsertLinkClick,
-  onNumberedListClick,
   onBulletedListClick,
-  onDiscardClick
+  onCenterClick,
+  onDiscardClick,
+  onInsertLinkClick,
+  onItalicClick,
+  onLeftAlignClick,
+  onNumberedListClick,
+  onRightAlignClick,
+  onSendClick,
+  onStrikeClick,
+  onUnderlineClick
 }: ComposeMailBottomToolbarProps) => {
   const t = useT();
 
@@ -76,9 +81,16 @@ export const ComposeMailBottomToolbar = ({
     <Stack direction="row" justifyContent="space-between" alignItems="center" gap={4} sx={{ px: 2, py: 1.5 }}>
       <Stack direction="row" alignItems="center" gap={4}>
         <Stack direction="row" alignItems="center" gap={1}>
-          <Button variant="contained" startIcon={<SentIcon className="sm-icon" />}>
-            {$send(t)}
-          </Button>
+          {BC(isFormReady.value, (isFormReady = false) => (
+            <Button
+              variant="contained"
+              startIcon={<SentIcon className="sm-icon primary-contrast" />}
+              disabled={!isFormReady}
+              onClick={onSendClick}
+            >
+              {$send(t)}
+            </Button>
+          ))}
 
           <Button sx={{ p: 1 }} title={$attachFiles(t)} onClick={onAttachFilesClick}>
             <AttachmentIcon className="sm-icon secondary-text" />

@@ -1,4 +1,4 @@
-import { Stack, useTheme } from '@mui/material';
+import { Button, Stack, useTheme } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
 import type { MailId } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
@@ -6,13 +6,20 @@ import { IF } from 'freedom-logical-web-components';
 import { ResizeObservingDiv } from 'freedom-web-resize-observer';
 import { t } from 'i18next';
 import React, { useMemo } from 'react';
-import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
+import { useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import { useDerivedWaitable } from 'react-waitables';
 
 import { ControlledTextField } from '../../../../components/reusable/form/ControlledTextField.tsx';
+import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
+import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useScrollParentVisibleHeightPx } from '../../../../contexts/scroll-parent-info.tsx';
+import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
+import { useSelectedMessageFolder } from '../../../../contexts/selected-message-folder.tsx';
+import { useTasks } from '../../../../contexts/tasks.tsx';
 import type { MailTextStyle } from '../../../../types/MailTextStyle.ts';
 import type { ReferencedMailCompositionMode } from '../../../../types/ReferencedMailCompositionMode.ts';
+import { makeMailAddressListFromString } from '../../../../utils/makeMailAddressListFromString.ts';
 import { ComposeMailBccField } from './fields/ComposeMailBccField.tsx';
 import { ComposeMailCcField } from './fields/ComposeMailCcField.tsx';
 import { ComposeMailToField } from './fields/ComposeMailToField.tsx';
@@ -29,9 +36,13 @@ export interface ComposeMailInputProps {
 }
 
 export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: ComposeMailInputProps) => {
+  const activeAccountInfo = useActiveAccountInfo();
   const { presentErrorMessage } = useMessagePresenter();
   const uuid = useMemo(() => makeUuid(), []);
   const scrollParentVisibleHeightPx = useScrollParentVisibleHeightPx();
+  const selectedMessageFolder = useSelectedMessageFolder();
+  const selectedThreadId = useSelectedMailThreadId();
+  const tasks = useTasks();
   const theme = useTheme();
 
   const to = useBinding(() => '', { id: 'to', detectChanges: true });
@@ -44,6 +55,19 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
   const showBcc = useBinding(() => false, { id: 'showBcc', detectChanges: true });
 
   const textStyle = useBinding<MailTextStyle>(() => 'normal', { id: 'textStyle', detectChanges: true });
+
+  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
+  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
+
+  // TODO: use real form validation
+  const isFormReady = useDerivedWaitable(
+    { isBusy, to, subject, body },
+    ({ isBusy, to, subject, body }) => !isBusy && to.length > 0 && subject.length > 0 && body.length > 0,
+    {
+      id: 'isFormReady',
+      limitType: 'none'
+    }
+  );
 
   const bodyTopToolbarHeightPx = useBinding<number>(() => (referencedMailId !== undefined ? 56 : 0), {
     id: 'bodyToolbarHeightPx',
@@ -137,11 +161,52 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
     presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
   });
 
+  const onSendClick = useCallbackRef(async () => {
+    const theActiveAccountInfo = activeAccountInfo.get();
+
+    if (theActiveAccountInfo === undefined || tasks === undefined || !(isFormReady.value.get() ?? false)) {
+      return;
+    }
+
+    isBusyCount.set(isBusyCount.get() + 1);
+    try {
+      const sent = await tasks.sendMail({
+        from: makeMailAddressListFromString(theActiveAccountInfo.email),
+        to: makeMailAddressListFromString(to.get()),
+        cc: showCc.get() ? makeMailAddressListFromString(cc.get()) : [],
+        bcc: showBcc.get() ? makeMailAddressListFromString(bcc.get()) : [],
+        subject: subject.get(),
+        isBodyHtml: false,
+        body: body.get(),
+        snippet: body.get().substring(0, 200)
+      });
+      if (!sent.ok) {
+        switch (sent.value.errorCode) {
+          case 'generic':
+            presentErrorMessage($apiGenericError(t), {
+              action: ({ dismissThen }) => (
+                <Button color="error" onClick={dismissThen(onSendClick)}>
+                  {$tryAgain(t)}
+                </Button>
+              )
+            });
+            return;
+        }
+      }
+
+      // TODO: this is probably not great -- should really go back to whatever the history was before composing
+      selectedMessageFolder.set('sent');
+      selectedThreadId.set(sent.value.mailId);
+    } finally {
+      isBusyCount.set(isBusyCount.get() - 1);
+    }
+  });
+
   return (
     <Stack className="flex-auto" gap={2}>
       {IF(referencedMailId === undefined, () => (
         <>
-          <ComposeMailToField value={to} showCc={showCc} showBcc={showBcc} />
+          <ComposeMailToField autoFocus value={to} showCc={showCc} showBcc={showBcc} />
 
           {IF(showCc, () => (
             <ComposeMailCcField value={cc} showBcc={showBcc} />
@@ -195,20 +260,22 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
                   className="absolute bottom-0 left-0 right-0"
                 >
                   <ComposeMailBottomToolbar
+                    isFormReady={isFormReady}
                     textStyle={textStyle}
                     showDiscardButton={referencedMailId !== undefined}
                     onAttachFilesClick={onAttachFilesClick}
                     onBoldClick={onBoldClick}
-                    onItalicClick={onItalicClick}
-                    onUnderlineClick={onUnderlineClick}
-                    onStrikeClick={onStrikeClick}
-                    onLeftAlignClick={onLeftAlignClick}
-                    onCenterClick={onCenterClick}
-                    onRightAlignClick={onRightAlignClick}
-                    onInsertLinkClick={onInsertLinkClick}
-                    onNumberedListClick={onNumberedListClick}
                     onBulletedListClick={onBulletedListClick}
+                    onCenterClick={onCenterClick}
                     onDiscardClick={onDiscardClick}
+                    onInsertLinkClick={onInsertLinkClick}
+                    onItalicClick={onItalicClick}
+                    onLeftAlignClick={onLeftAlignClick}
+                    onNumberedListClick={onNumberedListClick}
+                    onRightAlignClick={onRightAlignClick}
+                    onSendClick={onSendClick}
+                    onStrikeClick={onStrikeClick}
+                    onUnderlineClick={onUnderlineClick}
                   />
                 </ResizeObservingDiv>
               </>

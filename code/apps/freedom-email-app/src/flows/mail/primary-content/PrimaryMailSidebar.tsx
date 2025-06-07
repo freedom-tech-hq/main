@@ -39,7 +39,7 @@ export const PrimaryMailSidebar = () => {
         <Button
           type="submit"
           variant="contained"
-          startIcon={<NewEmailIcon className="primary-contrast sm-icon" />}
+          startIcon={<NewEmailIcon className="sm-icon primary-contrast" />}
           sx={{ mx: 1.5, my: 1 }}
           onClick={onNewMailClick}
         >

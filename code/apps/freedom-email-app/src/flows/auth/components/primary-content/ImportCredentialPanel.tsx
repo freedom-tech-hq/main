@@ -58,7 +58,7 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
 
   // TODO: use real form validation
   const isFormReady = useDerivedWaitable(
-    { locallyStoredEncryptedEmailCredentialId: locallyStoredEncryptedEmailCredentialInfo, isBusy, password },
+    { locallyStoredEncryptedEmailCredentialInfo, isBusy, password },
     ({ isBusy, password }) => !isBusy && password.length > 0,
     {
       id: 'isFormReady',
