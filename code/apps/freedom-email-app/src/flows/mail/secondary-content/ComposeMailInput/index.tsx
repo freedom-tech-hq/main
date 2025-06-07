@@ -178,6 +178,7 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
         subject: subject.get(),
         isBodyHtml: false,
         body: body.get(),
+        // TODO: should probably have a const for snippet length
         snippet: body.get().substring(0, 200)
       });
       if (!sent.ok) {
@@ -249,7 +250,16 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
                     onResize={onBodyTopToolbarResize}
                     className="absolute top-0 left-0 right-0"
                   >
-                    <ComposeMailTopToolbar defaultMode={mode ?? 'reply'} referencedMailId={referencedMailId} />
+                    <ComposeMailTopToolbar
+                      defaultMode={mode ?? 'reply'}
+                      referencedMailId={referencedMailId}
+                      to={to}
+                      cc={cc}
+                      showCc={showCc}
+                      bcc={bcc}
+                      showBcc={showBcc}
+                      subject={subject}
+                    />
                   </ResizeObservingDiv>
                 ) : null}
 
