@@ -3,12 +3,12 @@ import type { MailAttachmentInfo } from 'freedom-email-api';
 import React from 'react';
 import { useCallbackRef } from 'react-bindings';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { IconPlaceholder } from '../../../../components/reusable/IconPlaceholder.tsx';
-import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
-import { DownloadIcon } from '../../../../icons/DownloadIcon.ts';
-import { formatSizeBytes } from '../../../../utils/formatSizeBytes.ts';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { IconPlaceholder } from '../../../../../components/reusable/IconPlaceholder.tsx';
+import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
+import { useMessagePresenter } from '../../../../../contexts/message-presenter.tsx';
+import { DownloadIcon } from '../../../../../icons/DownloadIcon.ts';
+import { formatSizeBytes } from '../../../../../utils/formatSizeBytes.ts';
 
 export interface AttachmentButtonProps {
   attachment: MailAttachmentInfo;
@@ -39,7 +39,7 @@ export const AttachmentButton = ({ attachment }: AttachmentButtonProps) => {
 };
 
 export const AttachmentButtonPlaceholder = () => (
-  <Button variant="outlined" className="AttachmentButton" startIcon={<IconPlaceholder width="20px" />} disabled>
+  <Button variant="outlined" className="AttachmentButton" startIcon={<IconPlaceholder width="20px" />}>
     <Stack alignItems="flex-start">
       <TxtPlaceholder variant="body2" className="medium">
         Example

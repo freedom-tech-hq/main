@@ -12,7 +12,7 @@
     "pseudo-words": "1.0.1",
     "react-bindings": "1.19.8",
     "yaschema": "5.2.1",
-    "yasorted-array": "1.0.6"
+    "yasorted-array": "1.0.7"
   },
   "devDependencies": {
     "@types/lodash-es": "4.17.12",

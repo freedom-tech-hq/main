@@ -3,21 +3,22 @@ import { inline } from 'freedom-async';
 import { objectEntries } from 'freedom-cast';
 import type { Uuid } from 'freedom-contexts';
 import { log, makeUuid } from 'freedom-contexts';
-import type { DataSource } from 'freedom-data-source';
 import { ArrayDataSource } from 'freedom-data-source';
 import type { GetMessageFoldersPacket, MessageFolderGroup } from 'freedom-email-tasks-web-worker';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useTasks } from '../../../../contexts/tasks.tsx';
-import type { MessageFoldersListFolderDataSourceItem } from './MessageFoldersListFolderDataSourceItem.ts';
+import type { MessageFoldersListDataSourceItem } from './MessageFoldersListDataSourceItem.ts';
 import type { MessageFoldersListKey } from './MessageFoldersListKey.ts';
 
-export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersListFolderDataSourceItem, MessageFoldersListKey> => {
+export type MessageFoldersListDataSource = ArrayDataSource<MessageFoldersListDataSourceItem, MessageFoldersListKey>;
+
+export const useMessageFoldersListDataSource = (): MessageFoldersListDataSource => {
   const tasks = useTasks();
 
   const groups = useRef<MessageFolderGroup[]>([]);
-  const items = useRef<MessageFoldersListFolderDataSourceItem[]>([]);
+  const items = useRef<MessageFoldersListDataSourceItem[]>([]);
 
   const dataSource = useMemo(() => {
     const out = new ArrayDataSource(items.current, {
@@ -35,13 +36,18 @@ export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersList
     };
   }, [tasks]);
 
+  const connectionId = useRef(makeUuid());
+
   useEffect(() => {
     if (tasks === undefined) {
       return;
     }
 
+    connectionId.current = makeUuid();
+
     const myMountId = mountId.current;
-    const isConnected = proxy(() => mountId.current === myMountId);
+    const myConnectionId = connectionId.current;
+    const isConnected = proxy(() => mountId.current === myMountId && connectionId.current === myConnectionId);
     const onData = proxy((packet: GetMessageFoldersPacket) => {
       if (!isConnected()) {
         return;
@@ -107,8 +113,6 @@ export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersList
         return;
       }
 
-      dataSource.setIsLoading('end');
-
       let didClearOldData = false;
       const clearOldData = () => {
         if (didClearOldData || !isConnected()) {
@@ -119,19 +123,22 @@ export const useMessageFoldersListDataSource = (): DataSource<MessageFoldersList
         groups.current.length = 0;
         items.current.length = 0;
         dataSource.itemsCleared();
+        dataSource.setIsLoading('end');
       };
 
       setTimeout(clearOldData, ANIMATION_DURATION_MSEC);
       try {
         const data = await tasks.getMessageFolders(isConnected, onData);
-        clearOldData();
+        if (isConnected()) {
+          clearOldData();
 
-        if (!data.ok) {
-          log().error?.(`Failed to load message folders`, data.value);
-          return;
+          if (!data.ok) {
+            log().error?.(`Failed to load message folders`, data.value);
+            return;
+          }
+
+          onData(data.value);
         }
-
-        onData(data.value);
       } finally {
         if (isConnected()) {
           dataSource.setIsLoading(false);

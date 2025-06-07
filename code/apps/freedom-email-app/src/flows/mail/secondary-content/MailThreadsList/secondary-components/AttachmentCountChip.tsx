@@ -1,8 +1,8 @@
 import { Box, Chip } from '@mui/material';
 import React from 'react';
 
-import { AttachmentIcon } from '../../../../icons/AttachmentIcon.ts';
-import { formatInt } from '../../../../utils/formatInt.ts';
+import { AttachmentIcon } from '../../../../../icons/AttachmentIcon.ts';
+import { formatInt } from '../../../../../utils/formatInt.ts';
 
 export interface AttachmentCountChipProps {
   count: number;

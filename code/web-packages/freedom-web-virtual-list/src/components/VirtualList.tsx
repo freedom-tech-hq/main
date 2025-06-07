@@ -454,11 +454,11 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
 
   useBindingEffect(totalSize, () => makeOnVisibleRangeChange()?.(), { triggerOnMount: true, deps: [dataSource] });
 
-  const onItemsAdded = useCallbackRef(({ indices }: { indices: number[] }) => {
+  const onItemsAdded = useCallbackRef(({ indices }: { indices: Readonly<number[]> }) => {
     const currentPrototypeSizes = prototypeSizes.get();
 
     const currentItemSizes = itemSizes.get();
-    for (const index of indices.sort((a, b) => b - a)) {
+    for (const index of [...indices].sort((a, b) => b - a)) {
       const templateId = delegate.getTemplateIdForItemAtIndex(index);
       const newItemSize = currentPrototypeSizes[templateId];
       currentItemSizes.splice(index, 0, [false, newItemSize]);
@@ -490,7 +490,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     isEmpty.set(true);
   });
 
-  const onItemsMoved = useCallbackRef(({ indices }: { indices: Array<[from: number, to: number]> }) => {
+  const onItemsMoved = useCallbackRef(({ indices }: { indices: Readonly<Array<[from: number, to: number]>> }) => {
     const currentItemSizes = itemSizes.get();
     for (const [fromIndex, toIndex] of indices) {
       if (fromIndex === toIndex) {
@@ -513,9 +513,9 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     forceRenderCount.set(forceRenderCount.get() + 1);
   });
 
-  const onItemsRemoved = useCallbackRef(({ indices }: { indices: number[] }) => {
+  const onItemsRemoved = useCallbackRef(({ indices }: { indices: Readonly<number[]> }) => {
     const currentItemSizes = itemSizes.get();
-    for (const index of indices.sort((a, b) => b - a)) {
+    for (const index of [...indices].sort((a, b) => b - a)) {
       const rendered = lastRenderedItemsByItemIndex.get(index);
       if (rendered !== undefined) {
         const [key, renderedItem, topPx] = rendered;
@@ -534,11 +534,11 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
     isEmpty.set(dataSource.getNumItems() === 0);
   });
 
-  const onItemsUpdated = useCallbackRef(({ indices }: { indices: number[] }) => {
+  const onItemsUpdated = useCallbackRef(({ indices }: { indices: Readonly<number[]> }) => {
     const currentPrototypeSizes = prototypeSizes.get();
 
     const currentItemSizes = itemSizes.get();
-    for (const index of indices.sort((a, b) => b - a)) {
+    for (const index of [...indices].sort((a, b) => b - a)) {
       const newKey = dataSource.getKeyForItemAtIndex(index);
       const rendered = lastRenderedItemsByItemIndex.get(index);
       if (rendered !== undefined) {
@@ -638,56 +638,58 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
   const focus = useCallbackRef(() => isFocusable && document.getElementById(uuid)?.focus());
 
   const cancelLastScroll = useRef<(() => void) | undefined>(undefined);
-  const scrollToItemWithKey = useCallbackRef((key: KeyT) => {
-    cancelLastScroll.current?.();
+  const scrollToItemWithKey = useCallbackRef(
+    (key: KeyT, { scrollAreaInsets }: { scrollAreaInsets?: { top?: number; bottom?: number } } = {}) => {
+      cancelLastScroll.current?.();
 
-    const index = dataSource.getIndexOfItemWithKey(key);
-    if (index < 0) {
-      return;
-    }
-
-    const scrollParentElem = typeof scrollParent === 'string' ? document.getElementById(scrollParent) : scrollParent;
-    if (scrollParentElem === null) {
-      return;
-    }
-
-    const scrollPositionMarkerElem = document.getElementById(`${uuid}-scroll-position-marker`);
-    if (scrollPositionMarkerElem === null) {
-      return;
-    }
-
-    const currentItemSizes = itemSizes.get();
-
-    let itemOffset = 0;
-    let itemHeight = 0;
-    for (const [itemIndex, [_isMeasured, currentItemSize]] of currentItemSizes.entries()) {
-      if (itemIndex === index) {
-        itemHeight = currentItemSize;
-        break;
+      const index = dataSource.getIndexOfItemWithKey(key);
+      if (index < 0) {
+        return;
       }
-      itemOffset += currentItemSize;
-    }
 
-    scrollPositionMarkerElem.style.top = `${itemOffset}px`;
-    scrollPositionMarkerElem.style.height = `${itemHeight}px`;
+      const scrollParentElem = typeof scrollParent === 'string' ? document.getElementById(scrollParent) : scrollParent;
+      if (scrollParentElem === null) {
+        return;
+      }
 
-    const animationFrame = window.requestAnimationFrame(() => {
-      scrollPositionMarkerElem.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+      const scrollPositionMarkerElem = document.getElementById(`${uuid}-scroll-position-marker`);
+      if (scrollPositionMarkerElem === null) {
+        return;
+      }
 
-      // 600ms is the maximum amount of time any mainstream browser should take to scroll to an element
-      const timeout = setTimeout(() => (scrollPositionMarkerElem.style.height = '0'), 600);
+      const currentItemSizes = itemSizes.get();
+
+      let itemOffset = 0;
+      let itemHeight = 0;
+      for (const [itemIndex, [_isMeasured, currentItemSize]] of currentItemSizes.entries()) {
+        if (itemIndex === index) {
+          itemHeight = currentItemSize;
+          break;
+        }
+        itemOffset += currentItemSize;
+      }
+
+      scrollPositionMarkerElem.style.top = `${itemOffset - (scrollAreaInsets?.top ?? 0)}px`;
+      scrollPositionMarkerElem.style.height = `${itemHeight + (scrollAreaInsets?.top ?? 0) + (scrollAreaInsets?.bottom ?? 0)}px`;
+
+      const animationFrame = window.requestAnimationFrame(() => {
+        scrollPositionMarkerElem.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+
+        // 600ms is the maximum amount of time any mainstream browser should take to scroll to an element
+        const timeout = setTimeout(() => (scrollPositionMarkerElem.style.height = '0'), 600);
+        cancelLastScroll.current = () => {
+          scrollPositionMarkerElem.style.height = '0';
+          clearTimeout(timeout);
+          cancelLastScroll.current = undefined;
+        };
+      });
       cancelLastScroll.current = () => {
         scrollPositionMarkerElem.style.height = '0';
-        clearTimeout(timeout);
+        window.cancelAnimationFrame(animationFrame);
         cancelLastScroll.current = undefined;
       };
-    });
-    cancelLastScroll.current = () => {
-      scrollPositionMarkerElem.style.height = '0';
-      window.cancelAnimationFrame(animationFrame);
-      cancelLastScroll.current = undefined;
-    };
-  });
+    }
+  );
 
   if (controls !== undefined) {
     controls.hasFocus = delayedHasFocus.get;

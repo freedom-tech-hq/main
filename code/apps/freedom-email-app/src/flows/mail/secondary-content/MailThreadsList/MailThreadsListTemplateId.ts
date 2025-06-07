@@ -1,1 +1,1 @@
-export type MailThreadsListTemplateId = 'mail-thread';
+export type MailThreadsListTemplateId = 'mail-thread' | 'mail-thread-placeholder';

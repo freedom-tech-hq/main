@@ -7,17 +7,17 @@ import { useT } from 'freedom-react-localization';
 import React from 'react';
 import { useBinding, useCallbackRef } from 'react-bindings';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { AvatarPlaceholder } from '../../../../components/reusable/AvatarPlaceholder.tsx';
-import { StringAvatar } from '../../../../components/reusable/StringAvatar.tsx';
-import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
-import { MoreActionsIcon } from '../../../../icons/MoreActionsIcon.ts';
-import { ReplyIcon } from '../../../../icons/ReplyIcon.ts';
-import { formatDate } from '../../../../utils/formatDate.ts';
-import { formatTime } from '../../../../utils/formatTime.ts';
-import { getStringAvatarValueFromMailAddressList } from '../../../../utils/getStringAvatarValueFromMailAddressList.ts';
-import { useMailListItemTransientStatesBindingPersistence } from './mail-list-item-transient-states-binding-persistence.tsx';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { AvatarPlaceholder } from '../../../../../components/reusable/AvatarPlaceholder.tsx';
+import { StringAvatar } from '../../../../../components/reusable/StringAvatar.tsx';
+import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
+import { useMessagePresenter } from '../../../../../contexts/message-presenter.tsx';
+import { MoreActionsIcon } from '../../../../../icons/MoreActionsIcon.ts';
+import { ReplyIcon } from '../../../../../icons/ReplyIcon.ts';
+import { formatDate } from '../../../../../utils/formatDate.ts';
+import { formatTime } from '../../../../../utils/formatTime.ts';
+import { getStringAvatarValueFromMailAddressList } from '../../../../../utils/getStringAvatarValueFromMailAddressList.ts';
+import { useMailListItemTransientStatesBindingPersistence } from '../primary-components/mail-list-item-transient-states-binding-persistence.tsx';
 import {
   MailListItemFormattedEmailAddresses,
   MailListItemFormattedEmailAddressesPlaceholder

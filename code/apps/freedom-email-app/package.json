@@ -46,7 +46,7 @@
     "react-waitables": "2.3.10",
     "tailwindcss": "4.1.7",
     "yaschema": "5.2.1",
-    "yasorted-array": "1.0.6"
+    "yasorted-array": "1.0.7"
   },
   "devDependencies": {
     "@types/email-addresses": "3.0.0",

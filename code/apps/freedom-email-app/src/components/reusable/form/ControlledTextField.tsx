@@ -106,14 +106,7 @@ export const ControlledTextFieldPlaceholder = ({
   switch (labelPosition) {
     case 'default':
       return (
-        <TextField
-          helperText=" "
-          {...fwd}
-          label={label}
-          value=""
-          disabled
-          className={`ControlledTextFieldPlaceholder ${fwd.className ?? ''}`}
-        />
+        <TextField helperText=" " {...fwd} label={label} value="" className={`ControlledTextFieldPlaceholder ${fwd.className ?? ''}`} />
       );
     case 'above':
     case 'before':
@@ -126,13 +119,7 @@ export const ControlledTextFieldPlaceholder = ({
           <InputLabel shrink={false} htmlFor={'password'} className={`medium ${labelPosition}`}>
             <TxtPlaceholder>Label</TxtPlaceholder>
           </InputLabel>
-          <TextField
-            helperText=" "
-            {...fwd}
-            value=""
-            disabled
-            className={`flex-auto ControlledTextFieldPlaceholder ${fwd.className ?? ''}`}
-          />
+          <TextField helperText=" " {...fwd} value="" className={`flex-auto ControlledTextFieldPlaceholder ${fwd.className ?? ''}`} />
         </Stack>
       );
   }

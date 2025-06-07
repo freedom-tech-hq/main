@@ -1,1 +1,1 @@
-export type MailListTemplateId = 'mail' | 'collapsed';
+export type MailListTemplateId = 'mail' | 'collapsed' | 'load-more';

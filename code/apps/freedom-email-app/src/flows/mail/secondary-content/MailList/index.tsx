@@ -3,11 +3,11 @@ import React from 'react';
 import { useBindingEffect } from 'react-bindings';
 
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
+import type { MailListControls } from './MailListControls.ts';
 import {
   MailListItemTransientStatesBindingPersistenceProvider,
   useMailListItemTransientStatesBindingPersistence
-} from './mail-list-item-transient-states-binding-persistence.tsx';
-import type { MailListControls } from './MailListControls.ts';
+} from './primary-components/mail-list-item-transient-states-binding-persistence.tsx';
 import { useMailListDataSource } from './useMailListDataSource.ts';
 import { useMailListDelegate } from './useMailListDelegate.tsx';
 

@@ -1,4 +1,4 @@
-export * from './GetMailIdsForThreadPacket.ts';
-export * from './GetMailThreadIdsForMessageFolderPacket.ts';
+export * from './GetMailInfosForThreadPacket.ts';
+export * from './GetMailThreadInfosForMessageFolderPacket.ts';
 export * from './GetMessageFoldersPacket.ts';
 export * from './MailThreadsDataSetId.ts';

@@ -55,21 +55,17 @@ const segmentInfo = nest(
   }
 );
 
-const joinPaths = (...paths: string[]) =>
-  paths
-    .filter((segment) => segment.length > 0)
-    .map(encodeURIComponent)
-    .join('/');
+const joinPaths = (...paths: string[]) => paths.filter((segment) => segment.length > 0).join('/');
 
 const makePath = (rootPrefix: string) =>
   nest(
     [segmentInfo],
     (level) => joinPaths(rootPrefix, level.value.segment),
     (parent, level) => ({
-      signIn: (email: string) => joinPaths(parent, level.signIn.segment[0], email),
+      signIn: (email: string) => joinPaths(parent, level.signIn.segment[0], encodeURIComponent(email)),
       addAccount: joinPaths(parent, level.addAccount.segment),
       newAccount: joinPaths(parent, level.newAccount.segment),
-      importCredential: (email: string) => joinPaths(parent, level.importCredential.segment[0], email),
+      importCredential: (email: string) => joinPaths(parent, level.importCredential.segment[0], encodeURIComponent(email)),
 
       mail: nest(
         [level.mail],

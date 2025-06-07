@@ -8,12 +8,12 @@ import React, { Fragment } from 'react';
 import type { Binding } from 'react-bindings';
 import { BC, useCallbackRef } from 'react-bindings';
 
-import type { TxtProps } from '../../../../components/reusable/aliases/Txt.ts';
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { BreakableEmailAddressTxt } from '../../../../components/reusable/BreakableEmailAddressTxt.tsx';
-import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { formatInt } from '../../../../utils/formatInt.ts';
-import { makeTagsFromMailAddressList } from '../../../../utils/makeTagsFromMailAddressList.ts';
+import type { TxtProps } from '../../../../../components/reusable/aliases/Txt.ts';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { BreakableEmailAddressTxt } from '../../../../../components/reusable/BreakableEmailAddressTxt.tsx';
+import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
+import { formatInt } from '../../../../../utils/formatInt.ts';
+import { makeTagsFromMailAddressList } from '../../../../../utils/makeTagsFromMailAddressList.ts';
 
 const enSpace = '\u2002';
 const emSpace = '\u2003';

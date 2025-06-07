@@ -22,6 +22,8 @@
     --colors-divider: #E4E4E7;
     --colors-error: #DC2626;
     --colors-success: #16A34A;
+    --colors-item-needs-attention-background: #737373;
+    --colors-item-selected-background: #FFF0D8;
 
     --font-weight-regular: 500;
     --font-weight-medium: 500;
@@ -81,6 +83,8 @@
       --colors-disabled-text: #A1A1AA;
       --colors-input-border: #27272A;
       --colors-divider: #27272A;
+      --colors-item-needs-attention-background: #262626;
+      --colors-item-selected-background: #422E0C;
     }
   }
 }

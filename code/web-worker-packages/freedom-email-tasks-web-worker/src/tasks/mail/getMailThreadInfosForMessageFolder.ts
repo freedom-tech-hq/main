@@ -13,22 +13,22 @@ import type { CachedThread } from '../../caches/cachedThreadsByDataSetId.ts';
 import { cachedThreadsByDataSetId } from '../../caches/cachedThreadsByDataSetId.ts';
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import type {
-  GetMailThreadIdsForMessageFolderPacket,
+  GetMailThreadInfosForMessageFolderPacket,
   MailThreadsAddedPacket
-} from '../../types/mail/GetMailThreadIdsForMessageFolderPacket.ts';
+} from '../../types/mail/GetMailThreadInfosForMessageFolderPacket.ts';
 import { type MailThreadsDataSetId, mailThreadsDataSetIdInfo } from '../../types/mail/MailThreadsDataSetId.ts';
 import { isDemoMode } from '../config/demo-mode.ts';
 import { loadMoreThreadsByDataSetId } from './loadMoreMailThreadIds.ts';
 
 const getThreadsFromRemote = makeApiFetchTask([import.meta.filename, 'getThreadsFromRemote'], api.threads.GET);
 
-export const getMailThreadIdsForMessageFolder = makeAsyncResultFunc(
+export const getMailThreadInfosForMessageFolder = makeAsyncResultFunc(
   [import.meta.filename],
   async (
     trace,
     folder: MessageFolder,
     isConnected: () => TypeOrPromisedType<boolean>,
-    onData: (value: GetMailThreadIdsForMessageFolderPacket) => TypeOrPromisedType<void>
+    onData: (value: GetMailThreadInfosForMessageFolderPacket) => TypeOrPromisedType<void>
   ): PR<MailThreadsAddedPacket & { dataSetId: MailThreadsDataSetId }> => {
     const dataSetId = mailThreadsDataSetIdInfo.make(makeUuid());
 
@@ -39,7 +39,7 @@ export const getMailThreadIdsForMessageFolder = makeAsyncResultFunc(
     const credential = useActiveCredential(trace).credential;
 
     if (credential === undefined) {
-      return makeSuccess({ type: 'threads-added' as const, addedThreadIds: [], estCount: 0, dataSetId });
+      return makeSuccess({ type: 'threads-added' as const, addedThreadInfos: [], estCount: 0, estRemainingCount: 0, dataSetId });
     }
 
     const threads = await getThreadsFromRemote(trace, {
@@ -52,6 +52,7 @@ export const getMailThreadIdsForMessageFolder = makeAsyncResultFunc(
     }
 
     let lastEstCount = threads.value.body.estCount ?? threads.value.body.items.length;
+    let numLoaded = threads.value.body.items.length;
     let nextPageToken = threads.value.body.nextPageToken;
 
     const threadCache = new Map<MailThreadLikeId, CachedThread>();
@@ -66,31 +67,38 @@ export const getMailThreadIdsForMessageFolder = makeAsyncResultFunc(
       await bestEffort(
         trace,
         withAcquiredLock(trace, lock.lock(dataSetId), {}, async (): PR<undefined> => {
-          if (upToAtLeast <= threadCache.size) {
-            return makeSuccess(undefined);
+          while (nextPageToken !== undefined && upToAtLeast > threadCache.size) {
+            const threads = await getThreadsFromRemote(trace, {
+              headers: { authorization: `Bearer ${credential.userId}` },
+              query: { folder, pageToken: nextPageToken },
+              context: getDefaultApiRoutingContext()
+            });
+            if (!threads.ok) {
+              return threads;
+            }
+
+            lastEstCount = threads.value.body.estCount ?? threadCache.size + threads.value.body.items.length;
+            numLoaded += threads.value.body.items.length;
+            nextPageToken = threads.value.body.nextPageToken;
+
+            for (const thread of threads.value.body.items) {
+              threadCache.set(thread.id, { encrypted: true, value: thread });
+            }
+
+            onData({
+              type: 'threads-added' as const,
+              addedThreadInfos: threads.value.body.items.map((item) => ({
+                id: item.id,
+                timeMSec: new Date(item.lastMessage.updatedAt).getTime()
+              })),
+              estCount: lastEstCount,
+              estRemainingCount: nextPageToken === undefined ? 0 : Math.max(0, lastEstCount - numLoaded)
+            });
+
+            if (nextPageToken === undefined || threads.value.body.items.length === 0) {
+              break; // No more threads
+            }
           }
-
-          const threads = await getThreadsFromRemote(trace, {
-            headers: { authorization: `Bearer ${credential.userId}` },
-            query: { folder, pageToken: nextPageToken },
-            context: getDefaultApiRoutingContext()
-          });
-          if (!threads.ok) {
-            return threads;
-          }
-
-          lastEstCount = threads.value.body.estCount ?? threadCache.size + threads.value.body.items.length;
-          nextPageToken = threads.value.body.nextPageToken;
-
-          for (const thread of threads.value.body.items) {
-            threadCache.set(thread.id, { encrypted: true, value: thread });
-          }
-
-          onData({
-            type: 'threads-added' as const,
-            addedThreadIds: threads.value.body.items.map((item) => item.id),
-            estCount: lastEstCount
-          });
 
           return makeSuccess(undefined);
         })
@@ -111,8 +119,12 @@ export const getMailThreadIdsForMessageFolder = makeAsyncResultFunc(
 
     return makeSuccess({
       type: 'threads-added' as const,
-      addedThreadIds: threads.value.body.items.map((item) => item.id),
+      addedThreadInfos: threads.value.body.items.map((item) => ({
+        id: item.id,
+        timeMSec: new Date(item.lastMessage.updatedAt).getTime()
+      })),
       estCount: lastEstCount,
+      estRemainingCount: Math.max(0, lastEstCount - numLoaded),
       dataSetId
     });
   }
@@ -131,10 +143,18 @@ DEV: makeDemoModeResult = async ({ dataSetId }) => {
 
   return makeSuccess({
     type: 'threads-added',
-    addedThreadIds: Array(1000)
+    addedThreadInfos: Array(1000)
       .fill(0)
-      .map(() => mailIdInfo.make(`${makeIsoDateTime(new Date(Date.now() - Math.random() * 30 * ONE_DAY_MSEC))}-${makeUuid()}`)),
+      .map(() => {
+        const timeMSec = Date.now() - Math.random() * 30 * ONE_DAY_MSEC;
+
+        return {
+          id: mailIdInfo.make(`${makeIsoDateTime(new Date(timeMSec))}-${makeUuid()}`),
+          timeMSec
+        };
+      }),
     estCount: 1000,
+    estRemainingCount: 0,
     dataSetId
   });
 };

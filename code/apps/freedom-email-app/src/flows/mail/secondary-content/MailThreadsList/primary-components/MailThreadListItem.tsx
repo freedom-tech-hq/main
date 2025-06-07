@@ -4,18 +4,18 @@ import React from 'react';
 import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { useDerivedWaitable, WC } from 'react-waitables';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { AvatarPlaceholder } from '../../../../components/reusable/AvatarPlaceholder.tsx';
-import { ControlledCheckbox, ControlledCheckboxPlaceholder } from '../../../../components/reusable/form/ControlledCheckbox.tsx';
-import { StringAvatar } from '../../../../components/reusable/StringAvatar.tsx';
-import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
-import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
-import { formatTimeIfSameDateOrFormatDate } from '../../../../utils/formatTimeIfSameDateOrFormatDate.ts';
-import { getStringAvatarValueFromMailAddressList } from '../../../../utils/getStringAvatarValueFromMailAddressList.ts';
-import { makeTagsFromMailAddressList } from '../../../../utils/makeTagsFromMailAddressList.ts';
-import { AttachmentCountChip, AttachmentCountChipPlaceholder } from './AttachmentCountChip.tsx';
-import type { MailThreadsListThreadDataSourceItem } from './MailThreadsListThreadDataSourceItem.ts';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { AvatarPlaceholder } from '../../../../../components/reusable/AvatarPlaceholder.tsx';
+import { ControlledCheckbox, ControlledCheckboxPlaceholder } from '../../../../../components/reusable/form/ControlledCheckbox.tsx';
+import { StringAvatar } from '../../../../../components/reusable/StringAvatar.tsx';
+import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
+import { useSelectedMailThreadId } from '../../../../../contexts/selected-mail-thread-id.tsx';
+import { useTaskWaitable } from '../../../../../hooks/useTaskWaitable.ts';
+import { formatTimeIfSameDateOrFormatDate } from '../../../../../utils/formatTimeIfSameDateOrFormatDate.ts';
+import { getStringAvatarValueFromMailAddressList } from '../../../../../utils/getStringAvatarValueFromMailAddressList.ts';
+import { makeTagsFromMailAddressList } from '../../../../../utils/makeTagsFromMailAddressList.ts';
+import type { MailThreadsListThreadDataSourceItem } from '../MailThreadsListDataSourceItem.ts';
+import { AttachmentCountChip, AttachmentCountChipPlaceholder } from '../secondary-components/AttachmentCountChip.tsx';
 
 export interface MailThreadListItemProps<TagT> extends Omit<MailThreadsListThreadDataSourceItem, 'type'> {
   dataSetId: MailThreadsDataSetId;
@@ -62,7 +62,12 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, dataSetId, tag, onClic
   return WC(
     { isSelected, thread, fromTags },
     ({ isSelected, thread, fromTags }) => (
-      <ListItemButton selected={isSelected} onClick={taggedOnClick} className="mail-thread-list-item">
+      <ListItemButton
+        selected={isSelected}
+        onClick={taggedOnClick}
+        className="mail-thread-list-item"
+        // className={`mail-thread-list-item ${thread.numUnread > 0 ? 'needs-attention' : ''}`}
+      >
         <ListItemAvatar>
           <Stack direction="row" alignItems="center" gap={1}>
             <ControlledCheckbox checked={isChecked} />
@@ -78,7 +83,7 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, dataSetId, tag, onClic
                 {fromTags}
               </Txt>
             </Stack>
-            <Txt variant="caption" color="disabled" className="whitespace-no-wrap">
+            <Txt variant="caption" color="disabled" className="whitespace-nowrap">
               {formatTimeIfSameDateOrFormatDate(timeMSec)}
             </Txt>
           </Stack>
@@ -106,7 +111,7 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, dataSetId, tag, onClic
 };
 
 export const MailThreadListItemPlaceholder = () => (
-  <ListItemButton disabled className="mail-thread-list-item">
+  <ListItemButton className="mail-thread-list-item">
     <ListItemAvatar>
       <Stack direction="row" alignItems="center" gap={1}>
         <ControlledCheckboxPlaceholder />
@@ -120,7 +125,7 @@ export const MailThreadListItemPlaceholder = () => (
             {`email@freedommail.me`}
           </TxtPlaceholder>
         </Stack>
-        <TxtPlaceholder variant="caption" color="disabled" className="whitespace-no-wrap">
+        <TxtPlaceholder variant="caption" color="disabled" className="whitespace-nowrap">
           {formatTimeIfSameDateOrFormatDate(Date.now())}
         </TxtPlaceholder>
       </Stack>
