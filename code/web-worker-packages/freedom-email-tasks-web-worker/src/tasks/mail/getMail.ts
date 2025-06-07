@@ -2,8 +2,10 @@ import type { PR, SuccessResult } from 'freedom-async';
 import { makeAsyncResultFunc, makeFailure, makeSuccess, sleep } from 'freedom-async';
 import { makeIsoDateTime, ONE_DAY_MSEC, ONE_SEC_MSEC } from 'freedom-basic-data';
 import { NotFoundError, UnauthorizedError } from 'freedom-common-errors';
-import { clientApi, type DecryptedViewMessage, type MailId } from 'freedom-email-api';
+import { api, clientApi, type DecryptedViewMessage, type MailId } from 'freedom-email-api';
+import { makeApiFetchTask } from 'freedom-fetching';
 import { generatePseudoWord } from 'pseudo-words';
+import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { cachedMessagesByDataSetId } from '../../caches/cachedMessagesByDataSetId.ts';
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -12,9 +14,11 @@ import type { MailMessagesDataSetId } from '../../types/mail/MailMessagesDataSet
 import { getConfig } from '../config/config.ts';
 import { isDemoMode } from '../config/demo-mode.ts';
 
+const getMessageFromRemote = makeApiFetchTask([import.meta.filename, 'getMessageFromRemote'], api.message.id.GET);
+
 export const getMail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, dataSetId: MailMessagesDataSetId, mailId: MailId): PR<DecryptedViewMessage, 'not-found'> => {
+  async (trace, dataSetId: MailMessagesDataSetId | undefined, mailId: MailId): PR<DecryptedViewMessage, 'not-found'> => {
     DEV: if (isDemoMode()) {
       return await makeDemoModeResult({ mailId });
     }
@@ -25,29 +29,50 @@ export const getMail = makeAsyncResultFunc(
       return makeFailure(new UnauthorizedError(trace, { message: 'No active user' }));
     }
 
-    const messageCache = cachedMessagesByDataSetId.get(dataSetId);
-    if (messageCache === undefined) {
-      return makeFailure(new NotFoundError(trace, { message: `Data set with ID: ${dataSetId} was disconnected`, errorCode: 'not-found' }));
+    if (dataSetId !== undefined) {
+      const messageCache = cachedMessagesByDataSetId.get(dataSetId);
+      if (messageCache === undefined) {
+        return makeFailure(
+          new NotFoundError(trace, { message: `Data set with ID: ${dataSetId} was disconnected`, errorCode: 'not-found' })
+        );
+      }
+
+      const message = messageCache.get(mailId);
+      if (message === undefined) {
+        return makeFailure(new NotFoundError(trace, { message: `No mail item found with ID ${mailId}`, errorCode: 'not-found' }));
+      }
+
+      if (!message.encrypted) {
+        return makeSuccess(message.value);
+      }
+
+      const userKeys = makeUserKeysFromEmailCredential(credential);
+      const decrypted = await clientApi.decryptViewMessage(trace, userKeys, message.value);
+      if (!decrypted.ok) {
+        return decrypted;
+      }
+
+      messageCache.set(mailId, { encrypted: false, value: decrypted.value });
+
+      return makeSuccess(decrypted.value);
+    } else {
+      const message = await getMessageFromRemote(trace, {
+        headers: { authorization: `Bearer ${credential.userId}` },
+        params: { mailId },
+        context: getDefaultApiRoutingContext()
+      });
+      if (!message.ok) {
+        return message;
+      }
+
+      const userKeys = makeUserKeysFromEmailCredential(credential);
+      const decrypted = await clientApi.decryptViewMessage(trace, userKeys, message.value.body);
+      if (!decrypted.ok) {
+        return decrypted;
+      }
+
+      return makeSuccess(decrypted.value);
     }
-
-    const message = messageCache.get(mailId);
-    if (message === undefined) {
-      return makeFailure(new NotFoundError(trace, { message: `No mail item found with ID ${mailId}`, errorCode: 'not-found' }));
-    }
-
-    if (!message.encrypted) {
-      return makeSuccess(message.value);
-    }
-
-    const userKeys = makeUserKeysFromEmailCredential(credential);
-    const decrypted = await clientApi.decryptViewMessage(trace, userKeys, message.value);
-    if (!decrypted.ok) {
-      return decrypted;
-    }
-
-    messageCache.set(mailId, { encrypted: false, value: decrypted.value });
-
-    return makeSuccess(decrypted.value);
   }
 );
 
