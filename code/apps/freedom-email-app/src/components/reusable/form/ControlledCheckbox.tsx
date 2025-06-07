@@ -40,6 +40,5 @@ export const ControlledCheckboxPlaceholder = (props: Omit<ControlledCheckboxProp
     {...props}
     className={`ControlledCheckboxPlaceholder ${props.className ?? ''}`}
     checked={false}
-    disabled
   />
 );

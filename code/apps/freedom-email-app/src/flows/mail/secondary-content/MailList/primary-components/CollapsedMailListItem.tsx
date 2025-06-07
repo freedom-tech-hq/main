@@ -1,8 +1,8 @@
 import { Button, Divider, Stack } from '@mui/material';
 import React from 'react';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { formatInt } from '../../../../utils/formatInt.ts';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { formatInt } from '../../../../../utils/formatInt.ts';
 
 export interface CollapsedMailListItemProps {
   count: number;

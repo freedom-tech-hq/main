@@ -6,11 +6,11 @@ import type { ReadonlyBinding } from 'react-bindings';
 import { useBinding, useCallbackRef } from 'react-bindings';
 import { WC } from 'react-waitables';
 
-import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
+import { useTaskWaitable } from '../../../../../hooks/useTaskWaitable.ts';
+import type { MailListDataSourceMailItem } from '../MailListDataSourceItem.ts';
+import { MailListItemDetail, MailListItemDetailPlaceholder } from '../secondary-components/MailListItemDetail.tsx';
+import { MailListItemHeader, MailListItemHeaderPlaceholder } from '../secondary-components/MailListItemHeader.tsx';
 import { useMailListItemTransientStatesBindingPersistence } from './mail-list-item-transient-states-binding-persistence.tsx';
-import type { MailListDataSourceMailItem } from './MailListDataSourceItem.ts';
-import { MailListItemDetail, MailListItemDetailPlaceholder } from './MailListItemDetail.tsx';
-import { MailListItemHeader, MailListItemHeaderPlaceholder } from './MailListItemHeader.tsx';
 
 export interface MailListItemProps extends Omit<MailListDataSourceMailItem, 'type'> {
   dataSetId: MailMessagesDataSetId;

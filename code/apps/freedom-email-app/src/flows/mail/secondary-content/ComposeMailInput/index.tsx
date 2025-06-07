@@ -10,7 +10,7 @@ import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { ControlledTextField } from '../../../../components/reusable/form/ControlledTextField.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
-import { useScrollParentVisibleHeightPx } from '../../../../contexts/scroll-parent-visible-height-px.tsx';
+import { useScrollParentVisibleHeightPx } from '../../../../contexts/scroll-parent-info.tsx';
 import type { MailTextStyle } from '../../../../types/MailTextStyle.ts';
 import type { ReferencedMailCompositionMode } from '../../../../types/ReferencedMailCompositionMode.ts';
 import { ComposeMailBccField } from './fields/ComposeMailBccField.tsx';

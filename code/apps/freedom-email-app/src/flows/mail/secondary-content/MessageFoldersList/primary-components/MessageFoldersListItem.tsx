@@ -6,15 +6,15 @@ import { type TFunction } from 'i18next';
 import React from 'react';
 import { BC, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
-import { IconPlaceholder } from '../../../../components/reusable/IconPlaceholder.tsx';
-import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
-import { $messageFolder } from '../../../../consts/common-strings.ts';
-import { useSelectedMessageFolder } from '../../../../contexts/selected-message-folder.tsx';
-import { DraftIcon } from '../../../../icons/DraftIcon.ts';
-import { InboxIcon } from '../../../../icons/InboxIcon.ts';
-import { OutboxIcon } from '../../../../icons/OutboxIcon.ts';
-import { SentIcon } from '../../../../icons/SentIcon.ts';
-import type { MessageFoldersListFolderDataSourceItem } from './MessageFoldersListFolderDataSourceItem.ts';
+import { IconPlaceholder } from '../../../../../components/reusable/IconPlaceholder.tsx';
+import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
+import { $messageFolder } from '../../../../../consts/common-strings.ts';
+import { useSelectedMessageFolder } from '../../../../../contexts/selected-message-folder.tsx';
+import { DraftIcon } from '../../../../../icons/DraftIcon.ts';
+import { InboxIcon } from '../../../../../icons/InboxIcon.ts';
+import { OutboxIcon } from '../../../../../icons/OutboxIcon.ts';
+import { SentIcon } from '../../../../../icons/SentIcon.ts';
+import type { MessageFoldersListFolderDataSourceItem } from '../MessageFoldersListDataSourceItem.ts';
 
 export interface MessageFoldersListItemProps<TagT> extends Omit<MessageFoldersListFolderDataSourceItem, 'type'> {
   tag: TagT;
@@ -50,8 +50,8 @@ export const MessageFoldersListItem = <TagT,>({ folder, unreadCount, tag, onClic
   ));
 };
 
-export const MailCollectionListItemPlaceholder = () => (
-  <ListItemButton disabled className="MessageFoldersListItem">
+export const MessageFoldersListItemPlaceholder = () => (
+  <ListItemButton className="MessageFoldersListItem">
     <ListItemIcon>
       <IconPlaceholder />
     </ListItemIcon>

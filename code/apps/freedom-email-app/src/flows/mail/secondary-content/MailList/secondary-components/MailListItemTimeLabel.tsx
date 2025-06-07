@@ -2,9 +2,9 @@ import type { StackProps } from '@mui/material';
 import { Stack } from '@mui/material';
 import React from 'react';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { formatDate } from '../../../../utils/formatDate.ts';
-import { formatTime } from '../../../../utils/formatTime.ts';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { formatDate } from '../../../../../utils/formatDate.ts';
+import { formatTime } from '../../../../../utils/formatTime.ts';
 
 export interface MailListItemTimeLabelProps extends StackProps {
   timeMSec: number;

@@ -3,11 +3,11 @@ import type { VirtualListDelegate, VirtualListItemPrototype } from 'freedom-web-
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
 
-import { CollapsedMailListItem } from './CollapsedMailListItem.tsx';
 import type { MailListDataSourceItem } from './MailListDataSourceItem.ts';
-import { MailListItem, MailListItemPlaceholder } from './MailListItem.tsx';
 import type { MailListKey } from './MailListKey.ts';
 import type { MailListTemplateId } from './MailListTemplateId.ts';
+import { CollapsedMailListItem } from './primary-components/CollapsedMailListItem.tsx';
+import { MailListItem, MailListItemPlaceholder } from './primary-components/MailListItem.tsx';
 import type { MailListDataSource } from './useMailListDataSource.ts';
 
 export const useMailListDelegate = (dataSource: MailListDataSource) =>
@@ -33,6 +33,8 @@ export const useMailListDelegate = (dataSource: MailListDataSource) =>
           }
           case 'collapsed':
             return <CollapsedMailListItem count={item.count} onClick={dataSource.expandCollapsedItems} />;
+          case 'load-more':
+            return <CollapsedMailListItem count={item.count} onClick={dataSource.loadMore} />;
         }
       },
       loadingIndicatorTransitionDurationMSec: 0,
@@ -53,6 +55,11 @@ const itemPrototypes: Record<MailListTemplateId, VirtualListItemPrototype> = {
     Component: () => <MailListItemPlaceholder showDividerIfCollapsed={true} />
   },
   collapsed: {
+    defaultEstimatedSizePx: 70,
+    isSizeDynamic: false,
+    Component: () => <CollapsedMailListItem count={0} onClick={noop} />
+  },
+  'load-more': {
     defaultEstimatedSizePx: 70,
     isSizeDynamic: false,
     Component: () => <CollapsedMailListItem count={0} onClick={noop} />

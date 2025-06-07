@@ -1,5 +1,4 @@
 import { ListItem, ListItemText } from '@mui/material';
-import type { DataSource } from 'freedom-data-source';
 import type { MessageFolder } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
@@ -7,17 +6,18 @@ import type { VirtualListDelegate, VirtualListItemPrototype } from 'freedom-web-
 import { noop } from 'lodash-es';
 import React, { useMemo } from 'react';
 
-import type { MessageFoldersListFolderDataSourceItem } from './MessageFoldersListFolderDataSourceItem.ts';
-import { MailCollectionListItemPlaceholder, MessageFoldersListItem } from './MessageFoldersListItem.tsx';
+import type { MessageFoldersListDataSourceItem } from './MessageFoldersListDataSourceItem.ts';
 import type { MessageFoldersListKey } from './MessageFoldersListKey.ts';
 import type { MessageFoldersListTemplateId } from './MessageFoldersListTemplateId.ts';
+import { MessageFoldersListItem, MessageFoldersListItemPlaceholder } from './primary-components/MessageFoldersListItem.tsx';
+import type { MessageFoldersListDataSource } from './useMessageFoldersListDataSource.ts';
 import { useMessageFoldersListSelectionDelegate } from './useMessageFoldersListSelectionDelegate.ts';
 
 const ns = 'ui';
 const $noCollectionsFound = LOCALIZE('No Collections Found')({ ns });
 
 export const useMessageFoldersListDelegate = (
-  dataSource: DataSource<MessageFoldersListFolderDataSourceItem, MessageFoldersListKey>,
+  dataSource: MessageFoldersListDataSource,
   {
     onFolderClicked,
     onArrowLeft,
@@ -27,13 +27,13 @@ export const useMessageFoldersListDelegate = (
     onArrowLeft?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
     onArrowRight?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   }
-): VirtualListDelegate<MessageFoldersListFolderDataSourceItem, MessageFoldersListKey, MessageFoldersListTemplateId> => {
+): VirtualListDelegate<MessageFoldersListDataSourceItem, MessageFoldersListKey, MessageFoldersListTemplateId> => {
   const t = useT();
 
   const selectionDelegate = useMessageFoldersListSelectionDelegate(dataSource, { onArrowLeft, onArrowRight });
 
   return useMemo(
-    (): VirtualListDelegate<MessageFoldersListFolderDataSourceItem, MessageFoldersListKey, MessageFoldersListTemplateId> => ({
+    (): VirtualListDelegate<MessageFoldersListDataSourceItem, MessageFoldersListKey, MessageFoldersListTemplateId> => ({
       itemPrototypes,
       getTemplateIdForItemAtIndex: (index) => dataSource.getItemAtIndex(index).type,
       renderItem: (_key, item, _index) => {
@@ -50,11 +50,11 @@ export const useMessageFoldersListDelegate = (
       loadingIndicatorTransitionDurationMSec: 0,
       renderLoadingIndicator: () => (
         <>
-          <MailCollectionListItemPlaceholder />
-          <MailCollectionListItemPlaceholder />
-          <MailCollectionListItemPlaceholder />
-          <MailCollectionListItemPlaceholder />
-          <MailCollectionListItemPlaceholder />
+          <MessageFoldersListItemPlaceholder />
+          <MessageFoldersListItemPlaceholder />
+          <MessageFoldersListItemPlaceholder />
+          <MessageFoldersListItemPlaceholder />
+          <MessageFoldersListItemPlaceholder />
         </>
       ),
       onKeyDown: selectionDelegate.onKeyDown

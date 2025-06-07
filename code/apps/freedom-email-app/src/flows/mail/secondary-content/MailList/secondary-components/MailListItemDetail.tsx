@@ -9,8 +9,8 @@ import React from 'react';
 import type { ReadonlyBinding } from 'react-bindings';
 import { BC, ifBinding } from 'react-bindings';
 
-import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
-import { TxtPlaceholder } from '../../../../components/reusable/TxtPlaceholder.tsx';
+import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
+import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
 import { AttachmentButtonPlaceholder } from './AttachmentButton.tsx';
 
 const ns = 'ui';

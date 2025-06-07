@@ -1,13 +1,11 @@
-import type { DataSource } from 'freedom-data-source';
 import type { VirtualListKeyboardDelegate } from 'freedom-web-virtual-list';
 import { useMemo } from 'react';
 
 import { useSelectedMessageFolder } from '../../../../contexts/selected-message-folder.tsx';
-import type { MessageFoldersListFolderDataSourceItem } from './MessageFoldersListFolderDataSourceItem.ts';
-import type { MessageFoldersListKey } from './MessageFoldersListKey.ts';
+import type { MessageFoldersListDataSource } from './useMessageFoldersListDataSource.ts';
 
 export const useMessageFoldersListSelectionDelegate = (
-  dataSource: DataSource<MessageFoldersListFolderDataSourceItem, MessageFoldersListKey>,
+  dataSource: MessageFoldersListDataSource,
   {
     onArrowLeft,
     onArrowRight

@@ -49,7 +49,7 @@ export class ArrayDataSource<T, KeyT extends string> implements DataSource<T, Ke
     return this.isLoading_;
   }
 
-  public itemsAdded({ indices }: { indices: number[] }) {
+  public itemsAdded({ indices }: { indices: Readonly<number[]> }) {
     this.notificationManager_.notify('itemsAdded', { indices });
   }
 
@@ -57,15 +57,15 @@ export class ArrayDataSource<T, KeyT extends string> implements DataSource<T, Ke
     this.notificationManager_.notify('itemsCleared', {});
   }
 
-  public itemsMoved({ indices }: { indices: Array<[from: number, to: number]> }) {
+  public itemsMoved({ indices }: { indices: Readonly<Array<[from: number, to: number]>> }) {
     this.notificationManager_.notify('itemsMoved', { indices });
   }
 
-  public itemsRemoved({ indices }: { indices: number[] }) {
+  public itemsRemoved({ indices }: { indices: Readonly<number[]> }) {
     this.notificationManager_.notify('itemsRemoved', { indices });
   }
 
-  public itemsUpdated({ indices }: { indices: number[] }) {
+  public itemsUpdated({ indices }: { indices: Readonly<number[]> }) {
     this.notificationManager_.notify('itemsUpdated', { indices });
   }
 

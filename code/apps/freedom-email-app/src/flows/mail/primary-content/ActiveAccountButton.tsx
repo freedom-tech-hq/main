@@ -40,7 +40,7 @@ export const ActiveAccountButton = () => {
 // Helpers
 
 const ActiveAccountButtonPlaceholder = () => (
-  <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />} disabled>
+  <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />}>
     <TxtPlaceholder className="w-full" />
   </Button>
 );

@@ -47,6 +47,8 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
     const colorsInputBorder = documentStyle.getPropertyValue('--colors-input-border');
     const colorsDivider = documentStyle.getPropertyValue('--colors-divider');
     const colorsSuccess = documentStyle.getPropertyValue('--colors-success');
+    const colorsItemNeedsAttentionBackground = documentStyle.getPropertyValue('--colors-item-needs-attention-background');
+    const colorsItemSelectedBackground = documentStyle.getPropertyValue('--colors-item-selected-background');
 
     const stdTheme = createTheme({});
     const sp = (multiple: number) => stdTheme.spacing(multiple);
@@ -172,7 +174,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           styleOverrides: {
             root: {
               borderRadius: br(1),
-              border: `1px solid ${colorsInputBorder}`,
+              border: `1px solid ${disabledTextColor}`,
               width: '16px',
               height: '16px',
 
@@ -289,6 +291,19 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           },
           styleOverrides: {
             root: {
+              '&.needs-attention:not(.Mui-selected)': {
+                backgroundColor: colorsItemNeedsAttentionBackground,
+                '&:hover': {
+                  backgroundColor: colorsItemNeedsAttentionBackground
+                }
+              },
+              '&.Mui-selected': {
+                backgroundColor: colorsItemSelectedBackground,
+                '&:hover': {
+                  backgroundColor: colorsItemSelectedBackground
+                }
+              },
+
               '&.MessageFoldersListItem': {
                 borderRadius: br(3),
                 padding: sp(1.5),

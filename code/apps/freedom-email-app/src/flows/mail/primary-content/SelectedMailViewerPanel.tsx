@@ -13,7 +13,7 @@ import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { OnFirstMount } from '../../../components/reusable/OnFirstMount.tsx';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../consts/timing.ts';
 import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
-import { ScrollParentVisibleHeightPxProvider } from '../../../contexts/scroll-parent-visible-height-px.tsx';
+import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread-id.tsx';
 import { ArchiveIcon } from '../../../icons/ArchiveIcon.ts';
 import { ForwardIcon } from '../../../icons/ForwardIcon.ts';
@@ -148,7 +148,7 @@ export const SelectedMailViewerPanel = () => {
 
   return (
     <Stack alignItems="stretch" className="self-stretch flex-auto relative overflow-hidden">
-      <ScrollParentVisibleHeightPxProvider value={scrollParentVisibleHeightPx}>
+      <ScrollParentInfoProvider insetTopPx={topToolbarHeightPx} heightPx={scrollableHeightPx} visibleHeightPx={scrollParentVisibleHeightPx}>
         <Stack id={`${uuid}-scrollable`} alignItems="stretch" className="relative flex-auto overflow-y-auto">
           {IF(
             hasSelectedThreadId,
@@ -245,7 +245,7 @@ export const SelectedMailViewerPanel = () => {
             ))
           )}
         </Stack>
-      </ScrollParentVisibleHeightPxProvider>
+      </ScrollParentInfoProvider>
     </Stack>
   );
 };

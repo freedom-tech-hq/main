@@ -89,12 +89,12 @@ class TasksImpl {
 
   public readonly getMail = wrapPrFunc(async () => (await import('./mail/getMail.ts')).getMail);
 
-  public readonly getMailIdsForThread = wrapPrFunc(async () => (await import('./mail/getMailIdsForThread.ts')).getMailIdsForThread);
+  public readonly getMailInfosForThread = wrapPrFunc(async () => (await import('./mail/getMailInfosForThread.ts')).getMailInfosForThread);
 
   public readonly getMailThread = wrapPrFunc(async () => (await import('./mail/getMailThread.ts')).getMailThread);
 
-  public readonly getMailThreadIdsForMessageFolder = wrapPrFunc(
-    async () => (await import('./mail/getMailThreadIdsForMessageFolder.ts')).getMailThreadIdsForMessageFolder
+  public readonly getMailThreadInfosForMessageFolder = wrapPrFunc(
+    async () => (await import('./mail/getMailThreadInfosForMessageFolder.ts')).getMailThreadInfosForMessageFolder
   );
 
   public readonly getMessageFolders = wrapPrFunc(async () => (await import('./mail/getMessageFolders.ts')).getMessageFolders);

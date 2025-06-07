@@ -5,8 +5,10 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import type { Binding, TypeOrBindingType } from 'react-bindings';
 import { ifBinding, resolveTypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
+import { useScrollParentInsetBottomPx, useScrollParentInsetTopPx } from '../../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { SelectedMessageFolderProvider } from '../../../../contexts/selected-message-folder.tsx';
+import type { MailThreadsListKey } from './MailThreadsListKey.ts';
 import { useMailThreadsListDataSource } from './useMailThreadsListDataSource.ts';
 import { useMailThreadsListDelegate } from './useMailThreadsListDelegate.tsx';
 
@@ -54,8 +56,10 @@ const InternalMailThreadsList = ({
 }: Omit<MailThreadsListProps, 'folder'>) => {
   const dataSource = useMailThreadsListDataSource({ estThreadCount });
   const selectedThreadId = useSelectedMailThreadId();
+  const scrollAreaInsetBottomPx = useScrollParentInsetBottomPx();
+  const scrollAreaInsetTopPx = useScrollParentInsetTopPx();
 
-  const listControls = useRef<VirtualListControls<MailThreadLikeId>>({});
+  const listControls = useRef<VirtualListControls<MailThreadsListKey>>({});
 
   const selectFirstMailIfNothingIsSelected = useCallbackRef(() => {
     const theSelectedThreadId = selectedThreadId.get();
@@ -100,7 +104,9 @@ const InternalMailThreadsList = ({
       return;
     }
 
-    listControls.current.scrollToItemWithKey?.(selectedThreadId);
+    listControls.current.scrollToItemWithKey?.(selectedThreadId, {
+      scrollAreaInsets: { top: scrollAreaInsetTopPx.get(), bottom: scrollAreaInsetBottomPx.get() }
+    });
   });
 
   const delegate = useMailThreadsListDelegate(dataSource, { onThreadClicked, onArrowLeft, onArrowRight });
