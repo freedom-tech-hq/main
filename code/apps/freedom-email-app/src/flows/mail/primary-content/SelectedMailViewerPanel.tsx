@@ -4,7 +4,7 @@ import type { MailId } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
-import { useElementResizeObserver } from 'freedom-web-resize-observer';
+import { useElementHeightBinding } from 'freedom-web-resize-observer';
 import React, { useMemo, useRef } from 'react';
 import { BC, useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
@@ -27,7 +27,7 @@ import { ReplyIcon } from '../../../icons/ReplyIcon.ts';
 import { SpamIcon } from '../../../icons/SpamIcon.ts';
 import { TrashIcon } from '../../../icons/TrashIcon.ts';
 import type { ReferencedMailCompositionMode } from '../../../types/ReferencedMailCompositionMode.ts';
-import { ComposeMailInput } from '../secondary-content/ComposeMailInput/index.tsx';
+import { ComposeMailBodyField } from '../secondary-content/compose-mail/ComposeMailBodyField.tsx';
 import { MailList } from '../secondary-content/MailList/index.tsx';
 import type { MailListControls } from '../secondary-content/MailList/MailListControls.ts';
 
@@ -48,7 +48,9 @@ export const SelectedMailViewerPanel = () => {
   const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
   const uuid = useMemo(() => makeUuid(), []);
+  const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isMdOrSmaller = useIsSizeClass('<=', 'md');
+  const isSmOrSmaller = useIsSizeClass('<=', 'sm');
 
   const selectedThreadId = useSelectedMailThreadId();
   const hasSelectedThreadId = useDerivedBinding(selectedThreadId, (id) => id !== undefined, { id: 'hasSelectedThreadId' });
@@ -60,6 +62,8 @@ export const SelectedMailViewerPanel = () => {
   });
   const isInCompositionMode = useDerivedBinding(composition, (mode) => mode !== undefined, { id: 'isInCompositionMode' });
   const clearCompositionMode = useCallbackRef(() => composition.set(undefined));
+
+  const bodyFieldHasFocus = useBinding(() => false, { id: 'bodyFieldHasFocus', detectChanges: true });
 
   useBindingEffect(selectedThreadId, () => {
     composition.set(undefined);
@@ -131,24 +135,8 @@ export const SelectedMailViewerPanel = () => {
     }
   });
 
-  const scrollableHeightPx = useBinding(() => 800, { id: 'scrollableHeightPx', detectChanges: true });
-  useElementResizeObserver({
-    element: `${uuid}-scrollable`,
-    tag: 0,
-    onResize: (_width, height) => {
-      scrollableHeightPx.set(height);
-    }
-  });
-
-  const topToolbarHeightPx = useBinding(() => 56, { id: 'topToolbarHeightPx', detectChanges: true });
-  useElementResizeObserver({
-    element: `${uuid}-top-toolbar`,
-    tag: 0,
-    onResize: (_width, height) => {
-      topToolbarHeightPx.set(height);
-    }
-  });
-
+  const scrollableHeightPx = useElementHeightBinding(`${uuid}-scrollable`);
+  const topToolbarHeightPx = useElementHeightBinding(`${uuid}-top-toolbar`);
   const scrollParentVisibleHeightPx = useDerivedBinding(
     { scrollableHeightPx, topToolbarHeightPx },
     ({ scrollableHeightPx, topToolbarHeightPx }) => scrollableHeightPx - topToolbarHeightPx,
@@ -156,7 +144,7 @@ export const SelectedMailViewerPanel = () => {
   );
 
   return (
-    <Stack alignItems="stretch" className="self-stretch flex-auto relative overflow-hidden">
+    <Stack alignItems="stretch" className="flex-auto relative overflow-hidden">
       <ScrollParentInfoProvider insetTopPx={topToolbarHeightPx} heightPx={scrollableHeightPx} visibleHeightPx={scrollParentVisibleHeightPx}>
         <Stack id={`${uuid}-scrollable`} alignItems="stretch" className="relative flex-auto overflow-y-auto" sx={{ px: 0.5 }}>
           {IF(
@@ -183,17 +171,21 @@ export const SelectedMailViewerPanel = () => {
                       <TrashIcon className="sm-icon secondary-text" />
                     </Button>
 
-                    <Button sx={{ p: 1 }} title={$reply(t)} onClick={onReplyClick}>
-                      <ReplyIcon className="sm-icon secondary-text" />
-                    </Button>
+                    {IF(isMdOrLarger, () => (
+                      <>
+                        <Button sx={{ p: 1 }} title={$reply(t)} onClick={onReplyClick}>
+                          <ReplyIcon className="sm-icon secondary-text" />
+                        </Button>
 
-                    <Button sx={{ p: 1 }} title={$replyAll(t)} onClick={onReplyAllClick}>
-                      <ReplyAllIcon className="sm-icon secondary-text" />
-                    </Button>
+                        <Button sx={{ p: 1 }} title={$replyAll(t)} onClick={onReplyAllClick}>
+                          <ReplyAllIcon className="sm-icon secondary-text" />
+                        </Button>
 
-                    <Button sx={{ p: 1 }} title={$forward(t)} onClick={onForwardClick}>
-                      <ForwardIcon className="sm-icon secondary-text" />
-                    </Button>
+                        <Button sx={{ p: 1 }} title={$forward(t)} onClick={onForwardClick}>
+                          <ForwardIcon className="sm-icon secondary-text" />
+                        </Button>
+                      </>
+                    ))}
 
                     <Button sx={{ p: 1 }} title={$markUnread(t)} onClick={onMarkUnreadClick}>
                       <MarkUnreadIcon className="sm-icon secondary-text" />
@@ -213,9 +205,11 @@ export const SelectedMailViewerPanel = () => {
                       <Stack id={`${uuid}-compose-mail-input`} sx={{ mb: 1.5 }}>
                         <MailEditorProvider>
                           {BC(composition, (composition) => (
-                            <ComposeMailInput
+                            <ComposeMailBodyField
                               mode={composition?.mode}
                               referencedMailId={composition?.referencedMailId}
+                              flexHeight={false}
+                              hasFocus={bodyFieldHasFocus}
                               onDiscardClick={clearCompositionMode}
                             />
                           ))}
@@ -223,29 +217,28 @@ export const SelectedMailViewerPanel = () => {
                         <OnFirstMount do={scrollToComposeMailInput} delayMSec={INPUT_DEBOUNCE_TIME_MSEC} />
                       </Stack>
                     ),
-                    ELSE(() => (
-                      <Stack direction="row" gap={2} sx={{ pl: 6, mb: 1.5 }}>
-                        <Button variant="contained" color="secondary" startIcon={<ReplyIcon className="sm-icon" />} onClick={onReplyClick}>
-                          {$reply(t)}
-                        </Button>
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          startIcon={<ReplyAllIcon className="sm-icon" />}
-                          onClick={onReplyAllClick}
-                        >
-                          {$replyAll(t)}
-                        </Button>
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          startIcon={<ForwardIcon className="sm-icon" />}
-                          onClick={onForwardClick}
-                        >
-                          {$forward(t)}
-                        </Button>
-                      </Stack>
-                    ))
+                    ELSE(() =>
+                      BC(isSmOrSmaller, (isSmOrSmaller) => (
+                        <Stack direction="row" gap={2} sx={{ pl: isSmOrSmaller ? 0 : 6, mb: 1.5 }}>
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<ReplyIcon className="sm-icon" />}
+                            onClick={onReplyClick}
+                          >
+                            {$reply(t)}
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<ForwardIcon className="sm-icon" />}
+                            onClick={onForwardClick}
+                          >
+                            {$forward(t)}
+                          </Button>
+                        </Stack>
+                      ))
+                    )
                   )}
                 </Stack>
               </>

@@ -35,7 +35,7 @@ export const MailSidebars = () => {
     <>
       {IF(isLgOrSmaller, () =>
         BC(mailScreen.showPrimarySidebar, (show) => (
-          <Drawer open={show} onClose={hidePrimarySidebar}>
+          <Drawer variant="persistent" open={show} onClose={hidePrimarySidebar}>
             {lgOrSmallerDrawerContent}
           </Drawer>
         ))

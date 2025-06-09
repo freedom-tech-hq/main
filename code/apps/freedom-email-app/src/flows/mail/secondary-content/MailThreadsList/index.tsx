@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import type { Binding, TypeOrBindingType } from 'react-bindings';
 import { ifBinding, resolveTypeOrBindingType, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
+import { useMailScreen } from '../../../../contexts/mail-screen.tsx';
 import { useScrollParentInsetBottomPx, useScrollParentInsetTopPx } from '../../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { SelectedMessageFolderProvider } from '../../../../contexts/selected-message-folder.tsx';
@@ -55,6 +56,7 @@ const InternalMailThreadsList = ({
   onArrowLeft,
   onArrowRight
 }: Omit<MailThreadsListProps, 'folder'>) => {
+  const mailScreen = useMailScreen();
   const dataSource = useMailThreadsListDataSource({ estThreadCount });
   const selectedThreadId = useSelectedMailThreadId();
   const scrollAreaInsetBottomPx = useScrollParentInsetBottomPx();
@@ -64,8 +66,10 @@ const InternalMailThreadsList = ({
   const listControls = useRef<VirtualListControls<MailThreadsListKey>>({});
 
   const selectFirstMailIfNothingIsSelected = useCallbackRef(() => {
-    if (isMdOrSmaller.get()) {
-      return; // Don't auto select mail on small screens since the list is not focused by default
+    if (isMdOrSmaller.get() || mailScreen.mode.get() === 'compose') {
+      // Don't auto select mail on small screens since the list is not focused by default
+      // Also don't auto select when in compose mode
+      return;
     }
 
     const theSelectedThreadId = selectedThreadId.get();

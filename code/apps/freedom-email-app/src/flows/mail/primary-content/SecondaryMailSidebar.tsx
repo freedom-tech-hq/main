@@ -1,10 +1,11 @@
-import { Stack, useTheme } from '@mui/material';
+import { Stack } from '@mui/material';
 import { makeUuid } from 'freedom-contexts';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
-import { useElementResizeObserver } from 'freedom-web-resize-observer';
+import { useElementHeightBinding } from 'freedom-web-resize-observer';
 import React, { useMemo } from 'react';
 import { useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
+import { sp } from '../../../components/bootstrapping/AppTheme.tsx';
 import { secondarySidebarWidthPx } from '../../../consts/sizes.ts';
 import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
@@ -18,7 +19,6 @@ export const SecondaryMailSidebar = () => {
   const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (id) => id !== undefined, { id: 'hasSelectedCollectionId' });
   const estThreadCount = useBinding(() => 0, { id: 'estThreadCount', detectChanges: true });
   const uuid = useMemo(() => makeUuid(), []);
-  const theme = useTheme();
 
   const lastDefinedSelectedMessageFolder = useBinding(() => selectedMessageFolder.get(), {
     id: 'lastDefinedSelectedMessageFolder',
@@ -54,29 +54,13 @@ export const SecondaryMailSidebar = () => {
       elem.style.marginLeft = isMdOrSmaller || hasSelectedMessageFolder ? '0px' : `-${secondarySidebarWidthPx}px`;
       elem.style.width = isMdOrSmaller ? '100%' : `${secondarySidebarWidthPx}px`;
 
-      scrollableElem.style.padding = `0 ${theme.spacing(isMdOrSmaller ? 0.5 : 2)}`;
+      scrollableElem.style.padding = `0 ${sp(isMdOrSmaller ? 0.5 : 2)}px`;
     },
     { triggerOnMount: true }
   );
 
-  const scrollableHeightPx = useBinding(() => 800, { id: 'scrollableHeightPx', detectChanges: true });
-  useElementResizeObserver({
-    element: `${uuid}-scrollable`,
-    tag: 0,
-    onResize: (_width, height) => {
-      scrollableHeightPx.set(height);
-    }
-  });
-
-  const topToolbarHeightPx = useBinding(() => 154, { id: 'topToolbarHeightPx', detectChanges: true });
-  useElementResizeObserver({
-    element: `${uuid}-top-toolbar`,
-    tag: 0,
-    onResize: (_width, height) => {
-      topToolbarHeightPx.set(height);
-    }
-  });
-
+  const scrollableHeightPx = useElementHeightBinding(`${uuid}-scrollable`);
+  const topToolbarHeightPx = useElementHeightBinding(`${uuid}-top-toolbar`);
   const scrollParentVisibleHeightPx = useDerivedBinding(
     { scrollableHeightPx, topToolbarHeightPx },
     ({ scrollableHeightPx, topToolbarHeightPx }) => scrollableHeightPx - topToolbarHeightPx,
@@ -99,7 +83,7 @@ export const SecondaryMailSidebar = () => {
           id={`${uuid}-scrollable`}
           alignItems="stretch"
           className="relative overflow-y-auto"
-          style={{ padding: `0 ${theme.spacing(isMdOrSmaller.get() ? 0.5 : 2)}` }}
+          style={{ padding: `0 ${sp(isMdOrSmaller.get() ? 0.5 : 2)}px` }}
         >
           <Stack id={`${uuid}-top-toolbar`} alignItems="stretch" className="sticky top-0 default-bg z-5">
             <MessageFolderHeader estThreadCount={estThreadCount} />

@@ -5,6 +5,9 @@ import React, { useMemo } from 'react';
 
 export type AppTheme = Theme;
 
+export const sp = (multiple: number) => multiple * 8;
+export const br = (multiple: number) => multiple * 4;
+
 export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
   const theme = useMemo(() => {
     const documentStyle = window.getComputedStyle(document.body);
@@ -52,12 +55,8 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
     const colorsItemNeedsAttentionBackground = documentStyle.getPropertyValue('--colors-item-needs-attention-background');
     const colorsItemSelectedBackground = documentStyle.getPropertyValue('--colors-item-selected-background');
 
-    const stdTheme = createTheme({});
-    const sp = (multiple: number) => stdTheme.spacing(multiple);
-    const br = (multiple: number) => `${stdTheme.shape.borderRadius * multiple}px`;
-
     const theme = createTheme({
-      breakpoints: { values: { xs: 0, sm: 320, md: 375, lg: 960, xl: 1440 } },
+      breakpoints: { values: { xs: 0, sm: 320, md: 768, lg: 960, xl: 1440 } },
       typography: {
         fontFamily: defaultFontFamily,
         h1: {
@@ -130,7 +129,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiAvatar: {
           styleOverrides: {
             root: {
-              borderRadius: br(3),
+              borderRadius: `${br(3)}px`,
               fontSize: body1FontSize,
               fontWeight: semiboldFontWeight,
               lineHeight: '100%',
@@ -151,17 +150,17 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           },
           styleOverrides: {
             endIcon: {
-              margin: `0 0 0 ${sp(1)}`
+              margin: `0 0 0 ${sp(1)}px`
             },
             startIcon: {
-              margin: `0 ${sp(1)} 0 0`
+              margin: `0 ${sp(1)}px 0 0`
             },
             root: {
-              borderRadius: br(3),
+              borderRadius: `${br(3)}px`,
               fontSize: buttonFontSize,
               lineHeight: buttonLineHeight,
               fontWeight: buttonFontWeight,
-              padding: `${sp(1)} ${sp(2)}`,
+              padding: `${sp(1)}px ${sp(2)}px`,
               minWidth: 'auto',
               textTransform: 'none',
 
@@ -171,7 +170,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
 
               '&.AttachmentButton': {
                 borderColor: colorsInputBorder,
-                paddingTop: sp(1.5),
+                paddingTop: `${sp(1.5)}px`,
                 alignItems: 'flex-start'
               }
             }
@@ -180,7 +179,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiCheckbox: {
           styleOverrides: {
             root: {
-              borderRadius: br(1),
+              borderRadius: `${br(1)}px`,
               border: `1px solid ${mutedTextColor}`,
               width: '16px',
               height: '16px',
@@ -199,7 +198,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiChip: {
           styleOverrides: {
             root: {
-              borderRadius: br(2),
+              borderRadius: `${br(2)}px`,
               height: 'auto',
 
               '&.AttachmentCountChip': {
@@ -208,7 +207,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
                 backgroundColor: colorsBackground,
 
                 '& .MuiChip-icon': {
-                  marginRight: sp(1)
+                  marginRight: `${sp(1)}px`
                 },
 
                 '& .MuiChip-label': {
@@ -218,10 +217,10 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               }
             },
             icon: {
-              margin: `0 ${sp(0.5)} 0 0`
+              margin: `0 ${sp(0.5)}px 0 0`
             },
             label: {
-              padding: `${sp(0.25)} ${sp(0.5)}`,
+              padding: `${sp(0.25)}px ${sp(0.5)}px`,
               fontSize: inputFontSize,
               lineHeight: inputLineHeight
             }
@@ -237,7 +236,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiFormControlLabel: {
           styleOverrides: {
             root: {
-              gap: sp(1),
+              gap: `${sp(1)}px`,
               margin: 0
             }
           }
@@ -248,15 +247,15 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               fontSize: inputFontSize,
               lineHeight: inputLineHeight,
               margin: 0,
-              marginTop: sp(0.5)
+              marginTop: `${sp(0.5)}px`
             }
           }
         },
         MuiInputBase: {
           styleOverrides: {
             root: {
-              borderRadius: br(3),
-              padding: `${sp(0.5)} ${sp(1.5)}`
+              borderRadius: `${br(3)}px`,
+              padding: `${sp(0.5)}px ${sp(1.5)}px`
             },
             input: {
               fontSize: inputFontSize,
@@ -272,13 +271,13 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               '&.above': {
                 fontSize: inputLabelFontSize,
                 lineHeight: inputLabelLineHeight,
-                marginBottom: sp(1)
+                marginBottom: `${sp(1)}px`
               },
               '&.before': {
                 fontSize: inputLabelFontSize,
                 lineHeight: inputLabelLineHeight,
                 transform: 'none',
-                marginRight: sp(1)
+                marginRight: `${sp(1)}px`
               }
             }
           }
@@ -312,22 +311,22 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               },
 
               '&.MessageFoldersListItem': {
-                borderRadius: br(3),
-                padding: sp(1.5),
+                borderRadius: `${br(3)}px`,
+                padding: `${sp(1.5)}px`,
 
                 '& .MuiListItemIcon-root': {
                   minWidth: 'auto',
-                  marginRight: sp(1)
+                  marginRight: `${sp(1)}px`
                 },
 
                 '& .MuiChip-root.selected': {
-                  borderRadius: br(1.5),
+                  borderRadius: `${br(1.5)}px`,
                   backgroundColor: defaultTextColor,
                   minWidth: `calc(${smallestLineHeight} + 2px)`,
                   textAlign: 'center',
 
                   '& .MuiChip-label': {
-                    padding: `1px ${sp(0.5)}`,
+                    padding: `1px ${sp(0.5)}px`,
                     color: colorsDefaultTextContrast,
                     fontSize: smallestFontSize,
                     lineHeight: smallestLineHeight
@@ -335,25 +334,25 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
                 },
 
                 '& .MuiChip-root:not(.selected)': {
-                  borderRadius: br(1.5),
+                  borderRadius: `${br(1.5)}px`,
                   backgroundColor: 'transparent',
                   minWidth: `calc(${smallestLineHeight} + 2px)`,
                   textAlign: 'center',
 
                   '& .MuiChip-label': {
-                    padding: `1px ${sp(0.5)}`,
+                    padding: `1px ${sp(0.5)}px`,
                     fontSize: smallestFontSize,
                     lineHeight: smallestLineHeight
                   }
                 }
               },
               '&.mail-thread-list-item': {
-                borderRadius: br(4),
-                padding: `${sp(2)} ${sp(1.5)}`,
+                borderRadius: `${br(4)}px`,
+                padding: `${sp(2)}px ${sp(1.5)}px`,
                 alignItems: 'flex-start',
 
                 '& .MuiAvatar-root': {
-                  marginRight: sp(1)
+                  marginRight: `${sp(1)}px`
                 }
               }
             }
@@ -362,7 +361,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         MuiOutlinedInput: {
           styleOverrides: {
             root: {
-              borderRadius: br(3),
+              borderRadius: `${br(3)}px`,
 
               ':is(&, &.Mui-disabled, &.Mui-disabled.MuiOutlinedInput-notchedOutline) fieldset': {
                 borderColor: colorsInputBorder
@@ -373,16 +372,25 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
             }
           }
         },
+        MuiPopover: {
+          defaultProps: {
+            slotProps: {
+              paper: {
+                sx: { borderRadius: `${br(4)}px` }
+              }
+            }
+          }
+        },
         MuiSnackbar: {
           styleOverrides: {
             root: {
               '& .MuiPaper-root': {
                 backgroundColor: colorsBackground,
                 border: `1px solid ${colorsInputBorder}`,
-                borderRadius: br(3),
-                padding: `${sp(1.5)} ${sp(2)}`,
+                borderRadius: `${br(3)}px`,
+                padding: `${sp(1.5)}px ${sp(2)}px`,
                 justifyContent: 'space-between',
-                gap: sp(1)
+                gap: `${sp(1)}px`
               }
             }
           }
@@ -394,9 +402,9 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               padding: 0,
 
               '& .MuiButton-root': {
-                borderRadius: br(3),
+                borderRadius: `${br(3)}px`,
                 border: `1px solid ${colorsInputBorder}`,
-                padding: `${sp(1)} ${sp(2)}`
+                padding: `${sp(1)}px ${sp(2)}px`
               }
             },
             message: {
@@ -411,7 +419,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
             root: {
               '&.IconPlaceholder': {
                 backgroundColor: colorsInputBorder,
-                borderRadius: br(1)
+                borderRadius: `${br(1)}px`
               }
             }
           }
@@ -487,8 +495,8 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           styleOverrides: {
             tooltip: {
               color: defaultTextColor,
-              borderRadius: br(2),
-              padding: `${sp(0.75)} ${sp(1.5)}`,
+              borderRadius: `${br(2)}px`,
+              padding: `${sp(0.75)}px ${sp(1.5)}px`,
               backgroundColor: colorsSecondary,
               fontSize: captionFontSize,
               lineHeight: captionLineHeight
@@ -502,7 +510,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
                 position: 'relative',
 
                 '& .indicator': {
-                  borderRadius: br(1.5),
+                  borderRadius: `${br(1.5)}px`,
                   backgroundColor: colorsInputBorder,
                   display: 'block',
                   position: 'absolute',

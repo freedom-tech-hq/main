@@ -1,4 +1,4 @@
-import { Button, Stack } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import type { DecryptedViewMessage } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
@@ -12,6 +12,7 @@ import { AvatarPlaceholder } from '../../../../../components/reusable/AvatarPlac
 import { StringAvatar } from '../../../../../components/reusable/StringAvatar.tsx';
 import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
 import { useMessagePresenter } from '../../../../../contexts/message-presenter.tsx';
+import { useIsSizeClass } from '../../../../../hooks/useIsSizeClass.ts';
 import { MoreActionsIcon } from '../../../../../icons/MoreActionsIcon.ts';
 import { ReplyIcon } from '../../../../../icons/ReplyIcon.ts';
 import { formatDate } from '../../../../../utils/formatDate.ts';
@@ -36,6 +37,7 @@ export interface MailListItemHeaderProps {
 }
 
 export const MailListItemHeader = ({ mail, showOptions, onClick }: MailListItemHeaderProps) => {
+  const isMdOrLarger = useIsSizeClass('>=', 'md');
   const mailListItemTransientStatesBindingPersistence = useMailListItemTransientStatesBindingPersistence();
   const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
@@ -69,23 +71,27 @@ export const MailListItemHeader = ({ mail, showOptions, onClick }: MailListItemH
       <Stack direction="row" gap={1.5} className="flex-auto overflow-hidden">
         <StringAvatar value={getStringAvatarValueFromMailAddressList(mail.from)} />
         <Stack className="flex-auto overflow-hidden">
-          <Stack direction="row" justifyContent="space-between" className="flex-auto overflow-hidden">
-            <MailListItemFormattedEmailAddresses addresses={mail.from} showGroupMembers={showFromGroupMembers} mode="from" />
-            <Stack direction="row" alignItems="center" gap={2}>
-              {mail.date !== undefined ? <MailListItemTimeLabel timeMSec={new Date(mail.date).getTime()} /> : null}
+          <Box className="flex-auto overflow-hidden">
+            <Stack direction="row" alignItems="center" gap={2} sx={{ float: 'right' }}>
+              {mail.date !== undefined ? (
+                <MailListItemTimeLabel timeMSec={new Date(mail.date).getTime()} sx={{ lineHeight: 'var(--body1-line-height)' }} />
+              ) : null}
               {IF(showOptions, () => (
                 <Stack direction="row" alignItems="center">
-                  <Button sx={{ p: 1 }} title={$reply(t)} onClick={onReplyClick}>
-                    <ReplyIcon className="sm-icon secondary-text" />
-                  </Button>
+                  {IF(isMdOrLarger, () => (
+                    <Button sx={{ p: 1 }} title={$reply(t)} onClick={onReplyClick}>
+                      <ReplyIcon className="sm-icon secondary-text" />
+                    </Button>
+                  ))}
 
-                  <Button sx={{ p: 1 }} title={$moreActions(t)} onClick={onMoreActionsClick}>
+                  <Button sx={{ p: 0 }} title={$moreActions(t)} onClick={onMoreActionsClick}>
                     <MoreActionsIcon className="sm-icon secondary-text" />
                   </Button>
                 </Stack>
               ))}
             </Stack>
-          </Stack>
+            <MailListItemFormattedEmailAddresses addresses={mail.from} showGroupMembers={showFromGroupMembers} mode="from" />
+          </Box>
 
           <Stack direction="row" alignItems="baseline" gap={1} className="flex-auto overflow-hidden">
             <Txt variant="body2" color="textDisabled">
@@ -109,9 +115,12 @@ export const MailListItemHeaderPlaceholder = () => {
       <Stack direction="row" gap={1.5} className="flex-auto overflow-hidden">
         <AvatarPlaceholder />
         <Stack className="flex-auto overflow-hidden">
-          <Stack direction="row" justifyContent="space-between" className="flex-auto overflow-hidden">
+          <Stack direction="row" justifyContent="space-between" alignItems="baseline" className="flex-auto overflow-hidden">
             <MailListItemFormattedEmailAddressesPlaceholder mode="from" />
-            <TxtPlaceholder variant="body2">{`${formatDate(Date.now())} ${formatTime(Date.now())}`}</TxtPlaceholder>
+            <TxtPlaceholder
+              variant="body2"
+              sx={{ lineHeight: 'var(--body1-line-height)' }}
+            >{`${formatDate(Date.now())} ${formatTime(Date.now())}`}</TxtPlaceholder>
           </Stack>
 
           <Stack direction="row" alignItems="baseline" gap={1} className="flex-auto overflow-hidden">

@@ -36,6 +36,7 @@ export const PrimaryMailSidebar = () => {
 
   const onNewMailClick = useCallbackRef(() => {
     history.replace(appRoot.path.mail(selectedMessageFolder.get() ?? 'all').compose);
+    mailScreen.showPrimarySidebar.set(false);
   });
 
   useBindingEffect(isMdOrSmaller, (isMdOrSmaller) => {
@@ -46,6 +47,8 @@ export const PrimaryMailSidebar = () => {
 
     elem.style.width = `${isMdOrSmaller ? primarySidebarWidthDrawerPx : primarySidebarWidthInlinePx}px`;
   });
+
+  useBindingEffect(selectedMessageFolder, () => hidePrimarySidebar());
 
   return (
     <Stack

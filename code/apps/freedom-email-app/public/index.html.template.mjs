@@ -6,7 +6,7 @@ export default () => {
     <base href="/" />
     <script src="/index${(process.env.FREEDOM_BUILD_UUID ?? '').length > 0 ? `-${process.env.FREEDOM_BUILD_UUID}` : ''}.mjs" type="module" async defer></script>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=2, viewport-fit=cover, interactive-widget=overlays-content" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=2, viewport-fit=cover, interactive-widget=resize-content" />
 
     <!-- <link rel="icon" href="/favicon-light.png" media="(prefers-color-scheme: light)" /> -->
     <!-- <link rel="icon" href="/favicon-dark.png" media="(prefers-color-scheme: dark)" /> -->

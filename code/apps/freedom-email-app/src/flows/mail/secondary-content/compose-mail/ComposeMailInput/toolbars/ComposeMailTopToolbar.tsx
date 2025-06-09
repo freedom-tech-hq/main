@@ -4,14 +4,14 @@ import { IF } from 'freedom-logical-web-components';
 import React, { useRef } from 'react';
 import { useBinding, useBindingEffect } from 'react-bindings';
 
-import { useMailEditor } from '../../../../../contexts/mail-editor.tsx';
-import { useTaskWaitable } from '../../../../../hooks/useTaskWaitable.ts';
-import type { ReferencedMailCompositionMode } from '../../../../../types/ReferencedMailCompositionMode.ts';
-import { makeStringFromMailAddressList } from '../../../../../utils/makeStringFromMailAddressList.ts';
-import { ComposeMailBccField } from '../fields/ComposeMailBccField.tsx';
-import { ComposeMailCcField } from '../fields/ComposeMailCcField.tsx';
-import { ComposeMailToField } from '../fields/ComposeMailToField.tsx';
-import { ReferencedMailCompositionModePopupButton } from '../ReferencedMailCompositionModePopupButton.tsx';
+import { useMailEditor } from '../../../../../../contexts/mail-editor.tsx';
+import { useTaskWaitable } from '../../../../../../hooks/useTaskWaitable.ts';
+import type { ReferencedMailCompositionMode } from '../../../../../../types/ReferencedMailCompositionMode.ts';
+import { makeStringFromMailAddressList } from '../../../../../../utils/makeStringFromMailAddressList.ts';
+import { ComposeMailBccField } from '../../fields/ComposeMailBccField.tsx';
+import { ComposeMailCcField } from '../../fields/ComposeMailCcField.tsx';
+import { ComposeMailToField } from '../../fields/ComposeMailToField.tsx';
+import { ReferencedMailCompositionModePopupButton } from '../../ReferencedMailCompositionModePopupButton.tsx';
 
 export interface ComposeMailTopToolbarProps {
   defaultMode: ReferencedMailCompositionMode;

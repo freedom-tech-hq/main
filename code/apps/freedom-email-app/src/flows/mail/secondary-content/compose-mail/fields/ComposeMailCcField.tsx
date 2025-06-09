@@ -15,9 +15,10 @@ const $cc = LOCALIZE('CC')({ ns });
 
 export interface ComposeMailCcFieldProps extends ControlledTextFieldProps {
   showBcc: Binding<boolean>;
+  hideCcButtons?: boolean;
 }
 
-export const ComposeMailCcField = ({ showBcc, ...props }: ComposeMailCcFieldProps) => {
+export const ComposeMailCcField = ({ showBcc, hideCcButtons = false, ...props }: ComposeMailCcFieldProps) => {
   const t = useT();
 
   const setShowBcc = useCallbackRef(() => showBcc.set(true));
@@ -31,7 +32,7 @@ export const ComposeMailCcField = ({ showBcc, ...props }: ComposeMailCcFieldProp
       slotProps={{
         ...props.slotProps,
         input: {
-          endAdornment: IF(NOT(showBcc), () => (
+          endAdornment: IF([!hideCcButtons, NOT(showBcc)], () => (
             <Button onClick={setShowBcc} sx={{ p: 0 }}>
               <Txt variant="body2" className="semibold muted-text">
                 {$bcc(t)}

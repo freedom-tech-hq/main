@@ -29,6 +29,7 @@ export const ReferencedMailCompositionModePopupButton = ({ mode }: ReferencedMai
   return (
     <PopupButton
       value={mode}
+      buttonProps={{ sx: { p: 1 } }}
       renderSelectedValue={(mode) => {
         const IconComponent = iconComponentsByMode[mode];
         return <IconComponent className="sm-icon muted-text" />;

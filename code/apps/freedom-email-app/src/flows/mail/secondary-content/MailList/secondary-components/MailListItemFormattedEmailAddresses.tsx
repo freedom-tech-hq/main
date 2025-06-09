@@ -1,5 +1,5 @@
 import type { TypographyVariant } from '@mui/material';
-import { Chip, Stack } from '@mui/material';
+import { Box, Chip, Stack } from '@mui/material';
 import type { MailAddressList } from 'freedom-email-api';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
@@ -10,7 +10,6 @@ import { BC, useCallbackRef } from 'react-bindings';
 
 import type { TxtProps } from '../../../../../components/reusable/aliases/Txt.ts';
 import { Txt } from '../../../../../components/reusable/aliases/Txt.ts';
-import { BreakableEmailAddressTxt } from '../../../../../components/reusable/BreakableEmailAddressTxt.tsx';
 import { TxtPlaceholder } from '../../../../../components/reusable/TxtPlaceholder.tsx';
 import { formatInt } from '../../../../../utils/formatInt.ts';
 import { makeTagsFromMailAddressList } from '../../../../../utils/makeTagsFromMailAddressList.ts';
@@ -46,8 +45,8 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
           key={index}
           direction={showGroupMembers ? 'column' : 'row'}
           alignItems={showGroupMembers ? 'flex-start' : 'baseline'}
-          columnGap={1.5}
           className="flex-auto overflow-hidden"
+          sx={{ display: showGroupMembers ? 'flex' : 'span' }}
         >
           <Txt
             variant={nameVariantByMode[mode]}
@@ -55,7 +54,7 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
             title={group.groupName}
             className={`semibold ${showGroupMembers ? '' : 'overflow-hidden whitespace-nowrap text-ellipsis'}`}
           >
-            {group.groupName}
+            {`${group.groupName}${emSpace}`}
           </Txt>
           {IF(
             showGroupMembers,
@@ -70,10 +69,11 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
                             {`${member.name}${enSpace}`}
                           </Txt>
                         ) : null}
-                        <BreakableEmailAddressTxt
+                        <Txt
                           component="span"
+                          variant="inherit"
                           color="textDisabled"
-                        >{`${member.address}${index < group.addresses.length - 1 ? `,${emSpace}` : ''}`}</BreakableEmailAddressTxt>
+                        >{`${member.address}${index < group.addresses.length - 1 ? `,${emSpace}` : ''}`}</Txt>
                       </Fragment>
                     ))}
                   </Stack>
@@ -93,16 +93,28 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
         </Stack>
       )),
     single: (single, index) => (
-      <Stack key={index} direction="row" flexWrap="wrap" alignItems="baseline" columnGap={1.5} className="flex-auto overflow-hidden">
+      <Box key={index} component="span" className="flex-auto overflow-hidden">
         {(single.name?.length ?? 0) > 0 ? (
-          <Txt variant={nameVariantByMode[mode]} color={nameColorByMode[mode]} className="semibold" title={single.name}>
-            {single.name}
+          <Txt
+            component="span"
+            variant={nameVariantByMode[mode]}
+            color={nameColorByMode[mode]}
+            className="semibold whitespace-nowrap overflow-hidden text-ellipsis"
+            title={single.name}
+          >
+            {`${single.name}${emSpace}`}
           </Txt>
         ) : null}
-        <Txt variant="body2" color="textDisabled" title={single.address}>
-          <BreakableEmailAddressTxt component="span">{`${single.address}${index < addresses.length - 1 ? `,${emSpace}` : ''}`}</BreakableEmailAddressTxt>
+        <Txt
+          component="span"
+          variant="body2"
+          color="textDisabled"
+          title={single.address}
+          className="whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {`${single.address}${index < addresses.length - 1 ? `,${emSpace}` : ''}`}
         </Txt>
-      </Stack>
+      </Box>
     )
   });
 };
@@ -110,14 +122,15 @@ export const MailListItemFormattedEmailAddresses = ({ addresses, showGroupMember
 export const MailListItemFormattedEmailAddressesPlaceholder = ({
   mode
 }: Omit<MailListItemFormattedEmailAddressesProps, 'addresses' | 'showGroupMembers'>) => (
-  <Stack direction="row" flexWrap="wrap" alignItems="baseline" columnGap={1.5} className="flex-auto overflow-hidden">
-    <TxtPlaceholder variant={nameVariantByMode[mode]} className="semibold">
+  <Box component="span" className="flex-auto overflow-hidden">
+    <TxtPlaceholder component="span" variant={nameVariantByMode[mode]} className="semibold">
       Placeholder
     </TxtPlaceholder>
-    <TxtPlaceholder variant="body2" color="textDisabled" className="shrink overflow-hidden">
+    {emSpace}
+    <TxtPlaceholder component="span" variant="body2" color="textDisabled" className="shrink overflow-hidden">
       example@freedommail.me
     </TxtPlaceholder>
-  </Stack>
+  </Box>
 );
 
 // Helpers

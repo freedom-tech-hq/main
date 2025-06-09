@@ -21,6 +21,8 @@ export const useIsSizeClass = (op: IsSizeClassOp, breakpoint: Breakpoint) => {
     (sizeClass) => {
       if (sizeClass === breakpoint) {
         return isInclusiveOp;
+      } else if (op === '===') {
+        return false;
       }
 
       const sizeClassIndex = breakpointOrder.indexOf(sizeClass);

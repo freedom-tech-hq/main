@@ -55,7 +55,9 @@ export const MailScreen = ({ mode, threadId }: MailScreenProps) => {
   return (
     <Stack direction="row" alignItems="stretch" className="w-full h-dvh">
       <MailSidebars />
-      <MailDetailPanel />
+      <Stack direction="column" alignItems="stretch" className="flex-auto">
+        <MailDetailPanel />
+      </Stack>
     </Stack>
   );
 };
