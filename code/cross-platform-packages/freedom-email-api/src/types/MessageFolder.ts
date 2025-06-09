@@ -1,6 +1,6 @@
-import { schema } from 'yaschema';
+import { makeStringSubtypeArray, schema } from 'yaschema';
 
-export const messageFolders = [
+export const messageFolders = makeStringSubtypeArray(
   'inbox',
   // 'outbox' is a technical folder for agent in the current implementation.
   // If the agent does not rely on it, we should remove the constant.
@@ -8,7 +8,7 @@ export const messageFolders = [
   'outbox',
   'sent',
   'drafts'
-] as const;
+);
 
 export const messageFolderSchema = schema.string<MessageFolder>(...messageFolders);
 

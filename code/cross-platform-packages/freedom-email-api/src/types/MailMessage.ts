@@ -31,11 +31,11 @@ export const mailMessageSchema = schema.object({
   // TODO: Place isRead somewhere
 
   // ### Decoded listFields ###
-  subject: schema.string(), // If absent, setting to empty
+  subject: schema.string().allowEmptyString(), // If absent, setting to empty
   from: mailAddressListSchema, // Can be plural, and even with empty groups: RFC 6854
   sender: mailAddressSchema.optional(), // Should be singular. Renders as 'From: <Sender> on behalf of <From>'.
   priority: mailPrioritySchema.optional(),
-  snippet: schema.string(),
+  snippet: schema.string().allowEmptyString(),
 
   // ### Decoded viewFields ###
   to: mailAddressListSchema,
