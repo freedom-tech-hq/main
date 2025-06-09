@@ -19,7 +19,7 @@ export const AuthHeroBanner = () => {
 
   return (
     <Stack className="self-stretch" sx={{ px: 2, py: 1.5 }}>
-      <Stack gap={4} className="relative primary-color-bg" sx={{ borderRadius: 2, px: 2, py: 3 }}>
+      <Stack gap={4} className="relative primary-bg" sx={{ borderRadius: 2, px: 2, py: 3 }}>
         <img src={Vector1} className="absolute left-0 top-0" width="489px" />
         <Stack direction="row" alignItems="center" gap={0.5} className="z-1">
           <CompanyLogoIcon className="primary-contrast" sx={{ width: '40px', height: '40px' }} />

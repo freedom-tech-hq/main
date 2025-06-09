@@ -9,7 +9,7 @@ export type EmailFieldProps = ControlledTextFieldProps;
 
 export const EmailField = (props: EmailFieldProps) => {
   const defaultEndAdornment = (
-    <Chip className="muted-color-bg" disabled label={`@${getTaskWorkerConfig().defaultEmailDomain}`} sx={{ ml: 0.5 }} />
+    <Chip className="muted-bg" disabled label={`@${getTaskWorkerConfig().defaultEmailDomain}`} sx={{ ml: 0.5 }} />
   );
 
   return (

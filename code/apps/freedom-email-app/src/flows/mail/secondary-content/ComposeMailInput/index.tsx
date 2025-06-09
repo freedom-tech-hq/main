@@ -12,6 +12,7 @@ import { useDerivedWaitable } from 'react-waitables';
 import { ControlledTextField } from '../../../../components/reusable/form/ControlledTextField.tsx';
 import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
+import { useMailEditor } from '../../../../contexts/mail-editor.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useScrollParentVisibleHeightPx } from '../../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
@@ -37,6 +38,7 @@ export interface ComposeMailInputProps {
 
 export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: ComposeMailInputProps) => {
   const activeAccountInfo = useActiveAccountInfo();
+  const mailEditor = useMailEditor();
   const { presentErrorMessage } = useMessagePresenter();
   const uuid = useMemo(() => makeUuid(), []);
   const scrollParentVisibleHeightPx = useScrollParentVisibleHeightPx();
@@ -45,15 +47,6 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
   const tasks = useTasks();
   const theme = useTheme();
 
-  const to = useBinding(() => '', { id: 'to', detectChanges: true });
-  const cc = useBinding(() => '', { id: 'cc', detectChanges: true });
-  const bcc = useBinding(() => '', { id: 'bcc', detectChanges: true });
-  const subject = useBinding(() => '', { id: 'subject', detectChanges: true });
-  const body = useBinding(() => '', { id: 'body', detectChanges: true });
-
-  const showCc = useBinding(() => false, { id: 'showCc', detectChanges: true });
-  const showBcc = useBinding(() => false, { id: 'showBcc', detectChanges: true });
-
   const textStyle = useBinding<MailTextStyle>(() => 'normal', { id: 'textStyle', detectChanges: true });
 
   const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
@@ -61,7 +54,7 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
 
   // TODO: use real form validation
   const isFormReady = useDerivedWaitable(
-    { isBusy, to, subject, body },
+    { isBusy, to: mailEditor.to, subject: mailEditor.subject, body: mailEditor.body },
     ({ isBusy, to, subject, body }) => !isBusy && to.length > 0 && subject.length > 0 && body.length > 0,
     {
       id: 'isFormReady',
@@ -172,14 +165,14 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
     try {
       const sent = await tasks.sendMail({
         from: makeMailAddressListFromString(theActiveAccountInfo.email),
-        to: makeMailAddressListFromString(to.get()),
-        cc: showCc.get() ? makeMailAddressListFromString(cc.get()) : [],
-        bcc: showBcc.get() ? makeMailAddressListFromString(bcc.get()) : [],
-        subject: subject.get(),
+        to: makeMailAddressListFromString(mailEditor.to.get()),
+        cc: mailEditor.showCc.get() ? makeMailAddressListFromString(mailEditor.cc.get()) : [],
+        bcc: mailEditor.showBcc.get() ? makeMailAddressListFromString(mailEditor.bcc.get()) : [],
+        subject: mailEditor.subject.get(),
         isBodyHtml: false,
-        body: body.get(),
+        body: mailEditor.body.get(),
         // TODO: should probably have a const for snippet length
-        snippet: body.get().substring(0, 200)
+        snippet: mailEditor.body.get().substring(0, 200)
       });
       if (!sent.ok) {
         switch (sent.value.errorCode) {
@@ -207,23 +200,23 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
     <Stack className="flex-auto" gap={2}>
       {IF(referencedMailId === undefined, () => (
         <>
-          <ComposeMailToField autoFocus value={to} showCc={showCc} showBcc={showBcc} />
+          <ComposeMailToField autoFocus value={mailEditor.to} showCc={mailEditor.showCc} showBcc={mailEditor.showBcc} />
 
-          {IF(showCc, () => (
-            <ComposeMailCcField value={cc} showBcc={showBcc} />
+          {IF(mailEditor.showCc, () => (
+            <ComposeMailCcField value={mailEditor.cc} showBcc={mailEditor.showBcc} />
           ))}
 
-          {IF(showBcc, () => (
-            <ComposeMailBccField value={bcc} />
+          {IF(mailEditor.showBcc, () => (
+            <ComposeMailBccField value={mailEditor.bcc} />
           ))}
 
-          <ControlledTextField value={subject} label={$subject(t)} labelPosition="above" helperText="" />
+          <ControlledTextField value={mailEditor.subject} label={$subject(t)} labelPosition="above" helperText="" />
         </>
       ))}
 
       <ControlledTextField
         id={`${uuid}-body`}
-        value={body}
+        value={mailEditor.body}
         multiline={true}
         helperText=""
         className="flex-auto"
@@ -250,16 +243,7 @@ export const ComposeMailInput = ({ mode, referencedMailId, onDiscardClick }: Com
                     onResize={onBodyTopToolbarResize}
                     className="absolute top-0 left-0 right-0"
                   >
-                    <ComposeMailTopToolbar
-                      defaultMode={mode ?? 'reply'}
-                      referencedMailId={referencedMailId}
-                      to={to}
-                      cc={cc}
-                      showCc={showCc}
-                      bcc={bcc}
-                      showBcc={showBcc}
-                      subject={subject}
-                    />
+                    <ComposeMailTopToolbar defaultMode={mode ?? 'reply'} referencedMailId={referencedMailId} />
                   </ResizeObservingDiv>
                 ) : null}
 

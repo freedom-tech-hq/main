@@ -83,7 +83,7 @@ export const MailThreadListItem = <TagT,>({ id, timeMSec, dataSetId, tag, onClic
                 {fromTags}
               </Txt>
             </Stack>
-            <Txt variant="caption" color="disabled" className="whitespace-nowrap">
+            <Txt variant="caption" className="muted-text whitespace-nowrap">
               {formatTimeIfSameDateOrFormatDate(timeMSec)}
             </Txt>
           </Stack>
@@ -125,7 +125,7 @@ export const MailThreadListItemPlaceholder = () => (
             {`email@freedommail.me`}
           </TxtPlaceholder>
         </Stack>
-        <TxtPlaceholder variant="caption" color="disabled" className="whitespace-nowrap">
+        <TxtPlaceholder variant="caption" className="muted-text whitespace-nowrap">
           {formatTimeIfSameDateOrFormatDate(Date.now())}
         </TxtPlaceholder>
       </Stack>

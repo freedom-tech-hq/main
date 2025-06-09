@@ -35,11 +35,12 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
     const defaultTextColor = documentStyle.getPropertyValue('--colors-default-text');
     const secondaryTextColor = documentStyle.getPropertyValue('--colors-secondary-text');
     const disabledTextColor = documentStyle.getPropertyValue('--colors-disabled-text');
+    const mutedTextColor = documentStyle.getPropertyValue('--colors-muted-text');
 
     const semiboldFontWeight = documentStyle.getPropertyValue('--font-weight-semibold');
 
     const colorsBackground = documentStyle.getPropertyValue('--colors-background');
-    const colorsMuted = documentStyle.getPropertyValue('--colors-muted');
+    const colorsMutedBackground = documentStyle.getPropertyValue('--colors-muted-background');
     const colorsDefaultTextContrast = documentStyle.getPropertyValue('--colors-default-text-contrast');
     const colorsPrimary = documentStyle.getPropertyValue('--colors-primary');
     const colorsPrimaryContrast = documentStyle.getPropertyValue('--colors-primary-contrast');
@@ -56,7 +57,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
     const br = (multiple: number) => `${stdTheme.shape.borderRadius * multiple}px`;
 
     const theme = createTheme({
-      breakpoints: { values: { xs: 0, sm: 320, md: 375, lg: 768, xl: 1440 } },
+      breakpoints: { values: { xs: 0, sm: 320, md: 375, lg: 960, xl: 1440 } },
       typography: {
         fontFamily: defaultFontFamily,
         h1: {
@@ -108,7 +109,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
         },
         background: {
           default: colorsBackground,
-          paper: colorsMuted
+          paper: colorsMutedBackground
         },
         divider: colorsDivider,
         primary: {
@@ -164,6 +165,10 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
               minWidth: 'auto',
               textTransform: 'none',
 
+              '&.input-border': {
+                borderColor: colorsInputBorder
+              },
+
               '&.AttachmentButton': {
                 borderColor: colorsInputBorder,
                 paddingTop: sp(1.5),
@@ -176,7 +181,7 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
           styleOverrides: {
             root: {
               borderRadius: br(1),
-              border: `1px solid ${disabledTextColor}`,
+              border: `1px solid ${mutedTextColor}`,
               width: '16px',
               height: '16px',
 

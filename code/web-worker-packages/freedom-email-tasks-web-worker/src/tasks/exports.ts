@@ -103,6 +103,8 @@ class TasksImpl {
 
   public readonly loadMoreMailThreadIds = wrapPrFunc(async () => (await import('./mail/loadMoreMailThreadIds.ts')).loadMoreMailThreadIds);
 
+  public readonly saveMailDraft = wrapPrFunc(async () => (await import('./mail/saveMailDraft.ts')).saveMailDraft);
+
   public readonly sendMail = wrapPrFunc(async () => (await import('./mail/sendMail.ts')).sendMail);
 
   // User

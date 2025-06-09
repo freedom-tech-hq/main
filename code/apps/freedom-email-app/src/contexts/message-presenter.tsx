@@ -1,6 +1,7 @@
 import type { AlertColor, SnackbarProps } from '@mui/material';
 import { Snackbar } from '@mui/material';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
+import { makeUuid } from 'freedom-contexts';
 import type { ReactNode } from 'react';
 import React, { useMemo } from 'react';
 
@@ -19,6 +20,7 @@ export const useMessagePresenter = () => {
       presentErrorMessage: (message: ReactNode, { severity = 'info', action, onClose, ...props }: PresentErrorMessageOptions = {}) =>
         transientContent.present(({ dismiss }) => (
           <Snackbar
+            key={makeUuid()}
             open={true}
             onClose={(event, reason) => {
               dismiss();

@@ -8,8 +8,8 @@ import { getDefaultApiRoutingContext } from 'yaschema-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
 import { getPublicKeysForRemote } from '../../internal/tasks/remote/getPublicKeysForRemote.ts';
+import { saveMailDraft } from './saveMailDraft.ts';
 
-const saveDraftToRemote = makeApiFetchTask([import.meta.filename, 'saveDraftToRemote'], api.message.draft.POST);
 const sendDraftWithRemote = makeApiFetchTask([import.meta.filename, 'sendDraftWithRemote'], api.message.draft.id.send.POST);
 
 export const sendMail = makeAsyncResultFunc([import.meta.filename], async (trace, mail: DecryptedInputMessage): PR<{ mailId: MailId }> => {
@@ -19,14 +19,14 @@ export const sendMail = makeAsyncResultFunc([import.meta.filename], async (trace
     return makeFailure(new UnauthorizedError(trace, { message: 'No active user' }));
   }
 
+  const savedDraft = await saveMailDraft(trace, undefined, mail);
+  if (!savedDraft.ok) {
+    return savedDraft;
+  }
+
   const remotePublicKeys = await getPublicKeysForRemote(trace);
   if (!remotePublicKeys.ok) {
     return remotePublicKeys;
-  }
-
-  const mailEncryptedForUser = await clientApi.encryptInputMessage(trace, credential.privateKeys.publicOnly(), mail);
-  if (!mailEncryptedForUser.ok) {
-    return mailEncryptedForUser;
   }
 
   const mailEncryptedForRemote = await clientApi.encryptInputMessage(trace, remotePublicKeys.value, mail);
@@ -34,18 +34,9 @@ export const sendMail = makeAsyncResultFunc([import.meta.filename], async (trace
     return mailEncryptedForRemote;
   }
 
-  const savedDraft = await saveDraftToRemote(trace, {
-    headers: { authorization: `Bearer ${credential.userId}` },
-    body: mailEncryptedForUser.value,
-    context: getDefaultApiRoutingContext()
-  });
-  if (!savedDraft.ok) {
-    return savedDraft;
-  }
-
   const sentDraft = await sendDraftWithRemote(trace, {
     headers: { authorization: `Bearer ${credential.userId}` },
-    params: { mailId: savedDraft.value.body.id },
+    params: { mailId: savedDraft.value.mailId },
     body: { agentMessage: mailEncryptedForRemote.value },
     context: getDefaultApiRoutingContext()
   });
@@ -53,5 +44,5 @@ export const sendMail = makeAsyncResultFunc([import.meta.filename], async (trace
     return generalizeFailureResult(trace, sentDraft, 'not-found');
   }
 
-  return makeSuccess({ mailId: savedDraft.value.body.id });
+  return makeSuccess({ mailId: savedDraft.value.mailId });
 });

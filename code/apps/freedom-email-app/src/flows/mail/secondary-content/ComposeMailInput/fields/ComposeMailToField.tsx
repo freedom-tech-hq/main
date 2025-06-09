@@ -37,13 +37,13 @@ export const ComposeMailToField = ({ showCc, showBcc, ...props }: ComposeMailToF
           endAdornment: IF(NOT(showCc), () => (
             <Stack direction="row" gap={1}>
               <Button onClick={setShowCc} sx={{ p: 0 }}>
-                <Txt variant="body2" className="semibold disabled-text">
+                <Txt variant="body2" className="semibold muted-text">
                   {$cc(t)}
                 </Txt>
               </Button>
               {IF(NOT(showBcc), () => (
                 <Button onClick={setShowBcc} sx={{ p: 0 }}>
-                  <Txt variant="body2" className="semibold disabled-text">
+                  <Txt variant="body2" className="semibold muted-text">
                     {$bcc(t)}
                   </Txt>
                 </Button>

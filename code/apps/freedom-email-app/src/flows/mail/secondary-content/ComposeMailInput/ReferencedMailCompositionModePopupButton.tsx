@@ -31,7 +31,7 @@ export const ReferencedMailCompositionModePopupButton = ({ mode }: ReferencedMai
       value={mode}
       renderSelectedValue={(mode) => {
         const IconComponent = iconComponentsByMode[mode];
-        return <IconComponent className="sm-icon disabled-text" />;
+        return <IconComponent className="sm-icon muted-text" />;
       }}
       renderPopoverContents={({ selectValue }) => (
         <List>
@@ -40,7 +40,7 @@ export const ReferencedMailCompositionModePopupButton = ({ mode }: ReferencedMai
             return (
               <ListItemButton key={mode} onClick={() => selectValue(mode)}>
                 <ListItemIcon>
-                  <IconComponent className="sm-icon disabled-text" />
+                  <IconComponent className="sm-icon muted-text" />
                 </ListItemIcon>
                 <ListItemText primary={$modes[mode](t)} />
               </ListItemButton>

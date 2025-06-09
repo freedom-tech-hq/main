@@ -1,5 +1,5 @@
 import { Collapse, Divider, Stack, useTheme } from '@mui/material';
-import type { DecryptedViewMessage } from 'freedom-email-api';
+import { type DecryptedViewMessage } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';

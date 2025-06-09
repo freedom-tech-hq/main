@@ -2,13 +2,13 @@ import { Stack } from '@mui/material';
 import type { MailThreadLikeId } from 'freedom-email-api';
 import { useHistory } from 'freedom-web-navigation';
 import React, { useEffect } from 'react';
-import { BC, useBindingEffect } from 'react-bindings';
+import { useBindingEffect } from 'react-bindings';
 
 import { appRoot } from '../../../components/routing/appRoot.tsx';
-import type { MailScreenMode } from '../../../contexts/mail-screen-mode.tsx';
-import { useMailScreenMode } from '../../../contexts/mail-screen-mode.tsx';
+import type { MailScreenMode } from '../../../contexts/mail-screen.tsx';
+import { useMailScreen } from '../../../contexts/mail-screen.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread-id.tsx';
-import { useSizeClass } from '../../../hooks/useSizeClass.ts';
+import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { MailDetailPanel } from '../primary-content/MailDetailPanel.tsx';
 import { MailSidebars } from '../primary-content/MailSidebars.tsx';
 
@@ -19,16 +19,16 @@ export interface MailScreenProps {
 
 export const MailScreen = ({ mode, threadId }: MailScreenProps) => {
   const history = useHistory();
-  const mailScreenMode = useMailScreenMode();
+  const mailScreen = useMailScreen();
   const selectedThreadId = useSelectedMailThreadId();
-  const sizeClass = useSizeClass();
+  const selectedMessageFolder = useSelectedMessageFolder();
 
   useEffect(() => {
-    mailScreenMode.set(mode);
+    mailScreen.mode.set(mode);
 
     switch (mode) {
       case undefined:
-      case 'view-thread':
+      case 'default':
         if (selectedThreadId.get() !== 'initial' || threadId !== undefined) {
           selectedThreadId.set(threadId);
         }
@@ -38,46 +38,24 @@ export const MailScreen = ({ mode, threadId }: MailScreenProps) => {
         // threadId will always be undefined in compose mode, but we don't want to affect the selectedThreadId
         break;
     }
-  }, [mailScreenMode, mode, selectedThreadId, threadId]);
+  }, [mailScreen, mode, selectedThreadId, threadId]);
+
+  useBindingEffect(selectedMessageFolder, (selectedMessageFolder) => {
+    history.replace(appRoot.path.mail(selectedMessageFolder ?? 'all').value);
+  });
 
   useBindingEffect(selectedThreadId, (selectedThreadId) => {
     if (selectedThreadId === undefined || selectedThreadId === 'initial') {
-      history.replace(appRoot.path.mail.value);
+      history.replace(appRoot.path.mail(selectedMessageFolder.get() ?? 'all').value);
     } else {
-      history.replace(appRoot.path.mail.thread(selectedThreadId));
+      history.replace(appRoot.path.mail(selectedMessageFolder.get() ?? 'all').thread(selectedThreadId));
     }
   });
 
-  return BC(sizeClass, (sizeClass) => {
-    switch (sizeClass) {
-      case 'xl':
-      case 'lg':
-      case 'md':
-      case 'sm':
-      case 'xs':
-        // TODO: TEMP (md,sm,xs shouldnt be here)
-        return (
-          <Stack direction="row" alignItems="stretch" className="w-full h-dvh">
-            <MailSidebars />
-            <MailDetailPanel />
-          </Stack>
-        );
-
-      //   case 'md':
-      //     return (
-      //       <Stack className="min-h-dvh">
-      //         <AuthHeroBanner />
-      //         <AuthPanel />
-      //       </Stack>
-      //     );
-
-      //   case 'sm':
-      //   case 'xs':
-      //     return (
-      //       <Stack className="min-h-dvh">
-      //         <AuthPanel />
-      //       </Stack>
-      //     );
-    }
-  });
+  return (
+    <Stack direction="row" alignItems="stretch" className="w-full h-dvh">
+      <MailSidebars />
+      <MailDetailPanel />
+    </Stack>
+  );
 };

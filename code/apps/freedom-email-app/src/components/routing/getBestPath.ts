@@ -1,49 +1,71 @@
 import { objectKeys } from 'freedom-cast';
 import type { Nested } from 'freedom-nest';
 
-import { appRoot } from './appRoot.tsx';
-import { type AnySegmentValue, type RouteSegmentInfo } from './RouteSegmentInfo.tsx';
+import type { AnyRouteSegmentInfo } from './RouteSegmentInfo.ts';
 
-type NestedAppPathSegmentInfos = Nested<RouteSegmentInfo<AnySegmentValue>, { [key: string]: SimpleOrNestedAppPathSegmentInfos }>;
-type SimpleOrNestedAppPathSegmentInfos = RouteSegmentInfo<AnySegmentValue> | NestedAppPathSegmentInfos;
+// TODO: move to separate package
+export type AnyNestedAppPathSegmentInfos = Nested<AnyRouteSegmentInfo, { [key: string]: AnySimpleOrNestedAppPathSegmentInfos }>;
+export type AnySimpleOrNestedAppPathSegmentInfos = AnyRouteSegmentInfo | AnyNestedAppPathSegmentInfos;
 
-const isNestedAppPathSegmentInfos = (check: SimpleOrNestedAppPathSegmentInfos): check is NestedAppPathSegmentInfos => 'value' in check;
+const isNestedAppPathSegmentInfos = (check: AnySimpleOrNestedAppPathSegmentInfos): check is AnyNestedAppPathSegmentInfos =>
+  'value' in check;
 
 export const getBestPath = (
   pathParts: string[],
-  pathPartsOffset = 0,
-  segmentInfo: SimpleOrNestedAppPathSegmentInfos = appRoot.segmentInfo
-): { pathParts: string[]; segments: Array<RouteSegmentInfo<AnySegmentValue>> } | undefined => {
+  segmentInfo: AnySimpleOrNestedAppPathSegmentInfos,
+  pathPartsOffset = 0
+): { pathParts: string[]; segments: AnyRouteSegmentInfo[] } | undefined => {
   if (pathPartsOffset >= pathParts.length) {
     return { pathParts: [], segments: [] };
   }
 
   const resolvedSegmentInfo = isNestedAppPathSegmentInfos(segmentInfo) ? segmentInfo.value : segmentInfo;
 
-  const output: { pathParts: string[]; segments: Array<RouteSegmentInfo<AnySegmentValue>> } = {
+  const output: { pathParts: string[]; segments: AnyRouteSegmentInfo[] } = {
     pathParts: [],
     segments: [resolvedSegmentInfo]
   };
 
-  if (Array.isArray(resolvedSegmentInfo.segment)) {
-    if (
-      pathParts[pathPartsOffset] !== resolvedSegmentInfo.segment[0] ||
-      !resolvedSegmentInfo.segment[1].test(pathParts[pathPartsOffset + 1])
-    ) {
-      return undefined;
+  switch (resolvedSegmentInfo.type) {
+    case 'static':
+      if (pathParts[pathPartsOffset] !== resolvedSegmentInfo.staticPart) {
+        return undefined;
+      }
+
+      output.pathParts.push(pathParts[pathPartsOffset]);
+
+      pathPartsOffset += 1;
+
+      break;
+
+    case 'dynamic': {
+      if (pathParts[pathPartsOffset] !== resolvedSegmentInfo.staticPart) {
+        return undefined;
+      }
+
+      const dynamicPathValue = pathParts[pathPartsOffset + 1];
+      const dynamicSegmentInfoPart = resolvedSegmentInfo.dynamicPart;
+      if (dynamicSegmentInfoPart instanceof RegExp) {
+        // If the segment has a regex, check that the dynamic part matches it
+        if (!dynamicSegmentInfoPart.test(dynamicPathValue)) {
+          return undefined;
+        }
+      } else if (Array.isArray(dynamicSegmentInfoPart)) {
+        // If the segment has an array, check that the dynamic part is included in it
+        if (!dynamicSegmentInfoPart.includes(dynamicPathValue)) {
+          return undefined;
+        }
+      } else if (dynamicSegmentInfoPart.validate(dynamicPathValue).error !== undefined) {
+        // If the segment has a schema, validate the dynamic part
+        return undefined;
+      }
+
+      output.pathParts.push(pathParts[pathPartsOffset], dynamicPathValue);
+
+      pathPartsOffset += 2;
+
+      break;
     }
-
-    output.pathParts.push(pathParts[pathPartsOffset], pathParts[pathPartsOffset + 1]);
-
-    pathPartsOffset += 2;
-  } else {
-    if (pathParts[pathPartsOffset] !== resolvedSegmentInfo.segment) {
-      return undefined;
-    }
-
-    output.pathParts.push(pathParts[pathPartsOffset]);
-
-    pathPartsOffset += 1;
   }
 
   if (pathPartsOffset < pathParts.length) {
@@ -51,13 +73,13 @@ export const getBestPath = (
       return output;
     }
 
-    let longestSubPath: { pathParts: string[]; segments: Array<RouteSegmentInfo<AnySegmentValue>> } = { pathParts: [], segments: [] };
+    let longestSubPath: { pathParts: string[]; segments: AnyRouteSegmentInfo[] } = { pathParts: [], segments: [] };
     for (const key of objectKeys(segmentInfo)) {
       if (key === 'value') {
         continue;
       }
 
-      const subPath = getBestPath(pathParts, pathPartsOffset, segmentInfo[key]);
+      const subPath = getBestPath(pathParts, segmentInfo[key], pathPartsOffset);
       if (subPath !== undefined && subPath.pathParts.length > longestSubPath.pathParts.length) {
         longestSubPath = subPath;
       }

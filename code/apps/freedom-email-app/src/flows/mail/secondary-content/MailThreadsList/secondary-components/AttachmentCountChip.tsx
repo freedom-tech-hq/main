@@ -13,5 +13,5 @@ export const AttachmentCountChip = ({ count }: AttachmentCountChipProps) => (
 );
 
 export const AttachmentCountChipPlaceholder = () => (
-  <Box className="input-border-color-bg" sx={{ width: '50px', height: '30px', borderRadius: '15px' }} />
+  <Box className="input-border-bg" sx={{ width: '50px', height: '30px', borderRadius: '15px' }} />
 );

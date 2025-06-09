@@ -1,4 +1,4 @@
-import { Button, Stack } from '@mui/material';
+import { Button, Stack, useTheme } from '@mui/material';
 import type { MailAttachmentInfo } from 'freedom-email-api';
 import React from 'react';
 import { useCallbackRef } from 'react-bindings';
@@ -16,6 +16,7 @@ export interface AttachmentButtonProps {
 
 export const AttachmentButton = ({ attachment }: AttachmentButtonProps) => {
   const { presentErrorMessage } = useMessagePresenter();
+  const theme = useTheme();
 
   const onClick = useCallbackRef(() => {
     // TODO: implement
@@ -24,7 +25,13 @@ export const AttachmentButton = ({ attachment }: AttachmentButtonProps) => {
 
   // TODO: choose icon for mime type / preview
   return (
-    <Button variant="outlined" className="AttachmentButton" startIcon={<DownloadIcon color="disabled" width="20px" />} onClick={onClick}>
+    <Button
+      variant="outlined"
+      className="input-border items-start"
+      startIcon={<DownloadIcon width="20px" className="muted-text" />}
+      onClick={onClick}
+      sx={{ py: theme.spacing(1.5) }}
+    >
       <Stack alignItems="flex-start">
         <Txt variant="body2" className="medium">
           {/* TODO: replace with filename */}
@@ -38,15 +45,24 @@ export const AttachmentButton = ({ attachment }: AttachmentButtonProps) => {
   );
 };
 
-export const AttachmentButtonPlaceholder = () => (
-  <Button variant="outlined" className="AttachmentButton" startIcon={<IconPlaceholder width="20px" />}>
-    <Stack alignItems="flex-start">
-      <TxtPlaceholder variant="body2" className="medium">
-        Example
-      </TxtPlaceholder>
-      <TxtPlaceholder variant="body2" className="medium">
-        1.2MB
-      </TxtPlaceholder>
-    </Stack>
-  </Button>
-);
+export const AttachmentButtonPlaceholder = () => {
+  const theme = useTheme();
+
+  return (
+    <Button
+      variant="outlined"
+      className="input-border items-start"
+      startIcon={<IconPlaceholder width="20px" />}
+      sx={{ py: theme.spacing(1.5) }}
+    >
+      <Stack alignItems="flex-start">
+        <TxtPlaceholder variant="body2" className="medium">
+          Example
+        </TxtPlaceholder>
+        <TxtPlaceholder variant="body2" className="medium">
+          1.2MB
+        </TxtPlaceholder>
+      </Stack>
+    </Button>
+  );
+};

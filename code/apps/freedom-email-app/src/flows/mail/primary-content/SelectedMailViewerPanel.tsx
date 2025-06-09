@@ -12,13 +12,16 @@ import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { OnFirstMount } from '../../../components/reusable/OnFirstMount.tsx';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../consts/timing.ts';
+import { MailEditorProvider } from '../../../contexts/mail-editor.tsx';
 import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread-id.tsx';
+import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
 import { ArchiveIcon } from '../../../icons/ArchiveIcon.ts';
 import { ForwardIcon } from '../../../icons/ForwardIcon.ts';
 import { MarkUnreadIcon } from '../../../icons/MarkUnreadIcon.ts';
 import { MoreActionsIcon } from '../../../icons/MoreActionsIcon.ts';
+import { NavBackIcon } from '../../../icons/NavBackIcon.ts';
 import { ReplyAllIcon } from '../../../icons/ReplyAllIcon.ts';
 import { ReplyIcon } from '../../../icons/ReplyIcon.ts';
 import { SpamIcon } from '../../../icons/SpamIcon.ts';
@@ -30,6 +33,7 @@ import type { MailListControls } from '../secondary-content/MailList/MailListCon
 
 const ns = 'ui';
 const $archive = LOCALIZE('Archive')({ ns });
+const $backToMailbox = LOCALIZE('Back to Mailbox')({ ns });
 const $forward = LOCALIZE('Forward')({ ns });
 const $markUnread = LOCALIZE('Mark as Unread')({ ns });
 const $moreActions = LOCALIZE('More Actions…')({ ns });
@@ -44,6 +48,7 @@ export const SelectedMailViewerPanel = () => {
   const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
   const uuid = useMemo(() => makeUuid(), []);
+  const isMdOrSmaller = useIsSizeClass('<=', 'md');
 
   const selectedThreadId = useSelectedMailThreadId();
   const hasSelectedThreadId = useDerivedBinding(selectedThreadId, (id) => id !== undefined, { id: 'hasSelectedThreadId' });
@@ -58,6 +63,10 @@ export const SelectedMailViewerPanel = () => {
 
   useBindingEffect(selectedThreadId, () => {
     composition.set(undefined);
+  });
+
+  const onBackClick = useCallbackRef(() => {
+    selectedThreadId.set(undefined);
   });
 
   const onArchiveClick = useCallbackRef(() => {
@@ -149,13 +158,19 @@ export const SelectedMailViewerPanel = () => {
   return (
     <Stack alignItems="stretch" className="self-stretch flex-auto relative overflow-hidden">
       <ScrollParentInfoProvider insetTopPx={topToolbarHeightPx} heightPx={scrollableHeightPx} visibleHeightPx={scrollParentVisibleHeightPx}>
-        <Stack id={`${uuid}-scrollable`} alignItems="stretch" className="relative flex-auto overflow-y-auto">
+        <Stack id={`${uuid}-scrollable`} alignItems="stretch" className="relative flex-auto overflow-y-auto" sx={{ px: 0.5 }}>
           {IF(
             hasSelectedThreadId,
             () => (
               <>
                 <AppToolbar id={`${uuid}-top-toolbar`} justifyContent="space-between" gap={2} className="sticky top-0 default-bg z-5">
                   <Stack direction="row" alignItems="center" gap={2}>
+                    {IF(isMdOrSmaller, () => (
+                      <Button sx={{ p: 1 }} title={$backToMailbox(t)} onClick={onBackClick}>
+                        <NavBackIcon className="sm-icon secondary-text" />
+                      </Button>
+                    ))}
+
                     <Button sx={{ p: 1 }} title={$archive(t)} onClick={onArchiveClick}>
                       <ArchiveIcon className="sm-icon secondary-text" />
                     </Button>
@@ -196,13 +211,15 @@ export const SelectedMailViewerPanel = () => {
                     isInCompositionMode,
                     () => (
                       <Stack id={`${uuid}-compose-mail-input`} sx={{ mb: 1.5 }}>
-                        {BC(composition, (composition) => (
-                          <ComposeMailInput
-                            mode={composition?.mode}
-                            referencedMailId={composition?.referencedMailId}
-                            onDiscardClick={clearCompositionMode}
-                          />
-                        ))}
+                        <MailEditorProvider>
+                          {BC(composition, (composition) => (
+                            <ComposeMailInput
+                              mode={composition?.mode}
+                              referencedMailId={composition?.referencedMailId}
+                              onDiscardClick={clearCompositionMode}
+                            />
+                          ))}
+                        </MailEditorProvider>
                         <OnFirstMount do={scrollToComposeMailInput} delayMSec={INPUT_DEBOUNCE_TIME_MSEC} />
                       </Stack>
                     ),

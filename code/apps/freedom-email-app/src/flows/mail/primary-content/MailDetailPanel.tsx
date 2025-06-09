@@ -1,20 +1,45 @@
+import { ELSE, IF } from 'freedom-logical-web-components';
 import React from 'react';
-import { BC } from 'react-bindings';
+import { BC, useDerivedBinding } from 'react-bindings';
 
-import { useMailScreenMode } from '../../../contexts/mail-screen-mode.tsx';
+import { MailEditorProvider } from '../../../contexts/mail-editor.tsx';
+import { useMailScreen } from '../../../contexts/mail-screen.tsx';
+import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread-id.tsx';
+import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
 import { ComposeMailPanel } from './ComposeMailPanel.tsx';
+import { SecondaryMailSidebar } from './SecondaryMailSidebar.tsx';
 import { SelectedMailViewerPanel } from './SelectedMailViewerPanel.tsx';
 
 export const MailDetailPanel = () => {
-  const mailScreenMode = useMailScreenMode();
+  const mailScreen = useMailScreen();
+  const isLgOrLarger = useIsSizeClass('>=', 'lg');
+  const selectedThreadId = useSelectedMailThreadId();
 
-  return BC(mailScreenMode, (mode) => {
+  const hasSelectedThreadId = useDerivedBinding(selectedThreadId, (threadId) => threadId !== undefined && threadId !== 'initial', {
+    id: 'hasSelectedThreadId'
+  });
+
+  return BC(mailScreen.mode, (mode) => {
     switch (mode) {
       case undefined:
-      case 'view-thread':
-        return <SelectedMailViewerPanel />;
+      case 'default':
+        return IF(
+          isLgOrLarger,
+          () => <SelectedMailViewerPanel />,
+          ELSE(() =>
+            IF(
+              hasSelectedThreadId,
+              () => <SelectedMailViewerPanel />,
+              ELSE(() => <SecondaryMailSidebar />)
+            )
+          )
+        );
       case 'compose':
-        return <ComposeMailPanel />;
+        return (
+          <MailEditorProvider>
+            <ComposeMailPanel />
+          </MailEditorProvider>
+        );
     }
   });
 };

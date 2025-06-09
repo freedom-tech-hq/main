@@ -16,7 +16,7 @@ export const PasswordField = (props: PasswordFieldProps) => {
   const defaultEndAdornment = (
     <Button sx={{ p: 1 }} onClick={onToggleShowPasswordClick}>
       {BC(showPassword, (showPassword) => (
-        <EyeIcon className="sm-icon" sx={{ color: showPassword ? 'var(--colors-default-text)' : 'var(--colors-disabled-text)' }} />
+        <EyeIcon className={`sm-icon ${showPassword ? 'default-text' : 'muted-text'}`} />
       ))}
     </Button>
   );

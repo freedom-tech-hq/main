@@ -159,7 +159,7 @@ export const CreateNewAccountPanel = () => {
       }
 
       activeAccountInfo.set({ email: created.value.encryptedEmailCredential.email });
-      history.replace(appRoot.path.mail.value);
+      history.replace(appRoot.path.mail('inbox').value);
     } finally {
       isBusyCount.set(isBusyCount.get() - 1);
     }
@@ -205,7 +205,7 @@ export const CreateNewAccountPanel = () => {
                   <Stack direction="row" alignItems="center" gap={1.5}>
                     <Txt variant="inherit">{$createPassword(t)}</Txt>
                     <Tooltip title={$passwordTooltip(t)}>
-                      <InfoIcon color="disabled" className="sm-icon" />
+                      <InfoIcon className="sm-icon muted-text" />
                     </Tooltip>
                   </Stack>
                 }

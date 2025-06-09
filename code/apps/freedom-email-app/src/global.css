@@ -10,9 +10,10 @@
 
     --colors-secondary-text: #3F3F46;
     --colors-disabled-text: #71717A;
+    --colors-muted-text: #71717A;
 
     --colors-background: #fff;
-    --colors-muted: #F5F5F5;
+    --colors-muted-background: #F5F5F5;
     --colors-default-text-contrast: #FAFAF9;
     --colors-primary: #FFB43C;
     --colors-primary-contrast: #171717;
@@ -76,11 +77,12 @@
       --colors-background: #000;
       --colors-secondary: #27272A;
       --colors-secondary-contrast: #FAFAFA;
-      --colors-muted: #171717;
+      --colors-muted-background: #171717;
       --colors-default-text: #F4F4F5;
       --colors-default-text-contrast: #1C1917;
       --colors-secondary-text: #FAFAFA;
       --colors-disabled-text: #A1A1AA;
+      --colors-muted-text: #A1A1AA;
       --colors-input-border: #27272A;
       --colors-divider: #27272A;
       --colors-item-needs-attention-background: #262626;
@@ -113,6 +115,9 @@ h1, h2, h3, h4, h5, h6, p, span, svg, .MuiButton-text {
   &.disabled-text {
     color: var(--colors-disabled-text);
   }
+  &.muted-text {
+    color: var(--colors-muted-text);
+  }
   &.primary-contrast {
     color: var(--colors-primary-contrast);
   }
@@ -130,14 +135,17 @@ h1, h2, h3, h4, h5, h6, p, span, svg, .MuiButton-text {
 .default-bg {
   background-color: var(--colors-background);
 }
-.primary-color-bg {
+.primary-bg {
   background-color: var(--colors-primary);
 }
-.secondary-color-bg {
+.secondary-bg {
   background-color: var(--colors-secondary);
 }
-.muted-color-bg {
-  background-color: var(--colors-muted);
+.muted-bg {
+  background-color: var(--colors-muted-background);
+}
+.input-border {
+  border-color: var(--colors-muted-text);
 }
 .input-border-color-bg {
   background-color: var(--colors-input-border);

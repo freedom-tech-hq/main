@@ -2,9 +2,9 @@ import { Stack } from '@mui/material';
 import type { MailId } from 'freedom-email-api';
 import { IF } from 'freedom-logical-web-components';
 import React, { useRef } from 'react';
-import type { Binding } from 'react-bindings';
 import { useBinding, useBindingEffect } from 'react-bindings';
 
+import { useMailEditor } from '../../../../../contexts/mail-editor.tsx';
 import { useTaskWaitable } from '../../../../../hooks/useTaskWaitable.ts';
 import type { ReferencedMailCompositionMode } from '../../../../../types/ReferencedMailCompositionMode.ts';
 import { makeStringFromMailAddressList } from '../../../../../utils/makeStringFromMailAddressList.ts';
@@ -16,24 +16,11 @@ import { ReferencedMailCompositionModePopupButton } from '../ReferencedMailCompo
 export interface ComposeMailTopToolbarProps {
   defaultMode: ReferencedMailCompositionMode;
   referencedMailId: MailId;
-  to: Binding<string>;
-  cc: Binding<string>;
-  showCc: Binding<boolean>;
-  bcc: Binding<string>;
-  showBcc: Binding<boolean>;
-  subject: Binding<string>;
 }
 
-export const ComposeMailTopToolbar = ({
-  defaultMode,
-  referencedMailId,
-  to,
-  cc,
-  showCc,
-  bcc,
-  showBcc,
-  subject
-}: ComposeMailTopToolbarProps) => {
+export const ComposeMailTopToolbar = ({ defaultMode, referencedMailId }: ComposeMailTopToolbarProps) => {
+  const mailEditor = useMailEditor();
+
   const referencedMail = useTaskWaitable((tasks) => tasks.getMail(undefined, referencedMailId), { id: 'referencedMail' });
   // TODO: populate the hidden inReplyTo field as well
 
@@ -53,16 +40,16 @@ export const ComposeMailTopToolbar = ({
 
       switch (mode) {
         case 'forward':
-          to.set('');
-          cc.set('');
+          mailEditor.to.set('');
+          mailEditor.cc.set('');
           break;
         case 'reply':
-          to.set(makeStringFromMailAddressList(referencedMail.from));
-          cc.set('');
+          mailEditor.to.set(makeStringFromMailAddressList(referencedMail.from));
+          mailEditor.cc.set('');
           break;
         case 'reply-all':
-          to.set(makeStringFromMailAddressList(referencedMail.from));
-          cc.set(makeStringFromMailAddressList([...referencedMail.to, ...referencedMail.cc]));
+          mailEditor.to.set(makeStringFromMailAddressList(referencedMail.from));
+          mailEditor.cc.set(makeStringFromMailAddressList([...referencedMail.to, ...referencedMail.cc]));
           break;
       }
     },
@@ -76,7 +63,7 @@ export const ComposeMailTopToolbar = ({
         return;
       }
 
-      subject.set(referencedMail.subject);
+      mailEditor.subject.set(referencedMail.subject);
     },
     { triggerOnMount: 'first' }
   );
@@ -86,26 +73,31 @@ export const ComposeMailTopToolbar = ({
       <ReferencedMailCompositionModePopupButton mode={mode} />
       <Stack sx={{ flex: 1 }}>
         <ComposeMailToField
-          value={to}
-          showCc={showCc}
-          showBcc={showBcc}
+          value={mailEditor.to}
+          showCc={mailEditor.showCc}
+          showBcc={mailEditor.showBcc}
           variant="standard"
           labelPosition="before"
           slotProps={{ input: { disableUnderline: true } }}
         />
 
-        {IF(showCc, () => (
+        {IF(mailEditor.showCc, () => (
           <ComposeMailCcField
-            value={cc}
-            showBcc={showBcc}
+            value={mailEditor.cc}
+            showBcc={mailEditor.showBcc}
             variant="standard"
             labelPosition="before"
             slotProps={{ input: { disableUnderline: true } }}
           />
         ))}
 
-        {IF(showBcc, () => (
-          <ComposeMailBccField value={bcc} variant="standard" labelPosition="before" slotProps={{ input: { disableUnderline: true } }} />
+        {IF(mailEditor.showBcc, () => (
+          <ComposeMailBccField
+            value={mailEditor.bcc}
+            variant="standard"
+            labelPosition="before"
+            slotProps={{ input: { disableUnderline: true } }}
+          />
         ))}
       </Stack>
     </Stack>

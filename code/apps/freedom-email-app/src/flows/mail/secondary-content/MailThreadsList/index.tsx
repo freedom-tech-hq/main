@@ -8,6 +8,7 @@ import { ifBinding, resolveTypeOrBindingType, useBinding, useBindingEffect, useC
 import { useScrollParentInsetBottomPx, useScrollParentInsetTopPx } from '../../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMailThreadId } from '../../../../contexts/selected-mail-thread-id.tsx';
 import { SelectedMessageFolderProvider } from '../../../../contexts/selected-message-folder.tsx';
+import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import type { MailThreadsListKey } from './MailThreadsListKey.ts';
 import { useMailThreadsListDataSource } from './useMailThreadsListDataSource.ts';
 import { useMailThreadsListDelegate } from './useMailThreadsListDelegate.tsx';
@@ -58,10 +59,15 @@ const InternalMailThreadsList = ({
   const selectedThreadId = useSelectedMailThreadId();
   const scrollAreaInsetBottomPx = useScrollParentInsetBottomPx();
   const scrollAreaInsetTopPx = useScrollParentInsetTopPx();
+  const isMdOrSmaller = useIsSizeClass('<=', 'md');
 
   const listControls = useRef<VirtualListControls<MailThreadsListKey>>({});
 
   const selectFirstMailIfNothingIsSelected = useCallbackRef(() => {
+    if (isMdOrSmaller.get()) {
+      return; // Don't auto select mail on small screens since the list is not focused by default
+    }
+
     const theSelectedThreadId = selectedThreadId.get();
     if (theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial') {
       return;

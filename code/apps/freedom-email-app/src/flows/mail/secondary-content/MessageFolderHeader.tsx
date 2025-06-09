@@ -1,5 +1,6 @@
 import { Button, FormControlLabel, Stack } from '@mui/material';
 import { LOCALIZE, PLURALIZE } from 'freedom-localization';
+import { IF } from 'freedom-logical-web-components';
 import { useP, useT } from 'freedom-react-localization';
 import React from 'react';
 import type { ReadonlyBinding } from 'react-bindings';
@@ -11,8 +12,11 @@ import { ControlledCheckbox } from '../../../components/reusable/form/Controlled
 import { ControlledSwitch } from '../../../components/reusable/form/ControlledSwitch.tsx';
 import { ControlledTextField } from '../../../components/reusable/form/ControlledTextField.tsx';
 import { $messageFolder } from '../../../consts/common-strings.ts';
+import { useMailScreen } from '../../../contexts/mail-screen.tsx';
 import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
+import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
+import { HamburgerMenuIcon } from '../../../icons/HamburgerMenuIcon.ts';
 import { MarkReadIcon } from '../../../icons/MarkReadIcon.ts';
 import { RefreshIcon } from '../../../icons/RefreshIcon.ts';
 import { SearchIcon } from '../../../icons/SearchIcon.ts';
@@ -33,6 +37,8 @@ export interface MessageFolderHeaderProps {
 }
 
 export const MessageFolderHeader = ({ estThreadCount }: MessageFolderHeaderProps) => {
+  const isLgOrSmaller = useIsSizeClass('<=', 'lg');
+  const mailScreen = useMailScreen();
   const { presentErrorMessage } = useMessagePresenter();
   const p = useP();
   const selectedMessageFolder = useSelectedMessageFolder();
@@ -58,6 +64,10 @@ export const MessageFolderHeader = ({ estThreadCount }: MessageFolderHeaderProps
   const search = useBinding(() => '', { id: 'search', detectChanges: true });
   const selectAll = useBinding(() => false, { id: 'selectAll', detectChanges: true });
 
+  const onHamburgerMenuClick = useCallbackRef(() => {
+    mailScreen.showPrimarySidebar.set(true);
+  });
+
   const onMarkReadClick = useCallbackRef(() => {
     // TODO: implement
     presentErrorMessage('This feature is not implemented yet.', { severity: 'error' });
@@ -70,7 +80,13 @@ export const MessageFolderHeader = ({ estThreadCount }: MessageFolderHeaderProps
 
   return (
     <>
-      <AppToolbar>
+      <AppToolbar gap={1.5}>
+        {IF(isLgOrSmaller, () => (
+          <Button variant="outlined" sx={{ p: 1 }} className="input-border">
+            <HamburgerMenuIcon className="sm-icon default-text" onClick={onHamburgerMenuClick} />
+          </Button>
+        ))}
+
         {/* TODO: handle custom folder names */}
         <Txt variant="h3" className="flex-auto semibold">
           {BC(lastDefinedSelectedMessageFolder, (folder) => (folder !== undefined ? $messageFolder[folder](t) : null))}

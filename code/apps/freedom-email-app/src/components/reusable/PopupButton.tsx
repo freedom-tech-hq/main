@@ -42,12 +42,7 @@ export const PopupButton = <T,>({ value, renderSelectedValue, renderPopoverConte
   return (
     <>
       {BC(value, (value) => (
-        <Button
-          endIcon={<DropdownIcon className="sm-icon disabled-text" />}
-          {...buttonProps}
-          ref={buttonRef}
-          onClick={wrappedOnButtonClick}
-        >
+        <Button endIcon={<DropdownIcon className="sm-icon muted-text" />} {...buttonProps} ref={buttonRef} onClick={wrappedOnButtonClick}>
           {renderSelectedValue(value)}
         </Button>
       ))}

@@ -22,7 +22,7 @@ export const ActiveAccountButton = () => {
   return BC(activeAccountInfo, (activeAccountInfo) =>
     activeAccountInfo !== undefined ? (
       <Button
-        className="default-text"
+        className="default-text w-full"
         startIcon={<StringAvatar value={activeAccountInfo.email} />}
         endIcon={<CollapseExpandIcon className="sm-icon" />}
         onClick={onClick}
@@ -40,7 +40,7 @@ export const ActiveAccountButton = () => {
 // Helpers
 
 const ActiveAccountButtonPlaceholder = () => (
-  <Button startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon" color="disabled" />}>
+  <Button className="w-full" startIcon={<AvatarPlaceholder />} endIcon={<CollapseExpandIcon className="sm-icon muted-text" />}>
     <TxtPlaceholder className="w-full" />
   </Button>
 );
