@@ -15,7 +15,7 @@ In the future, could be split into multiple packages.
    2.1. Create databases [2025-05-10_create_databases.sql](migrations/2025-05-10_create_databases.sql) - run manually as `postgres` user.
    2.2. Connect with the newly created user `freedom_user`.
    2.3. Run the rest of SQL migrations manually.
-   2.4. Optional: use [migrate-fs-to-sql.cjs](migrations/migrate-fs-to-sql.cjs). It does not update the data, it outputs SQL to run manually.
+   2.4. Optional: use [migrate-fs-to-sql.cjs](migrations/2025-05-10_migrate-fs-to-sql.cjs). It does not update the data, it outputs SQL to run manually.
 3. Run the backends with no extra configuration.
 
 ## How to apply migrations in the cloud
@@ -25,7 +25,7 @@ Docker commands are for the local machine. To use them on the server only drop t
 Find the `db` container name.
 
 ```shell
-docker --context freedom-dev ps | grep -db-
+docker --context freedom-dev ps | grep -- -db-
 ```
 
 Enter the docker container.
