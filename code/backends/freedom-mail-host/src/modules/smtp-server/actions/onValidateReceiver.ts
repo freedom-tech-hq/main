@@ -1,10 +1,10 @@
 import { makeFailure, type PR } from 'freedom-async';
 import { makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import { generalizeFailureResult, NotFoundError } from 'freedom-common-errors';
+import { generalizeFailureResult, InternalStateError } from 'freedom-common-errors';
 import { findUserByEmail } from 'freedom-db';
 
 import * as config from '../../../config.ts';
-import { hasForwardingRoute } from '../../forwarding/exports.ts';
+import { interpretMailAddress, type InterpretMailAddressResult } from '../../forwarding/utils/interpretMailAddress.ts';
 import type { SmtpPublicErrorCodes } from '../internal/types/SmtpPublicErrorCodes.ts';
 import type { SmtpServerParams, ValidateReceiverResult } from '../internal/utils/defineSmtpServer.ts';
 
@@ -18,36 +18,39 @@ import type { SmtpServerParams, ValidateReceiverResult } from '../internal/utils
 export const onValidateReceiver: SmtpServerParams['onValidateReceiver'] = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, emailAddress: string): PR<ValidateReceiverResult, SmtpPublicErrorCodes> => {
-    // Get the domain part of the email
-    const [, domain] = emailAddress.split('@');
-
-    if (domain.length === 0) {
-      return makeFailure(
-        new NotFoundError(trace, {
-          errorCode: 'malformed-email-address',
-          message: `Malformed email address: '${emailAddress}'`
-        })
-      );
+    const interpretedResult = await interpretMailAddress(trace, emailAddress, config);
+    if (!interpretedResult.ok) {
+      return interpretedResult;
     }
 
-    // Not our domain
-    if (!config.SMTP_OUR_DOMAINS.includes(domain)) {
-      return makeSuccess<ValidateReceiverResult>('external');
-    }
+    switch (interpretedResult.value.type) {
+      case 'our':
+      case 'forwarding-our': {
+        // Check the user exists
+        const userResult = await findUserByEmail(trace, interpretedResult.value.target);
+        if (userResult.ok) {
+          return makeSuccess<ValidateReceiverResult>('our');
+        } else if (userResult.value.errorCode === 'not-found') {
+          return makeSuccess<ValidateReceiverResult>('wrong-user');
+        } else {
+          return generalizeFailureResult(trace, userResult, 'not-found');
+        }
+      }
 
-    // Check a forwarding route exists
-    if (hasForwardingRoute(emailAddress)) {
-      return makeSuccess<ValidateReceiverResult>('our'); // address is ours, destination is the onReceivedEmail concern
-    }
+      // The address is ours, destination is the onReceivedEmail's concern
+      case 'forwarding-external':
+        return makeSuccess<ValidateReceiverResult>('our');
 
-    // Check the user exists
-    const userResult = await findUserByEmail(trace, emailAddress);
-    if (userResult.ok) {
-      return makeSuccess<ValidateReceiverResult>('our');
-    } else if (userResult.value.errorCode === 'not-found') {
-      return makeSuccess<ValidateReceiverResult>('wrong-user');
-    } else {
-      return generalizeFailureResult(trace, userResult, 'not-found');
+      // This one is really external
+      case 'external':
+        return makeSuccess<ValidateReceiverResult>('external');
+
+      default:
+        return makeFailure(
+          new InternalStateError(trace, {
+            message: `Unexpected address type: ${(interpretedResult.value as InterpretMailAddressResult).type}`
+          })
+        );
     }
   }
 );

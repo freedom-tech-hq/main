@@ -5,7 +5,7 @@ import { findUserByEmail } from 'freedom-db';
 
 import * as config from '../../../config.ts';
 import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
-import { resolveMailAlias } from '../../forwarding/exports.ts';
+import { interpretMailAddress } from '../../forwarding/utils/interpretMailAddress.ts';
 import { deliverOutboundEmail } from '../../smtp-upstream/exports.ts';
 import { deliverForwardedEmail } from '../../smtp-upstream/utils/deliverForwardedEmail.ts';
 import { addIncomingEmail } from '../../storage/utils/addIncomingEmail.ts';
@@ -43,16 +43,22 @@ export const routeMail = makeAsyncResultFunc(
     const externalRecipients: string[] = [];
     const externalForwardingRecipients: Record<string, string[]> = {};
 
-    for (const denotedRecipient of recipients) {
-      // Resolve alias
-      const recipient = resolveMailAlias(denotedRecipient);
+    for (const rawRecipient of recipients) {
+      // Normalize and resolve aliases
+      const interpretedResult = await interpretMailAddress(trace, rawRecipient, config);
+      if (!interpretedResult.ok) {
+        // TODO: log?
+        continue;
+      }
+      const { type: recipientType, denoted: denotedRecipient, target: recipient } = interpretedResult.value;
 
       // Classify
-      const [, domain] = recipient.split('@');
-      if (domain.length > 0 && config.SMTP_OUR_DOMAINS.includes(domain)) {
+      if (recipientType === 'our' || recipientType === 'forwarding-our') {
         // Internal target
         internalRecipients.push(recipient);
-      } else if (recipient !== denotedRecipient) {
+
+        // Assuming that the denoted does not exist in 'forwarding-our' case
+      } else if (recipientType === 'forwarding-external') {
         // Forwarding
         if (mode.type === 'inbound') {
           // This adds headers on forwarding. Requires rawMail
@@ -72,6 +78,7 @@ export const routeMail = makeAsyncResultFunc(
           internalRecipients.push(denotedRecipient);
         }
       } else {
+        // Outbound scenario, recipientType === 'external'
         if (mode.type === 'inbound') {
           // This should not happen if the calling code is correct, so no need for feedback
           // Illegal relay attempts should be bounced one level above. Here it is just an extra safety check
@@ -79,7 +86,6 @@ export const routeMail = makeAsyncResultFunc(
           continue;
         }
 
-        // Outbound scenario
         externalRecipients.push(recipient);
       }
     }
