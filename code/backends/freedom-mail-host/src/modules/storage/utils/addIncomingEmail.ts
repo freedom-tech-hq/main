@@ -6,7 +6,7 @@ import { makeUuid } from 'freedom-contexts';
 import { encryptValue } from 'freedom-crypto';
 import type { DbMessageIn } from 'freedom-db';
 import { dbQuery, findUserByEmail, identifyThread } from 'freedom-db';
-import type { MessageFolder } from 'freedom-email-api';
+import { mailThreadIdInfo, type MessageFolder } from 'freedom-email-api';
 import { clientApi, mailIdInfo, rawMessageFieldSchema } from 'freedom-email-api';
 
 import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
@@ -59,7 +59,7 @@ export const addIncomingEmail = makeAsyncResultFunc(
       return threadResult;
     }
 
-    const threadId = threadResult.value;
+    const threadId = threadResult.value ?? mailThreadIdInfo.make(makeUuid());
 
     // TODO: Extract save with schema validation
     const sql = `

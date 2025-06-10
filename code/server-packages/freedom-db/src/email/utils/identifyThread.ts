@@ -4,42 +4,48 @@ import type { Trace } from 'freedom-contexts';
 import type { MailMessage, MailThreadId } from 'freedom-email-api';
 
 import { dbQuery } from '../../db/postgresClient.ts';
-import type { IdentifyThreadInputMessage } from '../internal/utils/identifyThreadPureLogic.ts';
-import { identifyThreadPureLogic } from '../internal/utils/identifyThreadPureLogic.ts';
+
+export type IdentifyThreadInputMessage = Pick<MailMessage, 'inReplyTo' | 'references'>;
 
 export const identifyThread = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace: Trace, message: IdentifyThreadInputMessage): PR<MailThreadId | null> => {
-    const threadResult = await identifyThreadPureLogic(trace, {
-      message,
-      findMessages: async (_trace, messageIds) => {
-        const query = `
-            SELECT "id", "messageId", "threadId"
-            FROM "messages"
-            WHERE "messageId" = ANY($1)
-        `;
-        const result = await dbQuery<Pick<MailMessage, 'id' | 'messageId' | 'threadId'>>(query, [messageIds]);
+  async (_trace: Trace, message: IdentifyThreadInputMessage): PR<MailThreadId | null> => {
+    const idsToCheck: string[] = [];
 
-        return makeSuccess(result.rows);
-      }
-    });
-
-    if (!threadResult.ok) {
-      return threadResult;
+    if (message.inReplyTo !== undefined) {
+      idsToCheck.push(message.inReplyTo);
     }
 
-    const { threadId } = threadResult.value;
-
-    // Handle alsoAttachMailIds if present
-    if (threadResult.value.alsoAttachMailIds !== undefined && threadResult.value.alsoAttachMailIds.length > 0) {
-      const updateSql = `
-        UPDATE "messages"
-        SET "threadId" = $1
-        WHERE "id" = ANY($2)
-      `;
-      await dbQuery(updateSql, [threadId, threadResult.value.alsoAttachMailIds]);
+    if (message.references !== undefined) {
+      idsToCheck.push(...message.references);
     }
 
-    return makeSuccess(threadId);
+    // If no IDs to check, return null (no thread)
+    if (idsToCheck.length === 0) {
+      return makeSuccess(null);
+    }
+
+    // Find messages with the given IDs
+    const query = `
+      SELECT "id", "messageId", "threadId"
+      FROM "messages"
+      WHERE "messageId" = ANY($1)
+    `;
+    const messagesResult = await dbQuery<Pick<MailMessage, 'id' | 'messageId' | 'threadId'>>(query, [idsToCheck]);
+
+    const messages = messagesResult.rows;
+
+    // The messageIds are not in our database
+    if (messages.length === 0) {
+      return makeSuccess(null);
+    }
+
+    // Prioritize inReplyTo over references
+    const inReplyToMessage =
+      message.inReplyTo !== undefined
+        ? messages.find((msg) => msg.messageId === message.inReplyTo) // prettier-fix
+        : undefined;
+
+    return makeSuccess<MailThreadId>(inReplyToMessage !== undefined ? inReplyToMessage.threadId : messages[0].threadId);
   }
 );

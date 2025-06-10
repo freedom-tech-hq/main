@@ -3,7 +3,7 @@ import { type IsoDateTime, makeIsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import { type DbMessageOut, dbQuery, identifyThread } from 'freedom-db';
-import type { MessageFolder } from 'freedom-email-api';
+import { mailThreadIdInfo, type MessageFolder } from 'freedom-email-api';
 import { api, mailIdInfo } from 'freedom-email-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { StatusCodes } from 'http-status-codes';
@@ -31,7 +31,7 @@ export default makeHttpApiHandler([import.meta.filename], { api: api.message.dra
     return threadResult;
   }
 
-  const threadId = threadResult.value;
+  const threadId = threadResult.value ?? mailThreadIdInfo.make(makeUuid());
 
   // Folder is 'drafts' for user-created messages
   const folder: MessageFolder = 'drafts';
@@ -63,7 +63,8 @@ export default makeHttpApiHandler([import.meta.filename], { api: api.message.dra
     body: {
       id: dbMsg.id,
       updatedAt: dbMsg.updatedAt.toISOString() as IsoDateTime,
-      messageId
+      messageId,
+      threadId
     }
   });
 });

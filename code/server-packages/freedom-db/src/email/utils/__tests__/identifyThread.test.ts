@@ -3,7 +3,7 @@ import { after, describe, it } from 'node:test';
 
 import { makeIsoDateTime } from 'freedom-basic-data';
 import { makeTrace, makeUuid } from 'freedom-contexts';
-import { emailUserIdInfo, mailIdInfo, type MailMessage, type MailThreadId } from 'freedom-email-api';
+import { emailUserIdInfo, mailIdInfo, type MailMessage, mailThreadIdInfo } from 'freedom-email-api';
 import { invalidateAllInMemoryCaches } from 'freedom-in-memory-cache';
 
 import { initConfigForTests } from '../../../config.ts';
@@ -14,12 +14,14 @@ import { identifyThread } from '../identifyThread.ts';
 // Such complex mail ids are overkill.
 const mailId1 = mailIdInfo.make(`${makeIsoDateTime(new Date())}-${makeUuid()}`);
 const mailId2 = mailIdInfo.make(`${makeIsoDateTime(new Date())}-${makeUuid()}`);
+const threadId1 = mailThreadIdInfo.make(makeUuid());
+const threadId2 = mailThreadIdInfo.make(makeUuid());
 const userId = emailUserIdInfo.make('the-user');
 
 /**
  * Helper function to insert a test message with all required fields
  */
-async function insertTestMessage(id: string, messageId: string, threadId: string | null): Promise<void> {
+async function insertTestMessage(id: string, messageId: string, threadId: string): Promise<void> {
   await dbQuery(
     `INSERT INTO "messages" (
       "id", "messageId", "threadId",
@@ -93,19 +95,42 @@ describe('identifyThread', () => {
     assert.strictEqual(result.value, null);
   });
 
+  it('should prefer threadId of inReplyTo over threadId of references', async () => {
+    // Arrange
+    initConfigForTests({});
+    await testsResetDb();
+
+    const replyToThreadId = threadId1;
+    const message: Pick<MailMessage, 'inReplyTo' | 'references'> = {
+      inReplyTo: 'the-reply-to-id',
+      references: ['the-ref1', 'the-ref2']
+    };
+
+    await insertTestUser();
+    await insertTestMessage(mailId1, 'the-ref1', threadId2);
+    await insertTestMessage(mailId2, 'the-reply-to-id', replyToThreadId);
+
+    // Act
+    const result = await identifyThread(trace, message);
+
+    // Assert
+    assert.ok(result.ok);
+    assert.strictEqual(result.value, replyToThreadId);
+  });
+
   it('should use existing threadId when found in related messages', async () => {
     // Arrange
     initConfigForTests({});
     await testsResetDb();
 
-    const existingThreadId = 'the-existing-thread-id' as MailThreadId;
+    const existingThreadId = threadId1;
     const message: Pick<MailMessage, 'inReplyTo' | 'references'> = {
-      inReplyTo: 'the-reply-to-id'
+      references: ['the-ref1', 'the-ref2']
     };
 
-    // Insert a message with the existing threadId
     await insertTestUser();
-    await insertTestMessage(mailId1, 'the-reply-to-id', existingThreadId);
+    await insertTestMessage(mailId1, 'the-ref1', existingThreadId);
+    await insertTestMessage(mailId2, 'the-ref2', existingThreadId);
 
     // Act
     const result = await identifyThread(trace, message);
@@ -113,37 +138,5 @@ describe('identifyThread', () => {
     // Assert
     assert.ok(result.ok);
     assert.strictEqual(result.value, existingThreadId);
-  });
-
-  it('should create new threadId when related messages have no threadId', async () => {
-    // Arrange
-    initConfigForTests({});
-    await testsResetDb();
-
-    const message: Pick<MailMessage, 'inReplyTo' | 'references'> = {
-      references: ['the-ref1', 'the-ref2']
-    };
-
-    // Insert messages with null threadId
-    await insertTestUser();
-    await insertTestMessage(mailId1, 'the-ref1', null);
-    await insertTestMessage(mailId2, 'the-ref2', null);
-
-    // Act
-    const result = await identifyThread(trace, message);
-
-    // Assert
-    assert.ok(result.ok);
-    assert.notStrictEqual(result.value, null);
-
-    // Check that the related messages have been updated with the new threadId
-    const updatedMessages = await dbQuery<Pick<MailMessage, 'id' | 'threadId'>>(
-      `SELECT "id", "threadId" FROM "messages" WHERE "id" = ANY($1)`,
-      [[mailId1, mailId2]]
-    );
-
-    assert.strictEqual(updatedMessages.rows.length, 2);
-    assert.strictEqual(updatedMessages.rows[0].threadId, result.value);
-    assert.strictEqual(updatedMessages.rows[1].threadId, result.value);
   });
 });

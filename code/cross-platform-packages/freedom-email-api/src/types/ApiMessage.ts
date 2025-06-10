@@ -13,7 +13,7 @@ export const apiMessageSchema = schema.object({
   userId: emailUserIdInfo.schema,
   updatedAt: isoDateTimeSchema,
   folder: messageFolderSchema,
-  threadId: mailThreadIdInfo.schema.allowNull(),
+  threadId: mailThreadIdInfo.schema,
 
   // External id, is optional in decrypted version
   // It is temporary open, to prototype the logic TODO: make encrypted or hashed

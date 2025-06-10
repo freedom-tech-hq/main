@@ -29,7 +29,7 @@ export const mailMessageSchema = schema.object({
   // For drafts, it is the time when the draft was last saved. Mutable, always up to date
   updatedAt: isoDateTimeSchema,
   folder: messageFolderSchema,
-  threadId: mailThreadIdInfo.schema.allowNull(),
+  threadId: mailThreadIdInfo.schema,
   // It is external, so allowing empty string to avoid runtime failures
   messageId: schema.string().allowEmptyString().allowNull(),
   // TODO: Place isRead somewhere

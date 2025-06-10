@@ -5,6 +5,7 @@ import { makeHttpApi } from 'yaschema-api';
 
 import { apiInputMessageSchema } from '../../../types/ApiInputMessage.ts';
 import { mailIdInfo } from '../../../types/MailId.ts';
+import { mailThreadIdInfo } from '../../../types/MailThreadId.ts';
 
 export const POST = makeHttpApi({
   method: 'POST',
@@ -21,8 +22,8 @@ export const POST = makeHttpApi({
       body: schema.object({
         id: mailIdInfo.schema,
         updatedAt: isoDateTimeSchema,
-        messageId: schema.string()
-        // Note, if we add threadId here, we should also return the id(s) of other messages, that were just connected to the same thread
+        messageId: schema.string(),
+        threadId: mailThreadIdInfo.schema
       })
     },
     failureResponse: makeFailureWithCodeSchemas()

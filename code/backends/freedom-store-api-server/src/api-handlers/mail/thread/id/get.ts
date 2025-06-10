@@ -65,7 +65,7 @@ export default makeHttpApiHandler(
     const messagesQuery = `
       SELECT "id", "userId", "updatedAt", "messageId", "threadId", "listFields", "viewFields"
       FROM "messages"
-      WHERE "userId" = $1 AND "id" = $2
+      WHERE "userId" = $1 AND "threadId" = $2
       ${cursorClause}
       ORDER BY "updatedAt" DESC, "id" DESC
       LIMIT $${params.length}
