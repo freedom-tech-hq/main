@@ -39,9 +39,13 @@ export const MailListItemDetail = ({ mail, showDividerIfCollapsed, isCollapsed }
               {mail.subject}
             </Txt>
 
-            <Txt variant="body1" className="medium whitespace-pre-line">
-              {mail.body}
-            </Txt>
+            {mail.isBodyHtml ? (
+              <div dangerouslySetInnerHTML={{ __html: mail.body }} />
+            ) : (
+              <Txt variant="body1" className="medium whitespace-pre-line">
+                {mail.body}
+              </Txt>
+            )}
 
             {/* TODO: support attachments */}
             {/* {IF(mail.attachments.length > 0, () => (
