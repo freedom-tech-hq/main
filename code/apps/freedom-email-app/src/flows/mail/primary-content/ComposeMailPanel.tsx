@@ -18,12 +18,14 @@ import { appRoot } from '../../../components/routing/appRoot.tsx';
 import { $apiGenericError, $tryAgain } from '../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../contexts/active-account-info.tsx';
 import { useMailEditor } from '../../../contexts/mail-editor.tsx';
+import { useMailScreen } from '../../../contexts/mail-screen.tsx';
 import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
 import { DraftIcon } from '../../../icons/DraftIcon.ts';
+import { HamburgerMenuIcon } from '../../../icons/HamburgerMenuIcon.ts';
 import { TrashIcon } from '../../../icons/TrashIcon.ts';
 import { makeMailAddressListFromString } from '../../../utils/makeMailAddressListFromString.ts';
 import { ComposeMailBodyField } from '../secondary-content/compose-mail/ComposeMailBodyField.tsx';
@@ -38,13 +40,25 @@ export const ComposeMailPanel = () => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
+  const isLgOrSmaller = useIsSizeClass('<=', 'lg');
   const isSmOrSmaller = useIsSizeClass('<=', 'sm');
   const { presentErrorMessage } = useMessagePresenter();
   const mailEditor = useMailEditor();
-  const selectedMessageFolder = useSelectedMessageFolder();
+  const mailScreen = useMailScreen();
   const t = useT();
   const tasks = useTasks();
   const uuid = useMemo(() => makeUuid(), []);
+
+  const selectedMessageFolder = useSelectedMessageFolder();
+  const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (folder) => folder !== undefined, {
+    id: 'hasSelectedMessageFolder'
+  });
+
+  const needsHamburgerMenu = useDerivedBinding(
+    { isLgOrSmaller, hasSelectedMessageFolder },
+    ({ isLgOrSmaller, hasSelectedMessageFolder }) => isLgOrSmaller && !hasSelectedMessageFolder,
+    { id: 'needsHamburgerMenu' }
+  );
 
   const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
   const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
@@ -52,6 +66,10 @@ export const ComposeMailPanel = () => {
   const isFormReady = useDerivedWaitable({ isBusy }, ({ isBusy }) => !isBusy, { id: 'isFormReady', limitType: 'none' });
 
   const bodyFieldHasFocus = useBinding(() => false, { id: 'bodyFieldHasFocus', detectChanges: true });
+
+  const onHamburgerMenuClick = useCallbackRef(() => {
+    mailScreen.showPrimarySidebar.set(true);
+  });
 
   const onSaveDraftClick = useCallbackRef(async () => {
     const theActiveAccountInfo = activeAccountInfo.get();
@@ -129,6 +147,12 @@ export const ComposeMailPanel = () => {
           {BC(isLgOrLarger, (isLgOrLarger) => (
             <Stack alignItems="stretch" sx={{ px: isLgOrLarger ? 2 : 0.5 }}>
               <AppToolbar id={`${uuid}-top-toolbar`} justifyContent="space-between" gap={2} className="sticky top-0 default-bg z-5">
+                {IF(needsHamburgerMenu, () => (
+                  <Button variant="outlined" sx={{ p: 1 }} className="input-border">
+                    <HamburgerMenuIcon className="sm-icon default-text" onClick={onHamburgerMenuClick} />
+                  </Button>
+                ))}
+
                 <Txt variant="h3" className="semibold">
                   {$compose(t)}
                 </Txt>

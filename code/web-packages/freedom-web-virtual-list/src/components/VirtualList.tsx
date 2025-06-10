@@ -2,7 +2,7 @@ import { Collapse, Stack } from '@mui/material';
 import { objectEntries, objectKeys, objectValues } from 'freedom-cast';
 import { makeUuid } from 'freedom-contexts';
 import type { DataSource, IsDataSourceLoading } from 'freedom-data-source';
-import { ANIMATION_DURATION_MSEC, TARGET_FPS_MSEC } from 'freedom-web-animation';
+import { ANIMATION_DURATION_MSEC, MAX_SCROLL_DURATION_MSEC, TARGET_FPS_MSEC } from 'freedom-web-animation';
 import { ResizeObservingDiv } from 'freedom-web-resize-observer';
 import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
@@ -675,8 +675,7 @@ export const VirtualList = <T, KeyT extends string, TemplateIdT extends string>(
       const animationFrame = window.requestAnimationFrame(() => {
         scrollPositionMarkerElem.scrollIntoView({ behavior: 'instant', block: 'nearest' });
 
-        // 600ms is the maximum amount of time any mainstream browser should take to scroll to an element
-        const timeout = setTimeout(() => (scrollPositionMarkerElem.style.height = '0'), 600);
+        const timeout = setTimeout(() => (scrollPositionMarkerElem.style.height = '0'), MAX_SCROLL_DURATION_MSEC);
         cancelLastScroll.current = () => {
           scrollPositionMarkerElem.style.height = '0';
           clearTimeout(timeout);

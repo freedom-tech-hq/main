@@ -16,6 +16,11 @@ export const ControlledCheckbox = ({ checked, ...props }: ControlledCheckboxProp
     checked.set(event.target.checked);
   });
 
+  const wrappedOnClick: React.MouseEventHandler<HTMLButtonElement> = useCallbackRef((event) => {
+    event.stopPropagation();
+    props.onClick?.(event);
+  });
+
   return (
     <BindingsConsumer bindings={checked} limitType="none">
       {(checked) => (
@@ -26,6 +31,7 @@ export const ControlledCheckbox = ({ checked, ...props }: ControlledCheckboxProp
           {...props}
           checked={checked}
           onChange={onChange}
+          onClick={wrappedOnClick}
         />
       )}
     </BindingsConsumer>

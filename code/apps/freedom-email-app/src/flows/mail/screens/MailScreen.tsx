@@ -41,7 +41,12 @@ export const MailScreen = ({ mode, threadId }: MailScreenProps) => {
   }, [mailScreen, mode, selectedThreadId, threadId]);
 
   useBindingEffect(selectedMessageFolder, (selectedMessageFolder) => {
-    history.replace(appRoot.path.mail(selectedMessageFolder ?? 'all').value);
+    const theSelectedThreadId = selectedThreadId.get();
+    if (theSelectedThreadId !== undefined && theSelectedThreadId !== 'initial') {
+      history.replace(appRoot.path.mail(selectedMessageFolder ?? 'all').thread(theSelectedThreadId));
+    } else {
+      history.replace(appRoot.path.mail(selectedMessageFolder ?? 'all').value);
+    }
   });
 
   useBindingEffect(selectedThreadId, (selectedThreadId) => {

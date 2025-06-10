@@ -1,15 +1,18 @@
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { makeUuid } from 'freedom-contexts';
 import type { MailId } from 'freedom-email-api';
+import { ANIMATION_DURATION_MSEC, MAX_SCROLL_DURATION_MSEC } from 'freedom-web-animation';
 import { ResizeObservingDiv, useElementHeightBinding } from 'freedom-web-resize-observer';
 import React, { useMemo } from 'react';
 import type { Binding } from 'react-bindings';
-import { useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
+import { BC, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
 import { sp } from '../../../../components/bootstrapping/AppTheme.tsx';
 import { ControlledTextField } from '../../../../components/reusable/form/ControlledTextField.tsx';
 import { useMailEditor } from '../../../../contexts/mail-editor.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useScrollParentVisibleHeightPx } from '../../../../contexts/scroll-parent-info.tsx';
+import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import type { MailTextStyle } from '../../../../types/MailTextStyle.ts';
 import type { ReferencedMailCompositionMode } from '../../../../types/ReferencedMailCompositionMode.ts';
 import { ComposeMailBottomToolbar } from './toolbars/ComposeMailBottomToolbar.tsx';
@@ -19,19 +22,39 @@ export interface ComposeMailBodyFieldProps {
   mode?: ReferencedMailCompositionMode;
   referencedMailId?: MailId;
   flexHeight: boolean;
+  autoFocus?: boolean;
   hasFocus: Binding<boolean>;
   // TODO: remove this field and use MailEditor instead
   onDiscardClick: () => void;
 }
 
-export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFocus, onDiscardClick }: ComposeMailBodyFieldProps) => {
+export const ComposeMailBodyField = ({
+  mode,
+  referencedMailId,
+  flexHeight,
+  autoFocus,
+  hasFocus,
+  onDiscardClick
+}: ComposeMailBodyFieldProps) => {
+  const isMdOrLarger = useIsSizeClass('>=', 'md');
+  const isSmOrSmaller = useIsSizeClass('<=', 'sm');
   const mailEditor = useMailEditor();
   const { presentErrorMessage } = useMessagePresenter();
   const scrollParentVisibleHeightPx = useScrollParentVisibleHeightPx();
   const uuid = useMemo(() => makeUuid(), []);
   const viewportHeightPx = useElementHeightBinding(window.visualViewport ?? window);
 
-  const onBodyFieldFocus = useCallbackRef(() => hasFocus.set(true));
+  const onBodyFieldFocus = useCallbackRef(() => {
+    hasFocus.set(true);
+
+    const elem = document.getElementById(uuid);
+    if (elem === null) {
+      return; // Not ready
+    }
+
+    // Scroll to the top of the text area when it gets focus
+    setTimeout(() => elem.scrollIntoView({ behavior: 'smooth', block: 'start' }), MAX_SCROLL_DURATION_MSEC);
+  });
   const onBodyFieldBlur = useCallbackRef(() => hasFocus.set(false));
 
   const textStyle = useBinding<MailTextStyle>(() => 'normal', { id: 'textStyle', detectChanges: true });
@@ -94,9 +117,9 @@ export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFo
   });
 
   useBindingEffect(
-    { bodyTopToolbarHeightPx, bodyBottomToolbarHeightPx, scrollParentVisibleHeightPx, viewportHeightPx },
-    ({ bodyTopToolbarHeightPx, bodyBottomToolbarHeightPx, scrollParentVisibleHeightPx, viewportHeightPx }) => {
-      const textAreaElem = document.getElementById(uuid);
+    { bodyTopToolbarHeightPx, bodyBottomToolbarHeightPx, isMdOrLarger, scrollParentVisibleHeightPx, viewportHeightPx },
+    ({ bodyTopToolbarHeightPx, bodyBottomToolbarHeightPx, isMdOrLarger, scrollParentVisibleHeightPx, viewportHeightPx }) => {
+      const textAreaElem = document.getElementById(`${uuid}-textarea`);
       if (textAreaElem === null) {
         return; // Not ready
       }
@@ -107,7 +130,9 @@ export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFo
       const minHeightPx = 60 + bodyTopToolbarHeightPx + bodyBottomToolbarHeightPx + 2;
 
       const containerHeightPx = Math.min(scrollParentVisibleHeightPx, viewportHeightPx);
-      const maxHeightPx = Math.max(minHeightPx, containerHeightPx - sp(3));
+      // On larger devices, we want to leave some margin around the input.  On smaller devices, we want to completely fill the available
+      // space and hide the bottom border (-1 for bottom border height)
+      const maxHeightPx = Math.max(minHeightPx, containerHeightPx - (isMdOrLarger ? sp(3) : -1));
 
       const muiInputElem = textAreaElem.parentElement!;
       muiInputElem.style.minHeight = `${minHeightPx}px`;
@@ -154,10 +179,11 @@ export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFo
     </ResizeObservingDiv>
   );
 
-  return (
+  return BC(isSmOrSmaller, (isSmOrSmaller) => (
     <ControlledTextField
-      id={uuid}
+      id={`${uuid}-textarea`}
       value={mailEditor.body}
+      autoFocus={autoFocus}
       multiline={true}
       helperText=""
       className={flexHeight ? 'flex-auto' : undefined}
@@ -166,6 +192,9 @@ export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFo
       // If this isn't set, MUI manually overrides the height based on the lines of text
       rows={1}
       slotProps={{
+        root: {
+          id: uuid
+        },
         input: {
           className: 'flex-auto',
           sx: {
@@ -175,7 +204,11 @@ export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFo
               boxSizing: 'border-box',
               padding: `${sp(1.5)}px ${sp(2)}px`,
               overflowY: 'auto'
-            }
+            },
+            '& fieldset': {
+              transition: `border-radius ${ANIMATION_DURATION_MSEC / ONE_SEC_MSEC}s ease-in-out`
+            },
+            '&.Mui-focused fieldset': isSmOrSmaller ? { borderRadius: 0 } : {}
           },
           startAdornment: (
             <>
@@ -186,5 +219,5 @@ export const ComposeMailBodyField = ({ mode, referencedMailId, flexHeight, hasFo
         }
       }}
     />
-  );
+  ));
 };
