@@ -1,6 +1,6 @@
 import { Button } from '@mui/material';
 import type { MailId } from 'freedom-email-api';
-import { t } from 'i18next';
+import { useT } from 'freedom-react-localization';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { Binding, ReadonlyBinding } from 'react-bindings';
@@ -38,6 +38,7 @@ export const MailEditorProvider = ({ children }: { children?: ReactNode }) => {
   const { presentErrorMessage } = useMessagePresenter();
   const selectedMessageFolder = useSelectedMessageFolder();
   const selectedThreadId = useSelectedMailThreadId();
+  const t = useT();
   const tasks = useTasks();
 
   const referencedMailId = useBinding<MailId | undefined>(() => undefined, {

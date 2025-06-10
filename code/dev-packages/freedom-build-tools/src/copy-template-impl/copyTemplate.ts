@@ -24,6 +24,7 @@ export const copyTemplate = async (args: CopyTemplateArgs) => {
     };
 
     const foundFiles = await findFiles({ includes: args.include.map(String), excludes: args.exclude?.map(String) ?? [] });
+
     await Promise.all(
       foundFiles.map(async (foundPath) => {
         if (foundPath.endsWith('.template.mjs')) {
@@ -42,13 +43,15 @@ export const copyTemplate = async (args: CopyTemplateArgs) => {
             await fs.writeFile(destPath, generated);
           }
         } else {
-          const destPath = path.resolve(args.outdir, foundPath);
+          const destPath = path.resolve(args.outdir, applyDropPrefixes(foundPath));
 
           const destDir = path.dirname(destPath);
           await fs.mkdir(destDir, { recursive: true });
 
-          console.log(`Copying regular file into ${destPath}`);
-          await fs.copyFile(foundPath, destPath);
+          if ((await fs.lstat(foundPath)).isFile()) {
+            console.log(`Copying regular file into ${destPath}`);
+            await fs.copyFile(foundPath, destPath);
+          }
         }
       })
     );

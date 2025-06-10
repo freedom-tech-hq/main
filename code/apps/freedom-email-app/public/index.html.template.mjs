@@ -8,15 +8,24 @@ export default () => {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=2, viewport-fit=cover, interactive-widget=resize-content" />
 
-    <!-- <link rel="icon" href="/favicon-light.png" media="(prefers-color-scheme: light)" /> -->
-    <!-- <link rel="icon" href="/favicon-dark.png" media="(prefers-color-scheme: dark)" /> -->
-    <!-- <link rel="mask-icon" href="/mask-icon.svg" color="white" /> -->
-    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" /> -->
-    <!-- <meta name="description" content="TODO" /> -->
-    <!-- <link rel="apple-touch-icon" href="/logo192.png" /> -->
-    <!-- <link rel="icon" sizes="192x192" href="/logo192.png"> -->
-    <!-- <link rel="manifest" href="/manifest.json" /> -->
-    <!-- <meta property="og:site_name" content="Freedom Email" /> -->
+    <link rel="icon" href="/images/favicon-light.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href="/images/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="mask-icon" href="/images/mask-icon.svg" color="white" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Reclaim Your Privacy" />
+    <link rel="apple-touch-icon" href="/images/icons-192.png" />
+    <link rel="icon" sizes="192x192" href="/images/icons-192.png">
+    <link rel="manifest" href="/manifest.json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Freedom Mail" />
+    <meta property="og:title" content="Freedom Mail" />
+    <meta name="twitter:title" content="Freedom Mail" />
+    <meta property="og:description" content="Reclaim Your Privacy" />
+    <meta name="twitter:description" content="Reclaim Your Privacy" />
+    <meta property="og:image" content="/images/default-share.png" />
+    <meta name="twitter:image" content="/images/default-share.png />
+    <meta name="twitter:card" content="summary_large_image" />
+
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

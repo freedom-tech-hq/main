@@ -1,0 +1,58 @@
+{
+  "short_name": "Freedom Mail",
+  "name": "Freedom Mail",
+  "icons": [
+    {
+      "src": "/images/icons-vector.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/images/icons-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/images/icons-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "background_color": "#FFFFFF",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#FFB43C",
+  "shortcuts": [
+    {
+      "name": "New Email",
+      "short_name": "New Email",
+      "description": "Compose a new email",
+      "url": "/mail/inbox/compose",
+      "icons": [{ "src": "/images/new-email.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Inbox",
+      "short_name": "Inbox",
+      "description": "View your Freedom Mail inbox",
+      "url": "/mail/inbox",
+      "icons": [{ "src": "/images/inbox.png", "sizes": "192x192" }]
+    }
+  ],
+  "description": "Reclaim Your Privacy",
+  "screenshots": [
+    {
+      "src": "/images/screenshot-narrow1.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/images/screenshot-wide1.jpg",
+      "type": "image/jpg",
+      "sizes": "720x540",
+      "form_factor": "wide"
+    }
+  ]
+}
