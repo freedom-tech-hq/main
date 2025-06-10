@@ -2,6 +2,7 @@ import type { Theme } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import type { ReactNode } from 'react';
 import React, { useMemo } from 'react';
+import { BC, useBinding } from 'react-bindings';
 
 export type AppTheme = Theme;
 
@@ -9,6 +10,14 @@ export const sp = (multiple: number) => multiple * 8;
 export const br = (multiple: number) => multiple * 4;
 
 export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
+  const themeColor = useBinding(
+    () => {
+      const documentStyle = window.getComputedStyle(document.body);
+      return documentStyle.getPropertyValue('--colors-background');
+    },
+    { id: 'themeColor', detectChanges: true }
+  );
+
   const theme = useMemo(() => {
     const documentStyle = window.getComputedStyle(document.body);
 
@@ -538,6 +547,9 @@ export const AppThemeProvider = ({ children }: { children?: ReactNode }) => {
 
   return (
     <ThemeProvider theme={theme} disableTransitionOnChange={true}>
+      {BC(themeColor, (themeColor) => (
+        <meta name="theme-color" content={themeColor} />
+      ))}
       {children}
     </ThemeProvider>
   );
