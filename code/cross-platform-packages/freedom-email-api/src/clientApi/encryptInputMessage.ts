@@ -35,6 +35,8 @@ export const encryptInputMessage = makeAsyncResultFunc(
       // 'userId'
       // 'updatedAt'
       // 'folder' - always 'drafts' for user and 'inbox' for MailAgent
+      // 'messageId' - auto on server to <id@domain>
+      inReplyTo: mail.inReplyTo,
       listFields: listFieldsResult.value,
       viewFields: viewFieldsResult.value
     });

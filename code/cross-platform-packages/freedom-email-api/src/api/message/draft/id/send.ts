@@ -19,6 +19,7 @@ export const POST = makeHttpApi({
       }),
       body: schema.object({
         /** Should be encrypted with agent's public key */
+        // TODO: omit the open version of inReplyTo here because it is not used. Draft preserves its thread when becoming a sent message
         agentMessage: apiInputMessageSchema
       })
     },

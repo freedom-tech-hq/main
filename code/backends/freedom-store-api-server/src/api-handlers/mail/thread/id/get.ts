@@ -63,7 +63,7 @@ export default makeHttpApiHandler(
     // Fetch one extra item to determine if there's a next page
     params.push(PAGE_SIZE + 1);
     const messagesQuery = `
-      SELECT "id", "userId", "updatedAt", "listFields", "viewFields"
+      SELECT "id", "userId", "updatedAt", "messageId", "threadId", "listFields", "viewFields"
       FROM "messages"
       WHERE "userId" = $1 AND "id" = $2
       ${cursorClause}
@@ -79,7 +79,10 @@ export default makeHttpApiHandler(
 
     // Execute queries (errors will bubble up and be handled by makeHttpApiHandler)
     const [messagesResult, countResult] = await Promise.all([
-      dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'updatedAt' | 'listFields' | 'viewFields'>>(messagesQuery, params),
+      dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'updatedAt' | 'messageId' | 'threadId' | 'listFields' | 'viewFields'>>(
+        messagesQuery,
+        params
+      ),
       dbQuery<{ total_count: number }>(countQuery, [currentUserId, threadId])
     ]);
 
@@ -94,6 +97,8 @@ export default makeHttpApiHandler(
       (dbMsg): ApiViewMessage => ({
         id: dbMsg.id,
         updatedAt: dbMsg.updatedAt.toISOString() as IsoDateTime,
+        messageId: dbMsg.messageId,
+        // threadId: dbMsg.threadId, - we could, but shall we?
         listFields: dbMsg.listFields,
         viewFields: dbMsg.viewFields
         // TODO: attachmentsSummarya

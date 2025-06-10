@@ -68,7 +68,7 @@ export const subscribeOnOutboundEmails = makeAsyncResultFunc(
           continue;
         }
 
-        // Decrypt message. ViewMessage is a superset of InputMessage
+        // Decrypt message
         const decryptedViewMessageResult = await clientApi.decryptViewMessage(trace, userKeysResult.value, {
           ...dbMessage,
           updatedAt: dbMessage.updatedAt.toISOString() as IsoDateTime

@@ -25,7 +25,8 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
 
   // Map to our type
   const result: ParsedMail = {
-    // Open fields - none so far
+    // Open fields
+    messageId: parsed.messageId ?? null,
 
     // Fields from listFields
     subject: parsed.subject ?? '',
@@ -42,7 +43,6 @@ export const parseEmail = makeAsyncResultFunc([import.meta.filename], async (_tr
     body,
 
     // Optional fields
-    messageId: parsed.messageId,
     inReplyTo: parsed.inReplyTo,
     references: parsed.references !== undefined ? (Array.isArray(parsed.references) ? parsed.references : [parsed.references]) : undefined,
     date: parsed.date !== undefined ? (parsed.date.toISOString() as IsoDateTime) : undefined,

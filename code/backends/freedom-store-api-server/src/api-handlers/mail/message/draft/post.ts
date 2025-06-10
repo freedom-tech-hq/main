@@ -2,12 +2,13 @@ import { makeFailure, makeSuccess } from 'freedom-async';
 import { type IsoDateTime, makeIsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
-import { type DbMessageOut, dbQuery } from 'freedom-db';
+import { type DbMessageOut, dbQuery, identifyThread } from 'freedom-db';
 import type { MessageFolder } from 'freedom-email-api';
 import { api, mailIdInfo } from 'freedom-email-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
 import { StatusCodes } from 'http-status-codes';
 
+import { getMessageIdFromMailId } from '../../../../internal/utils/getMessageIdFromMailId.ts';
 import { getUserIdFromAuthorizationHeader } from '../../../../internal/utils/getUserIdFromAuthorizationHeader.ts';
 
 export default makeHttpApiHandler([import.meta.filename], { api: api.message.draft.POST }, async (trace, { input: { headers, body } }) => {
@@ -18,7 +19,19 @@ export default makeHttpApiHandler([import.meta.filename], { api: api.message.dra
 
   // Auto-fields
   const updatedAt = new Date();
-  const messageId = mailIdInfo.make(`${makeIsoDateTime(updatedAt)}-${makeUuid()}`);
+  const mailId = mailIdInfo.make(`${makeIsoDateTime(updatedAt)}-${makeUuid()}`);
+  const messageId = getMessageIdFromMailId(mailId);
+
+  // Identify thread
+  const threadResult = await identifyThread(trace, {
+    inReplyTo: body.inReplyTo,
+    references: [] // Not used for internally-created messages
+  });
+  if (!threadResult.ok) {
+    return threadResult;
+  }
+
+  const threadId = threadResult.value;
 
   // Folder is 'drafts' for user-created messages
   const folder: MessageFolder = 'drafts';
@@ -31,13 +44,15 @@ export default makeHttpApiHandler([import.meta.filename], { api: api.message.dra
         "updatedAt", 
         "folder", 
         "listFields", 
-        "viewFields"
+        "viewFields",
+        "messageId",
+        "threadId"
       ) 
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING "id", "updatedAt"
     `;
 
-  const params = [messageId, currentUserId, updatedAt, folder, body.listFields, body.viewFields];
+  const params = [mailId, currentUserId, updatedAt, folder, body.listFields, body.viewFields, messageId, threadId];
 
   const result = await dbQuery<Pick<DbMessageOut, 'id' | 'updatedAt'>>(insertQuery, params);
   const dbMsg = result.rows[0];
@@ -47,7 +62,8 @@ export default makeHttpApiHandler([import.meta.filename], { api: api.message.dra
     status: StatusCodes.CREATED,
     body: {
       id: dbMsg.id,
-      updatedAt: dbMsg.updatedAt.toISOString() as IsoDateTime
+      updatedAt: dbMsg.updatedAt.toISOString() as IsoDateTime,
+      messageId
     }
   });
 });

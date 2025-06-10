@@ -13,7 +13,7 @@ import { addIncomingEmail } from '../../storage/utils/addIncomingEmail.ts';
 /**
  * Routes an email message to internal and external recipients
  * TODO: Revise inputs (do not need parsed mail when only forwarding)
- * TODO: Move to a different module, not 'syncable-store'
+ * TODO: Move to a different module, not 'storage'
  */
 export const routeMail = makeAsyncResultFunc(
   [import.meta.filename],
@@ -96,7 +96,10 @@ export const routeMail = makeAsyncResultFunc(
     for (const recipient of internalRecipients) {
       DEV: debugTopic('SMTP', (log) => log(trace, `Processing internal recipient: ${recipient}`));
 
-      await addIncomingEmail(trace, recipient, mail, mode.type === 'inbound' ? mode.rawMail : null);
+      await addIncomingEmail(trace, recipient, {
+        ...mail,
+        raw: mode.type === 'inbound' ? mode.rawMail : null
+      });
     }
 
     // External recipients

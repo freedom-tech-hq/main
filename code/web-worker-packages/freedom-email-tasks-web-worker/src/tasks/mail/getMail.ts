@@ -195,6 +195,7 @@ DEV: {
       from: [{ name: 'Demo User', address: `demo@${getConfig().defaultEmailDomain}` }],
       to: [{ name: 'Demo User', address: `demo@${getConfig().defaultEmailDomain}` }],
       cc: [],
+      messageId: `<${mailId}@${getConfig().defaultEmailDomain}>`,
       subject: generatePseudoText(1, 6),
       body,
       isBodyHtml,

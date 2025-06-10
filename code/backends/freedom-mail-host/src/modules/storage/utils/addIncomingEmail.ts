@@ -5,16 +5,19 @@ import { generalizeFailureResult } from 'freedom-common-errors';
 import { makeUuid } from 'freedom-contexts';
 import { encryptValue } from 'freedom-crypto';
 import type { DbMessageIn } from 'freedom-db';
-import { dbQuery, findUserByEmail } from 'freedom-db';
-import type { DecryptedInputMessage, MessageFolder } from 'freedom-email-api';
+import { dbQuery, findUserByEmail, identifyThread } from 'freedom-db';
+import type { MessageFolder } from 'freedom-email-api';
 import { clientApi, mailIdInfo, rawMessageFieldSchema } from 'freedom-email-api';
+
+import type { ParsedMail } from '../../formats/types/ParsedMail.ts';
 
 export const addIncomingEmail = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, recipientEmail: string, mail: DecryptedInputMessage, raw: string | null): PR<undefined> => {
+  async (trace, recipientEmail: string, mail: ParsedMail): PR<undefined> => {
     const updatedAt = new Date();
     // TODO: Extract a function
     // TODO: Remove time from the id because updatedAt is server-controlled
+    //  and consider simplifying the id radically. It is a hell to mock them, a simple string like MAIL_the-id should work.
     const id = mailIdInfo.make(`${makeIsoDateTime(updatedAt)}-${makeUuid()}`);
 
     const folder: MessageFolder = 'inbox';
@@ -35,10 +38,10 @@ export const addIncomingEmail = makeAsyncResultFunc(
 
     // raw
     let rawField: DbMessageIn['raw'] = null;
-    if (raw !== null) {
+    if (mail.raw !== null) {
       const rawFieldResult = await encryptValue(trace, {
         valueSchema: rawMessageFieldSchema,
-        value: raw,
+        value: mail.raw,
         encryptingKeys: user.value.publicKeys
       });
       if (!rawFieldResult.ok) {
@@ -47,10 +50,21 @@ export const addIncomingEmail = makeAsyncResultFunc(
       rawField = rawFieldResult.value;
     }
 
+    // Get threadId using identifyThread function
+    const threadResult = await identifyThread(trace, {
+      inReplyTo: mail.inReplyTo,
+      references: mail.references
+    });
+    if (!threadResult.ok) {
+      return threadResult;
+    }
+
+    const threadId = threadResult.value;
+
     // TODO: Extract save with schema validation
     const sql = `
-      INSERT INTO "messages" ("id", "userId", "updatedAt", "folder", "listFields", "viewFields", "raw")
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO "messages" ("id", "userId", "updatedAt", "folder", "messageId", "threadId", "listFields", "viewFields", "raw")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
 
     const params: unknown[] = [
@@ -58,6 +72,8 @@ export const addIncomingEmail = makeAsyncResultFunc(
       user.value.userId,
       updatedAt,
       folder,
+      mail.messageId,
+      threadId,
       apiMessageResult.value.listFields,
       apiMessageResult.value.viewFields,
       rawField

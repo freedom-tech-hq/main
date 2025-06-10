@@ -1,7 +1,7 @@
 import { makeFailure, makeSuccess } from 'freedom-async';
 import type { IsoDateTime } from 'freedom-basic-data';
 import { InputSchemaValidationError } from 'freedom-common-errors';
-import { type DbMessageOut, dbQuery } from 'freedom-db';
+import { type DbMessageOut, dbQuery, identifyThread } from 'freedom-db';
 import type { MessageFolder } from 'freedom-email-api';
 import { api } from 'freedom-email-api';
 import { makeHttpApiHandler } from 'freedom-server-api-handling';
@@ -29,6 +29,17 @@ export default makeHttpApiHandler(
     // Prepare message data for update
     const now = new Date();
 
+    // Identify thread. On update, we refresh threadId but preserve messageId
+    const threadResult = await identifyThread(trace, {
+      inReplyTo: body.inReplyTo, // No option to preserve, always update, see ApiInputMessage.inReplyTo comment
+      references: [] // Not used for internally-updated messages
+    });
+    if (!threadResult.ok) {
+      return threadResult;
+    }
+
+    const threadId = threadResult.value;
+
     // Folder is 'drafts' for user-created/updated messages
     const folder: MessageFolder = 'drafts';
 
@@ -40,12 +51,13 @@ export default makeHttpApiHandler(
       SET 
         "updatedAt" = $3,
         "listFields" = $5,
-        "viewFields" = $6
+        "viewFields" = $6,
+        "threadId" = $7
       WHERE "id" = $1 AND "userId" = $2 AND "folder" = $4
       RETURNING "updatedAt"
     `;
 
-    const params = [mailId, currentUserId, now, folder, body.listFields, body.viewFields];
+    const params = [mailId, currentUserId, now, folder, body.listFields, body.viewFields, threadId];
 
     const result = await dbQuery<Pick<DbMessageOut, 'id' | 'updatedAt'>>(updateQuery, params);
 

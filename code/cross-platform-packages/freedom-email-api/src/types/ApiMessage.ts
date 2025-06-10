@@ -3,6 +3,7 @@ import { schema } from 'yaschema';
 
 import { emailUserIdInfo } from './EmailUserId.ts';
 import { mailIdInfo } from './MailId.ts';
+import { mailThreadIdInfo } from './MailThreadId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
 // Should match DbMessage and the shared part of MailMessage.
@@ -12,6 +13,11 @@ export const apiMessageSchema = schema.object({
   userId: emailUserIdInfo.schema,
   updatedAt: isoDateTimeSchema,
   folder: messageFolderSchema,
+  threadId: mailThreadIdInfo.schema.allowNull(),
+
+  // External id, is optional in decrypted version
+  // It is temporary open, to prototype the logic TODO: make encrypted or hashed
+  messageId: schema.string().allowNull(),
   // TODO: Place isRead somewhere
 
   // ### Encrypted fields ###

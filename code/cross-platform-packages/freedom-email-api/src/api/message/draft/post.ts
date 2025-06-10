@@ -20,7 +20,9 @@ export const POST = makeHttpApi({
       status: schema.number(StatusCodes.CREATED),
       body: schema.object({
         id: mailIdInfo.schema,
-        updatedAt: isoDateTimeSchema
+        updatedAt: isoDateTimeSchema,
+        messageId: schema.string()
+        // Note, if we add threadId here, we should also return the id(s) of other messages, that were just connected to the same thread
       })
     },
     failureResponse: makeFailureWithCodeSchemas()
