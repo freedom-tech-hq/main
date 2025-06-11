@@ -1,0 +1,55 @@
+Received: by mail-oi1-f182.google.com with SMTP id 5614622812f47-4067bab37a1so2134935b6e.1
+        for <collect@mock-smtp.dev.linefeedr.com>; Fri, 06 Jun 2025 16:03:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=freedomtechhq.com; s=google; t=1749251001; x=1749855801; darn=mock-smtp.dev.linefeedr.com;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=dl6rRf2ppw6G95zBhK+jonbyq9iVHoO2iCHer293/7Y=;
+        b=JMUY76uLvQr2Qi2h0scntfd2t1FGPKOb/tzV8Wws1JXqgmCYRmXTeJj9pzM5aBzyyN
+         AEwTsmoSilLAorPjln2nUcOSs1ALfbFwg6ffMIAbS2/b9cADu1UCglH/Dvf09g2cz5cn
+         RZyIrApVrN+rgnlACBNZNVnbgSB/5byS0ReqRqB5KluakqOJfekMb5+cqCykMym9HWUL
+         QjSbsIPatU/kJFRhqmQCW6DmOd7FDceQvfsbwvs8+ZM2zLcxgQG68ILyWIkQqebTwFRL
+         VXUQ46ALt73oIvmuA5vTnYw+6zec573v62Ztup89jquvAvXxppiz8ah+MxSctrigPjoB
+         OSsA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1749251001; x=1749855801;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=dl6rRf2ppw6G95zBhK+jonbyq9iVHoO2iCHer293/7Y=;
+        b=KBBKCNAmYBiKwmoB3vHCD2ioGnIrlVWpM7Oh5heIA0Ex8q0rdO0ayVRjnirc9KMP71
+         orLWO2rBPkmXlSlwil3yXvRyvWcpkdAAIwpVOj1v89n7TC3kkcHpPl6dElhvj9nYWVjG
+         kZ0io8qjVPrV1Mo0iESUll1Q8+qIJpiY7EBXcC4VGLayJpFM/DN9g1XmwzD2fqOrzxiQ
+         OXwDbqh7zkMLMCQWDGk0K2Lvtu6y4eeWMgnNa8550r84Zr2cmLrKEMFZY07TabGUpWCz
+         qKsKfhh2vgUI5pkvw0pdaItf1tgBwoW/Pr23zWy3hDNspjO85Z6rismaL+juHZ3TBsE4
+         y/7w==
+X-Gm-Message-State: AOJu0Ywy+WxaSNokT4igrz1HOqpXNxjTbSdmBYbP6fllj72xtk05fWag
+	pV+Hof0bKZ7tb8Bz0JqXMLnRzI+jtjYSMK3kgo9Kwq7hPDEb3fpJXQm8SlvyCrBzKdYHKrxW4T6
+	GQh1FPqxs4xvCkh0ZbF9qLz6a171jrrKMYtpIRUgWtBQecjYixWA2VICXqw==
+X-Gm-Gg: ASbGncutW7OPXP2F1STOq+/Q97AZNJetWn2MTZkcNM3U6uKC8NfWlTAHuwc7h3cK/By
+	ue1Q+0cbRcr1ZelxFORUSqXzCKnGEdATRXIjrUgW6lNqkwbkdNHc6K835tSyk2NbA1K6nzGGdL3
+	IJK9PwCskvGAE2AMVzRH70P0uOhMliPVJC
+X-Google-Smtp-Source: AGHT+IH0VZWiZvVFlBilnIsf7j2/0h8+h8AvEnrsAM2ZT4RuEAXq6ntp6Fpz4JxJIevAoFBn0L3ESJXwbphN66PrG9Y=
+X-Received: by 2002:a05:6808:80b4:b0:406:2bb4:cd77 with SMTP id
+ 5614622812f47-4090519a801mr3716328b6e.5.1749251001207; Fri, 06 Jun 2025
+ 16:03:21 -0700 (PDT)
+MIME-Version: 1.0
+From: Pavel Koryagin <pavel.koryagin@freedomtechhq.com>
+Date: Sat, 7 Jun 2025 01:03:10 +0200
+X-Gm-Features: AX0GCFsMQyroykHMPhRw0U6lWc8z0FQnmAb2yjM4jjBwq89jYUX0A-vkwVHiCYM
+Message-ID: <CACjGMbvoZSX7iQ_aEZrRQRn4dRH9BSgAk08N59RGdiH6UuLxFQ@mail.gmail.com>
+Subject: See how threads work
+To: Email Sample Collector <collect@mock-smtp.dev.linefeedr.com>, 
+	Pavel Koryagin <pavel@koryagin.com>
+Content-Type: multipart/alternative; boundary="0000000000008cdebd0636ef3cf2"
+
+--0000000000008cdebd0636ef3cf2
+Content-Type: text/plain; charset="UTF-8"
+
+Sample body
+
+--0000000000008cdebd0636ef3cf2
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">Sample body</div>
+
+--0000000000008cdebd0636ef3cf2--

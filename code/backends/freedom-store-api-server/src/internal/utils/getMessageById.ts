@@ -10,12 +10,15 @@ export const getMessageById = makeAsyncResultFunc(
   [import.meta.filename],
   async (trace, { mailId, userId }: { mailId: MailId; userId: EmailUserId }): PR<ApiViewMessage, 'not-found'> => {
     const sql = `
-          SELECT "id", "userId", "updatedAt", "listFields", "viewFields"
+          SELECT "id", "userId", "updatedAt", "messageId", "listFields", "viewFields"
           FROM "messages"
           WHERE "id" = $1 AND "userId" = $2
         `;
 
-    const result = await dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'updatedAt' | 'listFields' | 'viewFields'>>(sql, [mailId, userId]);
+    const result = await dbQuery<Pick<DbMessageOut, 'id' | 'userId' | 'updatedAt' | 'messageId' | 'listFields' | 'viewFields'>>(sql, [
+      mailId,
+      userId
+    ]);
 
     if (result.rows.length === 0) {
       return makeFailure(
@@ -28,9 +31,10 @@ export const getMessageById = makeAsyncResultFunc(
 
     const dbMsg = result.rows[0];
 
-    return makeSuccess({
+    return makeSuccess<ApiViewMessage>({
       id: dbMsg.id,
       updatedAt: dbMsg.updatedAt.toISOString() as IsoDateTime,
+      messageId: dbMsg.messageId,
       listFields: dbMsg.listFields,
       viewFields: dbMsg.viewFields
     });

@@ -6,6 +6,7 @@ import { mailAddressSchema } from './MailAddress.ts';
 import { mailAddressListSchema } from './MailAddressList.ts';
 import { mailIdInfo } from './MailId.ts';
 import { mailPrioritySchema } from './MailPriority.ts';
+import { mailThreadIdInfo } from './MailThreadId.ts';
 import { messageFolderSchema } from './MessageFolder.ts';
 
 /*
@@ -28,6 +29,9 @@ export const mailMessageSchema = schema.object({
   // For drafts, it is the time when the draft was last saved. Mutable, always up to date
   updatedAt: isoDateTimeSchema,
   folder: messageFolderSchema,
+  threadId: mailThreadIdInfo.schema,
+  // It is external, so allowing empty string to avoid runtime failures
+  messageId: schema.string().allowEmptyString().allowNull(),
   // TODO: Place isRead somewhere
 
   // ### Decoded listFields ###
@@ -53,7 +57,6 @@ export const mailMessageSchema = schema.object({
 
   // If we forbid empty string for these, we are at risk of getting runtime exceptions in the receiving code
   // because it is close to impossible to recall this limitation when saving a message parsed by 3rd-party libraries
-  messageId: schema.string().allowEmptyString().optional(),
   inReplyTo: schema.string().allowEmptyString().optional(),
   references: schema.array({ items: schema.string() }).optional(),
 
@@ -100,7 +103,8 @@ export const viewFieldsOfMessageSchema = schema.pick(mailMessageSchema, [
   'body',
 
   // Not probably used, but we may want to render them at some point
-  'messageId',
+  // 'messageId', // The ids are tracked by the server, so it is not trivial to encrypt them on the client. Skipping for now
+  // TODO: Must hash in the future for server and encrypt for reading on the client, because they reveal the source mail domain
   'inReplyTo',
   'references',
   'date'

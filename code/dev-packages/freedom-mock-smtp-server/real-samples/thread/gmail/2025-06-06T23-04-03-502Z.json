@@ -1,0 +1,15 @@
+{
+  "envelope": {
+    "mailFrom": {
+      "address": "pavel@koryagin.com",
+      "args": false
+    },
+    "rcptTo": [
+      {
+        "address": "collect@mock-smtp.dev.linefeedr.com",
+        "args": false
+      }
+    ]
+  },
+  "timestamp": "2025-06-06T23:04:03.502Z"
+}

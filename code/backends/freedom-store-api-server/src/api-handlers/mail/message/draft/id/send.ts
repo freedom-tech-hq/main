@@ -35,10 +35,10 @@ export default makeHttpApiHandler(
         UPDATE "messages"
         SET "folder" = $1, "updatedAt" = $2
         WHERE "id" = $3 AND "userId" = $4
-        RETURNING "id", "updatedAt"
+        RETURNING "messageId"
       `;
     const paramsUpdate: unknown[] = [folder, updatedAt, mailId, currentUserId];
-    const resultUpdate = await dbQuery<Pick<DbMessageOut, 'id' | 'updatedAt'>>(updateQuery, paramsUpdate);
+    const resultUpdate = await dbQuery<Pick<DbMessageOut, 'messageId'>>(updateQuery, paramsUpdate);
 
     if (resultUpdate.rows.length === 0) {
       return makeFailure(
@@ -49,26 +49,30 @@ export default makeHttpApiHandler(
       );
     }
 
+    const draft = resultUpdate.rows[0];
+
     // Create a copy of the message for outbound processing
     // This copy will be in the 'outbox' folder and will be processed by the email server
-    const agentMessageId = mailIdInfo.make(`${makeIsoDateTime(updatedAt)}-${makeUuid()}`);
+    const agentMessageMailId = mailIdInfo.make(`${makeIsoDateTime(updatedAt)}-${makeUuid()}`);
     const agentMessageListFields = agentMessage.listFields;
     const agentMessageViewFields = agentMessage.viewFields;
     const agentFolder: MessageFolder = 'outbox';
 
     const agentInsertQuery = `
       INSERT INTO "messages" (
-        "id", "userId", "updatedAt", "folder", "listFields", "viewFields"
+        "id", "userId", "updatedAt", "folder", "listFields", "viewFields", "messageId", "threadId"
       ) 
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
     const agentParamsInsert: unknown[] = [
-      agentMessageId,
+      agentMessageMailId,
       currentUserId, // Store the actual user ID, not the agent ID although the contents are encrypted for the agent
       updatedAt,
       agentFolder,
       agentMessageListFields,
-      agentMessageViewFields
+      agentMessageViewFields,
+      draft.messageId, // we probably don't need this, but saving for consistency
+      null // threadId - not connecting to the original message as this is a temporary queue record
     ];
     await dbQuery(agentInsertQuery, agentParamsInsert);
 

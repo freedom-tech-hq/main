@@ -7,6 +7,7 @@ export const apiViewMessageSchema = schema.pick(apiMessageSchema, [
   // assumed // userId,
   'updatedAt',
   // assumed // folder,
+  'messageId',
 
   // Encrypted
   'listFields',

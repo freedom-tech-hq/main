@@ -37,7 +37,7 @@ export const deliverOutboundEmail = makeAsyncResultFunc(
       text: mail.isBodyHtml ? undefined : mail.body,
       html: mail.isBodyHtml ? mail.body : undefined,
 
-      messageId: mail.messageId,
+      messageId: mail.messageId ?? undefined,
       inReplyTo: mail.inReplyTo,
       references: mail.references,
 

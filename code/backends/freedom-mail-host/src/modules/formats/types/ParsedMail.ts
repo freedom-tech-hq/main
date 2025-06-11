@@ -7,6 +7,7 @@ export type ParsedMail = Omit<
   | 'userId'
   | 'updatedAt'
   | 'folder'
+  | 'threadId' // Detection is sophisticated, not plain parsing, so it is done outside of parseEmail()
   // Drop dynamic fields
   | 'hasAttachments'
   // TODO: add 'attachments'

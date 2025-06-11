@@ -1,0 +1,71 @@
+Received: by mail-pf1-f178.google.com with SMTP id d2e1a72fcca58-747fc77ba9eso2077167b3a.0
+        for <collect@mock-smtp.dev.linefeedr.com>; Fri, 06 Jun 2025 16:04:03 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=koryagin-com.20230601.gappssmtp.com; s=20230601; t=1749251042; x=1749855842; darn=mock-smtp.dev.linefeedr.com;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=+P+H4kRN+5xZ02guA34V0cF7cbyaFWPmdhBJnAXDUKk=;
+        b=ObegC/KMKhPvv/XxVFUK5OZgMOC6osj8MwGnAep+5nS8eCQXmJSi8bDankB32SfAlW
+         O2qrUX7APCxdWZ9qxE5LAEtYWe/injNAHcX6DL8fdTje6hqJgeEoD/M1X+lY2r62Ukns
+         aHYKhtVHSPY2XHNeEbtIJI3Lg5+dpeMMztQQpqCBEFDYnCiE7q4NKnYZRub8hiq7nlM0
+         NkBbJm4AOupPuB4lJwECzZPyk8aUHmIxCtlVi0oeiYLOTPgTffxBqRAzi/D9wJY67Tly
+         /F+pt7Bp/LmRk/lQTJCrOSqk54cP0eMwW1Yn6yDXukkrMpclKn8kwimb4dllxObWtgkY
+         W/5g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1749251042; x=1749855842;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=+P+H4kRN+5xZ02guA34V0cF7cbyaFWPmdhBJnAXDUKk=;
+        b=ahFaNtQfnivAayvxysl5Roa6APFGqxJWajU9IDjv+c7J9yiPjC6DjjaIL6rZEr3MXi
+         6RLGAte+qvM/wtABFwKPRrTptPVcM5Bz9LBstyxohQ+XYXsyRwp1WkN/b2KYv7Z4quvA
+         Oo+UdOBHXbH58xVO0s/PU9HfZ7JEMOwa9S61QgrKPEBI7vaTQYDZUbbQJWcb+GsdfCSI
+         Py68mu08jVqnmt4PKFXOanCsfh+Jlu6pMBCirIa+IKhfMKJ61OjmXCvXFqja4UTssmlP
+         zUZwMWskUXUjGPsa3P3B2t/Zl6l9p7c9qWeE+FELuMAHtEjWks5scuiCKygHvur/8h4Z
+         l79A==
+X-Gm-Message-State: AOJu0Yx94RE9uwDNCV531zLbEExTOdTJeNN/TEsrrtSYUF1q3A6gslmD
+	D4xwfKe+75pODZbOp8op9kH7po1BCIC/JZLWDx0SGFtIK80FCvbhEODc9J4upf0PtkdP0bCH1uJ
+	X0JatOG0G0ufv/HSsVIpsnb3SNOIZmfEOjJ229vYMIg==
+X-Gm-Gg: ASbGnctcUMio/W52jnZSgQsV+zfkbb8oZtldRmDAi3+1E7/d12xjKV8sJGijD4WWSiy
+	cbHjBZ1rnPWumNvqJICdA0ttmyj53FXwGMgH1SOY7VRqZNlknduPXrxOsmoOzlrVBy9HwLb8WTT
+	1SVfgWFFVaKQFwCrGd7yRNJ/VGsFeQ4ZgupaKx8DJs0LByba35IlVifg==
+X-Google-Smtp-Source: AGHT+IF1MbYD+n1fZFruMVEOYKfMGJrmRxKJvLLmKHUzhxkY77QLj/Kt2tRR7V7k8RgrNv61tS5XBFDelK7XTQMzAo4=
+X-Received: by 2002:a17:90b:2701:b0:311:b3e7:fb3c with SMTP id
+ 98e67ed59e1d1-3134769e983mr6350286a91.31.1749251042586; Fri, 06 Jun 2025
+ 16:04:02 -0700 (PDT)
+MIME-Version: 1.0
+References: <CACjGMbvoZSX7iQ_aEZrRQRn4dRH9BSgAk08N59RGdiH6UuLxFQ@mail.gmail.com>
+In-Reply-To: <CACjGMbvoZSX7iQ_aEZrRQRn4dRH9BSgAk08N59RGdiH6UuLxFQ@mail.gmail.com>
+From: Pavel Koryagin <pavel@koryagin.com>
+Date: Sat, 7 Jun 2025 01:03:51 +0200
+X-Gm-Features: AX0GCFvCtBj5XbXpHO-wCzu-0kwYXC6N_YuM7KSiuzDP4hxVTD0kFtEGbpREFio
+Message-ID: <CA+vs5NSygTrEOE_pysG1eauT3xx768sJ2b4uWv9nNDUjjt9RYg@mail.gmail.com>
+Subject: Re: See how threads work
+To: Pavel Koryagin <pavel.koryagin@freedomtechhq.com>
+Cc: Email Sample Collector <collect@mock-smtp.dev.linefeedr.com>
+Content-Type: multipart/alternative; boundary="0000000000000448480636ef3f66"
+
+--0000000000000448480636ef3f66
+Content-Type: text/plain; charset="UTF-8"
+
+Reply to everyone
+
+sub, 7. jun 2025. 01:03 Pavel Koryagin <pavel.koryagin@freedomtechhq.com>
+je napisao/la:
+
+> Sample body
+>
+
+--0000000000000448480636ef3f66
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"auto"><div>Reply to everyone=C2=A0</div></div><br><div class=3D=
+"gmail_quote gmail_quote_container"><div dir=3D"ltr" class=3D"gmail_attr">s=
+ub, 7. jun 2025. 01:03 Pavel Koryagin &lt;<a href=3D"mailto:pavel.koryagin@=
+freedomtechhq.com">pavel.koryagin@freedomtechhq.com</a>&gt; je napisao/la:<=
+br></div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;borde=
+r-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Sample body</div>
+</blockquote></div>
+
+--0000000000000448480636ef3f66--
