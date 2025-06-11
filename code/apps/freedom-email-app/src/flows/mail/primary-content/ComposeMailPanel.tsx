@@ -15,7 +15,7 @@ import { sp } from '../../../components/bootstrapping/AppTheme.tsx';
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { appRoot } from '../../../components/routing/appRoot.tsx';
-import { $apiGenericError, $tryAgain } from '../../../consts/common-strings.ts';
+import { $genericError, $tryAgain } from '../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../contexts/active-account-info.tsx';
 import { useMailEditor } from '../../../contexts/mail-editor.tsx';
 import { useMailScreen } from '../../../contexts/mail-screen.tsx';
@@ -23,6 +23,7 @@ import { useMessagePresenter } from '../../../contexts/message-presenter.tsx';
 import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { useTasks } from '../../../contexts/tasks.tsx';
+import { useIsBusy } from '../../../hooks/useIsBusy.tsx';
 import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
 import { DraftIcon } from '../../../icons/DraftIcon.ts';
 import { HamburgerMenuIcon } from '../../../icons/HamburgerMenuIcon.ts';
@@ -39,6 +40,7 @@ const $saveDraft = LOCALIZE('Save as Draft')({ ns });
 export const ComposeMailPanel = () => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
+  const isBusy = useIsBusy();
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
   const isLgOrSmaller = useIsSizeClass('<=', 'lg');
   const isSmOrSmaller = useIsSizeClass('<=', 'sm');
@@ -60,9 +62,6 @@ export const ComposeMailPanel = () => {
     { id: 'needsHamburgerMenu' }
   );
 
-  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
-  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
-
   const isFormReady = useDerivedWaitable({ isBusy }, ({ isBusy }) => !isBusy, { id: 'isFormReady', limitType: 'none' });
 
   const bodyFieldHasFocus = useBinding(() => false, { id: 'bodyFieldHasFocus', detectChanges: true });
@@ -78,8 +77,7 @@ export const ComposeMailPanel = () => {
       return;
     }
 
-    isBusyCount.set(isBusyCount.get() + 1);
-    try {
+    return await isBusy.busyWhile(async () => {
       const saved = await tasks.saveMailDraft(undefined, {
         from: makeMailAddressListFromString(theActiveAccountInfo.email),
         to: makeMailAddressListFromString(mailEditor.to.get()),
@@ -94,7 +92,7 @@ export const ComposeMailPanel = () => {
       if (!saved.ok) {
         switch (saved.value.errorCode) {
           case 'generic':
-            presentErrorMessage($apiGenericError(t), {
+            presentErrorMessage($genericError(t), {
               action: ({ dismissThen }) => (
                 <Button color="error" onClick={dismissThen(onSaveDraftClick)}>
                   {$tryAgain(t)}
@@ -111,9 +109,7 @@ export const ComposeMailPanel = () => {
       });
 
       history.replace(appRoot.path.mail('drafts').thread(saved.value.mailId));
-    } finally {
-      isBusyCount.set(isBusyCount.get() - 1);
-    }
+    });
   });
 
   const onDiscardClick = useCallbackRef(() => {

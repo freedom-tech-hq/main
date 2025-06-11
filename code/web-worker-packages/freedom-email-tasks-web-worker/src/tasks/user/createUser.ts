@@ -1,6 +1,5 @@
 import type { PR } from 'freedom-async';
 import { bestEffort, makeAsyncResultFunc, makeSuccess } from 'freedom-async';
-import type { Uuid } from 'freedom-basic-data';
 import type { EmailUserId, EncryptedEmailCredential } from 'freedom-email-api';
 
 import { useActiveCredential } from '../../contexts/active-credential.ts';
@@ -8,6 +7,7 @@ import { storeEncryptedEmailCredentialLocally } from '../../internal/tasks/email
 import { reserveEmail } from '../../internal/tasks/user/reserveEmail.ts';
 import { createEmailCredential } from '../../internal/utils/createEmailCredential.ts';
 import { encryptEmailCredentialWithPassword } from '../../internal/utils/encryptEmailCredentialWithPassword.ts';
+import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
 import { getConfig } from '../config/config.ts';
 import { storeCredentialsOnServer } from '../email-credential/storeCredentialsOnServer.ts';
 
@@ -33,7 +33,7 @@ export const createUser = makeAsyncResultFunc(
       saveCredentialsOnRemote: boolean;
     }
   ): PR<
-    { userId: EmailUserId; encryptedEmailCredential: EncryptedEmailCredential; locallyStoredCredentialUuid?: Uuid },
+    { userId: EmailUserId; encryptedEmailCredential: EncryptedEmailCredential; locallyStoredCredentialId?: LocallyStoredCredentialId },
     'email-unavailable'
   > => {
     const activeCredential = useActiveCredential(trace);

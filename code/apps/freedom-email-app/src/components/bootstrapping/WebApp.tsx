@@ -3,6 +3,7 @@ import React from 'react';
 
 import { TasksProvider } from '../../contexts/tasks.tsx';
 import { TransientContentProvider } from '../../contexts/transient-content.tsx';
+import { IsBusyProvider } from '../../hooks/useIsBusy.tsx';
 import { AppRouter } from '../routing/AppRouter.tsx';
 import { AppThemeProvider } from './AppTheme.tsx';
 
@@ -13,9 +14,11 @@ export const WebApp = () => {
     <HistoryProvider history={history}>
       <TasksProvider>
         <AppThemeProvider>
-          <TransientContentProvider>
-            <AppRouter />
-          </TransientContentProvider>
+          <IsBusyProvider>
+            <TransientContentProvider>
+              <AppRouter />
+            </TransientContentProvider>
+          </IsBusyProvider>
         </AppThemeProvider>
       </TasksProvider>
     </HistoryProvider>

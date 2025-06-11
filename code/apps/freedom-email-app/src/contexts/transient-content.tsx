@@ -1,32 +1,36 @@
 import { DoubleLinkedList } from 'doublell';
+import { Resolvable } from 'freedom-async';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
-import { noop } from 'lodash-es';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useMemo } from 'react';
 import { BC, useBinding } from 'react-bindings';
 
-export type TransientNodeMaker = (args: { dismiss: () => void }) => ReactNode;
+export type TransientNodeMaker<ResultT> = (args: { dismiss: (value?: ResultT) => void }) => ReactNode;
 
 export interface TransientContentController {
-  present: (makeNode: TransientNodeMaker) => () => void;
+  present: <ResultT>(makeNode: TransientNodeMaker<ResultT>) => { dismiss: () => void; promise: Promise<ResultT | undefined> };
 }
 
-const TransientContentContext = createContext<TransientContentController>({ present: () => noop });
+const TransientContentContext = createContext<TransientContentController | undefined>(undefined);
 
 export const TransientContentProvider = ({ children }: { children?: ReactNode }) => {
   const presented = useBinding(() => new DoubleLinkedList<ReactNode>(), { id: 'presented' });
 
   const controller = useMemo<TransientContentController>(
     () => ({
-      present: (makeNode: TransientNodeMaker) => {
+      present: <ResultT,>(makeNode: TransientNodeMaker<ResultT>) => {
         const thePresented = presented.get();
 
+        const resolvable = new Resolvable<ResultT | undefined>();
+
         let wasRemoved = false;
-        const dismiss = () => {
+        const dismiss = (value?: ResultT) => {
           if (wasRemoved) {
             return;
           }
           wasRemoved = true;
+
+          resolvable.resolve(value);
 
           setTimeout(() => {
             thePresented.remove(newNode);
@@ -37,7 +41,7 @@ export const TransientContentProvider = ({ children }: { children?: ReactNode })
         const newNode = thePresented.append(makeNode({ dismiss }));
         presented.set(thePresented);
 
-        return dismiss;
+        return { dismiss, promise: resolvable.promise };
       }
     }),
     [presented]
@@ -51,4 +55,11 @@ export const TransientContentProvider = ({ children }: { children?: ReactNode })
   );
 };
 
-export const useTransientContent = () => useContext(TransientContentContext);
+export const useTransientContent = () => {
+  const transientContent = useContext(TransientContentContext);
+  if (transientContent === undefined) {
+    throw new Error('useTransientContent must be used within a TransientContentProvider');
+  }
+
+  return transientContent;
+};

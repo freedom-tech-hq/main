@@ -1,21 +1,24 @@
 import { Button, Stack, useTheme } from '@mui/material';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { log, makeTrace } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useHistory } from 'freedom-web-navigation';
 import React from 'react';
-import { BC, useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import { BC, useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
 import { appRoot } from '../../../../components/routing/appRoot.tsx';
-import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
+import { $genericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
+import { useIsBusy } from '../../../../hooks/useIsBusy.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
+import { useWebAuthn } from '../../../../hooks/webauthn/useWebAuthn.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
 import { AccountListItem } from '../secondary-content/AccountListItem.tsx';
 
@@ -32,12 +35,14 @@ export interface ImportCredentialPanelProps {
 export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
+  const isBusy = useIsBusy();
   const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
   const tasks = useTasks();
   const theme = useTheme();
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
+  const webAuthn = useWebAuthn();
 
   const locallyStoredEncryptedEmailCredentialInfo = useTaskWaitable(
     (tasks) => tasks.getLocallyStoredEncryptedEmailCredentialInfoByEmail(email),
@@ -53,9 +58,6 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
 
   const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
 
-  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
-  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
-
   // TODO: use real form validation
   const isFormReady = useDerivedWaitable(
     { locallyStoredEncryptedEmailCredentialInfo, isBusy, password },
@@ -67,8 +69,8 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
   );
 
   const onBackClick = useCallbackRef(async () => {
-    isBusyCount.set(isBusyCount.get() + 1);
-    try {
+    // Best effort to remove the locally stored credential if it exists
+    await isBusy.busyWhile(async () => {
       const theLocallyStoredCredentialInfo = locallyStoredEncryptedEmailCredentialInfo.value.get();
       if (theLocallyStoredCredentialInfo !== undefined) {
         const removed = await tasks!.removeLocallyStoredEncryptedEmailCredential(theLocallyStoredCredentialInfo.locallyStoredCredentialId);
@@ -76,9 +78,7 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
           log().error?.('Failed to remove imported email credential', removed.value);
         }
       }
-    } finally {
-      isBusyCount.set(isBusyCount.get() - 1);
-    }
+    });
 
     history.replace(appRoot.path.value);
   });
@@ -90,11 +90,11 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
       return;
     }
 
-    isBusyCount.set(isBusyCount.get() + 1);
-    try {
+    return await isBusy.busyWhile(async () => {
+      const masterPassword = password.get();
       const activated = await tasks.activateUserWithLocallyStoredEncryptedEmailCredentials({
         locallyStoredCredentialId: theLocallyStoredEncryptedEmailCredentialInfo.locallyStoredCredentialId,
-        password: password.get(),
+        password: masterPassword,
         passwordType: 'master'
       });
       if (!activated.ok) {
@@ -103,7 +103,7 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
         switch (activated.value.errorCode) {
           case 'not-found':
           case 'generic':
-            presentErrorMessage($apiGenericError(t), {
+            presentErrorMessage($genericError(t), {
               action: ({ dismissThen }) => (
                 <Button color="error" onClick={dismissThen(submit)}>
                   {$tryAgain(t)}
@@ -114,11 +114,14 @@ export const ImportCredentialPanel = ({ email }: ImportCredentialPanelProps) => 
         }
       }
 
+      await webAuthn.isAvailable.wait({ timeoutMSec: ONE_SEC_MSEC });
+      if (webAuthn.isAvailable.value.get() === true) {
+        await webAuthn.register(theLocallyStoredEncryptedEmailCredentialInfo, { masterPassword });
+      }
+
       activeAccountInfo.set({ email });
       history.replace(appRoot.path.mail('inbox').value);
-    } finally {
-      isBusyCount.set(isBusyCount.get() - 1);
-    }
+    });
   });
 
   const onSubmit = useCallbackRef((event: React.FormEvent<HTMLFormElement>) => {

@@ -1,21 +1,24 @@
 import { Button, Stack, useTheme } from '@mui/material';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { log, makeTrace } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useHistory } from 'freedom-web-navigation';
 import React from 'react';
-import { BC, useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import { BC, useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
 import { appRoot } from '../../../../components/routing/appRoot.tsx';
-import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
+import { $genericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
+import { useIsBusy } from '../../../../hooks/useIsBusy.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
+import { useWebAuthn } from '../../../../hooks/webauthn/useWebAuthn.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
 import { getTaskWorkerConfig } from '../../../../task-worker-configs/configs.ts';
 
@@ -29,19 +32,18 @@ const $enterPassword = LOCALIZE('Enter your password')({ ns });
 export const SignInWithRemotePanel = () => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
+  const isBusy = useIsBusy();
   const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
   const tasks = useTasks();
   const theme = useTheme();
+  const webAuthn = useWebAuthn();
 
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
   const emailUsername = useBinding<string>(() => '', { id: 'emailUsername', detectChanges: true });
   const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
-
-  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
-  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
 
   // TODO: use real form validation
   const isFormReady = useDerivedWaitable(
@@ -59,18 +61,15 @@ export const SignInWithRemotePanel = () => {
       return;
     }
 
-    isBusyCount.set(isBusyCount.get() + 1);
-    try {
+    return await isBusy.busyWhile(async () => {
       const email = `${emailUsername.get()}@${getTaskWorkerConfig().defaultEmailDomain}`;
 
-      const imported = await tasks.importEmailCredentialFromRemote({
-        email
-      });
+      const imported = await tasks.importEmailCredentialFromRemote({ email });
       if (!imported.ok) {
         switch (imported.value.errorCode) {
           case 'not-found':
           case 'generic':
-            presentErrorMessage($apiGenericError(t), {
+            presentErrorMessage($genericError(t), {
               action: ({ dismissThen }) => (
                 <Button color="error" onClick={dismissThen(submit)}>
                   {$tryAgain(t)}
@@ -81,9 +80,10 @@ export const SignInWithRemotePanel = () => {
         }
       }
 
+      const masterPassword = password.get();
       const activated = await tasks.activateUserWithLocallyStoredEncryptedEmailCredentials({
         locallyStoredCredentialId: imported.value.locallyStoredCredentialId,
-        password: password.get(),
+        password: masterPassword,
         passwordType: 'master'
       });
       if (!activated.ok) {
@@ -92,7 +92,7 @@ export const SignInWithRemotePanel = () => {
         switch (activated.value.errorCode) {
           case 'not-found':
           case 'generic':
-            presentErrorMessage($apiGenericError(t), {
+            presentErrorMessage($genericError(t), {
               action: ({ dismissThen }) => (
                 <Button color="error" onClick={dismissThen(submit)}>
                   {$tryAgain(t)}
@@ -103,11 +103,14 @@ export const SignInWithRemotePanel = () => {
         }
       }
 
+      await webAuthn.isAvailable.wait({ timeoutMSec: ONE_SEC_MSEC });
+      if (webAuthn.isAvailable.value.get() === true) {
+        await webAuthn.register(imported.value, { masterPassword });
+      }
+
       activeAccountInfo.set({ email });
       history.replace(appRoot.path.mail('inbox').value);
-    } finally {
-      isBusyCount.set(isBusyCount.get() - 1);
-    }
+    });
   });
 
   const onSubmit = useCallbackRef((event: React.FormEvent<HTMLFormElement>) => {

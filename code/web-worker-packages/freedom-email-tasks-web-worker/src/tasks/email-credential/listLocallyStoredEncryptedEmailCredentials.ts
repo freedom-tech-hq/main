@@ -32,7 +32,7 @@ export const listLocallyStoredEncryptedEmailCredentials = makeAsyncResultFunc(
       return makeSuccess({
         locallyStoredCredentialId: key,
         email: storedCredential.value.encryptedCredential.email,
-        hasBiometricEncryption: storedCredential.value.pwEncryptedForBiometrics !== undefined
+        webAuthnCredentialId: storedCredential.value.webAuthnCredentialId
       });
     });
   }
@@ -50,8 +50,8 @@ DEV: makeDemoModeResult = async () => {
   return makeSuccess([
     {
       email: `demo@${getConfig().defaultEmailDomain}`,
-      hasBiometricEncryption: false,
-      locallyStoredCredentialId: locallyStoredCredentialIdInfo.make('demo')
+      locallyStoredCredentialId: locallyStoredCredentialIdInfo.make('demo'),
+      webAuthnCredentialId: undefined
     } satisfies LocallyStoredEncryptedEmailCredentialInfo
   ]);
 };

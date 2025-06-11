@@ -1,4 +1,5 @@
 import { Button, Stack, Tooltip, useTheme } from '@mui/material';
+import { ONE_SEC_MSEC } from 'freedom-basic-data';
 import { log, makeTrace, makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
@@ -12,13 +13,15 @@ import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { EmailField } from '../../../../components/reusable/form/fields/EmailField.tsx';
 import { PasswordField } from '../../../../components/reusable/form/fields/PasswordField.tsx';
 import { appRoot } from '../../../../components/routing/appRoot.tsx';
-import { $apiGenericError, $tryAgain } from '../../../../consts/common-strings.ts';
+import { $genericError, $tryAgain } from '../../../../consts/common-strings.ts';
 import { INPUT_DEBOUNCE_TIME_MSEC } from '../../../../consts/timing.ts';
 import { useActiveAccountInfo } from '../../../../contexts/active-account-info.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useTasks } from '../../../../contexts/tasks.tsx';
+import { useIsBusy } from '../../../../hooks/useIsBusy.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
+import { useWebAuthn } from '../../../../hooks/webauthn/useWebAuthn.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
 import { CheckIcon } from '../../../../icons/CheckIcon.ts';
 import { InfoIcon } from '../../../../icons/InfoIcon.ts';
@@ -41,20 +44,19 @@ const $passwordTooltip = LOCALIZE(
 export const CreateNewAccountPanel = () => {
   const activeAccountInfo = useActiveAccountInfo();
   const history = useHistory();
+  const isBusy = useIsBusy();
   const { presentErrorMessage } = useMessagePresenter();
   const t = useT();
   const tasks = useTasks();
   const theme = useTheme();
   const uuid = useMemo(() => makeUuid(), []);
+  const webAuthn = useWebAuthn();
 
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
 
   const emailUsername = useBinding<string>(() => '', { id: 'emailUsername', detectChanges: true });
   const password = useBinding<string>(() => '', { id: 'password', detectChanges: true });
-
-  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
-  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
 
   const isReadyToCheckName = useDerivedBinding(emailUsername, (username) => username.length > 0, { id: 'isReadyToCheckName' });
   const checkedEmailAvailability = useTaskWaitable((tasks) => tasks.checkEmailAvailability({ emailUsername: emailUsername.get() }), {
@@ -121,11 +123,11 @@ export const CreateNewAccountPanel = () => {
       return;
     }
 
-    isBusyCount.set(isBusyCount.get() + 1);
-    try {
+    return await isBusy.busyWhile(async () => {
+      const masterPassword = password.get();
       const created = await tasks.createUser({
         emailUsername: emailUsername.get(),
-        masterPassword: password.get(),
+        masterPassword,
         // TODO: in the future, consider exposing an option to advanced users to not save their credentials on the remote
         saveCredentialsOnRemote: true
       });
@@ -147,7 +149,7 @@ export const CreateNewAccountPanel = () => {
             return;
 
           case 'generic':
-            presentErrorMessage($apiGenericError(t), {
+            presentErrorMessage($genericError(t), {
               action: ({ dismissThen }) => (
                 <Button color="error" onClick={dismissThen(submit)}>
                   {$tryAgain(t)}
@@ -158,11 +160,23 @@ export const CreateNewAccountPanel = () => {
         }
       }
 
+      if (created.value.locallyStoredCredentialId !== undefined) {
+        await webAuthn.isAvailable.wait({ timeoutMSec: ONE_SEC_MSEC });
+        if (webAuthn.isAvailable.value.get() === true) {
+          await webAuthn.register(
+            {
+              locallyStoredCredentialId: created.value.locallyStoredCredentialId!,
+              email: created.value.encryptedEmailCredential.email,
+              webAuthnCredentialId: undefined
+            },
+            { masterPassword }
+          );
+        }
+      }
+
       activeAccountInfo.set({ email: created.value.encryptedEmailCredential.email });
       history.replace(appRoot.path.mail('inbox').value);
-    } finally {
-      isBusyCount.set(isBusyCount.get() - 1);
-    }
+    });
   });
 
   const onSubmit = useCallbackRef((event: React.FormEvent<HTMLFormElement>) => {

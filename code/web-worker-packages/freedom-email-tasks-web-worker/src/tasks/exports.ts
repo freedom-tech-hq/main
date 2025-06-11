@@ -39,10 +39,10 @@ class TasksImpl {
         .activateUserWithLocallyStoredEncryptedEmailCredential
   );
 
-  public readonly addEncryptionForBiometricsToLocallyStoredEmailCredential = wrapPrFunc(
+  public readonly addEncryptionForWebAuthnToLocallyStoredEmailCredential = wrapPrFunc(
     async () =>
-      (await import('./email-credential/addEncryptionForBiometricsToLocallyStoredEmailCredential.ts'))
-        .addEncryptionForBiometricsToLocallyStoredEmailCredential
+      (await import('./email-credential/addEncryptionForWebAuthnToLocallyStoredEmailCredential.ts'))
+        .addEncryptionForWebAuthnToLocallyStoredEmailCredential
   );
 
   public readonly deactivateUser = wrapPrFunc(async () => (await import('./email-credential/deactivateUser.ts')).deactivateUser);
@@ -70,10 +70,10 @@ class TasksImpl {
       (await import('./email-credential/listLocallyStoredEncryptedEmailCredentials.ts')).listLocallyStoredEncryptedEmailCredentials
   );
 
-  public readonly removeEncryptionForBiometricsFromLocallyStoredEmailCredential = wrapPrFunc(
+  public readonly removeEncryptionForWebAuthnFromLocallyStoredEmailCredential = wrapPrFunc(
     async () =>
-      (await import('./email-credential/removeEncryptionForBiometricsFromLocallyStoredEmailCredential.ts'))
-        .removeEncryptionForBiometricsFromLocallyStoredEmailCredential
+      (await import('./email-credential/removeEncryptionForWebAuthnFromLocallyStoredEmailCredential.ts'))
+        .removeEncryptionForWebAuthnFromLocallyStoredEmailCredential
   );
 
   public readonly removeLocallyStoredEncryptedEmailCredential = wrapPrFunc(

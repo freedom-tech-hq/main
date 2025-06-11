@@ -4,7 +4,7 @@ import { makeApiFetchTask } from 'freedom-fetching';
 import { api } from 'freedom-store-api-server-api';
 import { getDefaultApiRoutingContext } from 'yaschema-api';
 
-import type { LocallyStoredCredentialId } from '../../types/id/LocallyStoredCredentialId.ts';
+import type { LocallyStoredEncryptedEmailCredentialInfo } from '../../types/email-credential/LocallyStoredEncryptedEmailCredentialInfo.ts';
 import { importEmailCredential } from './importEmailCredential.ts';
 
 // Create API fetch task for retrieving credentials
@@ -17,7 +17,7 @@ const retrieveCredentialFromRemote = makeApiFetchTask([import.meta.filename, 're
  */
 export const importEmailCredentialFromRemote = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, { email }: { email: string }): PR<{ locallyStoredCredentialId: LocallyStoredCredentialId }, 'not-found'> => {
+  async (trace, { email }: { email: string }): PR<LocallyStoredEncryptedEmailCredentialInfo, 'not-found'> => {
     const retrieved = await retrieveCredentialFromRemote(trace, {
       body: { email },
       context: getDefaultApiRoutingContext()
@@ -26,7 +26,6 @@ export const importEmailCredentialFromRemote = makeAsyncResultFunc(
       return retrieved;
     }
 
-    // TODO: if there's already once with the same name, replace it
     return await importEmailCredential(trace, { encryptedCredential: retrieved.value.body.encryptedCredential });
   }
 );

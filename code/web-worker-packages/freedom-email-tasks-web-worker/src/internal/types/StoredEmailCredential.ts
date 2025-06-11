@@ -5,7 +5,8 @@ import { schema } from 'yaschema';
 export const storedEmailCredentialSchema = schema.object({
   /** Encrypted using a master password */
   encryptedCredential: encryptedEmailCredentialSchema,
-  /** The master password encrypted using the biometrics password */
-  pwEncryptedForBiometrics: base64String.schema.optional()
+  webAuthnCredentialId: base64String.schema.optional(),
+  /** The master password encrypted using the webauthn password */
+  pwEncryptedForWebAuthn: base64String.schema.optional()
 });
 export type StoredEmailCredential = typeof storedEmailCredentialSchema.valueType;

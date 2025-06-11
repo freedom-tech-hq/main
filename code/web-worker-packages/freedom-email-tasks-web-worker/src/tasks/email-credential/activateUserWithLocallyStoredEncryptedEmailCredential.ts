@@ -44,15 +44,15 @@ export const activateUserWithLocallyStoredEncryptedEmailCredential = makeAsyncRe
       case 'master':
         break;
 
-      case 'biometrics': {
-        if (storedCredential.value.pwEncryptedForBiometrics === undefined) {
+      case 'webauthn': {
+        if (storedCredential.value.pwEncryptedForWebAuthn === undefined) {
           return makeFailure(
-            new NotFoundError(trace, { message: `No biometrics credential found for ${locallyStoredCredentialId}`, errorCode: 'not-found' })
+            new NotFoundError(trace, { message: `No webauthn credential found for ${locallyStoredCredentialId}`, errorCode: 'not-found' })
           );
         }
 
         const decryptedMasterPassword = await decryptBufferWithPassword(trace, {
-          encryptedValue: base64String.toBuffer(storedCredential.value.pwEncryptedForBiometrics),
+          encryptedValue: base64String.toBuffer(storedCredential.value.pwEncryptedForWebAuthn),
           password
         });
         if (!decryptedMasterPassword.ok) {

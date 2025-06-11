@@ -3,11 +3,12 @@ import type { MailId } from 'freedom-email-api';
 import { useT } from 'freedom-react-localization';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useMemo } from 'react';
-import type { Binding, ReadonlyBinding } from 'react-bindings';
-import { useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import type { Binding } from 'react-bindings';
+import { useBinding, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable, type Waitable, type WrappedResult } from 'react-waitables';
 
-import { $apiGenericError, $tryAgain } from '../consts/common-strings.ts';
+import { $genericError, $tryAgain } from '../consts/common-strings.ts';
+import { useIsBusy } from '../hooks/useIsBusy.tsx';
 import { makeMailAddressListFromString } from '../utils/makeMailAddressListFromString.ts';
 import { useActiveAccountInfo } from './active-account-info.tsx';
 import { useMessagePresenter } from './message-presenter.tsx';
@@ -25,8 +26,6 @@ export interface MailEditor {
   subject: Binding<string>;
   body: Binding<string>;
 
-  isBusyCount: Binding<number>;
-  isBusy: ReadonlyBinding<boolean>;
   isFormReady: Waitable<boolean>;
   send: () => Promise<WrappedResult<{ mailId: MailId }, { errorCode: 'generic' | 'not-ready' }>>;
 }
@@ -35,6 +34,7 @@ const MailEditorContext = createContext<MailEditor | undefined>(undefined);
 
 export const MailEditorProvider = ({ children }: { children?: ReactNode }) => {
   const activeAccountInfo = useActiveAccountInfo();
+  const isBusy = useIsBusy();
   const { presentErrorMessage } = useMessagePresenter();
   const selectedMessageFolder = useSelectedMessageFolder();
   const selectedThreadId = useSelectedMailThreadId();
@@ -53,9 +53,6 @@ export const MailEditorProvider = ({ children }: { children?: ReactNode }) => {
   const subject = useBinding(() => '', { id: 'defaultMailEditorSubject', detectChanges: true });
   const body = useBinding(() => '', { id: 'defaultMailEditorBody', detectChanges: true });
 
-  const isBusyCount = useBinding(() => 0, { id: 'isBusyCount', detectChanges: true });
-  const isBusy = useDerivedBinding(isBusyCount, (count) => count > 0, { id: 'isBusy', limitType: 'none' });
-
   // TODO: use real form validation
   const isFormReady = useDerivedWaitable(
     { isBusy, to, subject, body },
@@ -73,8 +70,7 @@ export const MailEditorProvider = ({ children }: { children?: ReactNode }) => {
       return { ok: false, value: { errorCode: 'not-ready' } };
     }
 
-    isBusyCount.set(isBusyCount.get() + 1);
-    try {
+    return await isBusy.busyWhile(async () => {
       const sent = await tasks.sendMail({
         from: makeMailAddressListFromString(theActiveAccountInfo.email),
         to: makeMailAddressListFromString(mailEditor.to.get()),
@@ -89,7 +85,7 @@ export const MailEditorProvider = ({ children }: { children?: ReactNode }) => {
       if (!sent.ok) {
         switch (sent.value.errorCode) {
           case 'generic':
-            presentErrorMessage($apiGenericError(t), {
+            presentErrorMessage($genericError(t), {
               action: ({ dismissThen }) => (
                 <Button color="error" onClick={dismissThen(send)}>
                   {$tryAgain(t)}
@@ -105,14 +101,12 @@ export const MailEditorProvider = ({ children }: { children?: ReactNode }) => {
       selectedThreadId.set(sent.value.mailId);
 
       return sent;
-    } finally {
-      isBusyCount.set(isBusyCount.get() - 1);
-    }
+    });
   });
 
   const mailEditor = useMemo<MailEditor>(
-    () => ({ referencedMailId, to, cc, showCc, bcc, showBcc, subject, body, isBusyCount, isBusy, isFormReady, send }),
-    [bcc, body, cc, isBusy, isBusyCount, isFormReady, referencedMailId, send, showBcc, showCc, subject, to]
+    () => ({ referencedMailId, to, cc, showCc, bcc, showBcc, subject, body, isBusy, isFormReady, send }),
+    [bcc, body, cc, isBusy, isFormReady, referencedMailId, send, showBcc, showCc, subject, to]
   );
 
   return <MailEditorContext.Provider value={mailEditor}>{children}</MailEditorContext.Provider>;

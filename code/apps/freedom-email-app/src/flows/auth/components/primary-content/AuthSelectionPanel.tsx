@@ -9,15 +9,17 @@ import { parse } from 'freedom-serialization';
 import { SLOW_ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useHistory } from 'freedom-web-navigation';
 import React from 'react';
-import { BC, useCallbackRef } from 'react-bindings';
+import { BC, useBindingEffect, useCallbackRef } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { Txt } from '../../../../components/reusable/aliases/Txt.ts';
 import { AppDivider } from '../../../../components/reusable/AppDivider.tsx';
 import { appRoot } from '../../../../components/routing/appRoot.tsx';
+import { FEATURE_CREDENTIAL_IO } from '../../../../consts/features.ts';
 import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
+import { useWebAuthn } from '../../../../hooks/webauthn/useWebAuthn.ts';
 import { CompanyLogoIcon } from '../../../../icons/CompanyLogoIcon.ts';
 import { ImportIcon } from '../../../../icons/ImportIcon.ts';
 import { UserRoundPlusIcon } from '../../../../icons/UserRoundPlusIcon.ts';
@@ -40,6 +42,7 @@ export const AuthSelectionPanel = () => {
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isLgOrLarger = useIsSizeClass('>=', 'lg');
   const uuid = React.useMemo(() => makeUuid(), []);
+  const webAuthn = useWebAuthn();
 
   const locallyStoredEncryptedEmailCredentials = useTaskWaitable((tasks) => tasks.listLocallyStoredEncryptedEmailCredentials(), {
     id: 'locallyStoredEncryptedEmailCredentials'
@@ -47,6 +50,30 @@ export const AuthSelectionPanel = () => {
   const hasAtLeastOneAccount = useDerivedWaitable(locallyStoredEncryptedEmailCredentials, (accounts) => accounts.length > 0, {
     id: 'hasAtLeastOneAccount'
   });
+
+  // If the user has exactly 1 credential and it has webauthn enabled, we will try to authenticate with it immediately
+  useBindingEffect(
+    {
+      isWebAuthnAvailable: webAuthn.isAvailable.value,
+      locallyStoredEncryptedEmailCredentials: locallyStoredEncryptedEmailCredentials.value
+    },
+    ({ isWebAuthnAvailable = false, locallyStoredEncryptedEmailCredentials }) => {
+      const firstCredential = locallyStoredEncryptedEmailCredentials?.[0];
+
+      if (
+        !isWebAuthnAvailable ||
+        firstCredential === undefined ||
+        firstCredential.webAuthnCredentialId === undefined ||
+        (locallyStoredEncryptedEmailCredentials?.length ?? 0) !== 1
+      ) {
+        return; // Not ready
+      }
+
+      // Not waiting
+      webAuthn.authenticate(firstCredential);
+    },
+    { triggerOnMount: true }
+  );
 
   const onAccountClick = useCallbackRef((account: LocallyStoredEncryptedEmailCredentialInfo) => {
     history.replace(appRoot.path.signIn(account.email));
@@ -195,15 +222,17 @@ export const AuthSelectionPanel = () => {
                   {$createNewAccount(t)}
                 </Button>
 
-                <Button
-                  variant="text"
-                  className="default-text"
-                  onClick={onImportCredentialClick}
-                  startIcon={<ImportIcon className="default-text sm-icon" />}
-                  disabled={tasks === undefined}
-                >
-                  {$importCredential(t)}
-                </Button>
+                {IF(FEATURE_CREDENTIAL_IO, () => (
+                  <Button
+                    variant="text"
+                    className="default-text"
+                    onClick={onImportCredentialClick}
+                    startIcon={<ImportIcon className="default-text sm-icon" />}
+                    disabled={tasks === undefined}
+                  >
+                    {$importCredential(t)}
+                  </Button>
+                ))}
               </Stack>
             </Stack>
           </Collapse>

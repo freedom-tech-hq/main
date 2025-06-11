@@ -1,1 +1,1 @@
-export type LocallyStoredEncryptedEmailCredentialPasswordType = 'master' | 'biometrics';
+export type LocallyStoredEncryptedEmailCredentialPasswordType = 'master' | 'webauthn';

@@ -1,7 +1,8 @@
 import type { PR } from 'freedom-async';
 import { GeneralError, makeAsyncResultFunc, makeFailure, makeSuccess } from 'freedom-async';
-import type { Uuid } from 'freedom-basic-data';
+import { base64String } from 'freedom-basic-data';
 import { InternalStateError, UnauthorizedError } from 'freedom-common-errors';
+import type { LocallyStoredEncryptedEmailCredentialInfo } from 'freedom-email-tasks-web-worker';
 
 /**
  * Authenticates using WebAuthn
@@ -10,20 +11,21 @@ import { InternalStateError, UnauthorizedError } from 'freedom-common-errors';
  */
 export const authenticateWithWebAuthn = makeAsyncResultFunc(
   [import.meta.filename],
-  async (trace, localCredentialUuid: Uuid): PR<string, 'not-supported' | 'unauthorized'> => {
+  async (trace, credential: LocallyStoredEncryptedEmailCredentialInfo): PR<{ webAuthnPassword: string }, 'unauthorized'> => {
     try {
       // Check if WebAuthn is supported
       if (window.PublicKeyCredential === undefined) {
-        return makeFailure(
-          new InternalStateError(trace, { message: 'WebAuthn is not supported in this browser', errorCode: 'not-supported' })
-        );
+        return makeFailure(new InternalStateError(trace, { message: 'WebAuthn is not supported in this browser' }));
+      } else if (credential.webAuthnCredentialId === undefined) {
+        return makeFailure(new UnauthorizedError(trace, { message: 'WebAuthn setup incomplete', errorCode: 'unauthorized' }));
       }
 
-      const challenge = Buffer.from(localCredentialUuid, 'utf-8');
+      const challenge = Buffer.from(credential.locallyStoredCredentialId, 'utf-8');
 
       // Request authentication
       const publicKeyCredential = await navigator.credentials.get({
         publicKey: {
+          allowCredentials: [{ id: base64String.toBuffer(credential.webAuthnCredentialId), type: 'public-key' }],
           challenge,
           userVerification: 'required',
           timeout: 60000
@@ -35,7 +37,9 @@ export const authenticateWithWebAuthn = makeAsyncResultFunc(
       }
 
       // This should return a deterministic signature, which we're using as a password
-      return makeSuccess(Buffer.from((publicKeyCredential.response as AuthenticatorAssertionResponse).signature).toString('hex'));
+      return makeSuccess({
+        webAuthnPassword: Buffer.from((publicKeyCredential.response as AuthenticatorAssertionResponse).signature).toString('hex')
+      });
     } catch (e) {
       return makeFailure(new GeneralError(trace, e));
     }

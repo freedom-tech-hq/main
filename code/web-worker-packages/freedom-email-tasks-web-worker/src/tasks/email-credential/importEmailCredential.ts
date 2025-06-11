@@ -40,7 +40,7 @@ export const importEmailCredential = makeAsyncResultFunc(
     return makeSuccess({
       locallyStoredCredentialId,
       email: storedCredential.value.encryptedCredential.email,
-      hasBiometricEncryption: storedCredential.value.pwEncryptedForBiometrics !== undefined
+      webAuthnCredentialId: storedCredential.value.webAuthnCredentialId
     });
   }
 );
