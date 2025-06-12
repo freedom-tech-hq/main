@@ -1,9 +1,8 @@
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
 import type { MailId } from 'freedom-email-api';
 import { ANIMATION_DURATION_MSEC, MAX_SCROLL_DURATION_MSEC } from 'freedom-web-animation';
 import { ResizeObservingDiv, useElementHeightBinding } from 'freedom-web-resize-observer';
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { Binding } from 'react-bindings';
 import { BC, useBinding, useBindingEffect, useCallbackRef } from 'react-bindings';
 
@@ -13,6 +12,7 @@ import { useMailEditor } from '../../../../contexts/mail-editor.tsx';
 import { useMessagePresenter } from '../../../../contexts/message-presenter.tsx';
 import { useScrollParentVisibleHeightPx } from '../../../../contexts/scroll-parent-info.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
+import { useUuid } from '../../../../hooks/useUuid.ts';
 import type { MailTextStyle } from '../../../../types/MailTextStyle.ts';
 import type { ReferencedMailCompositionMode } from '../../../../types/ReferencedMailCompositionMode.ts';
 import { ComposeMailBottomToolbar } from './toolbars/ComposeMailBottomToolbar.tsx';
@@ -41,7 +41,7 @@ export const ComposeMailBodyField = ({
   const mailEditor = useMailEditor();
   const { presentErrorMessage } = useMessagePresenter();
   const scrollParentVisibleHeightPx = useScrollParentVisibleHeightPx();
-  const uuid = useMemo(() => makeUuid(), []);
+  const uuid = useUuid();
   const viewportHeightPx = useElementHeightBinding(window.visualViewport ?? window);
 
   const onBodyFieldFocus = useCallbackRef(() => {

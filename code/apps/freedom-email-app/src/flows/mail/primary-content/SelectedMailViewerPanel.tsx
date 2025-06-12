@@ -1,16 +1,16 @@
 import { Button, Stack } from '@mui/material';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
 import type { MailId } from 'freedom-email-api';
 import { LOCALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useElementHeightBinding } from 'freedom-web-resize-observer';
-import React, { useMemo, useRef } from 'react';
+import React, { useRef } from 'react';
 import { BC, useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
 
 import { sp } from '../../../components/bootstrapping/AppTheme.tsx';
+import { BoundStyles, dynamicStyle } from '../../../components/BoundStyles.tsx';
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { OnFirstMount } from '../../../components/reusable/OnFirstMount.tsx';
@@ -22,6 +22,7 @@ import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.t
 import { useSelectedMailThreadId } from '../../../contexts/selected-mail-thread-id.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
+import { useUuid } from '../../../hooks/useUuid.ts';
 import { ArchiveIcon } from '../../../icons/ArchiveIcon.ts';
 import { ForwardIcon } from '../../../icons/ForwardIcon.ts';
 import { HamburgerMenuIcon } from '../../../icons/HamburgerMenuIcon.ts';
@@ -51,14 +52,14 @@ const $spam = LOCALIZE('Spam')({ ns });
 const $trash = LOCALIZE('Trash')({ ns });
 
 export const SelectedMailViewerPanel = () => {
-  const { presentErrorMessage } = useMessagePresenter();
-  const t = useT();
-  const mailScreen = useMailScreen();
-  const uuid = useMemo(() => makeUuid(), []);
   const isLgOrSmaller = useIsSizeClass('<=', 'lg');
   const isMdOrLarger = useIsSizeClass('>=', 'md');
   const isMdOrSmaller = useIsSizeClass('<=', 'md');
   const isSmOrSmaller = useIsSizeClass('<=', 'sm');
+  const { presentErrorMessage } = useMessagePresenter();
+  const t = useT();
+  const mailScreen = useMailScreen();
+  const uuid = useUuid();
 
   const selectedMessageFolder = useSelectedMessageFolder();
   const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (folder) => folder !== undefined, {
@@ -158,15 +159,6 @@ export const SelectedMailViewerPanel = () => {
     }
   });
 
-  useBindingEffect({ bodyFieldHasFocus, isSmOrSmaller }, ({ bodyFieldHasFocus, isSmOrSmaller }) => {
-    const elem = document.getElementById(`${uuid}-compose-mail-input`);
-    if (elem === null) {
-      return; // Not ready
-    }
-
-    elem.style.padding = `0 ${isSmOrSmaller && bodyFieldHasFocus ? 0 : sp(2)}px`;
-  });
-
   const scrollableHeightPx = useElementHeightBinding(`${uuid}-scrollable`);
   const topToolbarHeightPx = useElementHeightBinding(`${uuid}-top-toolbar`);
   const scrollParentVisibleHeightPx = useDerivedBinding(
@@ -248,13 +240,14 @@ export const SelectedMailViewerPanel = () => {
                 {IF(
                   isInCompositionMode,
                   () => (
-                    <Stack
+                    <BoundStyles
+                      component={Stack}
                       id={`${uuid}-compose-mail-input`}
                       sx={{ mb: 1.5 }}
-                      style={{
+                      {...dynamicStyle({ bodyFieldHasFocus, isSmOrSmaller }, ({ bodyFieldHasFocus, isSmOrSmaller }) => ({
                         transition: `padding ${ANIMATION_DURATION_MSEC / ONE_SEC_MSEC}s ease-in-out`,
-                        padding: `0 ${isSmOrSmaller.get() && bodyFieldHasFocus.get() ? 0 : sp(2)}px`
-                      }}
+                        padding: `0 ${isSmOrSmaller && bodyFieldHasFocus ? 0 : sp(2)}px`
+                      }))}
                     >
                       <MailEditorProvider>
                         {BC(composition, (composition) => (
@@ -269,7 +262,7 @@ export const SelectedMailViewerPanel = () => {
                         ))}
                       </MailEditorProvider>
                       <OnFirstMount do={scrollToComposeMailInput} delayMSec={INPUT_DEBOUNCE_TIME_MSEC} />
-                    </Stack>
+                    </BoundStyles>
                   ),
                   ELSE(() =>
                     BC(isSmOrSmaller, (isSmOrSmaller) => (

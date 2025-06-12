@@ -1,17 +1,17 @@
 import { Button, Stack } from '@mui/material';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { ELSE, IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useHistory } from 'freedom-web-navigation';
 import { useElementHeightBinding } from 'freedom-web-resize-observer';
-import React, { useMemo } from 'react';
-import { BC, useBinding, useBindingEffect, useCallbackRef, useDerivedBinding } from 'react-bindings';
+import React from 'react';
+import { BC, useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
 import { sp } from '../../../components/bootstrapping/AppTheme.tsx';
+import { BoundStyles, dynamicStyle } from '../../../components/BoundStyles.tsx';
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { appRoot } from '../../../components/routing/appRoot.tsx';
@@ -25,6 +25,7 @@ import { useSelectedMessageFolder } from '../../../contexts/selected-message-fol
 import { useTasks } from '../../../contexts/tasks.tsx';
 import { useIsBusy } from '../../../hooks/useIsBusy.tsx';
 import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
+import { useUuid } from '../../../hooks/useUuid.ts';
 import { DraftIcon } from '../../../icons/DraftIcon.ts';
 import { HamburgerMenuIcon } from '../../../icons/HamburgerMenuIcon.ts';
 import { TrashIcon } from '../../../icons/TrashIcon.ts';
@@ -49,7 +50,7 @@ export const ComposeMailPanel = () => {
   const mailScreen = useMailScreen();
   const t = useT();
   const tasks = useTasks();
-  const uuid = useMemo(() => makeUuid(), []);
+  const uuid = useUuid();
 
   const selectedMessageFolder = useSelectedMessageFolder();
   const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (folder) => folder !== undefined, {
@@ -127,15 +128,6 @@ export const ComposeMailPanel = () => {
     { id: 'scrollParentVisibleHeightPx' }
   );
 
-  useBindingEffect({ bodyFieldHasFocus, isLgOrLarger, isSmOrSmaller }, ({ bodyFieldHasFocus, isLgOrLarger, isSmOrSmaller }) => {
-    const elem = document.getElementById(`${uuid}-compose-body-field-container`);
-    if (elem === null) {
-      return; // Not ready
-    }
-
-    elem.style.padding = `0 ${isLgOrLarger ? sp(3.5) : isSmOrSmaller && bodyFieldHasFocus ? 0 : sp(2)}px`;
-  });
-
   return (
     <Stack alignItems="stretch" className="self-stretch flex-auto relative overflow-hidden">
       <ScrollParentInfoProvider insetTopPx={topToolbarHeightPx} heightPx={scrollableHeightPx} visibleHeightPx={scrollParentVisibleHeightPx}>
@@ -187,24 +179,27 @@ export const ComposeMailPanel = () => {
           ))}
           <Stack alignItems="stretch" className="flex-auto" gap={2}>
             {BC(isLgOrLarger, (isLgOrLarger) => (
-              <>
-                <Stack alignItems="stretch" sx={{ px: isLgOrLarger ? 3.5 : 2 }}>
-                  <ComposeMailHeaderFields />
-                </Stack>
-                <Stack
-                  id={`${uuid}-compose-body-field-container`}
-                  alignItems="stretch"
-                  gap={2}
-                  className="flex-auto"
-                  style={{
-                    transition: `padding ${ANIMATION_DURATION_MSEC / ONE_SEC_MSEC}s ease-in-out`,
-                    padding: `0 ${isLgOrLarger ? sp(3.5) : isSmOrSmaller.get() && bodyFieldHasFocus.get() ? 0 : sp(2)}px`
-                  }}
-                >
-                  <ComposeMailBodyField flexHeight={isLgOrLarger} hasFocus={bodyFieldHasFocus} onDiscardClick={onDiscardClick} />
-                </Stack>
-              </>
+              <Stack alignItems="stretch" sx={{ px: isLgOrLarger ? 3.5 : 2 }}>
+                <ComposeMailHeaderFields />
+              </Stack>
             ))}
+            <BoundStyles
+              component={Stack}
+              alignItems="stretch"
+              gap={2}
+              className="flex-auto"
+              sx={{ transition: `padding ${ANIMATION_DURATION_MSEC / ONE_SEC_MSEC}s ease-in-out` }}
+              {...dynamicStyle(
+                { bodyFieldHasFocus, isLgOrLarger, isSmOrSmaller },
+                ({ bodyFieldHasFocus, isLgOrLarger, isSmOrSmaller }) => ({
+                  padding: `0 ${isLgOrLarger ? sp(3.5) : isSmOrSmaller && bodyFieldHasFocus ? 0 : sp(2)}px`
+                })
+              )}
+            >
+              {BC(isLgOrLarger, (isLgOrLarger) => (
+                <ComposeMailBodyField flexHeight={isLgOrLarger} hasFocus={bodyFieldHasFocus} onDiscardClick={onDiscardClick} />
+              ))}
+            </BoundStyles>
           </Stack>
         </Stack>
       </ScrollParentInfoProvider>

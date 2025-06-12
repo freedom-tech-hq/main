@@ -1,15 +1,16 @@
 import { Stack } from '@mui/material';
-import { makeUuid } from 'freedom-contexts';
 import { ANIMATION_DURATION_MSEC } from 'freedom-web-animation';
 import { useElementHeightBinding } from 'freedom-web-resize-observer';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useBinding, useBindingEffect, useDerivedBinding } from 'react-bindings';
 
 import { sp } from '../../../components/bootstrapping/AppTheme.tsx';
+import { BoundStyles, dynamicStyle } from '../../../components/BoundStyles.tsx';
 import { secondarySidebarWidthPx } from '../../../consts/sizes.ts';
 import { ScrollParentInfoProvider } from '../../../contexts/scroll-parent-info.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
+import { useUuid } from '../../../hooks/useUuid.ts';
 import { MailThreadsList } from '../secondary-content/MailThreadsList/index.tsx';
 import { MessageFolderHeader } from '../secondary-content/MessageFolderHeader.tsx';
 
@@ -18,7 +19,7 @@ export const SecondaryMailSidebar = () => {
   const selectedMessageFolder = useSelectedMessageFolder();
   const hasSelectedMessageFolder = useDerivedBinding(selectedMessageFolder, (id) => id !== undefined, { id: 'hasSelectedCollectionId' });
   const estThreadCount = useBinding(() => 0, { id: 'estThreadCount', detectChanges: true });
-  const uuid = useMemo(() => makeUuid(), []);
+  const uuid = useUuid();
 
   const lastDefinedSelectedMessageFolder = useBinding(() => selectedMessageFolder.get(), {
     id: 'lastDefinedSelectedMessageFolder',
@@ -36,29 +37,6 @@ export const SecondaryMailSidebar = () => {
     { triggerOnMount: true, limitType: 'none' }
   );
 
-  useBindingEffect(
-    { hasSelectedMessageFolder, isMdOrSmaller },
-    ({ hasSelectedMessageFolder, isMdOrSmaller }) => {
-      const elem = document.getElementById(uuid);
-      if (elem === null) {
-        return; // Not ready
-      }
-
-      const scrollableElem = document.getElementById(`${uuid}-scrollable`);
-      if (scrollableElem === null) {
-        return; // Not ready
-      }
-
-      // Not transitioned for md and smaller devices since this is presented as a whole page
-      elem.style.transition = isMdOrSmaller ? '' : `margin-left ${ANIMATION_DURATION_MSEC}ms ease-in-out`;
-      elem.style.marginLeft = isMdOrSmaller || hasSelectedMessageFolder ? '0px' : `-${secondarySidebarWidthPx}px`;
-      elem.style.width = isMdOrSmaller ? '100%' : `${secondarySidebarWidthPx}px`;
-
-      scrollableElem.style.padding = `0 ${sp(isMdOrSmaller ? 0.5 : 2)}px`;
-    },
-    { triggerOnMount: true }
-  );
-
   const scrollableHeightPx = useElementHeightBinding(`${uuid}-scrollable`);
   const topToolbarHeightPx = useElementHeightBinding(`${uuid}-top-toolbar`);
   const scrollParentVisibleHeightPx = useDerivedBinding(
@@ -68,22 +46,24 @@ export const SecondaryMailSidebar = () => {
   );
 
   return (
-    <Stack
-      id={uuid}
+    <BoundStyles
+      component={Stack}
       alignItems="stretch"
       className="relative overflow-hidden"
-      style={{
-        transition: isMdOrSmaller.get() ? '' : `margin-left ${ANIMATION_DURATION_MSEC}ms ease-in-out`,
-        marginLeft: isMdOrSmaller.get() || hasSelectedMessageFolder.get() ? '0px' : `-${secondarySidebarWidthPx}px`,
-        width: isMdOrSmaller.get() ? '100%' : `${secondarySidebarWidthPx}px`
-      }}
+      {...dynamicStyle({ hasSelectedMessageFolder, isMdOrSmaller }, ({ hasSelectedMessageFolder, isMdOrSmaller }) => ({
+        // Not transitioned for md and smaller devices since this is presented as a whole page
+        transition: isMdOrSmaller ? '' : `margin-left ${ANIMATION_DURATION_MSEC}ms ease-in-out`,
+        marginLeft: isMdOrSmaller || hasSelectedMessageFolder ? '0px' : `-${secondarySidebarWidthPx}px`,
+        width: isMdOrSmaller ? '100%' : `${secondarySidebarWidthPx}px`
+      }))}
     >
       <ScrollParentInfoProvider insetTopPx={topToolbarHeightPx} heightPx={scrollableHeightPx} visibleHeightPx={scrollParentVisibleHeightPx}>
-        <Stack
+        <BoundStyles
+          component={Stack}
           id={`${uuid}-scrollable`}
           alignItems="stretch"
           className="relative overflow-y-auto"
-          style={{ padding: `0 ${sp(isMdOrSmaller.get() ? 0.5 : 2)}px` }}
+          {...dynamicStyle(isMdOrSmaller, (isMdOrSmaller) => ({ padding: `0 ${sp(isMdOrSmaller ? 0.5 : 2)}px` }))}
         >
           <Stack id={`${uuid}-top-toolbar`} alignItems="stretch" className="sticky top-0 default-bg z-5">
             <MessageFolderHeader estThreadCount={estThreadCount} />
@@ -97,8 +77,8 @@ export const SecondaryMailSidebar = () => {
               scrollParent={`${uuid}-scrollable`}
             />
           </Stack>
-        </Stack>
+        </BoundStyles>
       </ScrollParentInfoProvider>
-    </Stack>
+    </BoundStyles>
   );
 };

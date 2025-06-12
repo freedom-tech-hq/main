@@ -1,12 +1,12 @@
 import { Box, Button, Stack } from '@mui/material';
-import { makeUuid } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { IF } from 'freedom-logical-web-components';
 import { useT } from 'freedom-react-localization';
 import { useHistory } from 'freedom-web-navigation';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useBindingEffect, useCallbackRef } from 'react-bindings';
 
+import { BoundStyles, dynamicStyle } from '../../../components/BoundStyles.tsx';
 import { Txt } from '../../../components/reusable/aliases/Txt.ts';
 import { AppToolbar } from '../../../components/reusable/AppToolbar.tsx';
 import { appRoot } from '../../../components/routing/appRoot.tsx';
@@ -15,6 +15,7 @@ import { primarySidebarWidthDrawerPx, primarySidebarWidthInlinePx } from '../../
 import { useMailScreen } from '../../../contexts/mail-screen.tsx';
 import { useSelectedMessageFolder } from '../../../contexts/selected-message-folder.tsx';
 import { useIsSizeClass } from '../../../hooks/useIsSizeClass.ts';
+import { useUuid } from '../../../hooks/useUuid.ts';
 import { CloseXIcon } from '../../../icons/CloseXIcon.ts';
 import { CompanyLogoIcon } from '../../../icons/CompanyLogoIcon.ts';
 import { NewEmailIcon } from '../../../icons/NewEmailIcon.ts';
@@ -28,9 +29,9 @@ export const PrimaryMailSidebar = () => {
   const history = useHistory();
   const isMdOrSmaller = useIsSizeClass('<=', 'md');
   const mailScreen = useMailScreen();
-  const t = useT();
-  const uuid = useMemo(() => makeUuid(), []);
   const selectedMessageFolder = useSelectedMessageFolder();
+  const t = useT();
+  const uuid = useUuid();
 
   const hidePrimarySidebar = useCallbackRef(() => mailScreen.showPrimarySidebar.set(false));
 
@@ -39,23 +40,16 @@ export const PrimaryMailSidebar = () => {
     mailScreen.showPrimarySidebar.set(false);
   });
 
-  useBindingEffect(isMdOrSmaller, (isMdOrSmaller) => {
-    const elem = document.getElementById(uuid);
-    if (elem === null) {
-      return; // Not ready
-    }
-
-    elem.style.width = `${isMdOrSmaller ? primarySidebarWidthDrawerPx : primarySidebarWidthInlinePx}px`;
-  });
-
   useBindingEffect(selectedMessageFolder, () => hidePrimarySidebar());
 
   return (
-    <Stack
-      id={uuid}
+    <BoundStyles
+      component={Stack}
       alignItems="stretch"
       className="relative default-bg  z-10"
-      style={{ width: `${isMdOrSmaller.get() ? primarySidebarWidthDrawerPx : primarySidebarWidthInlinePx}px` }}
+      {...dynamicStyle(isMdOrSmaller, (isMdOrSmaller) => ({
+        width: `${isMdOrSmaller ? primarySidebarWidthDrawerPx : primarySidebarWidthInlinePx}px`
+      }))}
     >
       <Stack alignItems="stretch" id={`${uuid}-scrollable`} className="overflow-y-auto">
         <AppToolbar justifyContent="space-between">
@@ -94,6 +88,6 @@ export const PrimaryMailSidebar = () => {
       <Box className="absolute default-bg bottom-0 left-0 right-0 z-2">
         <ActiveAccountButton />
       </Box>
-    </Stack>
+    </BoundStyles>
   );
 };

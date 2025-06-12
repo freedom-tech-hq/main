@@ -1,11 +1,11 @@
 import { Button, Stack, Tooltip, useTheme } from '@mui/material';
 import { ONE_SEC_MSEC } from 'freedom-basic-data';
-import { log, makeTrace, makeUuid } from 'freedom-contexts';
+import { log, makeTrace } from 'freedom-contexts';
 import { LOCALIZE } from 'freedom-localization';
 import { useT } from 'freedom-react-localization';
 import { useHistory } from 'freedom-web-navigation';
 import type { ReactNode } from 'react';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { BC, useBinding, useCallbackRef, useDerivedBinding } from 'react-bindings';
 import { useDerivedWaitable } from 'react-waitables';
 
@@ -21,6 +21,7 @@ import { useTasks } from '../../../../contexts/tasks.tsx';
 import { useIsBusy } from '../../../../hooks/useIsBusy.tsx';
 import { useIsSizeClass } from '../../../../hooks/useIsSizeClass.ts';
 import { useTaskWaitable } from '../../../../hooks/useTaskWaitable.ts';
+import { useUuid } from '../../../../hooks/useUuid.ts';
 import { useWebAuthn } from '../../../../hooks/webauthn/useWebAuthn.ts';
 import { BackIcon } from '../../../../icons/BackIcon.ts';
 import { CheckIcon } from '../../../../icons/CheckIcon.ts';
@@ -49,7 +50,7 @@ export const CreateNewAccountPanel = () => {
   const t = useT();
   const tasks = useTasks();
   const theme = useTheme();
-  const uuid = useMemo(() => makeUuid(), []);
+  const uuid = useUuid();
   const webAuthn = useWebAuthn();
 
   const isMdOrLarger = useIsSizeClass('>=', 'md');
